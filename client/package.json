@@ -10,12 +10,14 @@
   },
   "dependencies": {
     "@hookform/resolvers": "^7.0.0",
+    "@tailwindcss/postcss": "^4.3.3",
     "@tanstack/react-query": "^5.105.0",
     "axios": "^1.21.0",
     "date-fns": "^4.4.0",
     "html5-qrcode": "^2.3.8",
     "lucide-react": "^1.66.0",
     "next": "16.4.3",
+    "postcss": "^8.5.32",
     "qrcode.react": "^4.2.0",
     "react": "19.3.0",
     "react-dom": "19.3.0",
@@ -34,5 +36,10 @@
     "eslint-config-next": "16.4.3",
     "tailwindcss": "^4",
     "typescript": "^5"
+  },
+  "postcss": {
+    "plugins": {
+      "@tailwindcss/postcss": {}
+    }
   }
 }
