@@ -67,20 +67,20 @@ export default function InspectorHelpPage() {
   return (
     <div className="space-y-6 max-w-4xl mx-auto">
       {/* Top Header */}
-      <div className="border-b border-border/60 pb-5">
+      <div className="border-b border-slate-200/50 dark:border-slate-800/50 pb-5">
         <h1 className="text-xl font-bold tracking-tight text-foreground">
           Inspector Field Manual & Support
         </h1>
-        <p className="text-xs text-muted-foreground">
+        <p className="text-xs text-muted-foreground mt-0.5">
           Gate verification guidelines, troubleshooting protocols, and direct dispatch contacts.
         </p>
       </div>
 
       {/* Guide Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-        <div className="bg-card border border-border/60 rounded-xl p-4 shadow-xs space-y-2">
-          <div className="w-8 h-8 rounded-lg bg-emerald-500/10 text-emerald-600 flex items-center justify-center">
-            <CheckCircle2 className="w-4 h-4" />
+        <div className="bg-card border border-slate-200/50 dark:border-slate-800/50 rounded-3xl p-5 shadow-sm space-y-2">
+          <div className="w-9 h-9 rounded-xl bg-emerald-500/10 text-emerald-600 flex items-center justify-center">
+            <CheckCircle2 className="w-5 h-5" />
           </div>
           <h3 className="font-bold text-xs text-foreground">Green: Boarding Approved</h3>
           <p className="text-[11px] text-muted-foreground leading-relaxed">
@@ -88,9 +88,9 @@ export default function InspectorHelpPage() {
           </p>
         </div>
 
-        <div className="bg-card border border-border/60 rounded-xl p-4 shadow-xs space-y-2">
-          <div className="w-8 h-8 rounded-lg bg-amber-500/10 text-amber-600 flex items-center justify-center">
-            <AlertTriangle className="w-4 h-4" />
+        <div className="bg-card border border-slate-200/50 dark:border-slate-800/50 rounded-3xl p-5 shadow-sm space-y-2">
+          <div className="w-9 h-9 rounded-xl bg-amber-500/10 text-amber-600 flex items-center justify-center">
+            <AlertTriangle className="w-5 h-5" />
           </div>
           <h3 className="font-bold text-xs text-foreground">Amber: Duplicate Detected</h3>
           <p className="text-[11px] text-muted-foreground leading-relaxed">
@@ -98,9 +98,9 @@ export default function InspectorHelpPage() {
           </p>
         </div>
 
-        <div className="bg-card border border-border/60 rounded-xl p-4 shadow-xs space-y-2">
-          <div className="w-8 h-8 rounded-lg bg-rose-500/10 text-rose-600 flex items-center justify-center">
-            <XCircle className="w-4 h-4" />
+        <div className="bg-card border border-slate-200/50 dark:border-slate-800/50 rounded-3xl p-5 shadow-sm space-y-2">
+          <div className="w-9 h-9 rounded-xl bg-rose-500/10 text-rose-600 flex items-center justify-center">
+            <XCircle className="w-5 h-5" />
           </div>
           <h3 className="font-bold text-xs text-foreground">Red: Invalid Signature</h3>
           <p className="text-[11px] text-muted-foreground leading-relaxed">
@@ -113,21 +113,21 @@ export default function InspectorHelpPage() {
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         {/* Left 2 Cols: FAQs */}
         <div className="md:col-span-2 space-y-4">
-          <div className="bg-card border border-border/60 rounded-xl p-5 shadow-xs space-y-3">
+          <div className="bg-card border border-slate-200/50 dark:border-slate-800/50 rounded-3xl p-6 shadow-sm space-y-4">
             <h3 className="text-sm font-bold text-foreground">
               Frequently Asked Gate Inspection Questions
             </h3>
 
-            <div className="space-y-2">
+            <div className="space-y-2.5">
               {faqs.map((faq, idx) => (
                 <div
                   key={idx}
-                  className="rounded-lg border border-border/50 overflow-hidden text-xs"
+                  className="rounded-2xl border border-slate-200/50 dark:border-slate-800/50 overflow-hidden text-xs"
                 >
                   <button
                     type="button"
                     onClick={() => setOpenFaq(openFaq === idx ? null : idx)}
-                    className="w-full p-3 text-left font-semibold text-foreground flex items-center justify-between gap-2 hover:bg-muted/30 transition-colors"
+                    className="w-full p-3.5 text-left font-semibold text-foreground flex items-center justify-between gap-2 hover:bg-slate-50 dark:hover:bg-slate-800/40 transition-colors"
                   >
                     <span>{faq.q}</span>
                     <ChevronDown
@@ -137,7 +137,7 @@ export default function InspectorHelpPage() {
                     />
                   </button>
                   {openFaq === idx && (
-                    <div className="p-3 pt-0 text-[11px] text-muted-foreground leading-relaxed border-t border-border/30 bg-muted/10">
+                    <div className="p-3.5 pt-0 text-[11px] text-muted-foreground leading-relaxed border-t border-slate-100 dark:border-slate-800/30 bg-slate-50/50 dark:bg-slate-800/20">
                       {faq.a}
                     </div>
                   )}
@@ -150,7 +150,7 @@ export default function InspectorHelpPage() {
         {/* Right Col: Dispatch Hotline & Issue Reporter */}
         <div className="space-y-4">
           {/* Dispatch Hotline Card */}
-          <div className="bg-card border border-border/60 rounded-xl p-4 shadow-xs space-y-3 text-xs">
+          <div className="bg-card border border-slate-200/50 dark:border-slate-800/50 rounded-3xl p-6 shadow-sm space-y-3 text-xs">
             <h3 className="font-bold text-xs uppercase tracking-wider text-muted-foreground">
               Provider Dispatch Hotline
             </h3>
@@ -171,7 +171,7 @@ export default function InspectorHelpPage() {
           {/* Quick Issue Report Form */}
           <form
             onSubmit={handleSubmitSupport}
-            className="bg-card border border-border/60 rounded-xl p-4 shadow-xs space-y-3 text-xs"
+            className="bg-card border border-slate-200/50 dark:border-slate-800/50 rounded-3xl p-6 shadow-sm space-y-3 text-xs"
           >
             <h3 className="font-bold text-xs uppercase tracking-wider text-muted-foreground">
               Report Hardware / App Issue

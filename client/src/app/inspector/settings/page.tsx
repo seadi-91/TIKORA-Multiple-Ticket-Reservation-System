@@ -68,24 +68,24 @@ export default function InspectorSettingsPage() {
   return (
     <div className="space-y-6 max-w-3xl mx-auto">
       {/* Top Header */}
-      <div className="border-b border-border/60 pb-5">
+      <div className="border-b border-slate-200/50 dark:border-slate-800/50 pb-5">
         <h1 className="text-xl font-bold tracking-tight text-foreground">
           Inspector Device & System Settings
         </h1>
-        <p className="text-xs text-muted-foreground">
+        <p className="text-xs text-muted-foreground mt-0.5">
           Configure QR scanner hardware preferences, security credentials, and alerts.
         </p>
       </div>
 
       {/* Section 1: Scanner & Feedback Hardware */}
-      <div className="bg-card border border-border/60 rounded-xl p-5 shadow-xs space-y-4">
+      <div className="bg-card border border-slate-200/50 dark:border-slate-800/50 rounded-3xl p-6 shadow-sm space-y-4">
         <h3 className="text-xs font-bold uppercase tracking-wider text-muted-foreground flex items-center gap-1.5">
           <Smartphone className="w-3.5 h-3.5 text-amber-600" />
           <span>Scanner Hardware & Feedback</span>
         </h3>
 
         <div className="space-y-3">
-          <label className="flex items-center justify-between p-3 rounded-lg border border-border/50 hover:bg-muted/20 cursor-pointer transition-colors">
+          <label className="flex items-center justify-between p-4 rounded-2xl border border-slate-200/50 dark:border-slate-800/50 bg-slate-50/50 dark:bg-slate-800/20 hover:bg-slate-100/60 dark:hover:bg-slate-800/40 cursor-pointer transition-colors">
             <div>
               <span className="text-xs font-semibold text-foreground block">
                 Audio Beep on Verification
@@ -101,11 +101,11 @@ export default function InspectorSettingsPage() {
                 setScannerSound(e.target.checked);
                 toast.info(`Audio chime ${e.target.checked ? "enabled" : "muted"}`);
               }}
-              className="rounded border-border/70 text-amber-600 focus:ring-amber-500"
+              className="rounded-lg border-slate-300 dark:border-slate-700 text-amber-600 focus:ring-amber-500"
             />
           </label>
 
-          <label className="flex items-center justify-between p-3 rounded-lg border border-border/50 hover:bg-muted/20 cursor-pointer transition-colors">
+          <label className="flex items-center justify-between p-4 rounded-2xl border border-slate-200/50 dark:border-slate-800/50 bg-slate-50/50 dark:bg-slate-800/20 hover:bg-slate-100/60 dark:hover:bg-slate-800/40 cursor-pointer transition-colors">
             <div>
               <span className="text-xs font-semibold text-foreground block">
                 Haptic Vibration on Scan
@@ -121,11 +121,11 @@ export default function InspectorSettingsPage() {
                 setScannerVibrate(e.target.checked);
                 toast.info(`Vibration ${e.target.checked ? "enabled" : "disabled"}`);
               }}
-              className="rounded border-border/70 text-amber-600 focus:ring-amber-500"
+              className="rounded-lg border-slate-300 dark:border-slate-700 text-amber-600 focus:ring-amber-500"
             />
           </label>
 
-          <div className="p-3 rounded-lg border border-border/50 space-y-2">
+          <div className="p-4 rounded-2xl border border-slate-200/50 dark:border-slate-800/50 bg-slate-50/50 dark:bg-slate-800/20 space-y-2">
             <span className="text-xs font-semibold text-foreground block">
               Auto-Dismiss Result Timer
             </span>
@@ -145,10 +145,10 @@ export default function InspectorSettingsPage() {
                         : `Auto-dismiss set to ${sec} seconds`
                     );
                   }}
-                  className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-colors ${
+                  className={`px-3.5 py-1.5 rounded-xl text-xs font-semibold transition-all ${
                     autoResetDurationSec === sec
-                      ? "bg-amber-600 text-white"
-                      : "bg-muted/40 text-muted-foreground hover:bg-muted hover:text-foreground"
+                      ? "bg-amber-600 text-white shadow-sm"
+                      : "bg-slate-200/60 dark:bg-slate-700/60 text-muted-foreground hover:bg-slate-200 dark:hover:bg-slate-700 hover:text-foreground"
                   }`}
                 >
                   {sec === 0 ? "Manual Only" : `${sec}s`}
@@ -160,7 +160,7 @@ export default function InspectorSettingsPage() {
       </div>
 
       {/* Section 2: Display & Appearance */}
-      <div className="bg-card border border-border/60 rounded-xl p-5 shadow-xs space-y-4">
+      <div className="bg-card border border-slate-200/50 dark:border-slate-800/50 rounded-3xl p-6 shadow-sm space-y-4">
         <h3 className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
           Visual Theme
         </h3>
@@ -181,10 +181,10 @@ export default function InspectorSettingsPage() {
                 key={item.id}
                 type="button"
                 onClick={() => setTheme(item.id)}
-                className={`flex flex-col items-center justify-center p-3 rounded-xl border text-xs font-semibold transition-colors ${
+                className={`flex flex-col items-center justify-center p-3.5 rounded-2xl border text-xs font-semibold transition-all ${
                   isSelected
-                    ? "border-amber-600 bg-amber-500/10 text-amber-700 dark:text-amber-300 ring-1 ring-amber-600/30"
-                    : "border-border/70 hover:bg-muted text-muted-foreground hover:text-foreground"
+                    ? "border-amber-600 bg-amber-500/10 text-amber-700 dark:text-amber-300 ring-1 ring-amber-600/30 shadow-xs"
+                    : "border-slate-200/60 dark:border-slate-800/60 hover:bg-muted text-muted-foreground hover:text-foreground"
                 }`}
               >
                 <Icon className="w-4 h-4 mb-1.5" />
@@ -196,7 +196,7 @@ export default function InspectorSettingsPage() {
       </div>
 
       {/* Section 3: Change Password */}
-      <form onSubmit={handlePasswordSubmit} className="bg-card border border-border/60 rounded-xl p-5 shadow-xs space-y-4">
+      <form onSubmit={handlePasswordSubmit} className="bg-card border border-slate-200/50 dark:border-slate-800/50 rounded-3xl p-6 shadow-sm space-y-4">
         <h3 className="text-xs font-bold uppercase tracking-wider text-muted-foreground flex items-center gap-1.5">
           <Lock className="w-3.5 h-3.5 text-amber-600" />
           <span>Change Inspector Password</span>
@@ -204,7 +204,7 @@ export default function InspectorSettingsPage() {
 
         <div className="space-y-3">
           <div>
-            <label className="block text-xs font-medium text-foreground mb-1">
+            <label className="block text-xs font-semibold text-foreground mb-1">
               Current Password
             </label>
             <input
@@ -212,13 +212,13 @@ export default function InspectorSettingsPage() {
               required
               value={currentPassword}
               onChange={(e) => setCurrentPassword(e.target.value)}
-              className="w-full px-3.5 py-2 text-xs rounded-lg border border-border/70 bg-background text-foreground"
+              className="w-full px-3.5 py-2 text-xs rounded-xl border border-slate-200/60 dark:border-slate-800/60 bg-card text-foreground focus:outline-none focus:ring-2 focus:ring-amber-500/30"
             />
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
-              <label className="block text-xs font-medium text-foreground mb-1">
+              <label className="block text-xs font-semibold text-foreground mb-1">
                 New Password
               </label>
               <input
@@ -226,12 +226,12 @@ export default function InspectorSettingsPage() {
                 required
                 value={newPassword}
                 onChange={(e) => setNewPassword(e.target.value)}
-                className="w-full px-3.5 py-2 text-xs rounded-lg border border-border/70 bg-background text-foreground"
+                className="w-full px-3.5 py-2 text-xs rounded-xl border border-slate-200/60 dark:border-slate-800/60 bg-card text-foreground focus:outline-none focus:ring-2 focus:ring-amber-500/30"
               />
             </div>
 
             <div>
-              <label className="block text-xs font-medium text-foreground mb-1">
+              <label className="block text-xs font-semibold text-foreground mb-1">
                 Confirm New Password
               </label>
               <input
@@ -239,7 +239,7 @@ export default function InspectorSettingsPage() {
                 required
                 value={confirmPassword}
                 onChange={(e) => setConfirmPassword(e.target.value)}
-                className="w-full px-3.5 py-2 text-xs rounded-lg border border-border/70 bg-background text-foreground"
+                className="w-full px-3.5 py-2 text-xs rounded-xl border border-slate-200/60 dark:border-slate-800/60 bg-card text-foreground focus:outline-none focus:ring-2 focus:ring-amber-500/30"
               />
             </div>
           </div>
@@ -257,7 +257,7 @@ export default function InspectorSettingsPage() {
             <button
               type="submit"
               disabled={isUpdatingPassword}
-              className="px-4 py-2 text-xs font-semibold rounded-lg bg-amber-600 hover:bg-amber-700 text-white shadow-sm transition-colors disabled:opacity-60"
+              className="px-4 py-2 text-xs font-semibold rounded-xl bg-amber-600 hover:bg-amber-700 text-white shadow-sm transition-colors disabled:opacity-60"
             >
               {isUpdatingPassword ? "Updating..." : "Update Password"}
             </button>

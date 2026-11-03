@@ -17,12 +17,17 @@ import {
   LogOut,
   Laptop,
   Radio,
+  Menu,
 } from "lucide-react";
 import { useInspectorStore } from "@/stores/inspector.store";
 import { useAuthStore } from "@/stores/auth.store";
 import { useTheme } from "@/providers/theme-provider";
 
-export function InspectorHeader() {
+interface InspectorHeaderProps {
+  onToggleMobileMenu?: () => void;
+}
+
+export function InspectorHeader({ onToggleMobileMenu }: InspectorHeaderProps = {}) {
   const pathname = usePathname();
   const { profile, notifications, assignments, currentAssignmentId, markAllNotificationsAsRead } =
     useInspectorStore();
@@ -71,15 +76,25 @@ export function InspectorHeader() {
   };
 
   return (
-    <header className="h-14 border-b border-border/70 bg-card/80 backdrop-blur-md px-4 flex items-center justify-between gap-3 sticky top-0 z-30">
+    <header className="h-14 border-b border-slate-200/40 dark:border-slate-800/40 bg-card/80 backdrop-blur-md px-4 flex items-center justify-between gap-3 sticky top-0 z-30">
       {/* Left: Page Title & Current Gate Assignment */}
-      <div className="flex items-center gap-3 truncate">
+      <div className="flex items-center gap-2.5 truncate">
+        {onToggleMobileMenu && (
+          <button
+            type="button"
+            onClick={onToggleMobileMenu}
+            className="lg:hidden p-1.5 -ml-1 text-muted-foreground hover:text-foreground rounded-lg hover:bg-muted/80 transition-colors"
+            aria-label="Open sidebar menu"
+          >
+            <Menu className="w-5 h-5" />
+          </button>
+        )}
         <div>
-          <h1 className="text-xs sm:text-sm font-bold text-foreground tracking-tight truncate">
+          <h1 className="text-xs sm:text-sm font-extrabold text-foreground tracking-tight truncate">
             {getPageTitle()}
           </h1>
           <div className="flex items-center gap-1.5 text-[11px] text-muted-foreground truncate">
-            <span className="font-semibold text-amber-600">{profile.organizationName}</span>
+            <span className="font-bold text-amber-600 dark:text-amber-400">{profile.organizationName}</span>
             <span>•</span>
             <span className="truncate">{profile.assignedStation}</span>
           </div>
@@ -91,207 +106,168 @@ export function InspectorHeader() {
         {/* Active Session Indicator Pill */}
         <Link
           href="/inspector/assigned"
-          className="hidden sm:inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-emerald-500/10 text-emerald-700 dark:text-emerald-300 border border-emerald-500/20 text-xs font-semibold hover:bg-emerald-500/20 transition-colors"
+          className="hidden sm:inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-500/10 text-emerald-700 dark:text-emerald-300 ring-1 ring-emerald-500/20 text-xs font-bold hover:bg-emerald-500/20 transition-colors"
           title="Current Active Gate Assignment"
         >
-          <span className="w-1.5 h-1.5 rounded-full bg-emerald-600 animate-pulse" />
+          <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
           <span className="truncate max-w-[150px]">{activeAssignment.gate}</span>
         </Link>
 
-        {/* Quick Launch QR Scanner Button */}
-        {pathname !== "/inspector/scanner" && (
-          <Link
-            href="/inspector/scanner"
-            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-amber-600 hover:bg-amber-700 text-white text-xs font-semibold shadow-xs transition-colors"
-          >
-            <QrCode className="w-3.5 h-3.5" />
-            <span className="hidden sm:inline">Open Scanner</span>
-          </Link>
-        )}
-
-        {/* Theme Selector */}
-        <div className="relative" ref={themeRef}>
-          <button
-            type="button"
-            onClick={() => setShowThemeMenu(!showThemeMenu)}
-            className="p-2 rounded-lg border border-border/70 hover:bg-muted text-foreground transition-colors"
-            title="Switch theme"
-          >
-            {theme === "dark" ? (
-              <Moon className="w-4 h-4 text-amber-500" />
-            ) : theme === "light" ? (
-              <Sun className="w-4 h-4 text-amber-600" />
-            ) : (
-              <Laptop className="w-4 h-4 text-muted-foreground" />
-            )}
-          </button>
-
-          {showThemeMenu && (
-            <div className="absolute right-0 mt-2 w-36 rounded-xl border border-border/80 bg-card p-1 shadow-lg text-xs z-50">
-              {[
-                { id: "light" as const, label: "Light", icon: Sun },
-                { id: "dark" as const, label: "Dark", icon: Moon },
-                { id: "system" as const, label: "System", icon: Laptop },
-              ].map((m) => {
-                const Icon = m.icon;
-                return (
-                  <button
-                    key={m.id}
-                    type="button"
-                    onClick={() => {
-                      setTheme(m.id);
-                      setShowThemeMenu(false);
-                    }}
-                    className={`w-full flex items-center gap-2 px-2.5 py-1.5 rounded-lg text-left transition-colors ${
-                      theme === m.id
-                        ? "bg-amber-500/10 text-amber-600 font-semibold"
-                        : "text-muted-foreground hover:bg-muted hover:text-foreground"
-                    }`}
-                  >
-                    <Icon className="w-3.5 h-3.5" />
-                    <span>{m.label}</span>
-                  </button>
-                );
-              })}
-            </div>
-          )}
-        </div>
-
-        {/* Notification Bell */}
+        {/* Notifications Dropdown */}
         <div className="relative" ref={notifRef}>
           <button
             type="button"
             onClick={() => setShowNotifications(!showNotifications)}
-            className="relative p-2 rounded-lg border border-border/70 hover:bg-muted text-foreground transition-colors"
+            className="relative p-2 rounded-xl text-muted-foreground hover:text-foreground hover:bg-muted/80 transition-colors"
             title="Notifications"
           >
-            <Bell className="w-4 h-4 text-muted-foreground" />
+            <Bell className="w-4 h-4" />
             {unreadNotifs.length > 0 && (
-              <span className="absolute -top-1 -right-1 w-4 h-4 rounded-full bg-amber-600 text-[10px] font-bold text-white flex items-center justify-center">
-                {unreadNotifs.length}
-              </span>
+              <span className="absolute top-1.5 right-1.5 w-2 h-2 rounded-full bg-amber-500 ring-2 ring-card animate-pulse" />
             )}
           </button>
 
           {showNotifications && (
-            <div className="absolute right-0 mt-2 w-80 rounded-xl border border-border/80 bg-card shadow-xl p-3 space-y-2 text-xs z-50 animate-in fade-in zoom-in-95 duration-100">
-              <div className="flex items-center justify-between border-b border-border/50 pb-2">
-                <span className="font-bold text-foreground">Inspector Alerts</span>
+            <div className="absolute right-0 mt-2 w-80 rounded-2xl bg-card border border-slate-200/60 dark:border-slate-800/60 shadow-2xl py-2 z-50">
+              <div className="flex items-center justify-between px-3 py-1.5 border-b border-slate-200/40 dark:border-slate-800/40">
+                <span className="text-xs font-bold text-foreground">Notifications</span>
                 {unreadNotifs.length > 0 && (
                   <button
                     type="button"
                     onClick={markAllNotificationsAsRead}
-                    className="text-[11px] text-amber-600 hover:underline font-medium"
+                    className="text-[10px] text-amber-600 dark:text-amber-400 font-semibold hover:underline"
                   >
                     Mark all read
                   </button>
                 )}
               </div>
 
-              <div className="space-y-1.5 max-h-64 overflow-y-auto">
-                {notifications.length === 0 ? (
-                  <p className="text-center py-4 text-muted-foreground text-[11px]">
-                    No new alerts at this time.
-                  </p>
-                ) : (
-                  notifications.map((n) => (
-                    <div
-                      key={n.id}
-                      className={`p-2.5 rounded-lg border transition-colors ${
-                        !n.isRead
-                          ? "bg-amber-500/10 border-amber-600/30 text-foreground"
-                          : "bg-muted/30 border-border/40 text-muted-foreground"
-                      }`}
-                    >
-                      <div className="flex items-center justify-between font-semibold text-[11px] text-foreground mb-0.5">
-                        <span>{n.title}</span>
-                        <span className="text-[10px] text-muted-foreground">{n.createdAt}</span>
-                      </div>
-                      <p className="text-[11px] text-muted-foreground line-clamp-2 leading-relaxed">
-                        {n.message}
-                      </p>
-                    </div>
-                  ))
-                )}
-              </div>
-
-              <div className="pt-1 border-t border-border/50 text-center">
-                <Link
-                  href="/inspector/notifications"
-                  onClick={() => setShowNotifications(false)}
-                  className="text-[11px] text-amber-600 hover:underline font-semibold"
-                >
-                  View All Alerts →
-                </Link>
+              <div className="max-h-64 overflow-y-auto divide-y divide-border/20 text-xs">
+                {notifications.slice(0, 4).map((n) => (
+                  <div key={n.id} className="p-3 hover:bg-muted/40 transition-colors">
+                    <p className="font-semibold text-foreground truncate">{n.title}</p>
+                    <p className="text-[11px] text-muted-foreground mt-0.5">{n.message}</p>
+                    <span className="text-[9px] text-muted-foreground font-mono mt-1 block">
+                      {n.createdAt}
+                    </span>
+                  </div>
+                ))}
               </div>
             </div>
           )}
         </div>
 
-        {/* Inspector Profile Dropdown */}
+        {/* Theme Toggle Button */}
+        <div className="relative" ref={themeRef}>
+          <button
+            type="button"
+            onClick={() => setShowThemeMenu(!showThemeMenu)}
+            className="p-2 rounded-xl text-muted-foreground hover:text-foreground hover:bg-muted/80 transition-colors"
+            title="Switch Theme"
+          >
+            {theme === "dark" ? (
+              <Moon className="w-4 h-4" />
+            ) : (
+              <Sun className="w-4 h-4" />
+            )}
+          </button>
+
+          {showThemeMenu && (
+            <div className="absolute right-0 mt-2 w-32 rounded-2xl bg-card border border-slate-200/60 dark:border-slate-800/60 shadow-xl py-1 z-50 text-xs">
+              <button
+                type="button"
+                onClick={() => {
+                  setTheme("light");
+                  setShowThemeMenu(false);
+                }}
+                className="w-full text-left px-3 py-1.5 hover:bg-muted/60 transition-colors"
+              >
+                Light
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  setTheme("dark");
+                  setShowThemeMenu(false);
+                }}
+                className="w-full text-left px-3 py-1.5 hover:bg-muted/60 transition-colors"
+              >
+                Dark
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  setTheme("system");
+                  setShowThemeMenu(false);
+                }}
+                className="w-full text-left px-3 py-1.5 hover:bg-muted/60 transition-colors"
+              >
+                System
+              </button>
+            </div>
+          )}
+        </div>
+
+        {/* Profile Pill */}
         <div className="relative" ref={profileRef}>
           <button
             type="button"
             onClick={() => setShowProfileMenu(!showProfileMenu)}
-            className="flex items-center gap-2 p-1.5 rounded-lg hover:bg-muted transition-colors text-left"
+            className="flex items-center gap-2 p-1 rounded-xl hover:bg-muted/60 transition-colors"
           >
-            <div className="w-7 h-7 rounded-full bg-amber-600 text-white font-bold text-xs flex items-center justify-center">
-              {profile.fullName
-                .split(" ")
-                .map((n) => n[0])
-                .slice(0, 2)
-                .join("")}
+            <div className="w-8 h-8 rounded-xl bg-gradient-to-tr from-amber-600 to-amber-500 text-white flex items-center justify-center font-bold text-xs shadow-xs">
+              {profile.fullName.charAt(0)}
             </div>
-            <div className="hidden lg:flex flex-col text-xs leading-tight">
-              <span className="font-bold text-foreground truncate max-w-[120px]">
+            <div className="hidden sm:flex flex-col text-left">
+              <span className="text-xs font-bold text-foreground leading-tight truncate max-w-[120px]">
                 {profile.fullName}
               </span>
-              <span className="text-[10px] text-muted-foreground font-mono">
-                {profile.inspectorId}
-              </span>
+              <span className="text-[10px] text-muted-foreground">Officer</span>
             </div>
-            <ChevronDown className="w-3.5 h-3.5 text-muted-foreground" />
+            <ChevronDown className="w-3 h-3 text-muted-foreground hidden sm:block" />
           </button>
 
           {showProfileMenu && (
-            <div className="absolute right-0 mt-2 w-56 rounded-xl border border-border/80 bg-card p-2 shadow-xl text-xs z-50 animate-in fade-in zoom-in-95 duration-100 space-y-1">
-              <div className="px-2.5 py-2 border-b border-border/50">
-                <span className="font-bold text-foreground block">{profile.fullName}</span>
-                <span className="text-[11px] text-muted-foreground block">{profile.email}</span>
-                <span className="text-[10px] font-semibold text-amber-600 block mt-0.5">
-                  {profile.organizationName}
-                </span>
+            <div className="absolute right-0 mt-2 w-52 rounded-2xl bg-card border border-slate-200/60 dark:border-slate-800/60 shadow-2xl py-2 z-50 text-xs">
+              <div className="px-3 py-1.5 border-b border-slate-200/40 dark:border-slate-800/40">
+                <p className="font-bold text-foreground truncate">{profile.fullName}</p>
+                <p className="text-[10px] text-muted-foreground truncate font-mono">
+                  {profile.inspectorId}
+                </p>
               </div>
 
-              <Link
-                href="/inspector/profile"
-                onClick={() => setShowProfileMenu(false)}
-                className="flex items-center gap-2 px-2.5 py-1.5 rounded-lg text-foreground hover:bg-muted transition-colors"
-              >
-                <User className="w-3.5 h-3.5 text-muted-foreground" />
-                <span>My Profile</span>
-              </Link>
+              <div className="py-1">
+                <Link
+                  href="/inspector/profile"
+                  onClick={() => setShowProfileMenu(false)}
+                  className="flex items-center gap-2 px-3 py-2 text-muted-foreground hover:text-foreground hover:bg-muted/50 transition-colors"
+                >
+                  <User className="w-3.5 h-3.5" />
+                  <span>Personnel Profile</span>
+                </Link>
 
-              <Link
-                href="/inspector/settings"
-                onClick={() => setShowProfileMenu(false)}
-                className="flex items-center gap-2 px-2.5 py-1.5 rounded-lg text-foreground hover:bg-muted transition-colors"
-              >
-                <Settings className="w-3.5 h-3.5 text-muted-foreground" />
-                <span>Device & Scan Settings</span>
-              </Link>
+                <Link
+                  href="/inspector/settings"
+                  onClick={() => setShowProfileMenu(false)}
+                  className="flex items-center gap-2 px-3 py-2 text-muted-foreground hover:text-foreground hover:bg-muted/50 transition-colors"
+                >
+                  <Settings className="w-3.5 h-3.5" />
+                  <span>Scanner Settings</span>
+                </Link>
 
-              <div className="pt-1 border-t border-border/50">
+                <div className="my-1 border-t border-slate-200/40 dark:border-slate-800/40" />
+
                 <button
                   type="button"
                   onClick={() => {
+                    setShowProfileMenu(false);
                     logout();
-                    window.location.href = "/login";
+                    window.location.href = "/inspector/login";
                   }}
-                  className="w-full flex items-center gap-2 px-2.5 py-1.5 rounded-lg text-destructive hover:bg-destructive/10 transition-colors text-left"
+                  className="w-full flex items-center gap-2 px-3 py-2 text-rose-600 dark:text-rose-400 hover:bg-rose-500/10 transition-colors"
                 >
                   <LogOut className="w-3.5 h-3.5" />
-                  <span>Sign Out</span>
+                  <span>Log Out</span>
                 </button>
               </div>
             </div>
@@ -301,4 +277,3 @@ export function InspectorHeader() {
     </header>
   );
 }
-

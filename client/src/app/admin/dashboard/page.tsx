@@ -1,3 +1,5 @@
-export default function Page() {
-  return null;
+import AdminDashboardPage from "../page";
+
+export default function DashboardRoutePage() {
+  return <AdminDashboardPage />;
 }

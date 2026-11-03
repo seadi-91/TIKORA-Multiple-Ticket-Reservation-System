@@ -16,6 +16,7 @@ import {
 } from "lucide-react";
 import { useProviderStore } from "@/stores/provider.store";
 import { formatCurrency } from "@/lib/format-currency";
+import { ActionDropdown } from "@/components/ui/action-dropdown";
 
 export default function CinemaShowtimesPage() {
   const { movieShowtimes, addMovieShowtime, updateMovieShowtime } = useProviderStore();
@@ -100,28 +101,28 @@ export default function CinemaShowtimesPage() {
       </div>
 
       {/* Showtimes Table */}
-      <div className="rounded-3xl bg-white dark:bg-[#161922] border border-[#E2E8F0] dark:border-slate-800 overflow-hidden shadow-2xs">
+      <div className="rounded-3xl bg-card border border-slate-200/50 dark:border-slate-800/50 overflow-hidden shadow-sm">
         <div className="overflow-x-auto">
           <table className="w-full text-left border-collapse">
             <thead>
-              <tr className="border-b border-slate-100 dark:border-slate-800 text-[10px] uppercase font-bold text-slate-400 tracking-wider bg-slate-50/50 dark:bg-slate-800/20">
-                <th className="py-3 px-4">Movie Title</th>
-                <th className="py-3 px-4">Theater Hall / Format</th>
-                <th className="py-3 px-4">Screening Date & Time</th>
-                <th className="py-3 px-4">Pricing</th>
-                <th className="py-3 px-4">Booked Capacity</th>
-                <th className="py-3 px-4 text-center">Status</th>
-                <th className="py-3 px-4 text-right">Actions</th>
+              <tr className="bg-slate-50/60 dark:bg-slate-800/40 text-[10px] uppercase font-bold text-muted-foreground tracking-wider">
+                <th className="py-3.5 px-4">Movie Title</th>
+                <th className="py-3.5 px-4">Theater Hall / Format</th>
+                <th className="py-3.5 px-4">Screening Date & Time</th>
+                <th className="py-3.5 px-4">Pricing</th>
+                <th className="py-3.5 px-4">Booked Capacity</th>
+                <th className="py-3.5 px-4 text-center">Status</th>
+                <th className="py-3.5 px-5 text-right">Actions</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-slate-100 dark:divide-slate-800 text-xs">
+            <tbody className="divide-y divide-slate-100 dark:divide-slate-800/40 text-xs">
               {filtered.map((s) => (
-                <tr key={s.id} className="hover:bg-slate-50/60 dark:hover:bg-slate-800/30 transition-colors">
-                  <td className="py-3.5 px-4 font-bold text-[#0F172A] dark:text-white">
+                <tr key={s.id} className="hover:bg-amber-500/[0.03] dark:hover:bg-amber-500/[0.06] transition-colors">
+                  <td className="py-3.5 px-4 font-bold text-foreground">
                     {s.movieTitle}
                   </td>
                   <td className="py-3.5 px-4">
-                    <span className="font-semibold text-slate-700 dark:text-slate-300 block">
+                    <span className="font-semibold text-foreground block">
                       {s.hallName}
                     </span>
                     <span className="text-[10px] text-purple-600 dark:text-purple-400 font-semibold">
@@ -129,16 +130,16 @@ export default function CinemaShowtimesPage() {
                     </span>
                   </td>
                   <td className="py-3.5 px-4">
-                    <span className="font-bold text-[#0F172A] dark:text-white block">
+                    <span className="font-bold text-foreground block">
                       {s.time}
                     </span>
-                    <span className="text-[10px] text-slate-400">{s.date}</span>
+                    <span className="text-[10px] text-muted-foreground font-mono">{s.date}</span>
                   </td>
                   <td className="py-3.5 px-4">
-                    <span className="font-bold text-[#B45309] dark:text-amber-400 block">
+                    <span className="font-bold text-amber-600 dark:text-amber-400 block font-mono">
                       Standard: {formatCurrency(s.price)}
                     </span>
-                    <span className="text-[10px] text-slate-400">VIP: {formatCurrency(s.vipPrice)}</span>
+                    <span className="text-[10px] text-muted-foreground font-mono">VIP: {formatCurrency(s.vipPrice)}</span>
                   </td>
                   <td className="py-3.5 px-4">
                     <div className="flex items-center gap-2">
@@ -150,26 +151,46 @@ export default function CinemaShowtimesPage() {
                           }}
                         />
                       </div>
-                      <span className="font-bold text-xs">
+                      <span className="font-bold text-xs font-mono">
                         {s.bookedSeats}/{s.totalSeats}
                       </span>
                     </div>
                   </td>
                   <td className="py-3.5 px-4 text-center">
-                    <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-50 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-300 border border-emerald-200">
+                    <span className="text-[10px] font-bold px-2.5 py-0.5 rounded-full bg-emerald-50 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-300 border border-emerald-200/60">
                       {s.status}
                     </span>
                   </td>
-                  <td className="py-3.5 px-4 text-right">
-                    <button
-                      onClick={() => {
-                        const newStatus = s.status === "ACTIVE" ? "SOLD_OUT" : "ACTIVE";
-                        updateMovieShowtime(s.id, { status: newStatus });
-                      }}
-                      className="text-xs font-bold text-[#B45309] dark:text-amber-400 hover:underline cursor-pointer"
-                    >
-                      Toggle
-                    </button>
+                  <td className="py-3.5 px-5 text-right">
+                    <div className="flex items-center justify-end">
+                      <ActionDropdown
+                        items={[
+                          {
+                            label:
+                              s.status === "ACTIVE"
+                                ? "Mark as Sold Out"
+                                : "Mark as Active",
+                            icon: <CheckCircle2 className="w-3.5 h-3.5" />,
+                            variant: s.status === "ACTIVE" ? "warning" : "success",
+                            onClick: () => {
+                              const newStatus =
+                                s.status === "ACTIVE" ? "SOLD_OUT" : "ACTIVE";
+                              updateMovieShowtime(s.id, { status: newStatus });
+                            },
+                          },
+                          {
+                            label: "Movie Catalog",
+                            icon: <Film className="w-3.5 h-3.5" />,
+                            href: `/provider/cinema/movies`,
+                          },
+                          {
+                            label: "Cinema Dashboard",
+                            icon: <Clock className="w-3.5 h-3.5" />,
+                            href: `/provider/cinema`,
+                          },
+                        ]}
+                      />
+                    </div>
                   </td>
                 </tr>
               ))}

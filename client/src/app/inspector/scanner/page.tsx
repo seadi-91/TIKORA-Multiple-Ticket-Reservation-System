@@ -152,9 +152,9 @@ export default function TicketScannerPage() {
   return (
     <div className="space-y-4 max-w-4xl mx-auto">
       {/* Top Assignment Bar */}
-      <div className="bg-card border border-border/70 rounded-xl p-3 sm:p-4 shadow-xs flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 text-xs">
+      <div className="bg-card border border-slate-200/50 dark:border-slate-800/50 rounded-3xl p-4 sm:p-5 shadow-sm flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 text-xs">
         <div className="flex items-center gap-2.5">
-          <div className="w-8 h-8 rounded-lg bg-amber-600/10 text-amber-600 flex items-center justify-center shrink-0 border border-amber-600/20">
+          <div className="w-9 h-9 rounded-xl bg-amber-600/10 text-amber-600 flex items-center justify-center shrink-0 border border-amber-600/20">
             <Bus className="w-4 h-4" />
           </div>
           <div>
@@ -173,7 +173,7 @@ export default function TicketScannerPage() {
           <select
             value={currentAssignmentId}
             onChange={(e) => setCurrentAssignment(e.target.value)}
-            className="px-2.5 py-1.5 text-xs rounded-lg border border-border/70 bg-background text-foreground"
+            className="px-3 py-1.5 text-xs rounded-xl border border-slate-200/60 dark:border-slate-800/60 bg-card text-foreground focus:outline-none focus:ring-2 focus:ring-amber-500/30"
           >
             {assignments.map((a) => (
               <option key={a.id} value={a.id}>
@@ -444,13 +444,13 @@ export default function TicketScannerPage() {
             </div>
           ) : (
             /* Standby Status Card */
-            <div className="bg-card border border-border/70 rounded-xl p-4 shadow-xs text-center space-y-3">
-              <div className="w-12 h-12 rounded-full bg-amber-500/10 text-amber-600 mx-auto flex items-center justify-center border border-amber-600/20">
+            <div className="bg-card border border-slate-200/50 dark:border-slate-800/50 rounded-3xl p-6 shadow-sm text-center space-y-3">
+              <div className="w-12 h-12 rounded-2xl bg-amber-500/10 text-amber-600 mx-auto flex items-center justify-center border border-amber-600/20">
                 <QrCode className="w-6 h-6" />
               </div>
               <div>
                 <h3 className="text-sm font-bold text-foreground">Scanner Standby</h3>
-                <p className="text-xs text-muted-foreground mt-0.5">
+                <p className="text-xs text-muted-foreground mt-0.5 leading-relaxed">
                   Point device camera at customer QR voucher or enter alphanumeric reference below.
                 </p>
               </div>
@@ -458,7 +458,7 @@ export default function TicketScannerPage() {
           )}
 
           {/* Manual Reference Input Form */}
-          <div className="bg-card border border-border/70 rounded-xl p-4 shadow-xs space-y-3">
+          <div className="bg-card border border-slate-200/50 dark:border-slate-800/50 rounded-3xl p-6 shadow-sm space-y-3">
             <div className="flex items-center gap-1.5 text-xs font-bold uppercase tracking-wider text-muted-foreground">
               <Keyboard className="w-3.5 h-3.5" />
               <span>Manual Ticket Entry</span>

@@ -19,6 +19,9 @@ import {
   Trophy,
   Users,
   XCircle,
+  Sparkles,
+  Activity,
+  ArrowUpRight,
 } from "lucide-react";
 import { useInspectorStore } from "@/stores/inspector.store";
 import { TicketCategory } from "@/types/ticket.types";
@@ -39,48 +42,93 @@ export default function InspectorDashboardPage() {
   const getCategoryIcon = (cat: TicketCategory) => {
     switch (cat) {
       case "BUS":
-        return <Bus className="w-3.5 h-3.5 text-amber-600" />;
+        return <Bus className="w-3.5 h-3.5 text-amber-600 dark:text-amber-400" />;
       case "EVENT":
-        return <Music className="w-3.5 h-3.5 text-purple-600" />;
+        return <Music className="w-3.5 h-3.5 text-purple-600 dark:text-purple-400" />;
       case "SPORTS":
-        return <Trophy className="w-3.5 h-3.5 text-emerald-600" />;
+        return <Trophy className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" />;
       case "CINEMA":
-        return <Film className="w-3.5 h-3.5 text-sky-600" />;
+        return <Film className="w-3.5 h-3.5 text-sky-600 dark:text-sky-400" />;
     }
   };
 
+  const getResultBadge = (result: string) => {
+    switch (result) {
+      case "VALID":
+        return (
+          <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 ring-1 ring-inset ring-emerald-500/20">
+            <CheckCircle2 className="w-3 h-3" />
+            VALID
+          </span>
+        );
+      case "ALREADY_USED":
+        return (
+          <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-amber-500/10 text-amber-600 dark:text-amber-400 ring-1 ring-inset ring-amber-500/20">
+            <Clock className="w-3 h-3" />
+            DUPLICATE
+          </span>
+        );
+      case "WRONG_ASSIGNMENT":
+        return (
+          <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-purple-500/10 text-purple-600 dark:text-purple-400 ring-1 ring-inset ring-purple-500/20">
+            <AlertTriangle className="w-3 h-3" />
+            WRONG GATE
+          </span>
+        );
+      default:
+        return (
+          <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-rose-500/10 text-rose-600 dark:text-rose-400 ring-1 ring-inset ring-rose-500/20">
+            <XCircle className="w-3 h-3" />
+            INVALID
+          </span>
+        );
+    }
+  };
+
+  const boardedPercentage = Math.round(
+    (activeAssignment.scannedSeats / activeAssignment.totalSeats) * 100
+  );
+
   return (
     <div className="space-y-6">
-      {/* Active Duty Live Banner */}
-      <div className="rounded-xl border border-amber-600/30 bg-gradient-to-r from-amber-500/10 via-amber-500/5 to-transparent p-4 sm:p-5 shadow-xs">
-        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-          <div className="space-y-1">
+      {/* Active Duty Live Hero Banner (Modern Soft Mesh & Elevation) */}
+      <div className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-amber-500/10 via-amber-500/[0.03] to-card border border-amber-500/15 p-6 sm:p-7 shadow-sm">
+        <div className="absolute -right-16 -top-16 w-60 h-60 bg-amber-500/10 rounded-full blur-3xl pointer-events-none" />
+
+        <div className="relative z-10 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-5">
+          <div className="space-y-2">
             <div className="flex items-center gap-2">
-              <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-700 dark:text-emerald-300 text-[11px] font-bold border border-emerald-500/30">
-                <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
-                Active Gate Session
+              <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-500/15 text-emerald-700 dark:text-emerald-300 text-[11px] font-bold ring-1 ring-emerald-500/20">
+                <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+                Active Terminal Post
               </span>
-              <span className="text-xs text-muted-foreground font-mono">
-                {profile.inspectorId}
+              <span className="text-xs text-muted-foreground font-mono bg-muted/50 px-2 py-0.5 rounded-md">
+                ID: {profile.inspectorId}
               </span>
             </div>
-            <h2 className="text-base sm:text-lg font-bold text-foreground">
+
+            <h2 className="text-lg sm:text-2xl font-extrabold tracking-tight text-foreground">
               {activeAssignment.title}
             </h2>
-            <p className="text-xs text-muted-foreground flex items-center gap-1.5 flex-wrap">
-              <MapPin className="w-3.5 h-3.5 text-amber-600 shrink-0" />
-              <span>{activeAssignment.venueOrTerminal}</span>
+
+            <p className="text-xs text-muted-foreground flex items-center gap-2 flex-wrap">
+              <span className="inline-flex items-center gap-1 font-medium text-foreground">
+                <MapPin className="w-3.5 h-3.5 text-amber-600 dark:text-amber-400 shrink-0" />
+                {activeAssignment.venueOrTerminal}
+              </span>
               <span>•</span>
-              <span className="font-semibold text-foreground">{activeAssignment.gate}</span>
+              <span className="font-bold text-amber-600 dark:text-amber-400">
+                {activeAssignment.gate}
+              </span>
               <span>•</span>
-              <span>Departure: {activeAssignment.scheduledTime}</span>
+              <span>Departure: <strong className="text-foreground">{activeAssignment.scheduledTime}</strong></span>
             </p>
           </div>
 
           <div className="flex items-center gap-2 shrink-0">
             <Link
               href="/inspector/scanner"
-              className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-amber-600 hover:bg-amber-700 text-white text-xs font-bold shadow-md shadow-amber-600/20 transition-all hover:scale-102"
+              className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-amber-600 hover:bg-amber-700 text-white text-xs font-bold shadow-md shadow-amber-600/25 hover:shadow-lg hover:shadow-amber-600/35 transition-all hover:-translate-y-0.5"
             >
               <QrCode className="w-4 h-4" />
               <span>Launch Ticket Scanner</span>
@@ -88,110 +136,118 @@ export default function InspectorDashboardPage() {
           </div>
         </div>
 
-        {/* Boarding Progress Bar */}
-        <div className="mt-4 pt-3 border-t border-amber-600/20 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 text-xs">
+        {/* Boarding Progress Bar (Modern Soft Gradient Track) */}
+        <div className="mt-5 pt-4 border-t border-amber-500/15 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 text-xs">
           <div className="flex items-center gap-2 text-muted-foreground">
-            <span>Passes Validated:</span>
-            <span className="font-bold text-foreground font-mono">
+            <span>Passes Boarded:</span>
+            <span className="font-extrabold text-foreground font-mono">
               {activeAssignment.scannedSeats} / {activeAssignment.totalSeats} seats
             </span>
-            <span className="text-[11px] text-amber-600 font-semibold">
-              ({Math.round((activeAssignment.scannedSeats / activeAssignment.totalSeats) * 100)}% boarded)
+            <span className="px-2 py-0.5 rounded-full bg-amber-500/10 text-amber-600 dark:text-amber-400 font-bold text-[11px]">
+              {boardedPercentage}% validated
             </span>
           </div>
 
-          <div className="w-full sm:w-48 bg-muted/60 rounded-full h-2 overflow-hidden border border-border/40">
+          <div className="w-full sm:w-56 bg-muted/60 rounded-full h-2.5 overflow-hidden p-0.5">
             <div
-              className="bg-amber-600 h-full rounded-full transition-all"
-              style={{
-                width: `${Math.min(
-                  100,
-                  Math.round((activeAssignment.scannedSeats / activeAssignment.totalSeats) * 100)
-                )}%`,
-              }}
+              className="bg-gradient-to-r from-amber-600 to-amber-500 h-full rounded-full transition-all duration-500 shadow-xs"
+              style={{ width: `${Math.min(100, boardedPercentage)}%` }}
             />
           </div>
         </div>
       </div>
 
-      {/* KPI Stats Grid */}
-      <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
-        <div className="bg-card border border-border/60 rounded-xl p-4 shadow-xs">
-          <div className="flex items-center justify-between text-muted-foreground text-xs mb-1">
-            <span>Scanned Today</span>
-            <QrCode className="w-4 h-4 text-amber-600" />
+      {/* KPI Stats Grid (Modern elevated cards, softened borders) */}
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3.5 sm:gap-4">
+        <div className="p-4 sm:p-5 rounded-2xl bg-card border border-slate-200/50 dark:border-slate-800/50 shadow-sm hover:shadow-md transition-all hover:-translate-y-0.5">
+          <div className="flex items-center justify-between text-muted-foreground text-xs mb-2">
+            <span className="font-bold uppercase tracking-wider text-[10px]">Scanned Today</span>
+            <div className="w-8 h-8 rounded-xl bg-amber-500/10 text-amber-600 dark:text-amber-400 flex items-center justify-center">
+              <QrCode className="w-4 h-4" />
+            </div>
           </div>
-          <div className="text-xl font-bold text-foreground">{totalScans}</div>
-          <span className="text-[11px] text-muted-foreground">Digital passes checked</span>
+          <div className="text-2xl font-extrabold text-foreground">{totalScans}</div>
+          <span className="text-[11px] text-muted-foreground mt-1 block">Digital passes checked</span>
         </div>
 
-        <div className="bg-card border border-border/60 rounded-xl p-4 shadow-xs">
-          <div className="flex items-center justify-between text-muted-foreground text-xs mb-1">
-            <span>Valid & Boarded</span>
-            <CheckCircle2 className="w-4 h-4 text-emerald-600" />
+        <div className="p-4 sm:p-5 rounded-2xl bg-card border border-slate-200/50 dark:border-slate-800/50 shadow-sm hover:shadow-md transition-all hover:-translate-y-0.5">
+          <div className="flex items-center justify-between text-muted-foreground text-xs mb-2">
+            <span className="font-bold uppercase tracking-wider text-[10px]">Valid & Admitted</span>
+            <div className="w-8 h-8 rounded-xl bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 flex items-center justify-center">
+              <CheckCircle2 className="w-4 h-4" />
+            </div>
           </div>
-          <div className="text-xl font-bold text-emerald-600">{validScans}</div>
-          <span className="text-[11px] text-muted-foreground">Passengers admitted</span>
+          <div className="text-2xl font-extrabold text-emerald-600 dark:text-emerald-400">{validScans}</div>
+          <span className="text-[11px] text-muted-foreground mt-1 block">Passengers boarded</span>
         </div>
 
-        <div className="bg-card border border-border/60 rounded-xl p-4 shadow-xs">
-          <div className="flex items-center justify-between text-muted-foreground text-xs mb-1">
-            <span>Interceptions</span>
-            <ShieldAlert className="w-4 h-4 text-amber-600" />
+        <div className="p-4 sm:p-5 rounded-2xl bg-card border border-slate-200/50 dark:border-slate-800/50 shadow-sm hover:shadow-md transition-all hover:-translate-y-0.5">
+          <div className="flex items-center justify-between text-muted-foreground text-xs mb-2">
+            <span className="font-bold uppercase tracking-wider text-[10px]">Interceptions</span>
+            <div className="w-8 h-8 rounded-xl bg-amber-500/10 text-amber-600 dark:text-amber-400 flex items-center justify-center">
+              <ShieldAlert className="w-4 h-4" />
+            </div>
           </div>
-          <div className="text-xl font-bold text-amber-600">{duplicateScans}</div>
-          <span className="text-[11px] text-muted-foreground">Duplicates & wrong gates</span>
+          <div className="text-2xl font-extrabold text-amber-600 dark:text-amber-400">{duplicateScans}</div>
+          <span className="text-[11px] text-muted-foreground mt-1 block">Duplicate / wrong gate</span>
         </div>
 
-        <div className="bg-card border border-border/60 rounded-xl p-4 shadow-xs">
-          <div className="flex items-center justify-between text-muted-foreground text-xs mb-1">
-            <span>Invalid / Forged</span>
-            <XCircle className="w-4 h-4 text-rose-600" />
+        <div className="p-4 sm:p-5 rounded-2xl bg-card border border-slate-200/50 dark:border-slate-800/50 shadow-sm hover:shadow-md transition-all hover:-translate-y-0.5">
+          <div className="flex items-center justify-between text-muted-foreground text-xs mb-2">
+            <span className="font-bold uppercase tracking-wider text-[10px]">Invalid / Rejected</span>
+            <div className="w-8 h-8 rounded-xl bg-rose-500/10 text-rose-600 dark:text-rose-400 flex items-center justify-center">
+              <XCircle className="w-4 h-4" />
+            </div>
           </div>
-          <div className="text-xl font-bold text-rose-600">{invalidScans}</div>
-          <span className="text-[11px] text-muted-foreground">Cryptographic check failed</span>
+          <div className="text-2xl font-extrabold text-rose-600 dark:text-rose-400">{invalidScans}</div>
+          <span className="text-[11px] text-muted-foreground mt-1 block">Signature check failed</span>
         </div>
       </div>
 
-      {/* Main Grid: Today's Assignments & Recent Verification Stream */}
+      {/* Main Grid: Operational Sessions & Recent Verification Stream */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Left 2 Cols: Assignments */}
+        {/* Left 2 Cols: Assigned Sessions (Clean spaced cards, no harsh divide lines) */}
         <div className="lg:col-span-2 space-y-4">
-          <div className="bg-card border border-border/60 rounded-xl shadow-xs overflow-hidden">
-            <div className="p-4 border-b border-border/60 flex items-center justify-between">
+          <div className="bg-card border border-slate-200/50 dark:border-slate-800/50 rounded-3xl p-5 sm:p-6 shadow-sm space-y-4">
+            <div className="flex items-center justify-between">
               <div>
                 <h3 className="text-sm font-bold text-foreground">
                   My Assigned Operational Sessions
                 </h3>
                 <p className="text-xs text-muted-foreground">
-                  Scheduled verification posts assigned by {profile.organizationName}
+                  Verification posts assigned by {profile.organizationName}
                 </p>
               </div>
               <Link
                 href="/inspector/assigned"
-                className="text-xs font-semibold text-amber-600 hover:underline flex items-center gap-1"
+                className="text-xs font-semibold text-amber-600 dark:text-amber-400 hover:underline flex items-center gap-1"
               >
-                View All →
+                <span>View all</span>
+                <ArrowRight className="w-3.5 h-3.5" />
               </Link>
             </div>
 
-            <div className="divide-y divide-border/40">
+            <div className="space-y-3">
               {assignments.map((asn) => (
                 <div
                   key={asn.id}
-                  className="p-4 hover:bg-muted/20 transition-colors flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 text-xs"
+                  className="p-4 rounded-2xl bg-slate-50/70 dark:bg-slate-800/30 hover:bg-amber-500/[0.04] dark:hover:bg-amber-500/[0.08] transition-all flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 text-xs group"
                 >
-                  <div className="space-y-1">
-                    <div className="flex items-center gap-2">
-                      {getCategoryIcon(asn.category)}
-                      <span className="font-bold text-foreground text-xs">{asn.title}</span>
+                  <div className="space-y-1.5 flex-1 min-w-0">
+                    <div className="flex items-center gap-2 flex-wrap">
+                      <div className="p-1 rounded-md bg-muted/60">
+                        {getCategoryIcon(asn.category)}
+                      </div>
+                      <span className="font-bold text-foreground text-xs group-hover:text-amber-600 dark:group-hover:text-amber-400 transition-colors truncate">
+                        {asn.title}
+                      </span>
                       <span
-                        className={`inline-flex items-center px-2 py-0.2 rounded text-[10px] font-semibold border ${
+                        className={`inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold ${
                           asn.status === "ACTIVE_NOW"
-                            ? "bg-emerald-500/10 text-emerald-600 border-emerald-500/20"
+                            ? "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 ring-1 ring-emerald-500/20"
                             : asn.status === "UPCOMING"
-                            ? "bg-blue-500/10 text-blue-600 border-blue-500/20"
-                            : "bg-muted text-muted-foreground border-border/50"
+                            ? "bg-blue-500/10 text-blue-600 dark:text-blue-400 ring-1 ring-blue-500/20"
+                            : "bg-muted text-muted-foreground"
                         }`}
                       >
                         {asn.status === "ACTIVE_NOW"
@@ -202,7 +258,7 @@ export default function InspectorDashboardPage() {
                       </span>
                     </div>
 
-                    <div className="flex items-center gap-2 text-muted-foreground text-[11px]">
+                    <div className="flex items-center gap-2 text-muted-foreground text-[11px] flex-wrap">
                       <span>{asn.venueOrTerminal}</span>
                       <span>•</span>
                       <span className="font-semibold text-foreground">{asn.gate}</span>
@@ -218,7 +274,7 @@ export default function InspectorDashboardPage() {
                   <div className="flex items-center gap-2 shrink-0">
                     <Link
                       href="/inspector/scanner"
-                      className="px-3 py-1.5 rounded-lg bg-amber-600 hover:bg-amber-700 text-white font-semibold text-xs shadow-xs transition-colors"
+                      className="px-3.5 py-1.5 rounded-xl bg-amber-600 hover:bg-amber-700 text-white font-bold text-xs shadow-xs shadow-amber-600/20 transition-all hover:scale-102"
                     >
                       Scan Post
                     </Link>
@@ -229,59 +285,48 @@ export default function InspectorDashboardPage() {
           </div>
         </div>
 
-        {/* Right Col: Recent Scans Log */}
+        {/* Right Col: Recent Scans Stream */}
         <div className="space-y-4">
-          <div className="bg-card border border-border/60 rounded-xl shadow-xs overflow-hidden">
-            <div className="p-4 border-b border-border/60 flex items-center justify-between">
+          <div className="bg-card border border-slate-200/50 dark:border-slate-800/50 rounded-3xl p-5 sm:p-6 shadow-sm space-y-4">
+            <div className="flex items-center justify-between">
               <div>
                 <h3 className="text-sm font-bold text-foreground">Live Audit Stream</h3>
-                <p className="text-xs text-muted-foreground">Most recent ticket checks</p>
+                <p className="text-xs text-muted-foreground">Most recent ticket verifications</p>
               </div>
               <Link
                 href="/inspector/history"
-                className="text-xs text-amber-600 font-semibold hover:underline"
+                className="text-xs text-amber-600 dark:text-amber-400 font-semibold hover:underline flex items-center gap-1"
               >
-                History →
+                <span>History</span>
+                <ArrowRight className="w-3.5 h-3.5" />
               </Link>
             </div>
 
-            <div className="p-3 space-y-2.5 max-h-96 overflow-y-auto">
-              {verificationHistory.slice(0, 5).map((log) => (
+            <div className="space-y-2.5 max-h-[380px] overflow-y-auto pr-1 scrollbar-thin">
+              {verificationHistory.slice(0, 6).map((log) => (
                 <div
                   key={log.id}
-                  className="p-2.5 rounded-lg border border-border/50 bg-muted/20 text-xs space-y-1"
+                  className="p-3.5 rounded-2xl bg-slate-50/70 dark:bg-slate-800/30 hover:bg-muted/40 transition-all text-xs space-y-1.5"
                 >
                   <div className="flex items-center justify-between">
-                    <span className="font-mono font-bold text-amber-600 text-xs">
+                    <span className="font-mono font-bold text-amber-600 dark:text-amber-400 text-xs">
                       {log.ticketReference}
                     </span>
-                    <span
-                      className={`inline-flex items-center px-1.5 py-0.2 rounded text-[10px] font-semibold ${
-                        log.result === "VALID"
-                          ? "bg-emerald-500/10 text-emerald-600"
-                          : log.result === "ALREADY_USED"
-                          ? "bg-amber-500/10 text-amber-600"
-                          : log.result === "WRONG_ASSIGNMENT"
-                          ? "bg-purple-500/10 text-purple-600"
-                          : "bg-rose-500/10 text-rose-600"
-                      }`}
-                    >
-                      {log.result}
-                    </span>
+                    {getResultBadge(log.result)}
                   </div>
 
-                  <div className="flex items-center justify-between text-foreground font-medium">
+                  <div className="flex items-center justify-between text-foreground font-semibold">
                     <span>{log.passengerName}</span>
                     {log.seatNumber && (
-                      <span className="font-mono text-muted-foreground text-[11px]">
+                      <span className="font-mono text-muted-foreground text-[11px] bg-muted/60 px-1.5 py-0.5 rounded">
                         Seat {log.seatNumber}
                       </span>
                     )}
                   </div>
 
                   <div className="flex items-center justify-between text-muted-foreground text-[10px]">
-                    <span className="truncate max-w-[140px]">{log.serviceTitle}</span>
-                    <span>{log.verificationTime}</span>
+                    <span className="truncate max-w-[150px]">{log.serviceTitle}</span>
+                    <span className="font-mono">{log.verificationTime}</span>
                   </div>
                 </div>
               ))}

@@ -14,9 +14,12 @@ import {
   Ticket,
   Search,
   Filter,
+  Eye,
+  Boxes,
 } from "lucide-react";
 import { EventService } from "@/services/event.service";
 import { formatCurrency } from "@/lib/format-currency";
+import { ActionDropdown } from "@/components/ui/action-dropdown";
 
 export default function ProviderEventsPage() {
   const events = EventService.getAllEvents();
@@ -135,14 +138,36 @@ export default function ProviderEventsPage() {
                 {evt.availableSeats} Passes Left
               </span>
 
-              <Link
-                href={`/events/${evt.id}`}
-                target="_blank"
-                className="text-xs font-bold text-[#B45309] dark:text-amber-400 hover:underline flex items-center gap-1"
-              >
-                <span>Preview Page</span>
-                <ArrowRight className="w-3 h-3" />
-              </Link>
+              <div className="flex items-center gap-1.5">
+                <Link
+                  href={`/events/${evt.id}`}
+                  target="_blank"
+                  className="text-xs font-bold text-[#B45309] dark:text-amber-400 hover:underline flex items-center gap-1"
+                >
+                  <span>Preview</span>
+                  <ArrowRight className="w-3 h-3" />
+                </Link>
+
+                <ActionDropdown
+                  items={[
+                    {
+                      label: "View Listing",
+                      icon: <Eye className="w-3.5 h-3.5" />,
+                      href: `/provider/tickets/${evt.id}`,
+                    },
+                    {
+                      label: "Manage Tier Inventory",
+                      icon: <Boxes className="w-3.5 h-3.5" />,
+                      href: `/provider/inventory`,
+                    },
+                    {
+                      label: "Edit Event Tiers",
+                      icon: <Ticket className="w-3.5 h-3.5" />,
+                      href: `/provider/tickets/${evt.id}/edit`,
+                    },
+                  ]}
+                />
+              </div>
             </div>
           </div>
         ))}

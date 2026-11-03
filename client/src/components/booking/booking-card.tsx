@@ -112,31 +112,31 @@ export function BookingCard({ booking, onViewTicket }: BookingCardProps) {
             <span>Details & Receipt</span>
           </Link>
 
-          <div className="flex items-center gap-1.5">
+          <div className="flex items-center gap-2">
             {booking.bookingStatus === "CONFIRMED" && (
               <>
                 <Link
                   href={`/customer/tickets/${booking.id}`}
-                  className="inline-flex items-center gap-1 px-2.5 py-1 rounded-md bg-[#B45309] hover:bg-[#92400E] text-white text-xs font-bold transition-all shadow-xs"
+                  className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-[#B45309] hover:bg-[#92400E] text-white text-xs font-bold transition-all shadow-xs active:scale-95 touch-manipulation min-h-[36px]"
                 >
-                  <QrCode className="w-3 h-3" />
+                  <QrCode className="w-3.5 h-3.5" />
                   <span>Show QR</span>
                 </Link>
 
                 <button
                   onClick={handleDownload}
-                  className="p-1 rounded-md border border-[#E2E8F0] dark:border-slate-800 text-[#64748B] hover:text-[#B45309] transition-colors cursor-pointer"
+                  className="p-2 rounded-lg border border-[#E2E8F0] dark:border-slate-800 text-[#64748B] hover:text-[#B45309] dark:text-slate-300 dark:hover:text-amber-400 hover:bg-slate-50 dark:hover:bg-slate-800/60 transition-colors cursor-pointer min-w-[36px] min-h-[36px] flex items-center justify-center touch-manipulation"
                   title="Download PDF Ticket"
                 >
-                  <Download className="w-3 h-3" />
+                  <Download className="w-3.5 h-3.5" />
                 </button>
 
                 <button
                   onClick={() => setShowCancelDialog(true)}
-                  className="p-1 rounded-md border border-rose-200 text-rose-600 hover:bg-rose-50 dark:border-rose-900/40 dark:text-rose-400 transition-colors cursor-pointer"
+                  className="p-2 rounded-lg border border-rose-200 text-rose-600 hover:bg-rose-50 dark:border-rose-900/40 dark:text-rose-400 dark:hover:bg-rose-950/40 transition-colors cursor-pointer min-w-[36px] min-h-[36px] flex items-center justify-center touch-manipulation"
                   title="Cancel Booking"
                 >
-                  <XCircle className="w-3 h-3" />
+                  <XCircle className="w-3.5 h-3.5" />
                 </button>
               </>
             )}

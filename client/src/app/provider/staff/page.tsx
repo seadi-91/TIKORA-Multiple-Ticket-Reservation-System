@@ -7,6 +7,7 @@ import {
   Eye,
   QrCode,
   Search,
+  ShieldAlert,
   Trash2,
   UserCheck,
   UserPlus,
@@ -14,6 +15,7 @@ import {
 } from "lucide-react";
 import { useProviderStore, ProviderStaffMember } from "@/stores/provider.store";
 import { toast } from "sonner";
+import { ActionDropdown } from "@/components/ui/action-dropdown";
 
 export default function ProviderStaffPage() {
   const { staffMembers, toggleStaffStatus, deleteStaffMember } = useProviderStore();
@@ -140,9 +142,9 @@ export default function ProviderStaffPage() {
       </div>
 
       {/* Filter and Search Bar */}
-      <div className="bg-card border border-border/60 rounded-xl p-4 shadow-xs space-y-3">
+      <div className="bg-card border border-slate-200/50 dark:border-slate-800/50 rounded-3xl p-5 shadow-sm space-y-3">
         <div className="flex flex-col sm:flex-row gap-3 items-stretch sm:items-center justify-between">
-          <div className="flex flex-wrap items-center gap-1.5">
+          <div className="flex items-center gap-1.5 overflow-x-auto no-scrollbar flex-nowrap pb-1 sm:pb-0">
             {[
               { id: "ALL", label: `All Roles (${staffMembers.length})` },
               { id: "INSPECTOR", label: "Gate Inspectors" },
@@ -154,10 +156,11 @@ export default function ProviderStaffPage() {
                 key={tab.id}
                 type="button"
                 onClick={() => setRoleFilter(tab.id)}
-                className={`px-3 py-1.5 text-xs font-medium rounded-lg transition-colors ${roleFilter === tab.id
-                    ? "bg-amber-600 text-white"
-                    : "bg-muted/50 text-muted-foreground hover:bg-muted hover:text-foreground"
-                  }`}
+                className={`px-3.5 py-1.5 text-xs font-semibold rounded-xl transition-all shrink-0 ${
+                  roleFilter === tab.id
+                    ? "bg-amber-600 text-white shadow-sm"
+                    : "bg-slate-100 dark:bg-slate-800/60 text-muted-foreground hover:bg-slate-200 dark:hover:bg-slate-800 hover:text-foreground"
+                }`}
               >
                 {tab.label}
               </button>
@@ -165,46 +168,46 @@ export default function ProviderStaffPage() {
           </div>
 
           <div className="relative flex-1 sm:max-w-xs">
-            <Search className="w-3.5 h-3.5 absolute left-3 top-2.5 text-muted-foreground" />
+            <Search className="w-3.5 h-3.5 absolute left-3.5 top-1/2 -translate-y-1/2 text-muted-foreground pointer-events-none" />
             <input
               type="text"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               placeholder="Search by name, station, phone..."
-              className="w-full pl-9 pr-3 py-1.5 text-xs rounded-lg border border-border/70 bg-background text-foreground focus:outline-none focus:ring-1 focus:ring-amber-500"
+              className="w-full pl-9 pr-3 py-2 text-xs rounded-xl border border-slate-200/60 dark:border-slate-800/60 bg-card text-foreground focus:outline-none focus:ring-2 focus:ring-amber-500/30"
             />
           </div>
         </div>
       </div>
 
       {/* Staff Table */}
-      <div className="bg-card border border-border/60 rounded-xl shadow-xs overflow-hidden">
+      <div className="bg-card border border-slate-200/50 dark:border-slate-800/50 rounded-3xl shadow-sm overflow-hidden">
         <div className="overflow-x-auto">
           <table className="w-full text-left border-collapse text-xs">
             <thead>
-              <tr className="border-b border-border/60 bg-muted/30 text-muted-foreground font-semibold">
-                <th className="py-3 px-4">Staff Member</th>
-                <th className="py-3 px-3">Role</th>
-                <th className="py-3 px-3">Assigned Terminal / Gate</th>
-                <th className="py-3 px-3 text-center">Tickets Scanned</th>
-                <th className="py-3 px-3">Last Active</th>
-                <th className="py-3 px-3 text-center">Status</th>
-                <th className="py-3 px-4 text-right">Actions</th>
+              <tr className="bg-slate-50/60 dark:bg-slate-800/40 text-muted-foreground uppercase text-[10px] font-bold tracking-wider">
+                <th className="py-3.5 px-4">Staff Member</th>
+                <th className="py-3.5 px-4">Role</th>
+                <th className="py-3.5 px-4">Assigned Terminal / Gate</th>
+                <th className="py-3.5 px-4 text-center">Tickets Scanned</th>
+                <th className="py-3.5 px-4">Last Active</th>
+                <th className="py-3.5 px-4 text-center">Status</th>
+                <th className="py-3.5 px-5 text-right">Actions</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-border/40">
+            <tbody className="divide-y divide-slate-100 dark:divide-slate-800/40">
               {filteredStaff.length === 0 ? (
                 <tr>
-                  <td colSpan={7} className="py-8 text-center text-muted-foreground">
+                  <td colSpan={7} className="py-12 text-center text-muted-foreground">
                     No staff members found matching criteria.
                   </td>
                 </tr>
               ) : (
                 filteredStaff.map((member) => (
-                  <tr key={member.id} className="hover:bg-muted/20 transition-colors">
+                  <tr key={member.id} className="hover:bg-amber-500/[0.03] dark:hover:bg-amber-500/[0.06] transition-colors">
                     <td className="py-3.5 px-4">
                       <div className="flex items-center gap-2.5">
-                        <div className="w-7 h-7 rounded-full bg-amber-600/10 text-amber-700 dark:text-amber-300 font-bold flex items-center justify-center text-[11px] border border-amber-600/20">
+                        <div className="w-8 h-8 rounded-xl bg-amber-600/10 text-amber-700 dark:text-amber-300 font-bold flex items-center justify-center text-[11px] border border-amber-600/20 shrink-0">
                           {member.fullName
                             .split(" ")
                             .map((n) => n[0])
@@ -218,28 +221,28 @@ export default function ProviderStaffPage() {
                           >
                             {member.fullName}
                           </Link>
-                          <span className="text-[11px] text-muted-foreground block">
+                          <span className="text-[11px] text-muted-foreground block font-mono">
                             {member.email} • {member.phone}
                           </span>
                         </div>
                       </div>
                     </td>
 
-                    <td className="py-3.5 px-3">{getRoleBadge(member.role)}</td>
+                    <td className="py-3.5 px-4">{getRoleBadge(member.role)}</td>
 
-                    <td className="py-3.5 px-3 text-foreground font-medium">
+                    <td className="py-3.5 px-4 text-foreground font-medium">
                       {member.assignedStation}
                     </td>
 
-                    <td className="py-3.5 px-3 text-center font-mono font-bold text-amber-600">
+                    <td className="py-3.5 px-4 text-center font-mono font-bold text-amber-600 dark:text-amber-400">
                       {member.scannedTicketsCount.toLocaleString()}
                     </td>
 
-                    <td className="py-3.5 px-3 text-muted-foreground">{member.lastActive}</td>
+                    <td className="py-3.5 px-4 text-muted-foreground">{member.lastActive}</td>
 
-                    <td className="py-3.5 px-3 text-center">
+                    <td className="py-3.5 px-4 text-center">
                       <span
-                        className={`inline-flex items-center gap-1 px-2.5 py-0.5 rounded text-[10px] font-semibold border ${member.status === "ACTIVE"
+                        className={`inline-flex items-center gap-1 px-2.5 py-0.5 rounded-lg text-[10px] font-semibold border ${member.status === "ACTIVE"
                             ? "bg-emerald-500/10 text-emerald-600 border-emerald-500/20"
                             : member.status === "INVITED"
                               ? "bg-blue-500/10 text-blue-600 border-blue-500/20"
@@ -258,33 +261,33 @@ export default function ProviderStaffPage() {
                       </span>
                     </td>
 
-                    <td className="py-3.5 px-4 text-right">
-                      <div className="inline-flex items-center gap-1.5">
-                        <button
-                          type="button"
-                          onClick={() => handleToggleStatus(member.id, member.fullName)}
-                          className="px-2 py-1 text-[11px] font-medium rounded border border-border/70 hover:bg-muted text-foreground transition-colors"
-                          title="Toggle Active / Suspended status"
-                        >
-                          {member.status === "ACTIVE" ? "Suspend" : "Activate"}
-                        </button>
-
-                        <Link
-                          href={`/provider/staff/${member.id}`}
-                          className="p-1 rounded text-muted-foreground hover:text-foreground hover:bg-muted"
-                          title="View profile & scan logs"
-                        >
-                          <Eye className="w-3.5 h-3.5" />
-                        </Link>
-
-                        <button
-                          type="button"
-                          onClick={() => handleDelete(member.id, member.fullName)}
-                          className="p-1 rounded text-muted-foreground hover:text-destructive hover:bg-destructive/10"
-                          title="Remove staff member"
-                        >
-                          <Trash2 className="w-3.5 h-3.5" />
-                        </button>
+                    <td className="py-3.5 px-5 text-right">
+                      <div className="flex items-center justify-end">
+                        <ActionDropdown
+                          items={[
+                            {
+                              label: "View Profile & Logs",
+                              icon: <Eye className="w-3.5 h-3.5" />,
+                              href: `/provider/staff/${member.id}`,
+                            },
+                            {
+                              label:
+                                member.status === "ACTIVE"
+                                  ? "Suspend Access"
+                                  : "Activate Member",
+                              icon: <UserCheck className="w-3.5 h-3.5" />,
+                              variant: member.status === "ACTIVE" ? "warning" : "success",
+                              onClick: () =>
+                                handleToggleStatus(member.id, member.fullName),
+                            },
+                            {
+                              label: "Remove Staff Member",
+                              icon: <Trash2 className="w-3.5 h-3.5" />,
+                              variant: "danger",
+                              onClick: () => handleDelete(member.id, member.fullName),
+                            },
+                          ]}
+                        />
                       </div>
                     </td>
                   </tr>

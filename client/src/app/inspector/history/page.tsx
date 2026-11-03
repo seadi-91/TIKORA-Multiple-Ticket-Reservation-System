@@ -8,6 +8,7 @@ import {
   Bus,
   CheckCircle2,
   Clock,
+  Copy,
   Download,
   Eye,
   Film,
@@ -24,6 +25,7 @@ import {
 import { useInspectorStore, VerificationLogItem } from "@/stores/inspector.store";
 import { TicketCategory } from "@/types/ticket.types";
 import { toast } from "sonner";
+import { ActionDropdown } from "@/components/ui/action-dropdown";
 
 export default function VerificationHistoryPage() {
   const { verificationHistory, clearHistory, profile } = useInspectorStore();
@@ -93,22 +95,22 @@ export default function VerificationHistoryPage() {
   return (
     <div className="space-y-6">
       {/* Top Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 border-b border-border/60 pb-5">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 border-b border-slate-200/50 dark:border-slate-800/50 pb-5">
         <div>
           <h1 className="text-xl font-bold tracking-tight text-foreground">
             Ticket Verification Audit Trail
           </h1>
-          <p className="text-xs text-muted-foreground">
+          <p className="text-xs text-muted-foreground mt-0.5">
             Digital timestamped record of tickets scanned by {profile.fullName} ({profile.inspectorId}).
           </p>
         </div>
 
-        <div className="flex items-center gap-2">
+        <div className="flex flex-wrap items-center gap-2">
           {verificationHistory.length > 0 && (
             <button
               type="button"
               onClick={handleClear}
-              className="px-3 py-2 text-xs font-medium rounded-lg border border-border/70 hover:bg-muted text-muted-foreground hover:text-destructive transition-colors"
+              className="px-3.5 py-2 text-xs font-medium rounded-xl border border-slate-200/60 dark:border-slate-800/60 hover:bg-muted text-muted-foreground hover:text-destructive transition-colors shadow-xs"
               title="Clear log"
             >
               Clear Log
@@ -118,14 +120,14 @@ export default function VerificationHistoryPage() {
           <button
             type="button"
             onClick={handleExportCSV}
-            className="inline-flex items-center gap-1.5 px-3 py-2 text-xs font-medium rounded-lg border border-border/70 bg-card hover:bg-muted text-foreground transition-colors"
+            className="inline-flex items-center gap-1.5 px-3.5 py-2 text-xs font-medium rounded-xl border border-slate-200/60 dark:border-slate-800/60 bg-card hover:bg-muted text-foreground transition-colors shadow-xs"
           >
             <Download className="w-3.5 h-3.5" /> Export Audit CSV
           </button>
 
           <Link
             href="/inspector/scanner"
-            className="inline-flex items-center gap-1.5 px-3.5 py-2 text-xs font-semibold rounded-lg bg-amber-600 hover:bg-amber-700 text-white shadow-sm transition-colors"
+            className="inline-flex items-center gap-1.5 px-4 py-2 text-xs font-semibold rounded-xl bg-amber-600 hover:bg-amber-700 text-white shadow-sm transition-colors"
           >
             <QrCode className="w-3.5 h-3.5" /> Open Scanner
           </Link>
@@ -133,10 +135,10 @@ export default function VerificationHistoryPage() {
       </div>
 
       {/* Filter and Search Bar */}
-      <div className="bg-card border border-border/60 rounded-xl p-4 shadow-xs space-y-3">
+      <div className="bg-card border border-slate-200/50 dark:border-slate-800/50 rounded-3xl p-5 shadow-sm space-y-3">
         <div className="flex flex-col sm:flex-row gap-3 items-stretch sm:items-center justify-between">
           {/* Status Tabs */}
-          <div className="flex flex-wrap items-center gap-1.5">
+          <div className="flex items-center gap-1.5 overflow-x-auto no-scrollbar flex-nowrap pb-1 sm:pb-0">
             {[
               { id: "ALL", label: `All Scans (${verificationHistory.length})` },
               { id: "VALID", label: "Valid" },
@@ -148,10 +150,10 @@ export default function VerificationHistoryPage() {
                 key={tab.id}
                 type="button"
                 onClick={() => setStatusFilter(tab.id)}
-                className={`px-3 py-1.5 text-xs font-medium rounded-lg transition-colors ${
+                className={`px-3.5 py-1.5 text-xs font-semibold rounded-xl transition-all shrink-0 ${
                   statusFilter === tab.id
-                    ? "bg-amber-600 text-white font-semibold"
-                    : "bg-muted/50 text-muted-foreground hover:bg-muted hover:text-foreground"
+                    ? "bg-amber-600 text-white shadow-sm"
+                    : "bg-slate-100 dark:bg-slate-800/60 text-muted-foreground hover:bg-slate-200 dark:hover:bg-slate-800 hover:text-foreground"
                 }`}
               >
                 {tab.label}
@@ -161,20 +163,20 @@ export default function VerificationHistoryPage() {
 
           {/* Search Bar */}
           <div className="relative flex-1 sm:max-w-xs">
-            <Search className="w-3.5 h-3.5 absolute left-3 top-2.5 text-muted-foreground" />
+            <Search className="w-3.5 h-3.5 absolute left-3.5 top-1/2 -translate-y-1/2 text-muted-foreground pointer-events-none" />
             <input
               type="text"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               placeholder="Search reference, passenger, or service..."
-              className="w-full pl-9 pr-3 py-1.5 text-xs rounded-lg border border-border/70 bg-background text-foreground focus:outline-none focus:ring-1 focus:ring-amber-500"
+              className="w-full pl-9 pr-3 py-2 text-xs rounded-xl border border-slate-200/60 dark:border-slate-800/60 bg-card text-foreground focus:outline-none focus:ring-2 focus:ring-amber-500/30"
             />
           </div>
         </div>
 
         {/* Category Filters */}
-        <div className="flex flex-wrap items-center gap-2 pt-2 border-t border-border/40">
-          <span className="text-[11px] text-muted-foreground flex items-center gap-1">
+        <div className="flex flex-wrap items-center gap-2 pt-3 border-t border-slate-200/40 dark:border-slate-800/40">
+          <span className="text-[11px] font-semibold text-muted-foreground flex items-center gap-1">
             <Filter className="w-3 h-3" /> Sector:
           </span>
           {["ALL", "BUS", "EVENT", "SPORTS", "CINEMA"].map((cat) => (
@@ -182,10 +184,10 @@ export default function VerificationHistoryPage() {
               key={cat}
               type="button"
               onClick={() => setCategoryFilter(cat)}
-              className={`px-2.5 py-1 text-[11px] rounded-md transition-colors ${
+              className={`px-3 py-1 text-[11px] font-semibold rounded-lg transition-colors ${
                 categoryFilter === cat
-                  ? "bg-amber-500/20 text-amber-700 dark:text-amber-300 font-bold border border-amber-600/30"
-                  : "bg-muted/40 text-muted-foreground hover:bg-muted"
+                  ? "bg-amber-500/20 text-amber-700 dark:text-amber-300 border border-amber-600/30 font-bold"
+                  : "bg-slate-100 dark:bg-slate-800/40 text-muted-foreground hover:bg-slate-200 dark:hover:bg-slate-800"
               }`}
             >
               {cat === "ALL" ? "All Sectors" : cat}
@@ -194,41 +196,144 @@ export default function VerificationHistoryPage() {
         </div>
       </div>
 
-      {/* History Data Table */}
-      <div className="bg-card border border-border/60 rounded-xl shadow-xs overflow-hidden">
-        <div className="overflow-x-auto">
+      {/* History Master Table (Dual View: Mobile Cards & Desktop Table) */}
+      <div className="bg-card border border-slate-200/50 dark:border-slate-800/50 rounded-3xl shadow-sm overflow-hidden">
+        {/* Mobile View: Cards */}
+        <div className="block sm:hidden divide-y divide-slate-100 dark:divide-slate-800/40">
+          {filteredHistory.length === 0 ? (
+            <div className="py-12 px-4 text-center text-muted-foreground text-xs">
+              No ticket scan records found in this view.
+            </div>
+          ) : (
+            filteredHistory.map((item) => (
+              <div key={item.id} className="p-4 space-y-3">
+                {/* Header: Ref, Category, Actions */}
+                <div className="flex items-center justify-between gap-2">
+                  <div className="flex items-center gap-2">
+                    <div className="w-8 h-8 rounded-lg bg-amber-500/10 text-amber-600 flex items-center justify-center shrink-0">
+                      {getCategoryIcon(item.category)}
+                    </div>
+                    <div>
+                      <span className="font-mono font-bold text-xs text-amber-600 dark:text-amber-400 block leading-tight">
+                        {item.ticketReference}
+                      </span>
+                      <span className="text-[10px] text-muted-foreground block">
+                        {item.verificationDate} • {item.verificationTime}
+                      </span>
+                    </div>
+                  </div>
+
+                  <ActionDropdown
+                    items={[
+                      {
+                        label: "View Audit Record",
+                        icon: <Eye className="w-3.5 h-3.5" />,
+                        onClick: () => setSelectedLog(item),
+                      },
+                      {
+                        label: "Copy Ticket Code",
+                        icon: <Copy className="w-3.5 h-3.5" />,
+                        onClick: () => {
+                          navigator.clipboard.writeText(item.ticketReference);
+                          toast.success("Copied ticket code to clipboard");
+                        },
+                      },
+                      {
+                        label: "Re-scan Gate Ticket",
+                        icon: <QrCode className="w-3.5 h-3.5" />,
+                        href: "/inspector/scanner",
+                      },
+                    ]}
+                  />
+                </div>
+
+                {/* Passenger & Service */}
+                <div className="space-y-0.5">
+                  <p className="text-xs font-semibold text-foreground">{item.passengerName}</p>
+                  <p className="text-[11px] text-muted-foreground line-clamp-1">{item.serviceTitle}</p>
+                </div>
+
+                {/* Gate, Seat & Outcome Status */}
+                <div className="flex items-center justify-between pt-1 border-t border-slate-100 dark:border-slate-800/40 text-xs">
+                  <div className="flex items-center gap-2">
+                    <span className="font-mono text-[11px] bg-muted/60 px-2 py-0.5 rounded-lg text-foreground font-semibold">
+                      Seat: {item.seatNumber || "--"}
+                    </span>
+                    <span className="text-[11px] text-muted-foreground truncate max-w-[120px]">
+                      {item.location}
+                    </span>
+                  </div>
+
+                  <span
+                    className={`inline-flex items-center gap-1 px-2.5 py-0.5 rounded-lg text-[10px] font-semibold border ${
+                      item.result === "VALID"
+                        ? "bg-emerald-500/10 text-emerald-600 border-emerald-500/20"
+                        : item.result === "ALREADY_USED"
+                        ? "bg-amber-500/10 text-amber-600 border-amber-500/20"
+                        : item.result === "WRONG_ASSIGNMENT"
+                        ? "bg-purple-500/10 text-purple-600 border-purple-500/20"
+                        : "bg-rose-500/10 text-rose-600 border-rose-500/20"
+                    }`}
+                  >
+                    <span
+                      className={`w-1.5 h-1.5 rounded-full ${
+                        item.result === "VALID"
+                          ? "bg-emerald-600"
+                          : item.result === "ALREADY_USED"
+                          ? "bg-amber-500"
+                          : item.result === "WRONG_ASSIGNMENT"
+                          ? "bg-purple-500"
+                          : "bg-rose-500"
+                      }`}
+                    />
+                    {item.result === "VALID"
+                      ? "Approved"
+                      : item.result === "ALREADY_USED"
+                      ? "Duplicate"
+                      : item.result === "WRONG_ASSIGNMENT"
+                      ? "Wrong Gate"
+                      : "Invalid"}
+                  </span>
+                </div>
+              </div>
+            ))
+          )}
+        </div>
+
+        {/* Desktop View: Full Table */}
+        <div className="hidden sm:block overflow-x-auto">
           <table className="w-full text-left border-collapse text-xs">
             <thead>
-              <tr className="border-b border-border/60 bg-muted/30 text-muted-foreground font-semibold">
-                <th className="py-3 px-4">Ticket Ref</th>
-                <th className="py-3 px-3">Passenger</th>
-                <th className="py-3 px-3">Service / Departure</th>
-                <th className="py-3 px-3 text-center">Seat</th>
-                <th className="py-3 px-3">Timestamp</th>
-                <th className="py-3 px-3">Terminal Gate</th>
-                <th className="py-3 px-3 text-center">Outcome</th>
-                <th className="py-3 px-4 text-right">Details</th>
+              <tr className="bg-slate-50/60 dark:bg-slate-800/40 text-muted-foreground uppercase text-[10px] font-bold tracking-wider">
+                <th className="py-3.5 px-5">Ticket Ref</th>
+                <th className="py-3.5 px-4">Passenger</th>
+                <th className="py-3.5 px-4">Service / Departure</th>
+                <th className="py-3.5 px-4 text-center">Seat</th>
+                <th className="py-3.5 px-4">Timestamp</th>
+                <th className="py-3.5 px-4">Terminal Gate</th>
+                <th className="py-3.5 px-4 text-center">Outcome</th>
+                <th className="py-3.5 px-5 text-right">Details</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-border/40">
+            <tbody className="divide-y divide-slate-100 dark:divide-slate-800/40">
               {filteredHistory.length === 0 ? (
                 <tr>
-                  <td colSpan={8} className="py-8 text-center text-muted-foreground">
+                  <td colSpan={8} className="py-12 px-5 text-center text-muted-foreground">
                     No ticket scan records found in this view.
                   </td>
                 </tr>
               ) : (
                 filteredHistory.map((item) => (
-                  <tr key={item.id} className="hover:bg-muted/20 transition-colors">
-                    <td className="py-3.5 px-4 font-mono font-bold text-amber-600">
+                  <tr key={item.id} className="hover:bg-amber-500/[0.03] dark:hover:bg-amber-500/[0.06] transition-colors">
+                    <td className="py-3.5 px-5 font-mono font-bold text-amber-600 dark:text-amber-400">
                       {item.ticketReference}
                     </td>
 
-                    <td className="py-3.5 px-3 font-semibold text-foreground">
+                    <td className="py-3.5 px-4 font-semibold text-foreground">
                       {item.passengerName}
                     </td>
 
-                    <td className="py-3.5 px-3">
+                    <td className="py-3.5 px-4">
                       <div className="flex items-center gap-1.5">
                         {getCategoryIcon(item.category)}
                         <span className="line-clamp-1 font-medium text-foreground">
@@ -237,19 +342,19 @@ export default function VerificationHistoryPage() {
                       </div>
                     </td>
 
-                    <td className="py-3.5 px-3 text-center font-mono font-semibold text-foreground">
+                    <td className="py-3.5 px-4 text-center font-mono font-semibold text-foreground">
                       {item.seatNumber || "--"}
                     </td>
 
-                    <td className="py-3.5 px-3 text-muted-foreground whitespace-nowrap">
+                    <td className="py-3.5 px-4 text-muted-foreground whitespace-nowrap">
                       {item.verificationDate} • {item.verificationTime}
                     </td>
 
-                    <td className="py-3.5 px-3 text-muted-foreground">{item.location}</td>
+                    <td className="py-3.5 px-4 text-muted-foreground">{item.location}</td>
 
-                    <td className="py-3.5 px-3 text-center">
+                    <td className="py-3.5 px-4 text-center">
                       <span
-                        className={`inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-semibold border ${
+                        className={`inline-flex items-center gap-1 px-2.5 py-0.5 rounded-lg text-[10px] font-semibold border ${
                           item.result === "VALID"
                             ? "bg-emerald-500/10 text-emerald-600 border-emerald-500/20"
                             : item.result === "ALREADY_USED"
@@ -280,15 +385,31 @@ export default function VerificationHistoryPage() {
                       </span>
                     </td>
 
-                    <td className="py-3.5 px-4 text-right">
-                      <button
-                        type="button"
-                        onClick={() => setSelectedLog(item)}
-                        className="p-1 rounded text-muted-foreground hover:text-foreground hover:bg-muted transition-colors"
-                        title="View audit metadata"
-                      >
-                        <Eye className="w-3.5 h-3.5" />
-                      </button>
+                    <td className="py-3.5 px-5 text-right">
+                      <div className="flex items-center justify-end">
+                        <ActionDropdown
+                          items={[
+                            {
+                              label: "View Audit Record",
+                              icon: <Eye className="w-3.5 h-3.5" />,
+                              onClick: () => setSelectedLog(item),
+                            },
+                            {
+                              label: "Copy Ticket Code",
+                              icon: <Copy className="w-3.5 h-3.5" />,
+                              onClick: () => {
+                                navigator.clipboard.writeText(item.ticketReference);
+                                toast.success("Copied ticket code to clipboard");
+                              },
+                            },
+                            {
+                              label: "Re-scan Gate Ticket",
+                              icon: <QrCode className="w-3.5 h-3.5" />,
+                              href: "/inspector/scanner",
+                            },
+                          ]}
+                        />
+                      </div>
                     </td>
                   </tr>
                 ))
@@ -300,9 +421,9 @@ export default function VerificationHistoryPage() {
 
       {/* Audit Detail Modal */}
       {selectedLog && (
-        <div className="fixed inset-0 z-50 bg-background/80 backdrop-blur-xs flex items-center justify-center p-4">
-          <div className="bg-card border border-border/80 rounded-xl shadow-xl max-w-md w-full p-5 space-y-4 animate-in fade-in zoom-in-95 duration-150">
-            <div className="flex items-center justify-between border-b border-border/60 pb-3">
+        <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-center justify-center p-4">
+          <div className="bg-card border border-slate-200/50 dark:border-slate-800/50 rounded-3xl shadow-2xl max-w-md w-full p-6 space-y-4 animate-in fade-in zoom-in-95 duration-150">
+            <div className="flex items-center justify-between border-b border-slate-200/40 dark:border-slate-800/40 pb-3">
               <div>
                 <h3 className="text-sm font-bold text-foreground">Scan Verification Record</h3>
                 <span className="font-mono text-xs text-amber-600 font-bold block mt-0.5">
@@ -312,13 +433,13 @@ export default function VerificationHistoryPage() {
               <button
                 type="button"
                 onClick={() => setSelectedLog(null)}
-                className="p-1 rounded text-muted-foreground hover:text-foreground hover:bg-muted"
+                className="p-1 rounded-lg text-muted-foreground hover:text-foreground hover:bg-muted"
               >
                 <X className="w-4 h-4" />
               </button>
             </div>
 
-            <div className="bg-muted/30 rounded-lg p-3 text-xs space-y-2 border border-border/50">
+            <div className="bg-slate-50/70 dark:bg-slate-800/30 rounded-2xl p-4 text-xs space-y-2.5 border border-slate-200/40 dark:border-slate-800/40">
               <div className="flex justify-between">
                 <span className="text-muted-foreground">Verification Outcome:</span>
                 <span
@@ -336,7 +457,7 @@ export default function VerificationHistoryPage() {
 
               <div className="flex justify-between">
                 <span className="text-muted-foreground">Passenger:</span>
-                <span className="font-medium text-foreground">{selectedLog.passengerName}</span>
+                <span className="font-semibold text-foreground">{selectedLog.passengerName}</span>
               </div>
 
               {selectedLog.seatNumber && (
@@ -350,7 +471,7 @@ export default function VerificationHistoryPage() {
 
               <div className="flex justify-between">
                 <span className="text-muted-foreground">Service:</span>
-                <span className="font-medium text-foreground line-clamp-1">
+                <span className="font-semibold text-foreground line-clamp-1">
                   {selectedLog.serviceTitle}
                 </span>
               </div>
@@ -369,17 +490,17 @@ export default function VerificationHistoryPage() {
             </div>
 
             {selectedLog.failureReason && (
-              <div className="p-3 rounded-lg bg-rose-500/10 border border-rose-500/30 text-rose-700 dark:text-rose-300 text-xs">
+              <div className="p-3.5 rounded-2xl bg-rose-500/10 border border-rose-500/20 text-rose-700 dark:text-rose-300 text-xs">
                 <span className="font-bold block mb-0.5">Discrepancy Details:</span>
                 <p className="leading-relaxed">{selectedLog.failureReason}</p>
               </div>
             )}
 
-            <div className="flex items-center justify-end pt-2 border-t border-border/60">
+            <div className="flex items-center justify-end pt-2 border-t border-slate-200/40 dark:border-slate-800/40">
               <button
                 type="button"
                 onClick={() => setSelectedLog(null)}
-                className="px-4 py-1.5 text-xs font-semibold rounded-lg bg-muted hover:bg-muted/80 text-foreground"
+                className="px-4 py-2 text-xs font-semibold rounded-xl bg-muted hover:bg-muted/80 text-foreground"
               >
                 Close
               </button>

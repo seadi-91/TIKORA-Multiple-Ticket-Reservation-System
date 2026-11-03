@@ -2,6 +2,7 @@
 
 import React from "react";
 import { CustomerSidebar } from "@/components/navigation/customer-sidebar";
+import { CustomerBottomNav } from "@/components/navigation/customer-bottom-nav";
 import { PublicNavbar } from "@/components/navigation/public-navbar";
 import { Footer } from "@/components/layout/footer";
 
@@ -14,14 +15,21 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
     <div className="min-h-screen flex flex-col bg-[#F8FAFC] dark:bg-[#0C0E14] text-[#0F172A] dark:text-[#F8FAFC]">
       <PublicNavbar />
 
-      <main className="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8">
+      <main className="flex-1 max-w-7xl w-full mx-auto px-3 sm:px-6 lg:px-8 py-4 sm:py-8 pb-24 lg:pb-8">
         <div className="flex flex-col lg:flex-row items-start gap-6 lg:gap-8">
-          <CustomerSidebar />
+          <div className="hidden lg:block shrink-0">
+            <CustomerSidebar />
+          </div>
           <div className="flex-1 w-full min-w-0">{children}</div>
         </div>
       </main>
 
-      <Footer />
+      <div className="hidden lg:block">
+        <Footer />
+      </div>
+
+      {/* Modern Mobile Bottom Navigation for Customer Portal */}
+      <CustomerBottomNav />
     </div>
   );
 }

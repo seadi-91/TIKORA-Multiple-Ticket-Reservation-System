@@ -49,19 +49,19 @@ export default function InspectorAssignedServicesPage() {
   return (
     <div className="space-y-6">
       {/* Top Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 border-b border-border/60 pb-5">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 border-b border-slate-200/50 dark:border-slate-800/50 pb-5">
         <div>
           <h1 className="text-xl font-bold tracking-tight text-foreground">
             My Assigned Services & Fleet Operations
           </h1>
-          <p className="text-xs text-muted-foreground">
+          <p className="text-xs text-muted-foreground mt-0.5">
             Authorized services managed by {profile.organizationName}. You can only verify tickets for these assigned operations.
           </p>
         </div>
 
         <Link
           href="/inspector/scanner"
-          className="inline-flex items-center gap-1.5 px-3.5 py-2 text-xs font-semibold rounded-lg bg-amber-600 hover:bg-amber-700 text-white shadow-sm transition-colors"
+          className="inline-flex items-center gap-1.5 px-4 py-2 text-xs font-semibold rounded-xl bg-amber-600 hover:bg-amber-700 text-white shadow-sm transition-colors"
         >
           <QrCode className="w-3.5 h-3.5" /> Open Scanner
         </Link>
@@ -75,16 +75,16 @@ export default function InspectorAssignedServicesPage() {
           return (
             <div
               key={asn.id}
-              className="bg-card border border-border/60 rounded-xl p-5 shadow-xs flex flex-col justify-between space-y-4 hover:border-amber-600/40 transition-all"
+              className="bg-card border border-slate-200/50 dark:border-slate-800/50 rounded-3xl p-6 shadow-sm flex flex-col justify-between space-y-4 hover:shadow-md transition-all"
             >
               <div className="space-y-3">
                 <div className="flex items-center justify-between gap-2">
-                  <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded text-[11px] font-semibold bg-amber-500/10 text-amber-700 dark:text-amber-300 border border-amber-600/20">
+                  <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-amber-500/10 text-amber-700 dark:text-amber-300 border border-amber-600/20">
                     {getCategoryIcon(asn.category)}
                     <span>{asn.category}</span>
                   </span>
                   <span
-                    className={`inline-flex items-center px-2 py-0.5 rounded text-[10px] font-semibold border ${
+                    className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-[10px] font-semibold border ${
                       asn.status === "ACTIVE_NOW"
                         ? "bg-emerald-500/10 text-emerald-600 border-emerald-500/20"
                         : asn.status === "UPCOMING"
@@ -107,7 +107,7 @@ export default function InspectorAssignedServicesPage() {
                   </span>
                 </div>
 
-                <div className="space-y-1.5 text-xs text-muted-foreground bg-muted/20 p-3 rounded-lg border border-border/40">
+                <div className="space-y-1.5 text-xs text-muted-foreground bg-slate-50/70 dark:bg-slate-800/30 p-3.5 rounded-2xl border border-slate-200/40 dark:border-slate-800/40">
                   <div className="flex items-center gap-1.5">
                     <MapPin className="w-3.5 h-3.5 text-amber-600 shrink-0" />
                     <span className="truncate">
@@ -128,13 +128,13 @@ export default function InspectorAssignedServicesPage() {
 
                 {/* Progress bar */}
                 <div>
-                  <div className="flex items-center justify-between text-[11px] mb-1">
+                  <div className="flex items-center justify-between text-[11px] mb-1.5">
                     <span className="text-muted-foreground">Boarded / Scanned:</span>
                     <span className="font-mono font-bold text-foreground">
                       {asn.scannedSeats} / {asn.totalSeats} seats
                     </span>
                   </div>
-                  <div className="w-full bg-muted rounded-full h-1.5 overflow-hidden">
+                  <div className="w-full bg-slate-100 dark:bg-slate-800 rounded-full h-2 overflow-hidden">
                     <div
                       className="bg-amber-600 h-full rounded-full transition-all"
                       style={{ width: `${Math.min(100, occupancy)}%` }}
@@ -144,7 +144,7 @@ export default function InspectorAssignedServicesPage() {
               </div>
 
               {/* Actions */}
-              <div className="flex items-center justify-between gap-2 pt-2 border-t border-border/40 text-xs">
+              <div className="flex items-center justify-between gap-2 pt-3 border-t border-slate-200/40 dark:border-slate-800/40 text-xs">
                 <button
                   type="button"
                   onClick={() => setSelectedService(asn)}
@@ -156,7 +156,7 @@ export default function InspectorAssignedServicesPage() {
                 <button
                   type="button"
                   onClick={() => handleLaunchScan(asn)}
-                  className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-amber-600 hover:bg-amber-700 text-white font-semibold text-xs shadow-xs transition-colors"
+                  className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl bg-amber-600 hover:bg-amber-700 text-white font-semibold text-xs shadow-xs transition-colors"
                 >
                   <QrCode className="w-3.5 h-3.5" /> Scan Post
                 </button>
@@ -168,9 +168,9 @@ export default function InspectorAssignedServicesPage() {
 
       {/* Service Detail Modal */}
       {selectedService && (
-        <div className="fixed inset-0 z-50 bg-background/80 backdrop-blur-xs flex items-center justify-center p-4">
-          <div className="bg-card border border-border/80 rounded-xl shadow-xl max-w-lg w-full p-5 space-y-4 animate-in fade-in zoom-in-95 duration-150">
-            <div className="flex items-center justify-between border-b border-border/60 pb-3">
+        <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-center justify-center p-4">
+          <div className="bg-card border border-slate-200/50 dark:border-slate-800/50 rounded-3xl shadow-2xl max-w-lg w-full p-6 space-y-4 animate-in fade-in zoom-in-95 duration-150">
+            <div className="flex items-center justify-between border-b border-slate-200/40 dark:border-slate-800/40 pb-3">
               <div>
                 <h3 className="text-sm font-bold text-foreground">{selectedService.title}</h3>
                 <span className="text-xs text-muted-foreground font-mono">
@@ -180,14 +180,14 @@ export default function InspectorAssignedServicesPage() {
               <button
                 type="button"
                 onClick={() => setSelectedService(null)}
-                className="p-1 rounded text-muted-foreground hover:text-foreground hover:bg-muted"
+                className="p-1 rounded-lg text-muted-foreground hover:text-foreground hover:bg-muted"
               >
                 <X className="w-4 h-4" />
               </button>
             </div>
 
             <div className="space-y-3 text-xs">
-              <div className="grid grid-cols-2 gap-3 bg-muted/20 p-3 rounded-lg border border-border/40">
+              <div className="grid grid-cols-2 gap-3 bg-slate-50/70 dark:bg-slate-800/30 p-3.5 rounded-2xl border border-slate-200/40 dark:border-slate-800/40">
                 <div>
                   <span className="text-muted-foreground text-[11px] block">Terminal & Gate:</span>
                   <span className="font-semibold text-foreground block">
@@ -209,7 +209,7 @@ export default function InspectorAssignedServicesPage() {
               </div>
 
               {selectedService.driverOrLead && (
-                <div className="bg-muted/20 p-3 rounded-lg border border-border/40 flex items-center justify-between">
+                <div className="bg-slate-50/70 dark:bg-slate-800/30 p-3.5 rounded-2xl border border-slate-200/40 dark:border-slate-800/40 flex items-center justify-between">
                   <div>
                     <span className="text-[11px] text-muted-foreground block">Lead Driver:</span>
                     <span className="font-semibold text-foreground">
@@ -223,17 +223,17 @@ export default function InspectorAssignedServicesPage() {
                 </div>
               )}
 
-              <div className="p-3 rounded-lg bg-amber-500/10 border border-amber-600/30 text-amber-800 dark:text-amber-200">
+              <div className="p-3.5 rounded-2xl bg-amber-500/10 border border-amber-600/20 text-amber-800 dark:text-amber-200">
                 <span className="font-bold block mb-0.5">Inspection Instructions:</span>
                 <p className="leading-relaxed">{selectedService.specialInstructions}</p>
               </div>
             </div>
 
-            <div className="flex items-center justify-end gap-2 pt-2 border-t border-border/60">
+            <div className="flex items-center justify-end gap-2 pt-2 border-t border-slate-200/40 dark:border-slate-800/40">
               <button
                 type="button"
                 onClick={() => setSelectedService(null)}
-                className="px-3.5 py-1.5 text-xs font-medium rounded-lg border border-border/70 hover:bg-muted text-foreground"
+                className="px-4 py-2 text-xs font-semibold rounded-xl bg-muted hover:bg-muted/80 text-foreground"
               >
                 Close
               </button>
@@ -244,7 +244,7 @@ export default function InspectorAssignedServicesPage() {
                   setSelectedService(null);
                   handleLaunchScan(s);
                 }}
-                className="px-4 py-1.5 text-xs font-semibold rounded-lg bg-amber-600 hover:bg-amber-700 text-white"
+                className="px-4 py-2 text-xs font-semibold rounded-xl bg-amber-600 hover:bg-amber-700 text-white"
               >
                 Start Scanning Gate
               </button>

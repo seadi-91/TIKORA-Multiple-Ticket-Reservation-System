@@ -9,6 +9,7 @@ import {
   Calendar,
   CheckCircle2,
   Clock,
+  Copy,
   Film,
   Filter,
   Info,
@@ -26,6 +27,7 @@ import {
 import { useInspectorStore, InspectorAssignment } from "@/stores/inspector.store";
 import { TicketCategory } from "@/types/ticket.types";
 import { toast } from "sonner";
+import { ActionDropdown } from "@/components/ui/action-dropdown";
 
 export default function InspectorAssignmentsPage() {
   const router = useRouter();
@@ -78,12 +80,12 @@ export default function InspectorAssignmentsPage() {
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 border-b border-border/60 pb-5">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 border-b border-slate-200/50 dark:border-slate-800/50 pb-5">
         <div>
           <h1 className="text-xl font-bold tracking-tight text-foreground">
             Assigned Gate Posts & Sessions
           </h1>
-          <p className="text-xs text-muted-foreground">
+          <p className="text-xs text-muted-foreground mt-0.5">
             Official inspection posts assigned to you by {profile.organizationName}.
           </p>
         </div>
@@ -91,7 +93,7 @@ export default function InspectorAssignmentsPage() {
         <div className="flex items-center gap-2">
           <Link
             href="/inspector/scanner"
-            className="inline-flex items-center gap-1.5 px-3.5 py-2 text-xs font-semibold rounded-lg bg-amber-600 hover:bg-amber-700 text-white shadow-sm transition-colors"
+            className="inline-flex items-center gap-1.5 px-4 py-2 text-xs font-semibold rounded-xl bg-amber-600 hover:bg-amber-700 text-white shadow-sm transition-colors"
           >
             <QrCode className="w-3.5 h-3.5" /> Launch Scanner
           </Link>
@@ -99,10 +101,10 @@ export default function InspectorAssignmentsPage() {
       </div>
 
       {/* Filter and Search Bar */}
-      <div className="bg-card border border-border/60 rounded-xl p-4 shadow-xs space-y-3">
+      <div className="bg-card border border-slate-200/50 dark:border-slate-800/50 rounded-3xl p-5 shadow-sm space-y-3">
         <div className="flex flex-col sm:flex-row gap-3 items-stretch sm:items-center justify-between">
           {/* Status Tabs */}
-          <div className="flex flex-wrap items-center gap-1.5">
+          <div className="flex items-center gap-1.5 overflow-x-auto no-scrollbar flex-nowrap pb-1 sm:pb-0">
             {[
               { id: "ALL", label: `All Posts (${assignments.length})` },
               { id: "ACTIVE", label: "Active Live" },
@@ -113,10 +115,10 @@ export default function InspectorAssignmentsPage() {
                 key={tab.id}
                 type="button"
                 onClick={() => setStatusFilter(tab.id)}
-                className={`px-3 py-1.5 text-xs font-medium rounded-lg transition-colors ${
+                className={`px-3.5 py-1.5 text-xs font-semibold rounded-xl transition-all shrink-0 ${
                   statusFilter === tab.id
-                    ? "bg-amber-600 text-white"
-                    : "bg-muted/50 text-muted-foreground hover:bg-muted hover:text-foreground"
+                    ? "bg-amber-600 text-white shadow-sm"
+                    : "bg-slate-100 dark:bg-slate-800/60 text-muted-foreground hover:bg-slate-200 dark:hover:bg-slate-800 hover:text-foreground"
                 }`}
               >
                 {tab.label}
@@ -126,20 +128,20 @@ export default function InspectorAssignmentsPage() {
 
           {/* Search Bar */}
           <div className="relative flex-1 sm:max-w-xs">
-            <Search className="w-3.5 h-3.5 absolute left-3 top-2.5 text-muted-foreground" />
+            <Search className="w-3.5 h-3.5 absolute left-3.5 top-1/2 -translate-y-1/2 text-muted-foreground pointer-events-none" />
             <input
               type="text"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               placeholder="Search station, gate, or route..."
-              className="w-full pl-9 pr-3 py-1.5 text-xs rounded-lg border border-border/70 bg-background text-foreground focus:outline-none focus:ring-1 focus:ring-amber-500"
+              className="w-full pl-9 pr-3 py-2 text-xs rounded-xl border border-slate-200/60 dark:border-slate-800/60 bg-card text-foreground focus:outline-none focus:ring-2 focus:ring-amber-500/30"
             />
           </div>
         </div>
 
         {/* Category Pills */}
-        <div className="flex flex-wrap items-center gap-2 pt-2 border-t border-border/40">
-          <span className="text-[11px] text-muted-foreground flex items-center gap-1">
+        <div className="flex flex-wrap items-center gap-2 pt-3 border-t border-slate-200/40 dark:border-slate-800/40">
+          <span className="text-[11px] font-semibold text-muted-foreground flex items-center gap-1">
             <Filter className="w-3 h-3" /> Sector:
           </span>
           {["ALL", "BUS", "EVENT", "SPORTS", "CINEMA"].map((cat) => (
@@ -147,10 +149,10 @@ export default function InspectorAssignmentsPage() {
               key={cat}
               type="button"
               onClick={() => setCategoryFilter(cat)}
-              className={`px-2.5 py-1 text-[11px] rounded-md transition-colors ${
+              className={`px-3 py-1 text-[11px] font-semibold rounded-lg transition-colors ${
                 categoryFilter === cat
                   ? "bg-amber-500/20 text-amber-700 dark:text-amber-300 font-bold border border-amber-600/30"
-                  : "bg-muted/40 text-muted-foreground hover:bg-muted"
+                  : "bg-slate-100 dark:bg-slate-800/40 text-muted-foreground hover:bg-slate-200 dark:hover:bg-slate-800"
               }`}
             >
               {cat === "ALL" ? "All Sectors" : cat}
@@ -162,7 +164,7 @@ export default function InspectorAssignmentsPage() {
       {/* Assignments List */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         {filteredAssignments.length === 0 ? (
-          <div className="col-span-2 p-8 text-center bg-card rounded-xl border border-border/60 text-muted-foreground text-xs">
+          <div className="col-span-2 p-12 text-center bg-card rounded-3xl border border-slate-200/50 dark:border-slate-800/50 text-muted-foreground text-xs shadow-sm">
             No gate inspection posts match your selected filters.
           </div>
         ) : (
@@ -172,15 +174,15 @@ export default function InspectorAssignmentsPage() {
             return (
               <div
                 key={asn.id}
-                className="bg-card border border-border/60 rounded-xl p-4 shadow-xs space-y-3 flex flex-col justify-between hover:border-amber-600/40 transition-colors"
+                className="bg-card border border-slate-200/50 dark:border-slate-800/50 rounded-3xl p-5 shadow-sm space-y-4 flex flex-col justify-between hover:shadow-md transition-all"
               >
-                <div className="space-y-2">
+                <div className="space-y-3">
                   <div className="flex items-center justify-between gap-2">
                     <span className="font-mono text-[10px] text-muted-foreground">
                       {asn.id}
                     </span>
                     <span
-                      className={`inline-flex items-center px-2 py-0.2 rounded text-[10px] font-semibold border ${
+                      className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-[10px] font-semibold border ${
                         asn.status === "ACTIVE_NOW"
                           ? "bg-emerald-500/10 text-emerald-600 border-emerald-500/20"
                           : asn.status === "UPCOMING"
@@ -202,14 +204,14 @@ export default function InspectorAssignmentsPage() {
                       <span>{asn.title}</span>
                     </h3>
                     <p className="text-xs text-muted-foreground flex items-center gap-1 mt-0.5">
-                      <MapPin className="w-3 h-3 text-amber-600 shrink-0" />
+                      <MapPin className="w-3.5 h-3.5 text-amber-600 shrink-0" />
                       <span>{asn.venueOrTerminal}</span>
                       <span>•</span>
                       <span className="font-semibold text-foreground">{asn.gate}</span>
                     </p>
                   </div>
 
-                  <div className="grid grid-cols-2 gap-2 text-[11px] bg-muted/20 p-2.5 rounded-lg border border-border/40">
+                  <div className="grid grid-cols-2 gap-2 text-[11px] bg-slate-50/70 dark:bg-slate-800/30 p-3 rounded-2xl border border-slate-200/40 dark:border-slate-800/40">
                     <div>
                       <span className="text-muted-foreground block">Departure Time:</span>
                       <span className="font-semibold text-foreground">
@@ -226,13 +228,13 @@ export default function InspectorAssignmentsPage() {
 
                   {/* Boarding Progress */}
                   <div>
-                    <div className="flex items-center justify-between text-[11px] mb-1">
+                    <div className="flex items-center justify-between text-[11px] mb-1.5">
                       <span className="text-muted-foreground">Checked-In Progress:</span>
                       <span className="font-mono font-bold text-foreground">
                         {asn.scannedSeats} / {asn.totalSeats} ({fillRate}%)
                       </span>
                     </div>
-                    <div className="w-full bg-muted rounded-full h-1.5 overflow-hidden">
+                    <div className="w-full bg-slate-100 dark:bg-slate-800 rounded-full h-2 overflow-hidden">
                       <div
                         className="bg-amber-600 h-full rounded-full transition-all"
                         style={{ width: `${Math.min(100, fillRate)}%` }}
@@ -242,22 +244,52 @@ export default function InspectorAssignmentsPage() {
                 </div>
 
                 {/* Actions */}
-                <div className="flex items-center justify-between gap-2 pt-2 border-t border-border/40 text-xs">
+                <div className="flex items-center justify-between gap-2 pt-3 border-t border-slate-200/40 dark:border-slate-800/40 text-xs">
                   <button
                     type="button"
                     onClick={() => setSelectedInstructionAssignment(asn)}
-                    className="inline-flex items-center gap-1 text-[11px] text-muted-foreground hover:text-foreground font-medium"
+                    className="inline-flex items-center gap-1 text-[11px] text-muted-foreground hover:text-foreground font-semibold"
                   >
-                    <Info className="w-3.5 h-3.5" /> Gate Instructions
+                    <Info className="w-3.5 h-3.5" /> Instructions
                   </button>
 
-                  <button
-                    type="button"
-                    onClick={() => handleStartScanning(asn)}
-                    className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-lg bg-amber-600 hover:bg-amber-700 text-white shadow-xs transition-colors"
-                  >
-                    <QrCode className="w-3.5 h-3.5" /> Scan This Post
-                  </button>
+                  <div className="flex items-center gap-1.5">
+                    <button
+                      type="button"
+                      onClick={() => handleStartScanning(asn)}
+                      className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-xl bg-amber-600 hover:bg-amber-700 text-white shadow-xs transition-colors"
+                    >
+                      <QrCode className="w-3.5 h-3.5" /> Scan Post
+                    </button>
+
+                    <ActionDropdown
+                      items={[
+                        {
+                          label: "Open Live Scanner",
+                          icon: <QrCode className="w-3.5 h-3.5" />,
+                          onClick: () => handleStartScanning(asn),
+                        },
+                        {
+                          label: "Gate Instructions",
+                          icon: <Info className="w-3.5 h-3.5" />,
+                          onClick: () => setSelectedInstructionAssignment(asn),
+                        },
+                        {
+                          label: "Copy Post Ref",
+                          icon: <Copy className="w-3.5 h-3.5" />,
+                          onClick: () => {
+                            navigator.clipboard.writeText(asn.id);
+                            toast.success("Post ID copied");
+                          },
+                        },
+                        {
+                          label: "View All Scans",
+                          icon: <Clock className="w-3.5 h-3.5" />,
+                          href: "/inspector/history",
+                        },
+                      ]}
+                    />
+                  </div>
                 </div>
               </div>
             );
@@ -267,9 +299,9 @@ export default function InspectorAssignmentsPage() {
 
       {/* Gate Instructions Modal */}
       {selectedInstructionAssignment && (
-        <div className="fixed inset-0 z-50 bg-background/80 backdrop-blur-xs flex items-center justify-center p-4">
-          <div className="bg-card border border-border/80 rounded-xl shadow-xl max-w-md w-full p-5 space-y-4 animate-in fade-in zoom-in-95 duration-150">
-            <div className="flex items-center justify-between border-b border-border/60 pb-3">
+        <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-center justify-center p-4">
+          <div className="bg-card border border-slate-200/50 dark:border-slate-800/50 rounded-3xl shadow-2xl max-w-md w-full p-6 space-y-4 animate-in fade-in zoom-in-95 duration-150">
+            <div className="flex items-center justify-between border-b border-slate-200/40 dark:border-slate-800/40 pb-3">
               <div>
                 <h3 className="text-sm font-bold text-foreground">
                   Gate Standing Instructions
@@ -281,14 +313,14 @@ export default function InspectorAssignmentsPage() {
               <button
                 type="button"
                 onClick={() => setSelectedInstructionAssignment(null)}
-                className="p-1 rounded text-muted-foreground hover:text-foreground hover:bg-muted"
+                className="p-1 rounded-lg text-muted-foreground hover:text-foreground hover:bg-muted"
               >
                 <X className="w-4 h-4" />
               </button>
             </div>
 
             <div className="space-y-3 text-xs">
-              <div className="p-3 rounded-lg bg-amber-500/10 border border-amber-600/30 text-amber-800 dark:text-amber-200 space-y-1">
+              <div className="p-3.5 rounded-2xl bg-amber-500/10 border border-amber-600/20 text-amber-800 dark:text-amber-200 space-y-1">
                 <span className="font-bold block">Supervisor Instructions:</span>
                 <p className="leading-relaxed">
                   {selectedInstructionAssignment.specialInstructions}
@@ -296,7 +328,7 @@ export default function InspectorAssignmentsPage() {
               </div>
 
               {selectedInstructionAssignment.driverOrLead && (
-                <div className="p-3 rounded-lg bg-muted/30 border border-border/40 space-y-1.5">
+                <div className="p-3.5 rounded-2xl bg-slate-50/70 dark:bg-slate-800/30 border border-slate-200/40 dark:border-slate-800/40 space-y-1.5">
                   <span className="font-semibold text-foreground block">
                     Lead Driver / Gate Contact:
                   </span>
@@ -312,11 +344,11 @@ export default function InspectorAssignmentsPage() {
               )}
             </div>
 
-            <div className="flex items-center justify-end gap-2 pt-2 border-t border-border/60">
+            <div className="flex items-center justify-end gap-2 pt-2 border-t border-slate-200/40 dark:border-slate-800/40">
               <button
                 type="button"
                 onClick={() => setSelectedInstructionAssignment(null)}
-                className="px-3 py-1.5 text-xs font-medium rounded-lg border border-border/70 hover:bg-muted text-foreground"
+                className="px-4 py-2 text-xs font-semibold rounded-xl bg-muted hover:bg-muted/80 text-foreground"
               >
                 Close
               </button>
@@ -327,7 +359,7 @@ export default function InspectorAssignmentsPage() {
                   setSelectedInstructionAssignment(null);
                   handleStartScanning(asn);
                 }}
-                className="px-3.5 py-1.5 text-xs font-semibold rounded-lg bg-amber-600 hover:bg-amber-700 text-white"
+                className="px-4 py-2 text-xs font-semibold rounded-xl bg-amber-600 hover:bg-amber-700 text-white"
               >
                 Open Scanner for This Gate
               </button>

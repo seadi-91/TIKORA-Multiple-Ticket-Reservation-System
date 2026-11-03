@@ -12,9 +12,13 @@ import {
   ArrowRight,
   Search,
   Filter,
+  Eye,
+  Boxes,
+  Ticket,
 } from "lucide-react";
 import { SportsService } from "@/services/sports.service";
 import { formatCurrency } from "@/lib/format-currency";
+import { ActionDropdown } from "@/components/ui/action-dropdown";
 
 export default function ProviderSportsPage() {
   const matches = SportsService.getAllMatches();
@@ -140,14 +144,36 @@ export default function ProviderSportsPage() {
                 {match.availableSeats} Seats Available
               </span>
 
-              <Link
-                href={`/sports/${match.id}`}
-                target="_blank"
-                className="text-xs font-bold text-[#B45309] dark:text-amber-400 hover:underline flex items-center gap-1"
-              >
-                <span>Preview Match</span>
-                <ArrowRight className="w-3 h-3" />
-              </Link>
+              <div className="flex items-center gap-1.5">
+                <Link
+                  href={`/sports/${match.id}`}
+                  target="_blank"
+                  className="text-xs font-bold text-[#B45309] dark:text-amber-400 hover:underline flex items-center gap-1"
+                >
+                  <span>Preview</span>
+                  <ArrowRight className="w-3 h-3" />
+                </Link>
+
+                <ActionDropdown
+                  items={[
+                    {
+                      label: "View Fixture Listing",
+                      icon: <Eye className="w-3.5 h-3.5" />,
+                      href: `/provider/tickets/${match.id}`,
+                    },
+                    {
+                      label: "Tribune Seat Inventory",
+                      icon: <Boxes className="w-3.5 h-3.5" />,
+                      href: `/provider/inventory`,
+                    },
+                    {
+                      label: "Edit Match Passes",
+                      icon: <Ticket className="w-3.5 h-3.5" />,
+                      href: `/provider/tickets/${match.id}/edit`,
+                    },
+                  ]}
+                />
+              </div>
             </div>
           </div>
         ))}

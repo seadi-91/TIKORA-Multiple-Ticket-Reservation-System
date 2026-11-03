@@ -4,6 +4,8 @@ import React, { useState } from "react";
 import Link from "next/link";
 import {
   Bus,
+  CheckCircle2,
+  Copy,
   Download,
   Eye,
   Film,
@@ -11,10 +13,12 @@ import {
   Music,
   Search,
   Trophy,
+  UserCheck,
 } from "lucide-react";
 import { formatCurrency } from "@/lib/format-currency";
 import { TicketCategory } from "@/types/ticket.types";
 import { toast } from "sonner";
+import { ActionDropdown } from "@/components/ui/action-dropdown";
 
 interface ProviderBookingRecord {
   id: string;
@@ -323,10 +327,10 @@ export default function ProviderBookingsPage() {
       </div>
 
       {/* Filter and Search Bar */}
-      <div className="bg-card border border-border/60 rounded-xl p-4 shadow-xs space-y-3">
+      <div className="bg-card border border-slate-200/50 dark:border-slate-800/50 rounded-3xl p-5 shadow-sm space-y-3">
         <div className="flex flex-col sm:flex-row gap-3 items-stretch sm:items-center justify-between">
           {/* Category Tabs */}
-          <div className="flex flex-wrap items-center gap-1.5">
+          <div className="flex items-center gap-1.5 overflow-x-auto no-scrollbar flex-nowrap pb-1 sm:pb-0">
             {[
               { id: "ALL", label: "All Sectors" },
               { id: "BUS", label: "Bus" },
@@ -338,10 +342,10 @@ export default function ProviderBookingsPage() {
                 key={tab.id}
                 type="button"
                 onClick={() => setCategoryFilter(tab.id)}
-                className={`px-3 py-1.5 text-xs font-medium rounded-lg transition-colors ${
+                className={`px-3.5 py-1.5 text-xs font-semibold rounded-xl transition-all shrink-0 ${
                   categoryFilter === tab.id
-                    ? "bg-amber-600 text-white"
-                    : "bg-muted/50 text-muted-foreground hover:bg-muted hover:text-foreground"
+                    ? "bg-amber-600 text-white shadow-sm"
+                    : "bg-slate-100 dark:bg-slate-800/60 text-muted-foreground hover:bg-slate-200 dark:hover:bg-slate-800 hover:text-foreground"
                 }`}
               >
                 {tab.label}
@@ -351,27 +355,27 @@ export default function ProviderBookingsPage() {
 
           {/* Search Bar */}
           <div className="relative flex-1 sm:max-w-xs">
-            <Search className="w-3.5 h-3.5 absolute left-3 top-2.5 text-muted-foreground" />
+            <Search className="w-3.5 h-3.5 absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground pointer-events-none" />
             <input
               type="text"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               placeholder="Search ref, customer, phone..."
-              className="w-full pl-9 pr-3 py-1.5 text-xs rounded-lg border border-border/70 bg-background text-foreground focus:outline-none focus:ring-1 focus:ring-amber-500"
+              className="w-full pl-9 pr-3 py-2 text-xs rounded-xl border border-slate-200/60 dark:border-slate-800/60 bg-card text-foreground focus:outline-none focus:ring-2 focus:ring-amber-500/30"
             />
           </div>
         </div>
 
         {/* Status Dropdowns */}
-        <div className="flex flex-wrap items-center gap-2 pt-2 border-t border-border/40">
-          <span className="text-[11px] text-muted-foreground flex items-center gap-1">
+        <div className="flex flex-wrap items-center gap-2 pt-3 border-t border-slate-200/40 dark:border-slate-800/40">
+          <span className="text-[11px] font-semibold text-muted-foreground flex items-center gap-1">
             <Filter className="w-3 h-3" /> Filters:
           </span>
 
           <select
             value={paymentFilter}
             onChange={(e) => setPaymentFilter(e.target.value)}
-            className="px-2.5 py-1 text-xs rounded-md border border-border/70 bg-background text-foreground"
+            className="px-3 py-1.5 text-xs font-medium rounded-xl border border-slate-200/60 dark:border-slate-800/60 bg-card text-foreground focus:outline-none focus:ring-2 focus:ring-amber-500/30"
           >
             <option value="ALL">All Payment Statuses</option>
             <option value="PAID">Paid</option>
@@ -382,7 +386,7 @@ export default function ProviderBookingsPage() {
           <select
             value={statusFilter}
             onChange={(e) => setStatusFilter(e.target.value)}
-            className="px-2.5 py-1 text-xs rounded-md border border-border/70 bg-background text-foreground"
+            className="px-3 py-1.5 text-xs font-medium rounded-xl border border-slate-200/60 dark:border-slate-800/60 bg-card text-foreground focus:outline-none focus:ring-2 focus:ring-amber-500/30"
           >
             <option value="ALL">All Boarding Statuses</option>
             <option value="CONFIRMED">Confirmed</option>
@@ -402,7 +406,7 @@ export default function ProviderBookingsPage() {
                 setStatusFilter("ALL");
                 setSearchQuery("");
               }}
-              className="text-[11px] text-amber-600 hover:underline px-1"
+              className="text-[11px] font-semibold text-amber-600 hover:underline px-1"
             >
               Reset Filters
             </button>
@@ -410,34 +414,135 @@ export default function ProviderBookingsPage() {
         </div>
       </div>
 
-      {/* Bookings Data Table */}
-      <div className="bg-card border border-border/60 rounded-xl shadow-xs overflow-hidden">
-        <div className="overflow-x-auto">
+      {/* Bookings Data Table & Mobile Cards */}
+      <div className="bg-card border border-slate-200/50 dark:border-slate-800/50 rounded-3xl shadow-sm overflow-hidden">
+        {/* Mobile View: Cards */}
+        <div className="block sm:hidden divide-y divide-slate-100 dark:divide-slate-800/40">
+          {filteredBookings.length === 0 ? (
+            <div className="py-12 px-4 text-center text-muted-foreground text-xs">
+              No bookings found matching your search criteria.
+            </div>
+          ) : (
+            filteredBookings.map((b) => (
+              <div key={b.id} className="p-4 space-y-3">
+                {/* Header: Ref, Category, Actions */}
+                <div className="flex items-center justify-between gap-2">
+                  <div className="flex items-center gap-2">
+                    <div className="w-8 h-8 rounded-lg bg-amber-500/10 text-amber-600 flex items-center justify-center shrink-0">
+                      {getCategoryIcon(b.category)}
+                    </div>
+                    <div>
+                      <Link
+                        href={`/provider/bookings/${b.id}`}
+                        className="font-mono font-bold text-xs text-amber-600 dark:text-amber-400 hover:underline block leading-tight"
+                      >
+                        {b.reference}
+                      </Link>
+                      <span className="text-[10px] text-muted-foreground block">
+                        {b.travelDate} • {b.departureTime}
+                      </span>
+                    </div>
+                  </div>
+
+                  <ActionDropdown
+                    items={[
+                      {
+                        label: "View Booking Details",
+                        icon: <Eye className="w-3.5 h-3.5" />,
+                        href: `/provider/bookings/${b.id}`,
+                      },
+                      {
+                        label:
+                          b.bookingStatus === "CHECKED_IN"
+                            ? "Mark Unboarded"
+                            : "Check-in Passenger",
+                        icon: <UserCheck className="w-3.5 h-3.5" />,
+                        variant:
+                          b.bookingStatus === "CHECKED_IN" ? "warning" : "success",
+                        onClick: () => handleQuickCheckIn(b.id),
+                      },
+                      {
+                        label: "Copy Reference Code",
+                        icon: <Copy className="w-3.5 h-3.5" />,
+                        onClick: () => {
+                          navigator.clipboard.writeText(b.reference);
+                          toast.success("Booking reference copied");
+                        },
+                      },
+                    ]}
+                  />
+                </div>
+
+                {/* Service and Customer */}
+                <div className="space-y-1">
+                  <p className="text-xs font-semibold text-foreground line-clamp-1">
+                    {b.serviceTitle}
+                  </p>
+                  <div className="flex items-center justify-between text-xs text-muted-foreground">
+                    <span>{b.customerName}</span>
+                    <span className="font-mono text-[11px]">{b.customerPhone}</span>
+                  </div>
+                </div>
+
+                {/* Badges & Price */}
+                <div className="flex items-center justify-between pt-1 text-xs">
+                  <div className="flex items-center gap-1.5 flex-wrap">
+                    <span className="inline-flex items-center px-2 py-0.5 rounded-lg text-[10px] font-semibold bg-slate-100 dark:bg-slate-800 text-foreground font-mono">
+                      Seats: {b.seats.join(", ")}
+                    </span>
+                    <span
+                      className={`inline-flex items-center px-2 py-0.5 rounded-lg text-[10px] font-semibold border ${
+                        b.bookingStatus === "CHECKED_IN"
+                          ? "bg-emerald-500/10 text-emerald-600 border-emerald-500/20"
+                          : b.bookingStatus === "CANCELLED"
+                          ? "bg-rose-500/10 text-rose-600 border-rose-500/20"
+                          : "bg-blue-500/10 text-blue-600 border-blue-500/20"
+                      }`}
+                    >
+                      {b.bookingStatus === "CHECKED_IN"
+                        ? "Boarded"
+                        : b.bookingStatus === "CANCELLED"
+                        ? "Cancelled"
+                        : "Confirmed"}
+                    </span>
+                  </div>
+
+                  <span className="font-mono font-bold text-foreground text-sm">
+                    {formatCurrency(b.totalAmount)}
+                  </span>
+                </div>
+              </div>
+            ))
+          )}
+        </div>
+
+        {/* Desktop View: Full Table */}
+        <div className="hidden sm:block overflow-x-auto">
           <table className="w-full text-left border-collapse text-xs">
             <thead>
-              <tr className="border-b border-border/60 bg-muted/30 text-muted-foreground font-semibold">
-                <th className="py-3 px-3">Reference</th>
-                <th className="py-3 px-3">Customer & Contact</th>
-                <th className="py-3 px-3">Service & Route</th>
-                <th className="py-3 px-3">Schedule Date</th>
-                <th className="py-3 px-3 text-center">Seats</th>
-                <th className="py-3 px-3 text-right">Amount (ETB)</th>
-                <th className="py-3 px-3 text-center">Payment</th>
-                <th className="py-3 px-3 text-center">Boarding</th>
-                <th className="py-3 px-3 text-right">Actions</th>
+              <tr className="bg-slate-50/60 dark:bg-slate-800/40 text-muted-foreground uppercase text-[10px] font-bold tracking-wider">
+                <th className="py-3.5 px-4">Reference</th>
+                <th className="py-3.5 px-4">Customer & Contact</th>
+                <th className="py-3.5 px-4">Service & Route</th>
+                <th className="py-3.5 px-4">Schedule Date</th>
+                <th className="py-3.5 px-4 text-center">Seats</th>
+                <th className="py-3.5 px-4 text-right">Amount (ETB)</th>
+                <th className="py-3.5 px-4 text-center">Payment</th>
+                <th className="py-3.5 px-4 text-center">Boarding</th>
+                <th className="py-3.5 px-5 text-right">Actions</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-border/40">
+            <tbody className="divide-y divide-slate-100 dark:divide-slate-800/40">
               {filteredBookings.length === 0 ? (
                 <tr>
-                  <td colSpan={9} className="py-8 text-center text-muted-foreground">
+                  <td colSpan={9} className="py-12 text-center text-muted-foreground">
                     No bookings found matching your search criteria.
                   </td>
                 </tr>
               ) : (
                 filteredBookings.map((b) => (
-                  <tr key={b.id} className="hover:bg-muted/20 transition-colors">
-                    <td className="py-3 px-3 font-mono font-bold text-amber-600">
+                  <tr key={b.id} className="hover:bg-amber-500/[0.03] dark:hover:bg-amber-500/[0.06] transition-colors">
+                    <td className="py-3.5 px-4 font-mono font-bold text-amber-600 dark:text-amber-400">
                       <Link
                         href={`/provider/bookings/${b.id}`}
                         className="hover:underline"
@@ -446,40 +551,40 @@ export default function ProviderBookingsPage() {
                       </Link>
                     </td>
 
-                    <td className="py-3 px-3">
+                    <td className="py-3.5 px-4">
                       <span className="font-semibold text-foreground block">
                         {b.customerName}
                       </span>
-                      <span className="text-[11px] text-muted-foreground block">
+                      <span className="text-[11px] text-muted-foreground block font-mono">
                         {b.customerPhone}
                       </span>
                     </td>
 
-                    <td className="py-3 px-3">
+                    <td className="py-3.5 px-4">
                       <div className="flex items-center gap-1.5 font-medium text-foreground">
                         {getCategoryIcon(b.category)}
                         <span className="line-clamp-1">{b.serviceTitle}</span>
                       </div>
                     </td>
 
-                    <td className="py-3 px-3 text-muted-foreground whitespace-nowrap">
+                    <td className="py-3.5 px-4 text-muted-foreground whitespace-nowrap">
                       <span className="font-medium text-foreground block">{b.travelDate}</span>
-                      <span className="text-[11px]">{b.departureTime}</span>
+                      <span className="text-[11px] font-mono">{b.departureTime}</span>
                     </td>
 
-                    <td className="py-3 px-3 text-center font-mono">
-                      <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded bg-muted text-foreground text-[11px]">
+                    <td className="py-3.5 px-4 text-center font-mono">
+                      <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-lg bg-slate-100 dark:bg-slate-800 text-foreground text-[11px] font-medium">
                         {b.seats.join(", ")}
                       </span>
                     </td>
 
-                    <td className="py-3 px-3 text-right font-mono font-semibold text-foreground">
+                    <td className="py-3.5 px-4 text-right font-mono font-bold text-foreground">
                       {formatCurrency(b.totalAmount)}
                     </td>
 
-                    <td className="py-3 px-3 text-center">
+                    <td className="py-3.5 px-4 text-center">
                       <span
-                        className={`inline-flex items-center px-2 py-0.5 rounded text-[10px] font-semibold border ${
+                        className={`inline-flex items-center px-2 py-0.5 rounded-lg text-[10px] font-semibold border ${
                           b.paymentStatus === "PAID"
                             ? "bg-emerald-500/10 text-emerald-600 border-emerald-500/20"
                             : b.paymentStatus === "REFUNDED"
@@ -491,9 +596,9 @@ export default function ProviderBookingsPage() {
                       </span>
                     </td>
 
-                    <td className="py-3 px-3 text-center">
+                    <td className="py-3.5 px-4 text-center">
                       <span
-                        className={`inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-semibold border ${
+                        className={`inline-flex items-center gap-1 px-2.5 py-0.5 rounded-lg text-[10px] font-semibold border ${
                           b.bookingStatus === "CHECKED_IN"
                             ? "bg-emerald-500/10 text-emerald-600 border-emerald-500/20"
                             : b.bookingStatus === "CANCELLED"
@@ -518,23 +623,35 @@ export default function ProviderBookingsPage() {
                       </span>
                     </td>
 
-                    <td className="py-3 px-3 text-right">
-                      <div className="inline-flex items-center gap-1">
-                        <button
-                          type="button"
-                          onClick={() => handleQuickCheckIn(b.id)}
-                          className="px-2 py-1 text-[11px] font-medium rounded border border-border/70 hover:bg-muted text-foreground transition-colors"
-                          title="Toggle Check-In"
-                        >
-                          {b.bookingStatus === "CHECKED_IN" ? "Unboard" : "Check-in"}
-                        </button>
-                        <Link
-                          href={`/provider/bookings/${b.id}`}
-                          className="p-1 rounded text-muted-foreground hover:text-foreground hover:bg-muted"
-                          title="View booking detail"
-                        >
-                          <Eye className="w-3.5 h-3.5" />
-                        </Link>
+                    <td className="py-3.5 px-5 text-right">
+                      <div className="flex items-center justify-end">
+                        <ActionDropdown
+                          items={[
+                            {
+                              label: "View Booking Details",
+                              icon: <Eye className="w-3.5 h-3.5" />,
+                              href: `/provider/bookings/${b.id}`,
+                            },
+                            {
+                              label:
+                                b.bookingStatus === "CHECKED_IN"
+                                  ? "Mark Unboarded"
+                                  : "Check-in Passenger",
+                              icon: <UserCheck className="w-3.5 h-3.5" />,
+                              variant:
+                                b.bookingStatus === "CHECKED_IN" ? "warning" : "success",
+                              onClick: () => handleQuickCheckIn(b.id),
+                            },
+                            {
+                              label: "Copy Reference Code",
+                              icon: <Copy className="w-3.5 h-3.5" />,
+                              onClick: () => {
+                                navigator.clipboard.writeText(b.reference);
+                                toast.success("Booking reference copied");
+                              },
+                            },
+                          ]}
+                        />
                       </div>
                     </td>
                   </tr>

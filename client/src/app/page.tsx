@@ -127,8 +127,8 @@ export default function HomePage() {
 
           {/* Search Box Card - Compact */}
           <div className="rounded-2xl bg-white dark:bg-[#161922] border border-[#E2E8F0] dark:border-slate-800 p-3 sm:p-4 shadow-sm text-left max-w-3xl mx-auto">
-            {/* Category Switcher Tabs - Compact */}
-            <div className="flex items-center gap-1.5 overflow-x-auto pb-2.5 border-b border-[#E2E8F0] dark:border-slate-800 mb-3">
+            {/* Category Switcher Tabs - Compact & Smooth Touch Scroll */}
+            <div className="flex items-center gap-1.5 overflow-x-auto no-scrollbar pb-2.5 border-b border-[#E2E8F0] dark:border-slate-800 mb-3">
               {[
                 { id: "ALL", label: "All", icon: Ticket },
                 { id: "BUS", label: "Buses", icon: Bus },
@@ -142,9 +142,9 @@ export default function HomePage() {
                   <button
                     key={cat.id}
                     onClick={() => setActiveCategory(cat.id as any)}
-                    className={`flex items-center gap-1.5 px-3 py-1 rounded-lg text-xs font-semibold transition-all shrink-0 cursor-pointer ${
+                    className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition-all shrink-0 cursor-pointer min-h-[34px] touch-manipulation ${
                       isSelected
-                        ? "bg-[#B45309] text-white shadow-xs"
+                        ? "bg-[#B45309] text-white shadow-xs font-bold"
                         : "bg-slate-100 text-[#64748B] hover:text-[#0F172A] dark:bg-slate-800/80 dark:text-slate-300 dark:hover:bg-slate-800"
                     }`}
                   >
@@ -155,20 +155,20 @@ export default function HomePage() {
               })}
             </div>
 
-            {/* Form Inputs - Compact */}
-            <form onSubmit={handleHeroSearch} className="grid grid-cols-1 sm:grid-cols-12 gap-2 sm:gap-2.5">
+            {/* Form Inputs - Compact & Touch-Friendly */}
+            <form onSubmit={handleHeroSearch} className="grid grid-cols-1 sm:grid-cols-12 gap-2.5">
               <div className="sm:col-span-5 relative">
                 <label className="block text-[9px] uppercase font-bold text-[#64748B] dark:text-slate-400 mb-0.5">
                   Search Query
                 </label>
                 <div className="relative">
-                  <Search className="w-3.5 h-3.5 text-[#64748B] absolute left-2.5 top-1/2 -translate-y-1/2" />
+                  <Search className="w-3.5 h-3.5 text-[#64748B] absolute left-2.5 top-1/2 -translate-y-1/2 pointer-events-none" />
                   <input
                     type="text"
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
                     placeholder="e.g. Selam Bus, Avatar, Jazz Fest..."
-                    className="w-full pl-8 pr-2.5 py-1.5 rounded-lg border border-[#E2E8F0] dark:border-slate-800 bg-[#F8FAFC] dark:bg-[#0F1117] text-[#0F172A] dark:text-white text-xs focus:outline-none focus:border-[#B45309]"
+                    className="w-full pl-8 pr-2.5 py-2 sm:py-1.5 rounded-lg border border-[#E2E8F0] dark:border-slate-800 bg-[#F8FAFC] dark:bg-[#0F1117] text-[#0F172A] dark:text-white text-xs focus:outline-none focus:border-[#B45309] min-h-[40px] sm:min-h-0"
                   />
                 </div>
               </div>
@@ -182,7 +182,7 @@ export default function HomePage() {
                   <select
                     value={selectedCity}
                     onChange={(e) => setSelectedCity(e.target.value)}
-                    className="w-full pl-8 pr-2.5 py-1.5 rounded-lg border border-[#E2E8F0] dark:border-slate-800 bg-[#F8FAFC] dark:bg-[#0F1117] text-[#0F172A] dark:text-white text-xs focus:outline-none focus:border-[#B45309] appearance-none cursor-pointer"
+                    className="w-full pl-8 pr-2.5 py-2 sm:py-1.5 rounded-lg border border-[#E2E8F0] dark:border-slate-800 bg-[#F8FAFC] dark:bg-[#0F1117] text-[#0F172A] dark:text-white text-xs focus:outline-none focus:border-[#B45309] appearance-none cursor-pointer min-h-[40px] sm:min-h-0"
                   >
                     <option value="">All Cities</option>
                     {ETHIOPIAN_CITIES.map((c) => (
@@ -204,7 +204,7 @@ export default function HomePage() {
                     type="date"
                     value={selectedDate}
                     onChange={(e) => setSelectedDate(e.target.value)}
-                    className="w-full pl-8 pr-2 py-1.5 rounded-lg border border-[#E2E8F0] dark:border-slate-800 bg-[#F8FAFC] dark:bg-[#0F1117] text-[#0F172A] dark:text-white text-xs focus:outline-none focus:border-[#B45309]"
+                    className="w-full pl-8 pr-2 py-2 sm:py-1.5 rounded-lg border border-[#E2E8F0] dark:border-slate-800 bg-[#F8FAFC] dark:bg-[#0F1117] text-[#0F172A] dark:text-white text-xs focus:outline-none focus:border-[#B45309] min-h-[40px] sm:min-h-0"
                   />
                 </div>
               </div>
@@ -212,9 +212,9 @@ export default function HomePage() {
               <div className="sm:col-span-2 flex items-end">
                 <button
                   type="submit"
-                  className="w-full py-1.5 px-3 rounded-lg bg-[#B45309] hover:bg-[#92400E] text-white text-xs font-bold transition-all shadow-xs flex items-center justify-center gap-1.5 active:scale-98 cursor-pointer h-[30px]"
+                  className="w-full py-2.5 sm:py-1.5 px-3 rounded-lg bg-[#B45309] hover:bg-[#92400E] text-white text-xs font-bold transition-all shadow-xs flex items-center justify-center gap-1.5 active:scale-98 cursor-pointer h-10 sm:h-[30px] touch-manipulation"
                 >
-                  <Search className="w-3 h-3" />
+                  <Search className="w-3.5 h-3.5" />
                   <span>Search</span>
                 </button>
               </div>

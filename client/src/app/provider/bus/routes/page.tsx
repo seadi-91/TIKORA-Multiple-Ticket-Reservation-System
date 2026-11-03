@@ -12,10 +12,12 @@ import {
   Search,
   ArrowLeft,
   X,
+  Bus,
 } from "lucide-react";
 import { useProviderStore, BusRouteItem } from "@/stores/provider.store";
 import { formatCurrency } from "@/lib/format-currency";
 import { ETHIOPIAN_CITIES } from "@/lib/constants";
+import { ActionDropdown } from "@/components/ui/action-dropdown";
 
 export default function BusRoutesPage() {
   const { busRoutes, addBusRoute, updateBusRoute, deleteBusRoute } = useProviderStore();
@@ -193,24 +195,35 @@ export default function BusRoutesPage() {
               </span>
 
               <div className="flex items-center gap-1.5">
-                <button
-                  onClick={() => handleOpenEdit(rt)}
-                  className="p-1.5 rounded-lg border border-slate-200 dark:border-slate-800 text-slate-600 dark:text-slate-300 hover:text-[#B45309] hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors cursor-pointer"
-                  title="Edit Route"
-                >
-                  <Edit className="w-3.5 h-3.5" />
-                </button>
-                <button
-                  onClick={() => {
-                    if (confirm(`Delete route ${rt.origin} → ${rt.destination}?`)) {
-                      deleteBusRoute(rt.id);
-                    }
-                  }}
-                  className="p-1.5 rounded-lg border border-slate-200 dark:border-slate-800 text-slate-400 hover:text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-950/40 transition-colors cursor-pointer"
-                  title="Delete Route"
-                >
-                  <Trash2 className="w-3.5 h-3.5" />
-                </button>
+                <ActionDropdown
+                  items={[
+                    {
+                      label: "Edit Route Parameters",
+                      icon: <Edit className="w-3.5 h-3.5" />,
+                      onClick: () => handleOpenEdit(rt),
+                    },
+                    {
+                      label: "Schedule Departure",
+                      icon: <Clock className="w-3.5 h-3.5" />,
+                      href: `/provider/bus/schedules`,
+                    },
+                    {
+                      label: "View Live Trips",
+                      icon: <Bus className="w-3.5 h-3.5" />,
+                      href: `/provider/bus/trips`,
+                    },
+                    {
+                      label: "Delete Highway Route",
+                      icon: <Trash2 className="w-3.5 h-3.5" />,
+                      variant: "danger",
+                      onClick: () => {
+                        if (confirm(`Delete route ${rt.origin} → ${rt.destination}?`)) {
+                          deleteBusRoute(rt.id);
+                        }
+                      },
+                    },
+                  ]}
+                />
               </div>
             </div>
           </div>

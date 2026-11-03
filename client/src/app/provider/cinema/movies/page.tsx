@@ -15,6 +15,7 @@ import {
   CheckCircle2,
 } from "lucide-react";
 import { CinemaService } from "@/services/cinema.service";
+import { ActionDropdown } from "@/components/ui/action-dropdown";
 
 export default function ProviderMoviesCatalogPage() {
   const initialMovies = CinemaService.getAllMovies();
@@ -124,53 +125,68 @@ export default function ProviderMoviesCatalogPage() {
       </div>
 
       {/* Movie Catalog Table */}
-      <div className="rounded-3xl bg-white dark:bg-[#161922] border border-[#E2E8F0] dark:border-slate-800 overflow-hidden shadow-2xs">
+      <div className="rounded-3xl bg-card border border-slate-200/50 dark:border-slate-800/50 overflow-hidden shadow-sm">
         <div className="overflow-x-auto">
           <table className="w-full text-left border-collapse">
             <thead>
-              <tr className="border-b border-slate-100 dark:border-slate-800 text-[10px] uppercase font-bold text-slate-400 tracking-wider bg-slate-50/50 dark:bg-slate-800/20">
-                <th className="py-3 px-4">Movie Title</th>
-                <th className="py-3 px-4">Genre & Category</th>
-                <th className="py-3 px-4">Duration</th>
-                <th className="py-3 px-4">Rating</th>
-                <th className="py-3 px-4">Screen Format</th>
-                <th className="py-3 px-4 text-right">Actions</th>
+              <tr className="bg-slate-50/60 dark:bg-slate-800/40 text-[10px] uppercase font-bold text-muted-foreground tracking-wider">
+                <th className="py-3.5 px-4">Movie Title</th>
+                <th className="py-3.5 px-4">Genre & Category</th>
+                <th className="py-3.5 px-4">Duration</th>
+                <th className="py-3.5 px-4">Rating</th>
+                <th className="py-3.5 px-4">Screen Format</th>
+                <th className="py-3.5 px-5 text-right">Actions</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-slate-100 dark:divide-slate-800 text-xs">
+            <tbody className="divide-y divide-slate-100 dark:divide-slate-800/40 text-xs">
               {filtered.map((m) => (
-                <tr key={m.id} className="hover:bg-slate-50/60 dark:hover:bg-slate-800/30 transition-colors">
-                  <td className="py-3.5 px-4 font-bold text-[#0F172A] dark:text-white">
+                <tr key={m.id} className="hover:bg-amber-500/[0.03] dark:hover:bg-amber-500/[0.06] transition-colors">
+                  <td className="py-3.5 px-4 font-bold text-foreground">
                     {m.title}
                   </td>
-                  <td className="py-3.5 px-4 text-slate-600 dark:text-slate-300">
+                  <td className="py-3.5 px-4 text-muted-foreground">
                     {m.categoryDetails?.movieGenre || "Action"}
                   </td>
-                  <td className="py-3.5 px-4 font-mono text-slate-500">
+                  <td className="py-3.5 px-4 font-mono text-muted-foreground">
                     {m.duration}
                   </td>
                   <td className="py-3.5 px-4">
-                    <span className="px-2 py-0.5 rounded-md bg-slate-100 dark:bg-slate-800 font-bold text-[10px] text-slate-700 dark:text-slate-300">
+                    <span className="px-2.5 py-0.5 rounded-md bg-slate-100 dark:bg-slate-800 font-bold text-[10px] text-foreground">
                       {m.categoryDetails?.movieRating || "PG-13"}
                     </span>
                   </td>
                   <td className="py-3.5 px-4">
-                    <span className="text-xs font-semibold text-purple-700 dark:text-purple-300">
+                    <span className="text-xs font-semibold text-purple-600 dark:text-purple-400">
                       {m.categoryDetails?.screenFormat || "4K Laser"}
                     </span>
                   </td>
-                  <td className="py-3.5 px-4 text-right space-x-1.5">
-                    <button
-                      onClick={() => {
-                        if (confirm(`Remove "${m.title}" from catalog?`)) {
-                          setMoviesList(moviesList.filter((item) => item.id !== m.id));
-                        }
-                      }}
-                      className="p-1.5 rounded-lg border border-slate-200 dark:border-slate-800 text-slate-400 hover:text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-950/40 transition-colors"
-                      title="Delete Title"
-                    >
-                      <Trash2 className="w-3.5 h-3.5" />
-                    </button>
+                  <td className="py-3.5 px-5 text-right">
+                    <div className="flex items-center justify-end">
+                      <ActionDropdown
+                        items={[
+                          {
+                            label: "Schedule Showtime",
+                            icon: <Clock className="w-3.5 h-3.5" />,
+                            href: `/provider/cinema/showtimes`,
+                          },
+                          {
+                            label: "Cinema Overview",
+                            icon: <Film className="w-3.5 h-3.5" />,
+                            href: `/provider/cinema`,
+                          },
+                          {
+                            label: "Remove Movie",
+                            icon: <Trash2 className="w-3.5 h-3.5" />,
+                            variant: "danger",
+                            onClick: () => {
+                              if (confirm(`Remove "${m.title}" from catalog?`)) {
+                                setMoviesList(moviesList.filter((item) => item.id !== m.id));
+                              }
+                            },
+                          },
+                        ]}
+                      />
+                    </div>
                   </td>
                 </tr>
               ))}

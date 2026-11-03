@@ -4,8 +4,10 @@ import React, { useState } from "react";
 import Link from "next/link";
 import {
   CheckCircle2,
+  Copy,
   DollarSign,
   Download,
+  FileText,
   Landmark,
   TrendingUp,
   Wallet,
@@ -14,6 +16,7 @@ import {
 import { useProviderStore } from "@/stores/provider.store";
 import { formatCurrency } from "@/lib/format-currency";
 import { toast } from "sonner";
+import { ActionDropdown } from "@/components/ui/action-dropdown";
 
 interface PayoutTransaction {
   id: string;
@@ -237,15 +240,15 @@ export default function ProviderPaymentsPage() {
       </div>
 
       {/* Settlement Transactions Table */}
-      <div className="bg-card border border-border/60 rounded-xl shadow-xs overflow-hidden">
-        <div className="p-4 border-b border-border/60 flex items-center justify-between">
+      <div className="bg-card border border-slate-200/50 dark:border-slate-800/50 rounded-3xl shadow-sm overflow-hidden">
+        <div className="p-5 border-b border-slate-200/40 dark:border-slate-800/40 flex flex-col sm:flex-row sm:items-center justify-between gap-2">
           <div>
             <h3 className="text-sm font-bold text-foreground">Payout & Settlement History</h3>
-            <p className="text-xs text-muted-foreground">
+            <p className="text-xs text-muted-foreground mt-0.5">
               Official record of electronic funds transfers to your designated bank.
             </p>
           </div>
-          <span className="text-xs font-semibold text-muted-foreground">
+          <span className="text-xs font-semibold text-muted-foreground bg-slate-100 dark:bg-slate-800 px-3 py-1 rounded-xl self-start sm:self-auto">
             {transactions.length} Transactions
           </span>
         </div>
@@ -253,41 +256,42 @@ export default function ProviderPaymentsPage() {
         <div className="overflow-x-auto">
           <table className="w-full text-left border-collapse text-xs">
             <thead>
-              <tr className="border-b border-border/60 bg-muted/30 text-muted-foreground font-semibold">
-                <th className="py-3 px-4">Payout Reference</th>
-                <th className="py-3 px-3">Date & Timestamp</th>
-                <th className="py-3 px-3">Settlement Bank</th>
-                <th className="py-3 px-3 text-right">Requested</th>
-                <th className="py-3 px-3 text-right">Transfer Fee</th>
-                <th className="py-3 px-3 text-right">Net Transferred</th>
-                <th className="py-3 px-4 text-center">Status</th>
+              <tr className="bg-slate-50/60 dark:bg-slate-800/40 text-muted-foreground uppercase text-[10px] font-bold tracking-wider">
+                <th className="py-3.5 px-4">Payout Reference</th>
+                <th className="py-3.5 px-4">Date & Timestamp</th>
+                <th className="py-3.5 px-4">Settlement Bank</th>
+                <th className="py-3.5 px-4 text-right">Requested</th>
+                <th className="py-3.5 px-4 text-right">Transfer Fee</th>
+                <th className="py-3.5 px-4 text-right">Net Transferred</th>
+                <th className="py-3.5 px-4 text-center">Status</th>
+                <th className="py-3.5 px-5 text-right">Actions</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-border/40">
+            <tbody className="divide-y divide-slate-100 dark:divide-slate-800/40">
               {transactions.map((tx) => (
-                <tr key={tx.id} className="hover:bg-muted/20 transition-colors">
-                  <td className="py-3.5 px-4 font-mono font-bold text-amber-600">
+                <tr key={tx.id} className="hover:bg-amber-500/[0.03] dark:hover:bg-amber-500/[0.06] transition-colors">
+                  <td className="py-3.5 px-4 font-mono font-bold text-amber-600 dark:text-amber-400">
                     {tx.reference}
                   </td>
-                  <td className="py-3.5 px-3 text-muted-foreground">{tx.date}</td>
-                  <td className="py-3.5 px-3">
-                    <span className="font-medium text-foreground block">{tx.bankName}</span>
+                  <td className="py-3.5 px-4 text-muted-foreground font-mono">{tx.date}</td>
+                  <td className="py-3.5 px-4">
+                    <span className="font-semibold text-foreground block">{tx.bankName}</span>
                     <span className="text-[11px] font-mono text-muted-foreground">
                       Acct: {tx.accountNumber}
                     </span>
                   </td>
-                  <td className="py-3.5 px-3 text-right font-mono font-medium text-foreground">
+                  <td className="py-3.5 px-4 text-right font-mono font-medium text-foreground">
                     {formatCurrency(tx.amount)}
                   </td>
-                  <td className="py-3.5 px-3 text-right font-mono text-muted-foreground">
+                  <td className="py-3.5 px-4 text-right font-mono text-muted-foreground">
                     0 ETB
                   </td>
-                  <td className="py-3.5 px-3 text-right font-mono font-bold text-emerald-600">
+                  <td className="py-3.5 px-4 text-right font-mono font-bold text-emerald-600">
                     {formatCurrency(tx.netPayout)}
                   </td>
                   <td className="py-3.5 px-4 text-center">
                     <span
-                      className={`inline-flex items-center gap-1 px-2.5 py-0.5 rounded text-[10px] font-semibold border ${
+                      className={`inline-flex items-center gap-1 px-2.5 py-0.5 rounded-lg text-[10px] font-semibold border ${
                         tx.status === "COMPLETED"
                           ? "bg-emerald-500/10 text-emerald-600 border-emerald-500/20"
                           : "bg-amber-500/10 text-amber-600 border-amber-500/20"
@@ -300,6 +304,34 @@ export default function ProviderPaymentsPage() {
                       />
                       {tx.status}
                     </span>
+                  </td>
+                  <td className="py-3.5 px-5 text-right">
+                    <div className="flex items-center justify-end">
+                      <ActionDropdown
+                        items={[
+                          {
+                            label: "View Settlement Receipt",
+                            icon: <FileText className="w-3.5 h-3.5" />,
+                            onClick: () =>
+                              toast.success(`Generated receipt slip for ${tx.reference}`),
+                          },
+                          {
+                            label: "Copy Reference Code",
+                            icon: <Copy className="w-3.5 h-3.5" />,
+                            onClick: () => {
+                              navigator.clipboard.writeText(tx.reference);
+                              toast.success("Reference copied to clipboard");
+                            },
+                          },
+                          {
+                            label: "Download Invoice PDF",
+                            icon: <Download className="w-3.5 h-3.5" />,
+                            onClick: () =>
+                              toast.success(`Downloading payout receipt ${tx.reference}.pdf`),
+                          },
+                        ]}
+                      />
+                    </div>
                   </td>
                 </tr>
               ))}

@@ -45,11 +45,11 @@ export default function InspectorProfilePage() {
   return (
     <div className="space-y-6 max-w-4xl mx-auto">
       {/* Top Header */}
-      <div className="border-b border-border/60 pb-5">
+      <div className="border-b border-slate-200/50 dark:border-slate-800/50 pb-5">
         <h1 className="text-xl font-bold tracking-tight text-foreground">
           Inspector Personnel Credentials
         </h1>
-        <p className="text-xs text-muted-foreground">
+        <p className="text-xs text-muted-foreground mt-0.5">
           Authorized verification officer profile registered by {profile.organizationName}.
         </p>
       </div>
@@ -57,7 +57,7 @@ export default function InspectorProfilePage() {
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         {/* Left Column: Official Badge Card */}
         <div className="space-y-4">
-          <div className="bg-card border border-border/60 rounded-xl p-5 shadow-xs text-center space-y-4">
+          <div className="bg-card border border-slate-200/50 dark:border-slate-800/50 rounded-3xl p-6 shadow-sm text-center space-y-4">
             <div className="relative inline-block">
               <div className="w-20 h-20 rounded-full bg-amber-600 text-white font-bold text-2xl flex items-center justify-center mx-auto shadow-md">
                 {profile.fullName
@@ -77,7 +77,7 @@ export default function InspectorProfilePage() {
               </span>
             </div>
 
-            <div className="pt-2 border-t border-border/40 text-xs space-y-2 text-left">
+            <div className="pt-3 border-t border-slate-200/40 dark:border-slate-800/40 text-xs space-y-2 text-left">
               <div className="flex justify-between">
                 <span className="text-muted-foreground">Assigned Org:</span>
                 <span className="font-semibold text-foreground truncate max-w-[150px]">
@@ -106,7 +106,7 @@ export default function InspectorProfilePage() {
           </div>
 
           {/* Device & Hardware Info */}
-          <div className="bg-card border border-border/60 rounded-xl p-4 shadow-xs space-y-2 text-xs">
+          <div className="bg-card border border-slate-200/50 dark:border-slate-800/50 rounded-3xl p-5 shadow-sm space-y-2 text-xs">
             <span className="font-bold uppercase tracking-wider text-muted-foreground text-[10px] block">
               Authorized Device Hardware
             </span>
@@ -126,64 +126,64 @@ export default function InspectorProfilePage() {
 
         {/* Right Column: Editable Profile Form & Non-Editable Notices */}
         <div className="md:col-span-2 space-y-6">
-          <form onSubmit={handleSubmit} className="bg-card border border-border/60 rounded-xl p-5 shadow-xs space-y-4">
-            <div className="flex items-center justify-between border-b border-border/40 pb-3">
+          <form onSubmit={handleSubmit} className="bg-card border border-slate-200/50 dark:border-slate-800/50 rounded-3xl p-6 shadow-sm space-y-4">
+            <div className="flex items-center justify-between border-b border-slate-200/40 dark:border-slate-800/40 pb-3">
               <div>
                 <h3 className="text-sm font-bold text-foreground">Personal Contact Information</h3>
                 <p className="text-xs text-muted-foreground">
                   Update your mobile phone and notification dispatch address
                 </p>
               </div>
-              <span className="text-[10px] px-2 py-0.5 rounded bg-muted text-muted-foreground font-semibold">
+              <span className="text-[10px] px-2.5 py-0.5 rounded-full bg-muted text-muted-foreground font-semibold">
                 Editable Fields
               </span>
             </div>
 
             <div>
-              <label className="block text-xs font-medium text-foreground mb-1.5">
+              <label className="block text-xs font-semibold text-foreground mb-1.5">
                 Full Legal Name
               </label>
               <div className="relative">
-                <User className="w-3.5 h-3.5 absolute left-3 top-2.5 text-muted-foreground" />
+                <User className="w-3.5 h-3.5 absolute left-3.5 top-1/2 -translate-y-1/2 text-muted-foreground pointer-events-none" />
                 <input
                   type="text"
                   required
                   value={formData.fullName}
                   onChange={(e) => setFormData({ ...formData, fullName: e.target.value })}
-                  className="w-full pl-9 pr-3.5 py-2 text-xs rounded-lg border border-border/70 bg-background text-foreground"
+                  className="w-full pl-9 pr-3.5 py-2 text-xs rounded-xl border border-slate-200/60 dark:border-slate-800/60 bg-card text-foreground focus:outline-none focus:ring-2 focus:ring-amber-500/30"
                 />
               </div>
             </div>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div>
-                <label className="block text-xs font-medium text-foreground mb-1.5">
+                <label className="block text-xs font-semibold text-foreground mb-1.5">
                   Officer Email
                 </label>
                 <div className="relative">
-                  <Mail className="w-3.5 h-3.5 absolute left-3 top-2.5 text-muted-foreground" />
+                  <Mail className="w-3.5 h-3.5 absolute left-3.5 top-1/2 -translate-y-1/2 text-muted-foreground pointer-events-none" />
                   <input
                     type="email"
                     required
                     value={formData.email}
                     onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                    className="w-full pl-9 pr-3.5 py-2 text-xs rounded-lg border border-border/70 bg-background text-foreground"
+                    className="w-full pl-9 pr-3.5 py-2 text-xs rounded-xl border border-slate-200/60 dark:border-slate-800/60 bg-card text-foreground focus:outline-none focus:ring-2 focus:ring-amber-500/30"
                   />
                 </div>
               </div>
 
               <div>
-                <label className="block text-xs font-medium text-foreground mb-1.5">
+                <label className="block text-xs font-semibold text-foreground mb-1.5">
                   Mobile Dispatch Phone
                 </label>
                 <div className="relative">
-                  <Phone className="w-3.5 h-3.5 absolute left-3 top-2.5 text-muted-foreground" />
+                  <Phone className="w-3.5 h-3.5 absolute left-3.5 top-1/2 -translate-y-1/2 text-muted-foreground pointer-events-none" />
                   <input
                     type="text"
                     required
                     value={formData.phone}
                     onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
-                    className="w-full pl-9 pr-3.5 py-2 text-xs rounded-lg border border-border/70 bg-background text-foreground font-mono"
+                    className="w-full pl-9 pr-3.5 py-2 text-xs rounded-xl border border-slate-200/60 dark:border-slate-800/60 bg-card text-foreground font-mono focus:outline-none focus:ring-2 focus:ring-amber-500/30"
                   />
                 </div>
               </div>
@@ -193,7 +193,7 @@ export default function InspectorProfilePage() {
               <button
                 type="submit"
                 disabled={isSaving}
-                className="inline-flex items-center gap-1.5 px-4 py-2 text-xs font-semibold rounded-lg bg-amber-600 hover:bg-amber-700 text-white shadow-sm transition-colors"
+                className="inline-flex items-center gap-1.5 px-4 py-2 text-xs font-semibold rounded-xl bg-amber-600 hover:bg-amber-700 text-white shadow-sm transition-colors"
               >
                 <Save className="w-3.5 h-3.5" />
                 {isSaving ? "Saving..." : "Save Profile Details"}
@@ -202,7 +202,7 @@ export default function InspectorProfilePage() {
           </form>
 
           {/* Read-Only Organizational Restrictions Card */}
-          <div className="bg-muted/20 border border-border/60 rounded-xl p-5 text-xs space-y-3">
+          <div className="bg-amber-500/5 border border-amber-500/20 rounded-3xl p-6 text-xs space-y-3">
             <div className="flex items-center gap-2 text-amber-700 dark:text-amber-300 font-bold">
               <Shield className="w-4 h-4 text-amber-600" />
               <span>Security & Permission Restrictions</span>
