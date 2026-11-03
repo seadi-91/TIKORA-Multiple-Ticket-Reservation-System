@@ -1,7 +1,8 @@
 "use client";
 
-import React, { useState, useMemo } from "react";
+import React, { useState } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import {
   Ticket,
   Bus,
@@ -10,533 +11,471 @@ import {
   Trophy,
   Search,
   MapPin,
+  Calendar as CalendarIcon,
   ShieldCheck,
   QrCode,
-  Zap,
   ArrowRight,
+  Star,
+  CreditCard,
+  ChevronRight,
+  TrendingUp,
   Sparkles,
-  X,
 } from "lucide-react";
-import { PublicNavbar } from "@/components/navigation/public-navbar";
+import { Header } from "@/components/layout/header";
 import { Footer } from "@/components/layout/footer";
 import { TicketCard } from "@/components/tickets/ticket-card";
-import { TicketItem, TicketCategory } from "@/types/ticket.types";
-import { AUTH_ROUTES } from "@/lib/constants";
-import { formatCurrency } from "@/lib/format-currency";
+import { TicketService } from "@/services/ticket.service";
+import { ETHIOPIAN_CITIES, TicketCategory } from "@/lib/constants";
 
-// Curated live multi-industry ticket inventory
-const SAMPLE_TICKETS: TicketItem[] = [
-  {
-    id: "bus-01",
-    title: "Addis Ababa → Hawassa (Luxury Coach)",
-    category: "BUS",
-    organizer: "Selam Bus Line",
-    organizerVerified: true,
-    location: "Autobis Tera Terminal, Addis Ababa",
-    city: "Addis Ababa",
-    date: "Nov 05, 2026",
-    time: "06:00 AM",
-    price: 850,
-    availableSeats: 8,
-    totalSeats: 48,
-    status: "SELLING_FAST",
-    rating: 4.9,
-    categoryDetails: {
-      busCompany: "Selam Bus",
-      origin: "Addis Ababa",
-      destination: "Hawassa",
-      busType: "VIP 2x1 Recliner",
-    },
-  },
-  {
-    id: "cinema-01",
-    title: "Gladiator II (4K Laser Projection)",
-    category: "CINEMA",
-    organizer: "Century Cinema Megaplex",
-    organizerVerified: true,
-    location: "Century Mall, 4th Floor, Bole",
-    city: "Addis Ababa",
-    date: "Tonight",
-    time: "08:30 PM",
-    price: 350,
-    availableSeats: 34,
-    totalSeats: 180,
-    status: "AVAILABLE",
-    rating: 4.8,
-    categoryDetails: {
-      movieHall: "Hall 1 - Dolby Atmos",
-      screenFormat: "4K Laser Surround",
-    },
-  },
-  {
-    id: "event-01",
-    title: "Addis Afro-Jazz & Cultural Festival 2026",
-    category: "EVENT",
-    organizer: "Great Ethiopian Events",
-    organizerVerified: true,
-    location: "Millennium Hall, Bole Medhanealem",
-    city: "Addis Ababa",
-    date: "Nov 14, 2026",
-    time: "04:00 PM",
-    price: 600,
-    availableSeats: 120,
-    totalSeats: 1500,
-    status: "AVAILABLE",
-    rating: 5.0,
-    categoryDetails: {
-      eventVenue: "Main Exhibition Arena",
-    },
-  },
-  {
-    id: "sports-01",
-    title: "St. George SC vs. Ethiopian Coffee SC (Derby)",
-    category: "SPORTS",
-    organizer: "Ethiopian Premier League",
-    organizerVerified: true,
-    location: "Abebe Bikila Stadium, Addis Ababa",
-    city: "Addis Ababa",
-    date: "This Sunday",
-    time: "03:00 PM",
-    price: 200,
-    availableSeats: 45,
-    totalSeats: 8000,
-    status: "SELLING_FAST",
-    rating: 4.9,
-    categoryDetails: {
-      stadiumStand: "Tribune A & VIP West",
-    },
-  },
-  {
-    id: "bus-02",
-    title: "Addis Ababa → Bahir Dar (Express Overnight)",
-    category: "BUS",
-    organizer: "Golden Bus Transport",
-    organizerVerified: true,
-    location: "Lamberet Bus Terminal, Addis Ababa",
-    city: "Addis Ababa",
-    date: "Nov 06, 2026",
-    time: "08:00 PM",
-    price: 1100,
-    availableSeats: 14,
-    totalSeats: 52,
-    status: "AVAILABLE",
-    rating: 4.7,
-    categoryDetails: {
-      origin: "Addis Ababa",
-      destination: "Bahir Dar",
-      busType: "Executive AC",
-    },
-  },
-  {
-    id: "cinema-02",
-    title: "Dune: Part Two (IMAX Digital Experience)",
-    category: "CINEMA",
-    organizer: "Cinema Ethiopia",
-    organizerVerified: true,
-    location: "Piazza Historical Cinema Hall",
-    city: "Addis Ababa",
-    date: "Tomorrow",
-    time: "06:15 PM",
-    price: 300,
-    availableSeats: 18,
-    totalSeats: 220,
-    status: "AVAILABLE",
-    rating: 4.8,
-    categoryDetails: {
-      movieHall: "Grand Ballroom Screen",
-    },
-  },
-];
-
-export default function GuestHomePage() {
+export default function HomePage() {
+  const router = useRouter();
   const [activeCategory, setActiveCategory] = useState<TicketCategory | "ALL">("ALL");
   const [searchQuery, setSearchQuery] = useState("");
-  const [selectedCity, setSelectedCity] = useState("ALL");
-  const [selectedTicket, setSelectedTicket] = useState<TicketItem | null>(null);
+  const [selectedCity, setSelectedCity] = useState("Hawassa");
+  const [selectedDate, setSelectedDate] = useState("2026-11-15");
 
-  // Live filter logic
-  const filteredTickets = useMemo(() => {
-    return SAMPLE_TICKETS.filter((ticket) => {
-      const matchesCategory =
-        activeCategory === "ALL" || ticket.category === activeCategory;
-      const matchesSearch =
-        searchQuery === "" ||
-        ticket.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        ticket.organizer.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        ticket.location.toLowerCase().includes(searchQuery.toLowerCase());
-      const matchesCity =
-        selectedCity === "ALL" || ticket.city === selectedCity;
+  const allTickets = TicketService.getAllTickets();
 
-      return matchesCategory && matchesSearch && matchesCity;
-    });
-  }, [activeCategory, searchQuery, selectedCity]);
+  const filteredTickets =
+    activeCategory === "ALL"
+      ? allTickets
+      : allTickets.filter((t) => t.category === activeCategory);
+
+  const handleHeroSearch = (e: React.FormEvent) => {
+    e.preventDefault();
+    const params = new URLSearchParams();
+    if (activeCategory !== "ALL") params.set("category", activeCategory);
+    if (searchQuery) params.set("q", searchQuery);
+    if (selectedCity) params.set("city", selectedCity);
+    if (selectedDate) params.set("date", selectedDate);
+    router.push(`/search?${params.toString()}`);
+  };
+
+  const categoryCards = [
+    {
+      id: "BUS",
+      title: "Intercity Bus Fleets",
+      description: "Express coaches to Hawassa, Bahir Dar, Gondar & Dire Dawa with real-time seat matrices.",
+      icon: Bus,
+      badge: "Popular Across Ethiopia",
+      color: "from-blue-600 to-indigo-700",
+      bgLight: "bg-blue-50/60 dark:bg-blue-950/30 border-blue-200/80 dark:border-blue-900/40",
+      link: "/bus",
+      actionText: "Search Bus Routes",
+    },
+    {
+      id: "CINEMA",
+      title: "Cinema & IMAX",
+      description: "Century Mall, Edna Mall & Gast Cinema with 4K laser projection and couple loungers.",
+      icon: Film,
+      badge: "Now Showing & Coming Soon",
+      color: "from-purple-600 to-indigo-700",
+      bgLight: "bg-purple-50/60 dark:bg-purple-950/30 border-purple-200/80 dark:border-purple-900/40",
+      link: "/cinema",
+      actionText: "View Showtimes",
+    },
+    {
+      id: "EVENT",
+      title: "Concerts & Festivals",
+      description: "Addis Jazz festivals, Ethiopian cultural holidays, tech conventions & standup comedy.",
+      icon: Calendar,
+      badge: "VIP & Regular Passes",
+      color: "from-amber-600 to-orange-700",
+      bgLight: "bg-amber-50/60 dark:bg-amber-950/30 border-amber-200/80 dark:border-amber-900/40",
+      link: "/events",
+      actionText: "Explore Events",
+    },
+    {
+      id: "SPORTS",
+      title: "Stadium Sports",
+      description: "Ethiopian Premier League clashes, Sheger Derby (St. George vs Coffee SC) and national finals.",
+      icon: Trophy,
+      badge: "Matchday Tribune Passes",
+      color: "from-emerald-600 to-teal-700",
+      bgLight: "bg-emerald-50/60 dark:bg-amber-950/30 border-amber-200/80 dark:border-slate-800/40",
+      link: "/sports",
+      actionText: "Browse Fixtures",
+    },
+  ];
 
   return (
-    <div className="min-h-screen bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-slate-100 flex flex-col justify-between selection:bg-indigo-500 selection:text-white transition-colors duration-200">
-      {/* 1. Header with dynamic scroll state and theme dropdown */}
-      <PublicNavbar />
+    <div className="min-h-screen flex flex-col bg-[#F8FAFC] dark:bg-[#0F1117] text-[#0F172A] dark:text-[#F8FAFC]">
+      <Header />
 
-      <main className="flex-1 space-y-12 pb-16 -mt-18 pt-18">
-        {/* 2. Compact Modern Hero Section */}
-        <section className="relative overflow-hidden pt-16 pb-12 px-4 sm:px-6 border-b border-slate-200/80 dark:border-slate-800/80 bg-gradient-to-b from-indigo-100/60 via-slate-50 to-slate-50 dark:from-indigo-950/40 dark:via-slate-950 dark:to-slate-950 transition-colors duration-200">
-          {/* Ambient Lighting Orbs */}
-          <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[700px] h-[350px] bg-indigo-500/10 dark:bg-indigo-600/15 rounded-full blur-[130px] pointer-events-none" />
+      {/* Hero Section - Compact & Modern */}
+      <section className="relative overflow-hidden pt-5 pb-8 sm:pt-8 sm:pb-12 px-3 sm:px-6 border-b border-[#E2E8F0] dark:border-slate-800">
+        {/* Subtle Ambient Glow */}
+        <div className="absolute top-0 left-1/2 -translate-x-1/2 w-full max-w-5xl h-48 bg-gradient-to-b from-slate-200/50 dark:from-slate-800/30 to-transparent pointer-events-none rounded-full blur-3xl" />
 
-          <div className="max-w-6xl mx-auto space-y-6 relative z-10 text-center">
-            {/* Tag Badge */}
-            <div className="inline-flex items-center gap-2 px-3.5 py-1 rounded-full bg-white/80 dark:bg-indigo-500/10 border border-slate-200 dark:border-indigo-500/25 text-indigo-700 dark:text-indigo-300 text-xs font-bold shadow-xs backdrop-blur-md">
-              <Sparkles className="w-3.5 h-3.5 text-indigo-600 dark:text-indigo-400" />
-              <span>Multi-Ticket Reservation Engine • Ethiopia</span>
+        <div className="relative max-w-4xl mx-auto text-center space-y-4">
+          {/* Tagline Pill - Compact */}
+          <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-slate-100 dark:bg-slate-800/80 text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-slate-700 text-[11px] font-semibold shadow-2xs">
+            <Sparkles className="w-3 h-3 text-[#B45309] dark:text-amber-400" />
+            <span>Ethiopia&apos;s Smart Multi-Ticket Platform</span>
+          </div>
+
+          {/* Main Headline - Compact */}
+          <h1 className="text-2xl sm:text-4xl lg:text-5xl font-black text-[#0F172A] dark:text-white tracking-tight leading-[1.15]">
+            Book Tickets for{" "}
+            <span className="text-[#B45309] dark:text-[#D97706]">Buses, Cinema,</span>{" "}
+            Events & Sports
+          </h1>
+
+          <p className="text-xs sm:text-sm text-[#64748B] dark:text-slate-400 max-w-xl mx-auto leading-relaxed">
+            Verified operators, instant interactive seat selection, and digital QR passes powered by Telebirr, CBE Birr & Chapa.
+          </p>
+
+          {/* Search Box Card - Compact */}
+          <div className="rounded-2xl bg-white dark:bg-[#161922] border border-[#E2E8F0] dark:border-slate-800 p-3 sm:p-4 shadow-sm text-left max-w-3xl mx-auto">
+            {/* Category Switcher Tabs - Compact */}
+            <div className="flex items-center gap-1.5 overflow-x-auto pb-2.5 border-b border-[#E2E8F0] dark:border-slate-800 mb-3">
+              {[
+                { id: "ALL", label: "All", icon: Ticket },
+                { id: "BUS", label: "Buses", icon: Bus },
+                { id: "CINEMA", label: "Cinema", icon: Film },
+                { id: "EVENT", label: "Events", icon: Calendar },
+                { id: "SPORTS", label: "Sports", icon: Trophy },
+              ].map((cat) => {
+                const Icon = cat.icon;
+                const isSelected = activeCategory === cat.id;
+                return (
+                  <button
+                    key={cat.id}
+                    onClick={() => setActiveCategory(cat.id as any)}
+                    className={`flex items-center gap-1.5 px-3 py-1 rounded-lg text-xs font-semibold transition-all shrink-0 cursor-pointer ${
+                      isSelected
+                        ? "bg-[#B45309] text-white shadow-xs"
+                        : "bg-slate-100 text-[#64748B] hover:text-[#0F172A] dark:bg-slate-800/80 dark:text-slate-300 dark:hover:bg-slate-800"
+                    }`}
+                  >
+                    <Icon className="w-3.5 h-3.5" />
+                    <span>{cat.label}</span>
+                  </button>
+                );
+              })}
             </div>
 
-            {/* Headline */}
-            <div className="space-y-3 max-w-3xl mx-auto">
-              <h1 className="text-3xl sm:text-5xl lg:text-6xl font-black tracking-tight leading-[1.1] text-slate-900 dark:text-white">
-                Book Buses, Cinemas, <br className="hidden sm:inline" />
-                <span className="bg-gradient-to-r from-indigo-600 via-indigo-500 to-blue-600 dark:from-indigo-400 dark:via-indigo-300 dark:to-blue-400 bg-clip-text text-transparent">
-                  Live Events & Sports.
-                </span>
-              </h1>
-              <p className="text-xs sm:text-sm md:text-base text-slate-600 dark:text-slate-400 max-w-xl mx-auto leading-relaxed">
-                One seamless platform for instant digital tickets. Pick your seats, pay via Telebirr or Chapa, and enter with your phone QR.
-              </p>
-            </div>
-
-            {/* Compact Live Search Bar */}
-            <div className="max-w-4xl mx-auto bg-white/95 dark:bg-slate-900/90 backdrop-blur-2xl border border-slate-200/90 dark:border-slate-800/90 rounded-3xl p-3 sm:p-4 shadow-xl shadow-slate-200/50 dark:shadow-2xl dark:shadow-indigo-950/50 transition-all duration-200">
-              <div className="grid grid-cols-1 sm:grid-cols-12 gap-3 items-center">
-                {/* Search Text Input */}
-                <div className="sm:col-span-5 relative">
-                  <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-400">
-                    <Search className="w-4 h-4" />
-                  </div>
+            {/* Form Inputs - Compact */}
+            <form onSubmit={handleHeroSearch} className="grid grid-cols-1 sm:grid-cols-12 gap-2 sm:gap-2.5">
+              <div className="sm:col-span-5 relative">
+                <label className="block text-[9px] uppercase font-bold text-[#64748B] dark:text-slate-400 mb-0.5">
+                  Search Query
+                </label>
+                <div className="relative">
+                  <Search className="w-3.5 h-3.5 text-[#64748B] absolute left-2.5 top-1/2 -translate-y-1/2" />
                   <input
                     type="text"
-                    placeholder="Search route, movie, concert, or derby..."
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
-                    className="w-full pl-10 pr-4 py-2.5 rounded-xl bg-slate-50 dark:bg-slate-950/80 border border-slate-200 dark:border-slate-800 text-xs sm:text-sm text-slate-900 dark:text-white placeholder:text-slate-400 focus:outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 transition-all"
+                    placeholder="e.g. Selam Bus, Avatar, Jazz Fest..."
+                    className="w-full pl-8 pr-2.5 py-1.5 rounded-lg border border-[#E2E8F0] dark:border-slate-800 bg-[#F8FAFC] dark:bg-[#0F1117] text-[#0F172A] dark:text-white text-xs focus:outline-none focus:border-[#B45309]"
                   />
                 </div>
+              </div>
 
-                {/* City Picker */}
-                <div className="sm:col-span-4 relative">
-                  <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-400">
-                    <MapPin className="w-4 h-4" />
-                  </div>
+              <div className="sm:col-span-3 relative">
+                <label className="block text-[9px] uppercase font-bold text-[#64748B] dark:text-slate-400 mb-0.5">
+                  City
+                </label>
+                <div className="relative">
+                  <MapPin className="w-3.5 h-3.5 text-[#64748B] absolute left-2.5 top-1/2 -translate-y-1/2 pointer-events-none" />
                   <select
                     value={selectedCity}
                     onChange={(e) => setSelectedCity(e.target.value)}
-                    className="w-full pl-10 pr-8 py-2.5 rounded-xl bg-slate-50 dark:bg-slate-950/80 border border-slate-200 dark:border-slate-800 text-xs sm:text-sm text-slate-900 dark:text-white appearance-none focus:outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 transition-all"
+                    className="w-full pl-8 pr-2.5 py-1.5 rounded-lg border border-[#E2E8F0] dark:border-slate-800 bg-[#F8FAFC] dark:bg-[#0F1117] text-[#0F172A] dark:text-white text-xs focus:outline-none focus:border-[#B45309] appearance-none cursor-pointer"
                   >
-                    <option value="ALL">All Destinations & Cities</option>
-                    <option value="Addis Ababa">Addis Ababa</option>
-                    <option value="Hawassa">Hawassa</option>
-                    <option value="Bahir Dar">Bahir Dar</option>
-                    <option value="Adama">Adama (Nazret)</option>
-                    <option value="Dire Dawa">Dire Dawa</option>
+                    <option value="">All Cities</option>
+                    {ETHIOPIAN_CITIES.map((c) => (
+                      <option key={c} value={c}>
+                        {c}
+                      </option>
+                    ))}
                   </select>
                 </div>
+              </div>
 
-                {/* Search Action CTA */}
-                <div className="sm:col-span-3">
-                  <button
-                    type="button"
-                    className="w-full flex items-center justify-center gap-2 py-2.5 px-4 rounded-xl bg-gradient-to-r from-indigo-600 via-indigo-500 to-blue-600 text-white font-bold text-xs sm:text-sm shadow-md shadow-indigo-600/30 hover:from-indigo-500 hover:to-blue-500 active:scale-95 transition-all"
-                  >
-                    <Search className="w-4 h-4" />
-                    <span>Find Tickets</span>
-                  </button>
+              <div className="sm:col-span-2 relative">
+                <label className="block text-[9px] uppercase font-bold text-[#64748B] dark:text-slate-400 mb-0.5">
+                  Date
+                </label>
+                <div className="relative">
+                  <CalendarIcon className="w-3.5 h-3.5 text-[#64748B] absolute left-2.5 top-1/2 -translate-y-1/2 pointer-events-none" />
+                  <input
+                    type="date"
+                    value={selectedDate}
+                    onChange={(e) => setSelectedDate(e.target.value)}
+                    className="w-full pl-8 pr-2 py-1.5 rounded-lg border border-[#E2E8F0] dark:border-slate-800 bg-[#F8FAFC] dark:bg-[#0F1117] text-[#0F172A] dark:text-white text-xs focus:outline-none focus:border-[#B45309]"
+                  />
                 </div>
               </div>
-            </div>
 
-            {/* Quick Metrics Bar */}
-            <div className="pt-2 flex flex-wrap items-center justify-center gap-6 sm:gap-10 text-[11px] text-slate-500 dark:text-slate-400">
-              <div className="flex items-center gap-2">
-                <QrCode className="w-4 h-4 text-indigo-600 dark:text-indigo-400" />
-                <span>Instant QR Boarding Passes</span>
-              </div>
-              <div className="flex items-center gap-2">
-                <ShieldCheck className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
-                <span>100% Verified Providers</span>
-              </div>
-              <div className="flex items-center gap-2">
-                <Zap className="w-4 h-4 text-amber-500 dark:text-amber-400" />
-                <span>Real-Time Seat Booking</span>
-              </div>
-            </div>
-          </div>
-        </section>
-
-        {/* 3. Category Filter Tabs */}
-        <section className="max-w-7xl mx-auto px-4 sm:px-6">
-          <div className="flex items-center justify-between flex-wrap gap-4 pb-2">
-            <div>
-              <h2 className="text-xl sm:text-2xl font-black text-slate-900 dark:text-white tracking-tight flex items-center gap-2">
-                <span>Featured Tickets & Schedules</span>
-                <span className="text-xs font-bold px-2.5 py-0.5 rounded-full bg-indigo-100 text-indigo-800 dark:bg-indigo-500/20 dark:text-indigo-300 border border-indigo-200 dark:border-indigo-500/30">
-                  {filteredTickets.length} available
-                </span>
-              </h2>
-              <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
-                Reserve your seat in advance across buses, cinema screenings, festivals, and stadiums.
-              </p>
-            </div>
-
-            {/* Category Pills Switcher */}
-            <div className="flex items-center gap-1.5 p-1 rounded-2xl bg-white dark:bg-slate-900/80 border border-slate-200 dark:border-slate-800 overflow-x-auto shadow-xs">
-              <button
-                type="button"
-                onClick={() => setActiveCategory("ALL")}
-                className={`px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all ${
-                  activeCategory === "ALL"
-                    ? "bg-indigo-600 text-white shadow-md shadow-indigo-600/30"
-                    : "text-slate-600 hover:text-slate-900 hover:bg-slate-100 dark:text-slate-400 dark:hover:text-white dark:hover:bg-slate-800"
-                }`}
-              >
-                All
-              </button>
-
-              <button
-                type="button"
-                onClick={() => setActiveCategory("BUS")}
-                className={`flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all ${
-                  activeCategory === "BUS"
-                    ? "bg-cyan-600 text-white shadow-md shadow-cyan-600/30"
-                    : "text-slate-600 hover:text-cyan-600 hover:bg-slate-100 dark:text-slate-400 dark:hover:text-cyan-300 dark:hover:bg-slate-800"
-                }`}
-              >
-                <Bus className="w-3.5 h-3.5" />
-                <span>Buses</span>
-              </button>
-
-              <button
-                type="button"
-                onClick={() => setActiveCategory("CINEMA")}
-                className={`flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all ${
-                  activeCategory === "CINEMA"
-                    ? "bg-purple-600 text-white shadow-md shadow-purple-600/30"
-                    : "text-slate-600 hover:text-purple-600 hover:bg-slate-100 dark:text-slate-400 dark:hover:text-purple-300 dark:hover:bg-slate-800"
-                }`}
-              >
-                <Film className="w-3.5 h-3.5" />
-                <span>Cinema</span>
-              </button>
-
-              <button
-                type="button"
-                onClick={() => setActiveCategory("EVENT")}
-                className={`flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all ${
-                  activeCategory === "EVENT"
-                    ? "bg-amber-600 text-white shadow-md shadow-amber-600/30"
-                    : "text-slate-600 hover:text-amber-600 hover:bg-slate-100 dark:text-slate-400 dark:hover:text-amber-300 dark:hover:bg-slate-800"
-                }`}
-              >
-                <Calendar className="w-3.5 h-3.5" />
-                <span>Events</span>
-              </button>
-
-              <button
-                type="button"
-                onClick={() => setActiveCategory("SPORTS")}
-                className={`flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all ${
-                  activeCategory === "SPORTS"
-                    ? "bg-emerald-600 text-white shadow-md shadow-emerald-600/30"
-                    : "text-slate-600 hover:text-emerald-600 hover:bg-slate-100 dark:text-slate-400 dark:hover:text-emerald-300 dark:hover:bg-slate-800"
-                }`}
-              >
-                <Trophy className="w-3.5 h-3.5" />
-                <span>Sports</span>
-              </button>
-            </div>
-          </div>
-
-          {/* 4. Live Curated Ticket Grid */}
-          <div className="mt-6">
-            {filteredTickets.length > 0 ? (
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
-                {filteredTickets.map((ticket) => (
-                  <TicketCard
-                    key={ticket.id}
-                    ticket={ticket}
-                    onBookClick={(t) => setSelectedTicket(t)}
-                  />
-                ))}
-              </div>
-            ) : (
-              <div className="p-12 text-center rounded-3xl bg-white dark:bg-slate-900/40 border border-slate-200 dark:border-slate-800 space-y-3 shadow-xs">
-                <Ticket className="w-10 h-10 text-slate-400 dark:text-slate-600 mx-auto" />
-                <h3 className="text-base font-bold text-slate-900 dark:text-white">No tickets found</h3>
-                <p className="text-xs text-slate-500 dark:text-slate-400 max-w-sm mx-auto">
-                  No ticket match for your active filter. Try resetting your search or picking another category.
-                </p>
+              <div className="sm:col-span-2 flex items-end">
                 <button
-                  onClick={() => {
-                    setActiveCategory("ALL");
-                    setSearchQuery("");
-                    setSelectedCity("ALL");
-                  }}
-                  className="px-4 py-2 rounded-xl bg-slate-100 dark:bg-slate-800 text-xs font-bold text-slate-700 dark:text-slate-200 hover:bg-slate-200 dark:hover:text-white transition-colors"
+                  type="submit"
+                  className="w-full py-1.5 px-3 rounded-lg bg-[#B45309] hover:bg-[#92400E] text-white text-xs font-bold transition-all shadow-xs flex items-center justify-center gap-1.5 active:scale-98 cursor-pointer h-[30px]"
                 >
-                  Clear all filters
+                  <Search className="w-3 h-3" />
+                  <span>Search</span>
                 </button>
               </div>
-            )}
+            </form>
           </div>
-        </section>
 
-        {/* 5. Compact Why Tikora Features Banner */}
-        <section className="max-w-7xl mx-auto px-4 sm:px-6">
-          <div className="rounded-3xl bg-white dark:bg-gradient-to-b dark:from-slate-900/90 dark:to-slate-950 border border-slate-200/90 dark:border-slate-800 p-6 sm:p-10 space-y-8 shadow-sm">
-            <div className="text-center max-w-2xl mx-auto space-y-2">
-              <h2 className="text-2xl sm:text-3xl font-black text-slate-900 dark:text-white tracking-tight">
-                Why Millions Trust Tikora
-              </h2>
-              <p className="text-xs sm:text-sm text-slate-500 dark:text-slate-400">
-                The most reliable ticketing platform in the Horn of Africa, engineered for speed and convenience.
-              </p>
+          {/* Quick Metrics Bar - Compact */}
+          <div className="pt-1 flex flex-wrap items-center justify-center gap-4 sm:gap-8 text-[11px] text-[#64748B] dark:text-slate-400">
+            <div className="flex items-center gap-1.5">
+              <QrCode className="w-3.5 h-3.5 text-slate-400 dark:text-slate-500" />
+              <span>Instant Digital QR Passes</span>
             </div>
-
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-              <div className="space-y-2.5 p-4 rounded-2xl bg-slate-50/80 dark:bg-slate-900/50 border border-slate-100 dark:border-slate-800/80">
-                <div className="w-10 h-10 rounded-2xl bg-indigo-50 text-indigo-600 dark:bg-indigo-500/10 dark:text-indigo-400 flex items-center justify-center">
-                  <QrCode className="w-5 h-5" />
-                </div>
-                <h3 className="text-sm font-bold text-slate-900 dark:text-white">Instant QR Passes</h3>
-                <p className="text-xs text-slate-500 dark:text-slate-400 leading-relaxed">
-                  Never print physical paper tickets again. Scan straight from your smartphone at bus terminals, gates, or cinema halls.
-                </p>
-              </div>
-
-              <div className="space-y-2.5 p-4 rounded-2xl bg-slate-50/80 dark:bg-slate-900/50 border border-slate-100 dark:border-slate-800/80">
-                <div className="w-10 h-10 rounded-2xl bg-cyan-50 text-cyan-600 dark:bg-cyan-500/10 dark:text-cyan-400 flex items-center justify-center">
-                  <Bus className="w-5 h-5" />
-                </div>
-                <h3 className="text-sm font-bold text-slate-900 dark:text-white">Interactive Seat Maps</h3>
-                <p className="text-xs text-slate-500 dark:text-slate-400 leading-relaxed">
-                  Choose your exact preferred seat: window vs. aisle on buses, VIP center on cinema screens, or grandstand stadium tribunes.
-                </p>
-              </div>
-
-              <div className="space-y-2.5 p-4 rounded-2xl bg-slate-50/80 dark:bg-slate-900/50 border border-slate-100 dark:border-slate-800/80">
-                <div className="w-10 h-10 rounded-2xl bg-emerald-50 text-emerald-600 dark:bg-emerald-500/10 dark:text-emerald-400 flex items-center justify-center">
-                  <ShieldCheck className="w-5 h-5" />
-                </div>
-                <h3 className="text-sm font-bold text-slate-900 dark:text-white">Verified Organizers</h3>
-                <p className="text-xs text-slate-500 dark:text-slate-400 leading-relaxed">
-                  Every bus operator, movie theater, and event planner on Tikora goes through strict commercial compliance verification.
-                </p>
-              </div>
-
-              <div className="space-y-2.5 p-4 rounded-2xl bg-slate-50/80 dark:bg-slate-900/50 border border-slate-100 dark:border-slate-800/80">
-                <div className="w-10 h-10 rounded-2xl bg-amber-50 text-amber-600 dark:bg-amber-500/10 dark:text-amber-400 flex items-center justify-center">
-                  <Zap className="w-5 h-5" />
-                </div>
-                <h3 className="text-sm font-bold text-slate-900 dark:text-white">Telebirr & Local Pay</h3>
-                <p className="text-xs text-slate-500 dark:text-slate-400 leading-relaxed">
-                  Checkout in seconds using Telebirr, Chapa, CBE Birr, or debit cards with zero hidden booking charges.
-                </p>
-              </div>
+            <div className="flex items-center gap-1.5">
+              <ShieldCheck className="w-3.5 h-3.5 text-slate-400 dark:text-slate-500" />
+              <span>100% Verified Partners</span>
             </div>
-          </div>
-        </section>
-
-        {/* 6. Compact Quick Auth Callout */}
-        <section className="max-w-7xl mx-auto px-4 sm:px-6">
-          <div className="rounded-3xl bg-gradient-to-r from-indigo-600 via-indigo-700 to-blue-700 dark:from-indigo-900/60 dark:via-slate-900 dark:to-slate-950 border border-indigo-500/30 p-6 sm:p-8 flex flex-col sm:flex-row items-center justify-between gap-6 text-white shadow-xl shadow-indigo-600/20">
-            <div className="space-y-1 text-center sm:text-left">
-              <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-white/20 dark:bg-indigo-500/20 text-white dark:text-indigo-300 text-[11px] font-bold">
-                <Sparkles className="w-3.5 h-3.5" />
-                <span>Ready to start?</span>
-              </div>
-              <h3 className="text-lg sm:text-xl font-black">
-                Create a Free Account or Access Your Tickets
-              </h3>
-              <p className="text-xs text-indigo-100 dark:text-slate-400">
-                Log in to view active QR passes, manage bookings, and access rapid check-in.
-              </p>
-            </div>
-
-            <div className="flex items-center gap-3 shrink-0">
-              <Link
-                href={AUTH_ROUTES.LOGIN}
-                className="px-5 py-2.5 rounded-xl border border-white/30 dark:border-slate-700 bg-white/10 dark:bg-slate-800 text-xs font-bold text-white hover:bg-white/20 dark:hover:bg-slate-700 transition-colors"
-              >
-                Sign In
-              </Link>
-              <Link
-                href={AUTH_ROUTES.REGISTER}
-                className="px-5 py-2.5 rounded-xl bg-white text-indigo-700 dark:bg-gradient-to-r dark:from-indigo-600 dark:via-indigo-500 dark:to-blue-600 dark:text-white text-xs font-bold shadow-lg shadow-black/20 hover:bg-indigo-50 transition-all"
-              >
-                Create Account
-              </Link>
-            </div>
-          </div>
-        </section>
-      </main>
-
-      {/* 7. Quick Reservation Preview Modal */}
-      {selectedTicket && (
-        <div className="fixed inset-0 z-50 bg-black/70 backdrop-blur-md flex items-center justify-center p-4 animate-in fade-in-50 duration-200">
-          <div className="w-full max-w-md rounded-3xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-2xl shadow-slate-900/20 dark:shadow-indigo-950/60 p-6 space-y-5 relative">
-            <button
-              onClick={() => setSelectedTicket(null)}
-              className="absolute top-4 right-4 p-2 text-slate-400 hover:text-slate-600 dark:hover:text-white rounded-full bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors"
-            >
-              <X className="w-4 h-4" />
-            </button>
-
-            <div>
-              <span className="text-[10px] uppercase tracking-wider font-bold text-indigo-600 dark:text-indigo-400">
-                Reservation Preview
-              </span>
-              <h3 className="text-lg font-black text-slate-900 dark:text-white mt-1">
-                {selectedTicket.title}
-              </h3>
-              <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
-                {selectedTicket.organizer} • {selectedTicket.location}
-              </p>
-            </div>
-
-            <div className="p-4 rounded-2xl bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 space-y-2 text-xs">
-              <div className="flex justify-between text-slate-500 dark:text-slate-400">
-                <span>Date & Time:</span>
-                <span className="font-bold text-slate-800 dark:text-slate-200">
-                  {selectedTicket.date} at {selectedTicket.time}
-                </span>
-              </div>
-              <div className="flex justify-between text-slate-500 dark:text-slate-400">
-                <span>Seats Available:</span>
-                <span className="font-bold text-emerald-600 dark:text-emerald-400">
-                  {selectedTicket.availableSeats} of {selectedTicket.totalSeats} seats
-                </span>
-              </div>
-              <div className="flex justify-between text-slate-500 dark:text-slate-400 pt-2 border-t border-slate-200 dark:border-slate-800 text-sm">
-                <span className="font-bold text-slate-900 dark:text-white">Ticket Price:</span>
-                <span className="font-black text-indigo-600 dark:text-indigo-400">
-                  {formatCurrency(selectedTicket.price)}
-                </span>
-              </div>
-            </div>
-
-            <div className="space-y-2.5">
-              <Link
-                href={`${AUTH_ROUTES.LOGIN}?redirect=/tickets/${selectedTicket.id}`}
-                className="w-full flex items-center justify-center gap-2 py-3 rounded-xl bg-gradient-to-r from-indigo-600 via-indigo-500 to-blue-600 text-white font-bold text-xs shadow-md shadow-indigo-600/30 hover:from-indigo-500 hover:to-blue-500 transition-all"
-              >
-                <span>Continue to Seat Selection</span>
-                <ArrowRight className="w-4 h-4" />
-              </Link>
-              <p className="text-center text-[11px] text-slate-500">
-                Sign in or register to secure your seat lock with instant QR code.
-              </p>
+            <div className="flex items-center gap-1.5">
+              <CreditCard className="w-3.5 h-3.5 text-slate-400 dark:text-slate-500" />
+              <span>Telebirr, CBE Birr & Chapa</span>
             </div>
           </div>
         </div>
-      )}
+      </section>
 
-      {/* 8. Modern Compact Footer */}
+      {/* 4 Category Cards - Compact */}
+      <section className="max-w-7xl mx-auto px-3 sm:px-6 py-6 sm:py-8 w-full space-y-4">
+        <div className="flex items-center justify-between">
+          <div>
+            <span className="text-[10px] font-bold text-[#B45309] dark:text-amber-400 uppercase tracking-wider">
+              Browse by Sector
+            </span>
+            <h2 className="text-lg sm:text-xl font-black text-[#0F172A] dark:text-white">
+              Discover Available Tickets
+            </h2>
+          </div>
+          <Link
+            href="/search"
+            className="text-xs font-semibold text-[#B45309] dark:text-amber-400 hover:underline flex items-center gap-0.5"
+          >
+            <span>Explore All</span>
+            <ChevronRight className="w-3.5 h-3.5" />
+          </Link>
+        </div>
+
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3.5">
+          {categoryCards.map((card) => {
+            const Icon = card.icon;
+            return (
+              <div
+                key={card.id}
+                className={`rounded-2xl p-4 border transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md flex flex-col justify-between ${card.bgLight}`}
+              >
+                <div className="space-y-2.5">
+                  <div className="flex items-center justify-between">
+                    <div
+                      className={`w-9 h-9 rounded-xl bg-gradient-to-tr ${card.color} text-white flex items-center justify-center shadow-xs`}
+                    >
+                      <Icon className="w-4 h-4" />
+                    </div>
+                    <span className="text-[9px] font-bold px-2 py-0.5 rounded-full bg-white/90 dark:bg-black/50 text-[#0F172A] dark:text-slate-200">
+                      {card.badge}
+                    </span>
+                  </div>
+
+                  <div>
+                    <h3 className="text-sm font-bold text-[#0F172A] dark:text-white">
+                      {card.title}
+                    </h3>
+                    <p className="text-[11px] text-[#64748B] dark:text-slate-400 mt-1 leading-relaxed">
+                      {card.description}
+                    </p>
+                  </div>
+                </div>
+
+                <div className="pt-3">
+                  <Link
+                    href={card.link}
+                    className="inline-flex items-center gap-1.5 text-xs font-bold text-[#B45309] dark:text-amber-400 hover:text-[#92400E] group"
+                  >
+                    <span>{card.actionText}</span>
+                    <ArrowRight className="w-3 h-3 group-hover:translate-x-1 transition-transform" />
+                  </Link>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      </section>
+
+      {/* Featured & Curated Tickets Section - Compact */}
+      <section className="bg-white dark:bg-[#161922] border-y border-[#E2E8F0] dark:border-slate-800 py-6 sm:py-8 px-3 sm:px-6">
+        <div className="max-w-7xl mx-auto space-y-4">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+            <div>
+              <div className="flex items-center gap-1.5 text-[10px] font-bold text-[#B45309] dark:text-amber-400 uppercase tracking-wider">
+                <TrendingUp className="w-3.5 h-3.5" />
+                <span>Featured & Top Rated</span>
+              </div>
+              <h2 className="text-lg sm:text-xl font-black text-[#0F172A] dark:text-white">
+                Popular Tickets Ready to Book
+              </h2>
+            </div>
+
+            {/* Quick Category Filter Pills - Compact */}
+            <div className="flex items-center gap-1.5 overflow-x-auto pb-1 scrollbar-none">
+              {(["ALL", "BUS", "CINEMA", "EVENT", "SPORTS"] as const).map((cat) => (
+                <button
+                  key={cat}
+                  onClick={() => setActiveCategory(cat)}
+                  className={`px-2.5 py-1 rounded-lg text-xs font-semibold transition-all shrink-0 cursor-pointer ${
+                    activeCategory === cat
+                      ? "bg-[#B45309] text-white shadow-2xs"
+                      : "bg-slate-100 text-[#64748B] hover:text-[#0F172A] dark:bg-slate-800/80 dark:text-slate-300"
+                  }`}
+                >
+                  {cat === "ALL" ? "All" : cat}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 sm:gap-5">
+            {filteredTickets.slice(0, 8).map((ticket) => (
+              <TicketCard key={ticket.id} ticket={ticket} />
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* How TicketHub Works - Compact */}
+      <section className="max-w-7xl mx-auto px-3 sm:px-6 py-6 sm:py-8 w-full space-y-4">
+        <div className="text-center max-w-xl mx-auto space-y-1">
+          <span className="text-[10px] font-bold text-[#B45309] dark:text-[#D97706] uppercase tracking-wider">
+            Quick 3-Step Checkout
+          </span>
+          <h2 className="text-lg sm:text-xl font-black text-[#0F172A] dark:text-white">
+            How TicketHub Works
+          </h2>
+          <p className="text-xs text-[#64748B] dark:text-slate-400">
+            Reserve your bus coach seat, movie screening, concert pass, or stadium tribune in under a minute.
+          </p>
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-3.5">
+          <div className="p-4 rounded-2xl bg-white dark:bg-[#161922] border border-[#E2E8F0] dark:border-slate-800 text-center space-y-2">
+            <div className="w-9 h-9 rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-800 dark:text-slate-200 border border-slate-200 dark:border-slate-700 flex items-center justify-center font-black text-sm mx-auto shadow-2xs">
+              1
+            </div>
+            <h3 className="text-sm font-bold text-[#0F172A] dark:text-white">
+              Choose Ticket & Time
+            </h3>
+            <p className="text-xs text-[#64748B] dark:text-slate-400 leading-relaxed">
+              Explore bus routes, cinema screenings, music concerts, or stadiums with departure stations and prices.
+            </p>
+          </div>
+
+          <div className="p-4 rounded-2xl bg-white dark:bg-[#161922] border border-[#E2E8F0] dark:border-slate-800 text-center space-y-2">
+            <div className="w-9 h-9 rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-800 dark:text-slate-200 border border-slate-200 dark:border-slate-700 flex items-center justify-center font-black text-sm mx-auto shadow-2xs">
+              2
+            </div>
+            <h3 className="text-sm font-bold text-[#0F172A] dark:text-white">
+              Select Your Exact Seat
+            </h3>
+            <p className="text-xs text-[#64748B] dark:text-slate-400 leading-relaxed">
+              Interactive 2x2 bus seating grid, 4K IMAX theater rows, or festival pass tiers with live pricing.
+            </p>
+          </div>
+
+          <div className="p-4 rounded-2xl bg-white dark:bg-[#161922] border border-[#E2E8F0] dark:border-slate-800 text-center space-y-2">
+            <div className="w-9 h-9 rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-800 dark:text-slate-200 border border-slate-200 dark:border-slate-700 flex items-center justify-center font-black text-sm mx-auto shadow-2xs">
+              3
+            </div>
+            <h3 className="text-sm font-bold text-[#0F172A] dark:text-white">
+              Instant QR Boarding Pass
+            </h3>
+            <p className="text-xs text-[#64748B] dark:text-slate-400 leading-relaxed">
+              Pay with Telebirr, CBE Birr, or Chapa. Your verified digital QR pass appears immediately in your wallet.
+            </p>
+          </div>
+        </div>
+      </section>
+
+      {/* Special Offer Banner - Modern Dark Executive Card */}
+      <section className="max-w-7xl mx-auto px-3 sm:px-6 pb-6 w-full">
+        <div className="rounded-2xl bg-[#0F172A] dark:bg-[#161922] border border-slate-800 p-5 sm:p-6 text-white flex flex-col md:flex-row items-center justify-between gap-4 shadow-sm">
+          <div className="space-y-1.5 max-w-lg text-center md:text-left">
+            <span className="text-[10px] font-bold uppercase tracking-widest px-2.5 py-0.5 rounded-full bg-white/10 text-slate-200 inline-block border border-white/10">
+              Seasonal Promotion
+            </span>
+            <h3 className="text-lg sm:text-xl font-black">
+              Get 15% Off Your Next Bus or Concert Ticket
+            </h3>
+            <p className="text-xs text-slate-300 leading-relaxed">
+              Use promo code <strong className="text-white underline">SAVE15</strong> with Telebirr or CBE Birr at checkout.
+            </p>
+          </div>
+
+          <Link
+            href="/search"
+            className="px-4 py-2 rounded-xl bg-[#B45309] hover:bg-[#92400E] text-white text-xs font-bold transition-all shadow-xs active:scale-95 shrink-0"
+          >
+            Claim Offer
+          </Link>
+        </div>
+      </section>
+
+      {/* Testimonials - Compact */}
+      <section className="bg-white dark:bg-[#161922] border-t border-[#E2E8F0] dark:border-slate-800 py-6 sm:py-8 px-3 sm:px-6">
+        <div className="max-w-7xl mx-auto space-y-4">
+          <div className="text-center max-w-xl mx-auto space-y-1">
+            <span className="text-[10px] font-bold text-[#B45309] dark:text-[#D97706] uppercase tracking-wider">
+              Reviews & Feedback
+            </span>
+            <h2 className="text-lg sm:text-xl font-black text-[#0F172A] dark:text-white">
+              Trusted by Ticket Buyers Everywhere
+            </h2>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-3.5">
+            {[
+              {
+                name: "Dawit Yohannes",
+                role: "Frequent Bus Commuter",
+                quote: "TicketHub saved me hours at Autobus Tera. I picked my window seat on Selam Bus in seconds and boarded with my Telebirr QR pass.",
+                rating: 5,
+              },
+              {
+                name: "Tigist Haile",
+                role: "Cinema & Movie Fan",
+                quote: "Booking IMAX couple seats at Century Mall through TicketHub is smooth. No more counter lines and the seat view is accurate.",
+                rating: 5,
+              },
+              {
+                name: "Robel Kebede",
+                role: "Football Fan",
+                quote: "Got my Katanga tribune ticket for the Sheger Derby without hassles. The digital barcode worked immediately at the stadium turnstile.",
+                rating: 5,
+              },
+            ].map((t, idx) => (
+              <div
+                key={idx}
+                className="p-4 rounded-xl bg-[#F8FAFC] dark:bg-[#0C0E14] border border-[#E2E8F0] dark:border-slate-800 space-y-2"
+              >
+                <div className="flex items-center gap-1 text-amber-500">
+                  {Array.from({ length: t.rating }).map((_, i) => (
+                    <Star key={i} className="w-3.5 h-3.5 fill-amber-400" />
+                  ))}
+                </div>
+                <p className="text-xs text-[#0F172A] dark:text-slate-300 leading-relaxed italic">
+                  &ldquo;{t.quote}&rdquo;
+                </p>
+                <div className="pt-2 border-t border-[#E2E8F0] dark:border-slate-800">
+                  <h4 className="text-xs font-bold text-[#0F172A] dark:text-white">{t.name}</h4>
+                  <span className="text-[10px] text-[#64748B] dark:text-slate-400">{t.role}</span>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
       <Footer />
     </div>
   );

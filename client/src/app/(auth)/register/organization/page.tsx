@@ -109,7 +109,7 @@ export default function OrganizationRegisterPage() {
           Back to Account Types
         </Link>
         <div className="flex items-center gap-2 mb-1.5">
-          <div className="w-7 h-7 rounded-lg bg-indigo-500/20 text-indigo-400 flex items-center justify-center">
+          <div className="w-7 h-7 rounded-lg bg-amber-500/20 text-indigo-400 flex items-center justify-center">
             <Building2 className="w-4 h-4" />
           </div>
           <span className="text-xs uppercase tracking-wider font-bold text-indigo-400">
@@ -125,7 +125,7 @@ export default function OrganizationRegisterPage() {
       </div>
 
       {/* Main Glassmorphic Card */}
-      <div className="bg-slate-900/90 backdrop-blur-xl rounded-3xl border border-slate-800 shadow-2xl shadow-indigo-950/40 p-6 sm:p-9 space-y-6">
+      <div className="bg-slate-900/90 backdrop-blur-xl rounded-3xl border border-slate-800 shadow-2xl shadow-black/40 p-6 sm:p-9 space-y-6">
         <FormError message={error} />
 
         {/* Verification Notice */}
@@ -278,7 +278,7 @@ export default function OrganizationRegisterPage() {
                 type="checkbox"
                 checked={formData.agreeToTerms}
                 onChange={(e) => setFormData({ ...formData, agreeToTerms: e.target.checked })}
-                className="mt-0.5 w-4 h-4 rounded-md border-slate-700 bg-slate-800 text-indigo-600 focus:ring-indigo-500"
+                className="mt-0.5 w-4 h-4 rounded-md border-slate-700 bg-slate-800 text-amber-600 focus:ring-indigo-500"
               />
               <span className="text-xs text-slate-400 leading-relaxed">
                 I agree to the{" "}
@@ -293,7 +293,7 @@ export default function OrganizationRegisterPage() {
           <button
             type="submit"
             disabled={loading}
-            className="w-full flex items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-indigo-600 via-indigo-500 to-blue-600 px-5 py-3.5 text-sm font-bold text-white shadow-lg shadow-indigo-600/30 hover:from-indigo-500 hover:to-blue-500 active:scale-[0.99] focus:outline-none focus:ring-4 focus:ring-indigo-500/25 disabled:opacity-60 disabled:cursor-not-allowed transition-all duration-200"
+            className="w-full flex items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-indigo-600 via-indigo-500 to-blue-600 px-5 py-3.5 text-sm font-bold text-white shadow-lg shadow-indigo-600/30 hover:from-indigo-500 hover:to-blue-500 active:scale-[0.99] focus:outline-none focus:ring-4 focus:ring-amber-500/25 disabled:opacity-60 disabled:cursor-not-allowed transition-all duration-200"
           >
             {loading ? (
               <span className="inline-block w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />

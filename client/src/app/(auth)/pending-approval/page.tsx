@@ -9,7 +9,7 @@ export default function PendingApprovalPage() {
   return (
     <div className="w-full space-y-6">
       {/* Status Card */}
-      <div className="bg-slate-900/90 backdrop-blur-xl rounded-3xl border border-slate-800 shadow-2xl shadow-indigo-950/40 p-6 sm:p-10 text-center space-y-6">
+      <div className="bg-slate-900/90 backdrop-blur-xl rounded-3xl border border-slate-800 shadow-2xl shadow-black/40 p-6 sm:p-10 text-center space-y-6">
         <div className="w-16 h-16 bg-amber-500/10 text-amber-400 border border-amber-500/30 rounded-2xl flex items-center justify-center mx-auto shadow-lg shadow-amber-950/40">
           <Clock className="w-8 h-8 animate-pulse" />
         </div>
@@ -43,7 +43,7 @@ export default function PendingApprovalPage() {
             </div>
 
             <div className="flex items-start gap-3">
-              <div className="w-5 h-5 rounded-full bg-indigo-500/20 text-indigo-400 border border-indigo-500/30 flex items-center justify-center shrink-0 font-bold text-[10px]">
+              <div className="w-5 h-5 rounded-full bg-amber-500/20 text-indigo-400 border border-indigo-500/30 flex items-center justify-center shrink-0 font-bold text-[10px]">
                 2
               </div>
               <p>

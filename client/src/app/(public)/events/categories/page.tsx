@@ -1,3 +1,3 @@
-export default function Page() {
-  return null;
-}
+import EventsLandingPage from "../page";
+
+export default EventsLandingPage;

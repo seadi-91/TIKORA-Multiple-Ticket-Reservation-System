@@ -1,5 +1,22 @@
-export const APP_NAME = "TIKORA";
-export const APP_TAGLINE = "Your Unified Multi-Ticket Reservation Platform";
+export const APP_NAME = "TicketHub";
+export const APP_TAGLINE = "Your Modern Multi-Category Ticket Reservation Platform";
+
+// TicketHub Subdued Warm Amber & Bronze Color System (Muted & Premium)
+export const BRAND_COLORS = {
+  primary: "#B45309", // Warm Muted Amber / Refined Bronze
+  primaryHover: "#92400E", // Deep Bronze Amber
+  primaryLightBg: "#FAF5ED", // Soft Warm Linen Tint
+  darkBg: "#0F1117", // Neutral Slate Charcoal
+  darkCardBg: "#161922", // Elevated Slate Surface
+  mainText: "#0F172A",
+  secondaryText: "#64748B",
+  pageBg: "#F8FAFC",
+  white: "#FFFFFF",
+  border: "#E2E8F0",
+  error: "#EF4444",
+  warning: "#D97706",
+  success: "#10B981",
+} as const;
 
 export const USER_ROLES = {
   CUSTOMER: "CUSTOMER",
@@ -11,6 +28,7 @@ export const USER_ROLES = {
 export type UserRole = (typeof USER_ROLES)[keyof typeof USER_ROLES];
 
 export const TICKET_CATEGORIES = {
+  ALL: "ALL",
   BUS: "BUS",
   CINEMA: "CINEMA",
   EVENT: "EVENT",
@@ -19,30 +37,52 @@ export const TICKET_CATEGORIES = {
 
 export type TicketCategory = (typeof TICKET_CATEGORIES)[keyof typeof TICKET_CATEGORIES];
 
-export const ORGANIZATION_TYPES = [
+export const ETHIOPIAN_CITIES = [
+  "Addis Ababa",
+  "Hawassa",
+  "Bahir Dar",
+  "Adama (Nazret)",
+  "Dire Dawa",
+  "Gondar",
+  "Mekelle",
+  "Jimma",
+  "Dessie",
+  "Bishoftu",
+  "Arba Minch",
+] as const;
+
+export const PAYMENT_METHODS = [
   {
-    id: "CINEMA",
-    title: "Cinema & Movie Theaters",
-    description: "Manage theater halls, screen schedules, seat maps, and premiere tickets.",
-    badge: "Cinema Halls",
+    id: "TELEBIRR",
+    name: "Telebirr SuperApp",
+    description: "Instant mobile payment via Ethio Telecom Telebirr account or QR",
+    icon: "Phone",
+    color: "from-sky-500 to-blue-600",
+    badge: "Most Popular",
   },
   {
-    id: "BUS",
-    title: "Intercity Bus & Transportation",
-    description: "Manage travel routes, departure times, fleet buses, and passenger seat assignments.",
-    badge: "Transport Services",
+    id: "CBE_BIRR",
+    name: "CBE Birr",
+    description: "Commercial Bank of Ethiopia digital wallet & mobile banking",
+    icon: "Building2",
+    color: "from-purple-600 to-indigo-700",
+    badge: "Zero Fee",
   },
   {
-    id: "EVENT",
-    title: "Live Concerts & Events",
-    description: "Sell tickets for festivals, concerts, conferences, and private exhibitions.",
-    badge: "Event Planners",
+    id: "CHAPA",
+    name: "Chapa Payment Gateway",
+    description: "Pay securely with any Ethiopian local debit card or mobile wallet",
+    icon: "CreditCard",
+    color: "from-emerald-600 to-teal-700",
+    badge: "Instant Pass",
   },
   {
-    id: "SPORTS",
-    title: "Sports Clubs & Stadiums",
-    description: "Host football matches, tournaments, club memberships, and stadium VIP stands.",
-    badge: "Stadiums & Clubs",
+    id: "BANK_CARD",
+    name: "Visa / Mastercard / Local Cards",
+    description: "Direct debit or credit card checkout with 3D Secure verification",
+    icon: "Wallet",
+    color: "from-amber-600 to-orange-700",
+    badge: "International",
   },
 ] as const;
 
@@ -57,3 +97,15 @@ export const AUTH_ROUTES = {
   PENDING_APPROVAL: "/pending-approval",
 } as const;
 
+export const CUSTOMER_ROUTES = {
+  OVERVIEW: "/customer",
+  BOOKINGS: "/customer/bookings",
+  TICKETS: "/customer/tickets",
+  FAVORITES: "/customer/favorites",
+  NOTIFICATIONS: "/customer/notifications",
+  PAYMENTS: "/customer/payments",
+  PROFILE: "/customer/profile",
+  SETTINGS: "/customer/profile/settings",
+  REFUNDS: "/customer/refunds",
+  REVIEWS: "/customer/reviews",
+} as const;

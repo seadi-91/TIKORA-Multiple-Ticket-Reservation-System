@@ -9,19 +9,26 @@ import {
   Film,
   Calendar,
   Trophy,
-  LogIn,
-  UserPlus,
-  Menu,
-  X,
-  Search,
+  Compass,
+  Heart,
+  Bell,
   Sun,
   Moon,
   Laptop,
   Check,
   ChevronDown,
+  LayoutDashboard,
+  QrCode,
+  CreditCard,
+  Settings,
+  LogOut,
+  Menu,
+  X,
 } from "lucide-react";
-import { AUTH_ROUTES } from "@/lib/constants";
+import { AUTH_ROUTES, CUSTOMER_ROUTES } from "@/lib/constants";
 import { useTheme, Theme } from "@/providers/theme-provider";
+import { useBookingStore } from "@/stores/booking.store";
+import { useAuthStore } from "@/stores/auth.store";
 
 interface PublicNavbarProps {
   onSearchClick?: () => void;
@@ -29,33 +36,36 @@ interface PublicNavbarProps {
 
 export function PublicNavbar({ onSearchClick }: PublicNavbarProps) {
   const pathname = usePathname();
-  const { theme, resolvedTheme, systemIsDark, setTheme } = useTheme();
+  const { theme, systemIsDark, setTheme } = useTheme();
+  const { favorites, notifications } = useBookingStore();
+  const { user, isAuthenticated, logout } = useAuthStore();
 
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [themeDropdownOpen, setThemeDropdownOpen] = useState(false);
+  const [userDropdownOpen, setUserDropdownOpen] = useState(false);
   const [isScrolled, setIsScrolled] = useState(false);
-  const dropdownRef = useRef<HTMLDivElement>(null);
 
-  // Scroll detection: before scroll transparent with no border; after scroll frosted glass with border
+  const themeDropdownRef = useRef<HTMLDivElement>(null);
+  const userDropdownRef = useRef<HTMLDivElement>(null);
+
+  const unreadNotifsCount = notifications.filter((n) => !n.isRead).length;
+
   useEffect(() => {
     const handleScroll = () => {
-      if (window.scrollY > 12) {
-        setIsScrolled(true);
-      } else {
-        setIsScrolled(false);
-      }
+      setIsScrolled(window.scrollY > 8);
     };
-
     handleScroll();
     window.addEventListener("scroll", handleScroll, { passive: true });
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
 
-  // Close dropdown on outside click
   useEffect(() => {
     function handleClickOutside(event: MouseEvent) {
-      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
+      if (themeDropdownRef.current && !themeDropdownRef.current.contains(event.target as Node)) {
         setThemeDropdownOpen(false);
+      }
+      if (userDropdownRef.current && !userDropdownRef.current.contains(event.target as Node)) {
+        setUserDropdownOpen(false);
       }
     }
     document.addEventListener("mousedown", handleClickOutside);
@@ -63,10 +73,11 @@ export function PublicNavbar({ onSearchClick }: PublicNavbarProps) {
   }, []);
 
   const navLinks = [
-    { label: "All Tickets", href: "/", icon: Ticket },
-    { label: "Buses", href: "/bus", icon: Bus, badge: "Popular" },
+    { label: "Home", href: "/", icon: Ticket },
+    { label: "Explore", href: "/search", icon: Compass },
+    { label: "Buses", href: "/bus", icon: Bus },
     { label: "Cinema", href: "/cinema", icon: Film },
-    { label: "Events", href: "/events", icon: Calendar, badge: "Hot" },
+    { label: "Events", href: "/events", icon: Calendar },
     { label: "Sports", href: "/sports", icon: Trophy },
   ];
 
@@ -75,63 +86,53 @@ export function PublicNavbar({ onSearchClick }: PublicNavbarProps) {
     label: string;
     description: string;
     icon: React.ComponentType<{ className?: string }>;
-    accentColor: string;
   }[] = [
     {
       value: "light",
       label: "Light",
-      description: "Clean & bright daylight mode",
+      description: "Crisp daylight",
       icon: Sun,
-      accentColor: "text-amber-500 bg-amber-500/10 border-amber-500/20",
     },
     {
       value: "dark",
       label: "Dark",
-      description: "Midnight obsidian mode",
+      description: "Midnight obsidian",
       icon: Moon,
-      accentColor: "text-indigo-400 bg-indigo-500/10 border-indigo-500/20",
     },
     {
       value: "system",
       label: "System",
       description: `Follows OS (${systemIsDark ? "Dark" : "Light"})`,
       icon: Laptop,
-      accentColor: "text-cyan-400 bg-cyan-500/10 border-cyan-500/20",
     },
   ];
 
   return (
     <header
-      className={`sticky top-0 z-50 w-full transition-all duration-300 ${
+      className={`sticky top-0 z-40 w-full transition-all duration-200 ${
         isScrolled
-          ? "border-b border-slate-200/90 dark:border-slate-800/90 bg-white/85 dark:bg-slate-950/85 backdrop-blur-xl shadow-xs dark:shadow-md dark:shadow-black/20"
-          : "border-b border-transparent bg-transparent shadow-none"
+          ? "bg-white/95 dark:bg-[#0F1117]/95 backdrop-blur-md border-b border-[#E2E8F0] dark:border-slate-800 shadow-xs"
+          : "bg-transparent border-b border-transparent shadow-none"
       }`}
     >
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 h-18 flex items-center justify-between gap-4">
-        {/* Brand Logo */}
-        <Link href="/" className="flex items-center gap-3 shrink-0 group">
-          <div className="w-10 h-10 rounded-2xl bg-gradient-to-tr from-indigo-600 to-indigo-500 flex items-center justify-center text-white shadow-lg shadow-indigo-500/25 group-hover:scale-105 group-hover:rotate-3 transition-all duration-300 ring-1 ring-white/20">
-            <Ticket className="w-5 h-5 transform -rotate-12" />
+      <div className="max-w-7xl mx-auto px-3 sm:px-6 h-13 sm:h-14 flex items-center justify-between gap-3">
+        {/* Brand Logo - Compact */}
+        <Link href="/" className="flex items-center gap-2 group shrink-0">
+          <div className="w-8 h-8 rounded-lg bg-[#B45309] flex items-center justify-center text-white shadow-xs group-hover:scale-105 transition-transform">
+            <Ticket className="w-4 h-4 transform -rotate-12" />
           </div>
           <div>
-            <span className="text-xl font-black tracking-wider text-slate-900 dark:text-white">
-              TIKORA
+            <span className="text-base sm:text-lg font-black tracking-tight text-[#0F172A] dark:text-white flex items-center gap-0.5">
+              Ticket<span className="text-[#B45309] dark:text-[#D97706]">Hub</span>
             </span>
-            <span className="hidden sm:block text-[10px] uppercase tracking-widest text-indigo-600 dark:text-indigo-400 font-bold leading-none">
-              Ticketing Platform
+            <span className="text-[8px] uppercase tracking-widest text-[#64748B] dark:text-slate-400 font-semibold block -mt-1 hidden sm:block">
+              Multi-Ticket Ethiopia
             </span>
           </div>
         </Link>
 
-        {/* Desktop Category Navigation */}
-        <nav
-          className={`hidden md:flex items-center gap-1 p-1.5 rounded-2xl transition-all duration-300 ${
-            isScrolled
-              ? "bg-slate-100/80 dark:bg-slate-900/60 border border-slate-200/80 dark:border-slate-800/80 backdrop-blur-md"
-              : "bg-white/40 dark:bg-slate-900/40 border border-white/50 dark:border-slate-800/50 backdrop-blur-sm"
-          }`}
-        >
+        {/* Center Desktop Navigation - Compact */}
+        <nav className="hidden lg:flex items-center gap-0.5 bg-[#F8FAFC] dark:bg-[#161922] p-1 rounded-xl border border-[#E2E8F0] dark:border-slate-800">
           {navLinks.map((link) => {
             const Icon = link.icon;
             const isActive = pathname === link.href;
@@ -139,61 +140,65 @@ export function PublicNavbar({ onSearchClick }: PublicNavbarProps) {
               <Link
                 key={link.href}
                 href={link.href}
-                className={`relative flex items-center gap-2 px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all duration-200 ${
+                className={`flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-semibold transition-all ${
                   isActive
-                    ? "bg-indigo-600 text-white shadow-md shadow-indigo-600/30"
-                    : "text-slate-600 hover:text-slate-900 hover:bg-slate-200/60 dark:text-slate-300 dark:hover:text-white dark:hover:bg-slate-800/80"
+                    ? "bg-[#B45309] text-white shadow-xs"
+                    : "text-[#64748B] hover:text-[#0F172A] dark:text-slate-400 dark:hover:text-white hover:bg-white/80 dark:hover:bg-slate-800/60"
                 }`}
               >
                 <Icon className="w-3.5 h-3.5" />
                 <span>{link.label}</span>
-                {link.badge && !isActive && (
-                  <span className="text-[9px] font-black uppercase tracking-wider px-1.5 py-0.2 rounded-full bg-indigo-500/10 text-indigo-600 border border-indigo-500/20 dark:bg-indigo-500/20 dark:text-indigo-300 dark:border-indigo-500/30">
-                    {link.badge}
-                  </span>
-                )}
               </Link>
             );
           })}
         </nav>
 
-        {/* Right Actions & Theme Switcher */}
-        <div className="hidden sm:flex items-center gap-2.5 shrink-0">
-          {/* Theme Dropdown Toggle */}
-          <div className="relative" ref={dropdownRef}>
+        {/* Right Customer Controls - Compact */}
+        <div className="flex items-center gap-1.5 sm:gap-2">
+          {/* Wishlist Link */}
+          <Link
+            href={CUSTOMER_ROUTES.FAVORITES}
+            className="relative p-1.5 sm:p-2 rounded-lg border border-[#E2E8F0] dark:border-slate-800 bg-white/70 dark:bg-[#161922] text-[#64748B] hover:text-[#B45309] dark:text-slate-300 transition-colors"
+            title="My Saved Wishlist"
+          >
+            <Heart className="w-3.5 h-3.5" />
+            {favorites.length > 0 && (
+              <span className="absolute -top-1 -right-1 w-3.5 h-3.5 rounded-full bg-[#B45309] text-white text-[8px] font-bold flex items-center justify-center">
+                {favorites.length}
+              </span>
+            )}
+          </Link>
+
+          {/* Notifications Link */}
+          <Link
+            href={CUSTOMER_ROUTES.NOTIFICATIONS}
+            className="relative p-1.5 sm:p-2 rounded-lg border border-[#E2E8F0] dark:border-slate-800 bg-white/70 dark:bg-[#161922] text-[#64748B] hover:text-[#B45309] dark:text-slate-300 transition-colors"
+            title="Notification Center"
+          >
+            <Bell className="w-3.5 h-3.5" />
+            {unreadNotifsCount > 0 && (
+              <span className="absolute -top-1 -right-1 w-3.5 h-3.5 rounded-full bg-[#B45309] text-white text-[8px] font-bold flex items-center justify-center">
+                {unreadNotifsCount}
+              </span>
+            )}
+          </Link>
+
+          {/* Theme Dropdown */}
+          <div className="relative" ref={themeDropdownRef}>
             <button
               onClick={() => setThemeDropdownOpen(!themeDropdownOpen)}
-              className={`flex items-center gap-2 px-3 py-2 rounded-xl text-xs font-bold transition-all duration-200 border shadow-xs ${
-                isScrolled
-                  ? "bg-slate-100 text-slate-700 hover:bg-slate-200/80 border-slate-200 dark:bg-slate-900 dark:text-slate-200 dark:hover:bg-slate-800 dark:border-slate-800"
-                  : "bg-white/60 text-slate-800 hover:bg-white/90 border-slate-200/80 dark:bg-slate-900/60 dark:text-slate-200 dark:hover:bg-slate-900 dark:border-slate-800/80 backdrop-blur-sm"
-              }`}
-              title="Change Theme (Dark, Light, System)"
-              aria-label="Theme Selector"
+              className="p-1.5 sm:p-2 rounded-lg border border-[#E2E8F0] dark:border-slate-800 bg-white/70 dark:bg-[#161922] text-[#64748B] hover:text-[#B45309] dark:text-slate-300 transition-colors cursor-pointer"
+              title="Change Color Theme"
             >
-              {theme === "dark" ? (
-                <Moon className="w-4 h-4 text-indigo-500 dark:text-indigo-400" />
-              ) : theme === "light" ? (
-                <Sun className="w-4 h-4 text-amber-500" />
+              {theme === "dark" || (theme === "system" && systemIsDark) ? (
+                <Moon className="w-3.5 h-3.5 text-slate-300" />
               ) : (
-                <Laptop className="w-4 h-4 text-cyan-500 dark:text-cyan-400" />
+                <Sun className="w-3.5 h-3.5 text-slate-600" />
               )}
-              <span className="capitalize text-xs font-bold">
-                {theme}
-              </span>
-              <ChevronDown
-                className={`w-3 h-3 text-slate-400 transition-transform duration-200 ${
-                  themeDropdownOpen ? "rotate-180" : ""
-                }`}
-              />
             </button>
 
-            {/* Dropdown Menu */}
             {themeDropdownOpen && (
-              <div className="absolute right-0 mt-2 w-52 rounded-2xl bg-white/95 dark:bg-slate-900/95 backdrop-blur-2xl border border-slate-200 dark:border-slate-800 shadow-2xl shadow-slate-900/10 dark:shadow-black/60 p-2 z-50 animate-in fade-in-50 zoom-in-95 duration-150">
-                <div className="px-2.5 py-1.5 text-[10px] font-bold uppercase tracking-wider text-slate-400 dark:text-slate-500 border-b border-slate-100 dark:border-slate-800/80 mb-1">
-                  Appearance Theme
-                </div>
+              <div className="absolute right-0 mt-1.5 w-48 rounded-xl border border-[#E2E8F0] dark:border-slate-800 bg-white dark:bg-[#161922] p-1.5 shadow-xl z-50 space-y-0.5">
                 {themeOptions.map((opt) => {
                   const Icon = opt.icon;
                   const isSelected = theme === opt.value;
@@ -204,28 +209,20 @@ export function PublicNavbar({ onSearchClick }: PublicNavbarProps) {
                         setTheme(opt.value);
                         setThemeDropdownOpen(false);
                       }}
-                      className={`w-full flex items-center justify-between p-2 rounded-xl text-xs transition-all my-0.5 text-left ${
+                      className={`w-full flex items-center justify-between p-1.5 rounded-lg text-xs font-semibold transition-colors cursor-pointer ${
                         isSelected
-                          ? "bg-indigo-50 text-indigo-700 dark:bg-indigo-950/60 dark:text-indigo-300 font-bold"
-                          : "text-slate-700 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-800/80 dark:hover:text-white"
+                          ? "bg-slate-100 text-slate-900 dark:bg-slate-800 dark:text-white"
+                          : "text-[#64748B] hover:bg-slate-50 dark:text-slate-400 dark:hover:bg-slate-800/50"
                       }`}
                     >
-                      <div className="flex items-center gap-2.5">
-                        <div
-                          className={`w-7 h-7 rounded-lg flex items-center justify-center border shrink-0 ${opt.accentColor}`}
-                        >
-                          <Icon className="w-3.5 h-3.5" />
-                        </div>
-                        <div>
-                          <p className="font-bold leading-tight">{opt.label}</p>
-                          <p className="text-[10px] text-slate-400 dark:text-slate-500 font-normal">
-                            {opt.description}
-                          </p>
+                      <div className="flex items-center gap-2">
+                        <Icon className="w-3.5 h-3.5" />
+                        <div className="text-left">
+                          <span className="block font-bold leading-tight">{opt.label}</span>
+                          <span className="text-[9px] text-[#64748B] dark:text-slate-400 block">{opt.description}</span>
                         </div>
                       </div>
-                      {isSelected && (
-                        <Check className="w-4 h-4 text-indigo-600 dark:text-indigo-400 shrink-0 ml-2" />
-                      )}
+                      {isSelected && <Check className="w-3.5 h-3.5 text-[#B45309] dark:text-[#D97706]" />}
                     </button>
                   );
                 })}
@@ -233,74 +230,105 @@ export function PublicNavbar({ onSearchClick }: PublicNavbarProps) {
             )}
           </div>
 
-          {onSearchClick && (
+          {/* User Profile / Dashboard Actions */}
+          <div className="relative" ref={userDropdownRef}>
             <button
-              onClick={onSearchClick}
-              className="p-2.5 rounded-xl text-slate-500 hover:text-slate-900 hover:bg-slate-100 dark:text-slate-400 dark:hover:text-white dark:hover:bg-slate-900 border border-transparent hover:border-slate-200 dark:hover:border-slate-800 transition-colors"
-              title="Search Tickets"
+              onClick={() => setUserDropdownOpen(!userDropdownOpen)}
+              className="flex items-center gap-1.5 p-1 sm:px-2.5 sm:py-1.5 rounded-lg border border-[#E2E8F0] dark:border-slate-800 bg-white/70 dark:bg-[#161922] hover:border-slate-300 dark:hover:border-slate-700 transition-all cursor-pointer"
             >
-              <Search className="w-4 h-4" />
+              <div className="w-6 h-6 rounded-md bg-slate-900 dark:bg-slate-800 text-white font-bold flex items-center justify-center text-xs">
+                A
+              </div>
+              <span className="hidden sm:inline-block text-xs font-semibold text-[#0F172A] dark:text-white">
+                Customer
+              </span>
+              <ChevronDown className="w-3 h-3 text-[#64748B]" />
             </button>
-          )}
 
-          <Link
-            href={AUTH_ROUTES.LOGIN}
-            className={`inline-flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold transition-all ${
-              isScrolled
-                ? "text-slate-700 hover:text-slate-900 bg-slate-100/80 hover:bg-slate-200/80 dark:text-slate-300 dark:hover:text-white dark:bg-slate-900 dark:hover:bg-slate-800 border border-slate-200/80 dark:border-slate-800/80"
-                : "text-slate-800 hover:text-black bg-white/70 hover:bg-white dark:text-slate-200 dark:hover:text-white dark:bg-slate-900/60 dark:hover:bg-slate-900 border border-slate-200/70 dark:border-slate-800/70 shadow-2xs"
-            }`}
-          >
-            <LogIn className="w-4 h-4 text-indigo-600 dark:text-indigo-400" />
-            <span>Sign In</span>
-          </Link>
+            {userDropdownOpen && (
+              <div className="absolute right-0 mt-1.5 w-52 rounded-xl border border-[#E2E8F0] dark:border-slate-800 bg-white dark:bg-[#161922] p-1.5 shadow-xl z-50 space-y-0.5">
+                <div className="p-2 border-b border-[#E2E8F0] dark:border-slate-800 mb-1">
+                  <p className="text-xs font-bold text-[#0F172A] dark:text-white">Abebe Bekele</p>
+                  <p className="text-[10px] text-[#64748B] dark:text-slate-400">abebe.customer@tickethub.et</p>
+                </div>
 
-          <Link
-            href={AUTH_ROUTES.REGISTER}
-            className="inline-flex items-center gap-2 px-4.5 py-2 rounded-xl text-xs font-bold text-white bg-gradient-to-r from-indigo-600 via-indigo-500 to-blue-600 hover:from-indigo-500 hover:to-blue-500 shadow-md shadow-indigo-600/30 transition-all duration-200 active:scale-[0.99]"
-          >
-            <UserPlus className="w-4 h-4" />
-            <span>Join Tikora</span>
-          </Link>
-        </div>
+                <Link
+                  href={CUSTOMER_ROUTES.OVERVIEW}
+                  onClick={() => setUserDropdownOpen(false)}
+                  className="flex items-center gap-2 p-1.5 rounded-lg text-xs font-medium text-[#0F172A] dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800/70"
+                >
+                  <LayoutDashboard className="w-3.5 h-3.5 text-slate-400 dark:text-slate-500" />
+                  <span>Dashboard Overview</span>
+                </Link>
 
-        {/* Mobile Header Buttons (Theme Toggle + Menu) */}
-        <div className="flex sm:hidden items-center gap-2">
-          {/* Mobile Quick Theme Toggle */}
-          <button
-            onClick={() => setTheme(resolvedTheme === "dark" ? "light" : "dark")}
-            className={`p-2 rounded-xl border text-xs ${
-              isScrolled
-                ? "bg-slate-100 dark:bg-slate-900 text-slate-700 dark:text-slate-300 border-slate-200 dark:border-slate-800"
-                : "bg-white/60 dark:bg-slate-900/60 text-slate-800 dark:text-slate-200 border-slate-200/70 dark:border-slate-800/70"
-            }`}
-            aria-label="Toggle Theme"
-          >
-            {resolvedTheme === "dark" ? (
-              <Moon className="w-4 h-4 text-indigo-400" />
-            ) : (
-              <Sun className="w-4 h-4 text-amber-500" />
+                <Link
+                  href={CUSTOMER_ROUTES.BOOKINGS}
+                  onClick={() => setUserDropdownOpen(false)}
+                  className="flex items-center gap-2 p-1.5 rounded-lg text-xs font-medium text-[#0F172A] dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800/70"
+                >
+                  <Ticket className="w-3.5 h-3.5 text-slate-400 dark:text-slate-500" />
+                  <span>My Bookings</span>
+                </Link>
+
+                <Link
+                  href={CUSTOMER_ROUTES.TICKETS}
+                  onClick={() => setUserDropdownOpen(false)}
+                  className="flex items-center gap-2 p-1.5 rounded-lg text-xs font-medium text-[#0F172A] dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800/70"
+                >
+                  <QrCode className="w-3.5 h-3.5 text-slate-400 dark:text-slate-500" />
+                  <span>Digital Ticket Wallet</span>
+                </Link>
+
+                <Link
+                  href={CUSTOMER_ROUTES.PAYMENTS}
+                  onClick={() => setUserDropdownOpen(false)}
+                  className="flex items-center gap-2 p-1.5 rounded-lg text-xs font-medium text-[#0F172A] dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800/70"
+                >
+                  <CreditCard className="w-3.5 h-3.5 text-slate-400 dark:text-slate-500" />
+                  <span>Payment History</span>
+                </Link>
+
+                <Link
+                  href={CUSTOMER_ROUTES.SETTINGS}
+                  onClick={() => setUserDropdownOpen(false)}
+                  className="flex items-center gap-2 p-1.5 rounded-lg text-xs font-medium text-[#0F172A] dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800/70"
+                >
+                  <Settings className="w-3.5 h-3.5 text-slate-400 dark:text-slate-500" />
+                  <span>Account Settings</span>
+                </Link>
+
+                <div className="border-t border-[#E2E8F0] dark:border-slate-800 pt-1 mt-1">
+                  <Link
+                    href={AUTH_ROUTES.LOGIN}
+                    onClick={() => {
+                      logout();
+                      setUserDropdownOpen(false);
+                    }}
+                    className="flex items-center gap-2 p-1.5 rounded-lg text-xs font-semibold text-rose-600 dark:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-950/30"
+                  >
+                    <LogOut className="w-3.5 h-3.5" />
+                    <span>Sign Out</span>
+                  </Link>
+                </div>
+              </div>
             )}
-          </button>
+          </div>
 
+          {/* Mobile Menu Hamburger */}
           <button
             onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-            className={`p-2.5 rounded-xl border ${
-              isScrolled
-                ? "bg-slate-100 dark:bg-slate-900 text-slate-700 dark:text-slate-300 border-slate-200 dark:border-slate-800"
-                : "bg-white/60 dark:bg-slate-900/60 text-slate-800 dark:text-slate-200 border-slate-200/70 dark:border-slate-800/70"
-            }`}
-            aria-label="Toggle navigation menu"
+            className="lg:hidden p-1.5 rounded-lg border border-[#E2E8F0] dark:border-slate-800 text-[#0F172A] dark:text-white"
+            aria-label="Open Mobile Menu"
           >
-            {mobileMenuOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
+            {mobileMenuOpen ? <X className="w-4 h-4" /> : <Menu className="w-4 h-4" />}
           </button>
         </div>
       </div>
 
-      {/* Mobile Slide-Down Drawer */}
+      {/* Mobile Drawer - Compact */}
       {mobileMenuOpen && (
-        <div className="md:hidden border-t border-slate-200 dark:border-slate-800 bg-white/95 dark:bg-slate-950/95 backdrop-blur-2xl px-5 py-6 space-y-4 animate-in slide-in-from-top-4 duration-200 shadow-xl">
-          <div className="grid grid-cols-2 gap-2">
+        <div className="lg:hidden border-b border-[#E2E8F0] dark:border-slate-800 bg-white dark:bg-[#161922] px-3 pt-2 pb-4 space-y-2">
+          <div className="grid grid-cols-2 gap-1.5">
             {navLinks.map((link) => {
               const Icon = link.icon;
               return (
@@ -308,59 +336,37 @@ export function PublicNavbar({ onSearchClick }: PublicNavbarProps) {
                   key={link.href}
                   href={link.href}
                   onClick={() => setMobileMenuOpen(false)}
-                  className="flex items-center gap-2.5 p-3 rounded-xl bg-slate-50 dark:bg-slate-900/60 border border-slate-200 dark:border-slate-800/70 text-xs font-bold text-slate-700 dark:text-slate-200 hover:text-indigo-600 dark:hover:text-white hover:border-indigo-500/50"
+                  className="flex items-center gap-1.5 p-2 rounded-lg border border-[#E2E8F0] dark:border-slate-800 text-xs font-semibold text-[#0F172A] dark:text-white"
                 >
-                  <Icon className="w-4 h-4 text-indigo-600 dark:text-indigo-400" />
+                  <Icon className="w-3.5 h-3.5 text-slate-400 dark:text-slate-500" />
                   <span>{link.label}</span>
                 </Link>
               );
             })}
           </div>
 
-          {/* Theme Selector inside mobile drawer */}
-          <div className="pt-2 border-t border-slate-200 dark:border-slate-800 space-y-2">
-            <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400">
-              Appearance Theme
-            </span>
-            <div className="grid grid-cols-3 gap-2">
-              {themeOptions.map((opt) => {
-                const Icon = opt.icon;
-                const isSelected = theme === opt.value;
-                return (
-                  <button
-                    key={opt.value}
-                    onClick={() => setTheme(opt.value)}
-                    className={`flex items-center justify-center gap-1.5 py-2 px-2 rounded-xl text-xs font-bold border transition-all ${
-                      isSelected
-                        ? "bg-indigo-600 text-white border-indigo-600 shadow-sm"
-                        : "bg-slate-100 dark:bg-slate-900 text-slate-600 dark:text-slate-300 border-slate-200 dark:border-slate-800"
-                    }`}
-                  >
-                    <Icon className="w-3.5 h-3.5" />
-                    <span>{opt.label}</span>
-                  </button>
-                );
-              })}
-            </div>
-          </div>
-
-          <div className="pt-2 border-t border-slate-200 dark:border-slate-800 grid grid-cols-2 gap-2">
+          <div className="pt-2 border-t border-[#E2E8F0] dark:border-slate-800 space-y-1.5">
             <Link
-              href={AUTH_ROUTES.LOGIN}
+              href={CUSTOMER_ROUTES.BOOKINGS}
               onClick={() => setMobileMenuOpen(false)}
-              className="flex items-center justify-center gap-2 p-3 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-900/80 text-xs font-bold text-slate-700 dark:text-slate-200"
+              className="flex items-center justify-between p-2 rounded-lg bg-slate-100 dark:bg-slate-800 text-slate-900 dark:text-white text-xs font-semibold"
             >
-              <LogIn className="w-4 h-4 text-indigo-600 dark:text-indigo-400" />
-              <span>Sign In</span>
+              <span className="flex items-center gap-2">
+                <Ticket className="w-3.5 h-3.5" />
+                <span>My Bookings</span>
+              </span>
+              <span className="text-[9px] bg-[#B45309] text-white px-2 py-0.5 rounded-full font-bold">
+                Active
+              </span>
             </Link>
 
             <Link
-              href={AUTH_ROUTES.REGISTER}
+              href={CUSTOMER_ROUTES.TICKETS}
               onClick={() => setMobileMenuOpen(false)}
-              className="flex items-center justify-center gap-2 p-3 rounded-xl bg-gradient-to-r from-indigo-600 to-blue-600 text-xs font-bold text-white shadow-md shadow-indigo-600/30"
+              className="flex items-center gap-2 p-2 rounded-lg border border-[#E2E8F0] dark:border-slate-800 text-[#0F172A] dark:text-white text-xs font-semibold"
             >
-              <UserPlus className="w-4 h-4" />
-              <span>Join Tikora</span>
+              <QrCode className="w-3.5 h-3.5 text-slate-400 dark:text-slate-500" />
+              <span>Digital Ticket Wallet</span>
             </Link>
           </div>
         </div>

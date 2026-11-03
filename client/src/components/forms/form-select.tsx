@@ -52,7 +52,7 @@ export const FormSelect = forwardRef<HTMLSelectElement, FormSelectProps>(
 
         <div className="relative group">
           {leftIcon && (
-            <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3.5 text-slate-400 group-focus-within:text-indigo-600 dark:text-slate-500 dark:group-focus-within:text-indigo-400 transition-colors">
+            <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3.5 text-slate-400 group-focus-within:text-amber-600 dark:text-slate-500 dark:group-focus-within:text-indigo-400 transition-colors">
               {leftIcon}
             </div>
           )}
@@ -67,7 +67,7 @@ export const FormSelect = forwardRef<HTMLSelectElement, FormSelectProps>(
               "pr-10",
               error
                 ? "border-rose-400 focus:border-rose-500 focus:ring-rose-500/15 dark:border-rose-600 dark:focus:ring-rose-500/20"
-                : "border-slate-200/90 hover:border-slate-300 focus:border-indigo-600 focus:ring-indigo-600/15 dark:border-slate-800 dark:hover:border-slate-700 dark:focus:border-indigo-500 dark:focus:ring-indigo-500/20",
+                : "border-slate-200/90 hover:border-slate-300 focus:border-indigo-600 focus:ring-indigo-600/15 dark:border-slate-800 dark:hover:border-slate-700 dark:focus:border-amber-500 dark:focus:ring-amber-500/20",
               className
             )}
             {...props}
@@ -84,7 +84,7 @@ export const FormSelect = forwardRef<HTMLSelectElement, FormSelectProps>(
             ))}
           </select>
 
-          <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-3.5 text-slate-400 dark:text-slate-500 group-focus-within:text-indigo-600 dark:group-focus-within:text-indigo-400 transition-colors">
+          <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-3.5 text-slate-400 dark:text-slate-500 group-focus-within:text-amber-600 dark:group-focus-within:text-indigo-400 transition-colors">
             <ChevronDown className="w-4 h-4" />
           </div>
         </div>

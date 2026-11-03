@@ -3,17 +3,31 @@
 @custom-variant dark (&:where(.dark, .dark *));
 
 :root {
-  --background: #f8fafc;
-  --foreground: #0f172a;
-  --card-bg: #ffffff;
-  --card-border: #e2e8f0;
+  --primary: #B45309;
+  --primary-hover: #92400E;
+  --primary-light-bg: #FAF5ED;
+  --background: #F8FAFC;
+  --foreground: #0F172A;
+  --card-bg: #FFFFFF;
+  --card-border: #E2E8F0;
+  --text-muted: #64748B;
+  --color-error: #EF4444;
+  --color-warning: #D97706;
+  --color-success: #10B981;
 }
 
 .dark {
-  --background: #020617;
-  --foreground: #f8fafc;
-  --card-bg: #0b1120;
-  --card-border: #1e293b;
+  --primary: #D97706;
+  --primary-hover: #B45309;
+  --primary-light-bg: #221B12;
+  --background: #0F1117;
+  --foreground: #F8FAFC;
+  --card-bg: #161922;
+  --card-border: #232733;
+  --text-muted: #94A3B8;
+  --color-error: #F87171;
+  --color-warning: #D97706;
+  --color-success: #34D399;
 }
 
 body {
@@ -26,6 +40,25 @@ body {
 }
 
 ::selection {
-  background-color: #4f46e5;
-  color: #ffffff;
+  background-color: #B45309;
+  color: #FFFFFF;
+}
+
+/* Custom scrollbars with subdued warm amber thumb */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: rgba(180, 83, 9, 0.3);
+  border-radius: 9999px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(180, 83, 9, 0.5);
 }

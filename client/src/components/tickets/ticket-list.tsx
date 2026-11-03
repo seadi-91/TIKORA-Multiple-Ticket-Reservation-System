@@ -1,0 +1,54 @@
+"use client";
+
+import React from "react";
+import { TicketItem } from "@/types/ticket.types";
+import { TicketCard } from "./ticket-card";
+import { EmptyState } from "@/components/feedback/empty-state";
+import { Ticket as TicketIcon } from "lucide-react";
+
+interface TicketListProps {
+  tickets: TicketItem[];
+  viewMode?: "grid" | "list";
+  onBookClick?: (ticket: TicketItem) => void;
+  onResetFilters?: () => void;
+}
+
+export function TicketList({
+  tickets,
+  viewMode = "grid",
+  onBookClick,
+  onResetFilters,
+}: TicketListProps) {
+  if (tickets.length === 0) {
+    return (
+      <EmptyState
+        icon={TicketIcon}
+        title="No matching tickets found"
+        description="We couldn't find any tickets matching your selected criteria. Try adjusting your search query, destination city, or category filter."
+        actionLabel="Reset Search Filters"
+        onActionClick={onResetFilters}
+      />
+    );
+  }
+
+  if (viewMode === "list") {
+    return (
+      <div className="flex flex-col gap-3">
+        {tickets.map((ticket) => (
+          <TicketCard key={ticket.id} ticket={ticket} viewMode="list" onBookClick={onBookClick} />
+        ))}
+      </div>
+    );
+  }
+
+  return (
+    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5">
+      {tickets.map((ticket) => (
+        <TicketCard key={ticket.id} ticket={ticket} viewMode="grid" onBookClick={onBookClick} />
+      ))}
+    </div>
+  );
+}
+
+export default TicketList;
+

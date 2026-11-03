@@ -42,12 +42,11 @@ export default function UnifiedLoginPage() {
     setLoading(true);
 
     try {
-      // Simulate authentication API call
-      await new Promise((resolve) => setTimeout(resolve, 800));
+      await new Promise((resolve) => setTimeout(resolve, 600));
 
       const normalizedEmail = email.toLowerCase().trim();
       let role: "CUSTOMER" | "ORGANIZATION" | "INSPECTOR" | "ADMIN" = "CUSTOMER";
-      let name = "Tikora Member";
+      let name = "Abebe Bekele";
       let redirectPath = "/customer";
 
       if (normalizedEmail.includes("admin")) {
@@ -61,184 +60,166 @@ export default function UnifiedLoginPage() {
         normalizedEmail.includes("provider")
       ) {
         role = "ORGANIZATION";
-        name = "Partner Organization";
+        name = "Selam Bus Operations";
         redirectPath = "/provider/dashboard";
-      } else if (
-        normalizedEmail.includes("inspector") ||
-        normalizedEmail.includes("scanner") ||
-        normalizedEmail.includes("staff")
-      ) {
+      } else if (normalizedEmail.includes("inspector") || normalizedEmail.includes("scanner")) {
         role = "INSPECTOR";
-        name = "Ticket Inspector";
+        name = "Station Gate Officer";
         redirectPath = "/inspector/scanner";
+      } else {
+        role = "CUSTOMER";
+        name = "Abebe Bekele";
+        redirectPath = "/customer";
       }
 
       setAuth(
         {
-          id: `usr_${Date.now()}`,
-          email: normalizedEmail,
+          id: `usr-${Date.now()}`,
           name,
+          email: normalizedEmail,
           role,
           status: "ACTIVE",
+          emailVerified: true,
           createdAt: new Date().toISOString(),
         },
-        "tikora_jwt_session_token"
+        "mock-jwt-token-tickethub"
       );
 
       router.push(redirectPath);
-    } catch (err: unknown) {
-      if (err instanceof Error) {
-        setError(err.message);
-      } else {
-        setError("Invalid email or password. Please try again.");
-      }
+    } catch (err: any) {
+      setError(err?.message || "Failed to sign in. Please verify your credentials.");
     } finally {
       setLoading(false);
     }
   };
 
-  const handleFillDemo = (demoEmail: string) => {
-    setEmail(demoEmail);
-    setPassword("Tikora@2026");
+  const handleDemoPreset = (presetEmail: string) => {
+    setEmail(presetEmail);
+    setPassword("DemoPassword123!");
     setError(null);
   };
 
   return (
-    <div className="w-full space-y-6">
-      {/* Title & Introduction */}
-      <div className="space-y-2 text-center sm:text-left">
-        <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-indigo-500/10 border border-indigo-500/20 text-indigo-400 text-xs font-semibold backdrop-blur-md">
-          <Sparkles className="w-3.5 h-3.5" />
-          <span>Single Unified Sign In</span>
-        </div>
-        <h2 className="text-3xl sm:text-4xl font-black text-white tracking-tight">
-          Welcome back
+    <div className="rounded-3xl bg-white dark:bg-[#161922] border border-[#E2E8F0] dark:border-slate-800 p-6 sm:p-8 shadow-xl shadow-black/5 space-y-6">
+      <div className="space-y-1.5 text-center sm:text-left">
+        <h2 className="text-2xl font-black tracking-tight text-[#0F172A] dark:text-white">
+          Sign In to TicketHub
         </h2>
-        <p className="text-sm text-slate-400">
-          Sign in to access your tickets, route fleets, or administrative dashboard.
+        <p className="text-xs text-[#64748B] dark:text-slate-400">
+          Access your digital ticket wallet, bookings, or operator portal.
         </p>
       </div>
 
-      {/* Main Glassmorphic Card */}
-      <div className="bg-slate-900/90 backdrop-blur-xl rounded-3xl border border-slate-800 shadow-2xl shadow-indigo-950/40 p-6 sm:p-9 space-y-6">
-        <FormError message={error} />
+      {error && <FormError message={error} onDismiss={() => setError(null)} />}
 
-        <form onSubmit={handleLogin} className="space-y-4">
-          <FormInput
-            label="Email or Phone Number"
-            type="email"
-            placeholder="name@tikora.com"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            required
-            autoComplete="email"
-            leftIcon={<Mail className="w-4 h-4" />}
-          />
+      <form onSubmit={handleLogin} className="space-y-4">
+        <FormInput
+          label="Email Address"
+          type="email"
+          name="email"
+          value={email}
+          onChange={(e) => setEmail(e.target.value)}
+          placeholder="your.email@example.com"
+          leftIcon={<Mail className="w-4 h-4 text-[#64748B]" />}
+          autoComplete="email"
+          required
+        />
 
+        <div className="space-y-1">
           <FormInput
             label="Password"
             type="password"
-            placeholder="••••••••"
+            name="password"
             value={password}
             onChange={(e) => setPassword(e.target.value)}
-            required
+            placeholder="••••••••••••"
+            leftIcon={<Lock className="w-4 h-4 text-[#64748B]" />}
             autoComplete="current-password"
-            leftIcon={<Lock className="w-4 h-4" />}
+            required
           />
 
-          <div className="flex items-center justify-between text-xs sm:text-sm pt-1">
-            <label className="flex items-center gap-2.5 cursor-pointer select-none">
+          <div className="flex items-center justify-between text-xs pt-1">
+            <label className="flex items-center gap-2 cursor-pointer select-none text-[#64748B] dark:text-slate-300">
               <input
                 type="checkbox"
                 checked={rememberMe}
                 onChange={(e) => setRememberMe(e.target.checked)}
-                className="w-4 h-4 rounded-md border-slate-700 bg-slate-800 text-indigo-600 focus:ring-indigo-500 focus:ring-offset-0 transition-colors"
+                className="w-4 h-4 rounded text-[#B45309] focus:ring-[#B45309]"
               />
-              <span className="text-slate-300 font-medium">Keep me signed in</span>
+              <span>Remember me</span>
             </label>
 
             <Link
               href={AUTH_ROUTES.FORGOT_PASSWORD}
-              className="font-semibold text-indigo-400 hover:text-indigo-300 transition-colors"
+              className="font-bold text-[#B45309] dark:text-[#D97706] hover:underline"
             >
               Forgot password?
             </Link>
           </div>
+        </div>
 
+        <button
+          type="submit"
+          disabled={loading}
+          className="w-full py-3 px-4 rounded-xl bg-[#B45309] hover:bg-[#92400E] text-white text-xs font-bold transition-all shadow-xs flex items-center justify-center gap-2 active:scale-95 disabled:opacity-60 cursor-pointer"
+        >
+          {loading ? (
+            <span className="flex items-center gap-2">
+              <span className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+              <span>Verifying credentials...</span>
+            </span>
+          ) : (
+            <>
+              <LogIn className="w-4 h-4" />
+              <span>Sign In to Customer Hub</span>
+              <ArrowRight className="w-4 h-4 ml-auto" />
+            </>
+          )}
+        </button>
+      </form>
+
+      {/* 1-Click Demo autofill presets */}
+      <div className="pt-2 border-t border-[#E2E8F0] dark:border-slate-800 space-y-2.5">
+        <div className="flex items-center justify-between text-[11px] font-bold text-[#64748B] dark:text-slate-400 uppercase">
+          <span>Quick 1-Click Demo Login</span>
+          <Sparkles className="w-3.5 h-3.5 text-[#B45309] dark:text-[#D97706]" />
+        </div>
+
+        <div className="grid grid-cols-2 gap-2">
           <button
-            type="submit"
-            disabled={loading}
-            className="w-full relative group overflow-hidden rounded-xl bg-gradient-to-r from-indigo-600 via-indigo-500 to-blue-600 px-5 py-3.5 text-sm font-bold text-white shadow-lg shadow-indigo-600/30 hover:from-indigo-500 hover:to-blue-500 active:scale-[0.99] focus:outline-none focus:ring-4 focus:ring-indigo-500/25 disabled:opacity-60 disabled:cursor-not-allowed transition-all duration-200"
+            type="button"
+            onClick={() => handleDemoPreset("abebe.customer@tickethub.et")}
+            className="flex items-center gap-2 p-2 rounded-xl bg-[#F8FAFC] dark:bg-[#0F1117] border border-[#E2E8F0] dark:border-slate-800 text-left hover:border-slate-300 dark:hover:border-slate-700 transition-colors cursor-pointer"
           >
-            <div className="flex items-center justify-center gap-2">
-              {loading ? (
-                <span className="inline-block w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-              ) : (
-                <>
-                  <LogIn className="w-4 h-4 group-hover:translate-x-0.5 transition-transform" />
-                  <span>Sign In</span>
-                </>
-              )}
+            <UserCheck className="w-4 h-4 text-[#B45309] dark:text-[#D97706] shrink-0" />
+            <div className="truncate">
+              <span className="block text-[11px] font-bold text-[#0F172A] dark:text-white">Customer</span>
+              <span className="block text-[9px] text-[#64748B] truncate">abebe.customer</span>
             </div>
           </button>
-        </form>
 
-        {/* Unified Demo Account Selector (Click to auto-fill) */}
-        <div className="pt-4 border-t border-slate-800/80 space-y-3">
-          <div className="flex items-center justify-between text-[11px] font-bold uppercase tracking-wider text-slate-400">
-            <span>Instant Demo Sign-in</span>
-            <span className="text-indigo-400 font-semibold lowercase">click any chip</span>
-          </div>
-
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
-            <button
-              type="button"
-              onClick={() => handleFillDemo("customer@tikora.com")}
-              className="flex items-center justify-center gap-1.5 px-2.5 py-2 rounded-xl bg-slate-800/60 hover:bg-slate-800 border border-slate-700/60 text-xs font-semibold text-slate-300 hover:text-white hover:border-indigo-500/50 transition-all"
-            >
-              <UserCheck className="w-3.5 h-3.5 text-indigo-400" />
-              <span>Customer</span>
-            </button>
-
-            <button
-              type="button"
-              onClick={() => handleFillDemo("cinema.partner@tikora.com")}
-              className="flex items-center justify-center gap-1.5 px-2.5 py-2 rounded-xl bg-slate-800/60 hover:bg-slate-800 border border-slate-700/60 text-xs font-semibold text-slate-300 hover:text-white hover:border-purple-500/50 transition-all"
-            >
-              <Building2 className="w-3.5 h-3.5 text-purple-400" />
-              <span>Provider</span>
-            </button>
-
-            <button
-              type="button"
-              onClick={() => handleFillDemo("inspector@tikora.com")}
-              className="flex items-center justify-center gap-1.5 px-2.5 py-2 rounded-xl bg-slate-800/60 hover:bg-slate-800 border border-slate-700/60 text-xs font-semibold text-slate-300 hover:text-white hover:border-emerald-500/50 transition-all"
-            >
-              <QrCode className="w-3.5 h-3.5 text-emerald-400" />
-              <span>Inspector</span>
-            </button>
-
-            <button
-              type="button"
-              onClick={() => handleFillDemo("admin@tikora.com")}
-              className="flex items-center justify-center gap-1.5 px-2.5 py-2 rounded-xl bg-slate-800/60 hover:bg-slate-800 border border-slate-700/60 text-xs font-semibold text-slate-300 hover:text-white hover:border-rose-500/50 transition-all"
-            >
-              <Shield className="w-3.5 h-3.5 text-rose-400" />
-              <span>Admin</span>
-            </button>
-          </div>
+          <button
+            type="button"
+            onClick={() => handleDemoPreset("selam.bus@tickethub.et")}
+            className="flex items-center gap-2 p-2 rounded-xl bg-[#F8FAFC] dark:bg-[#0F1117] border border-[#E2E8F0] dark:border-slate-800 text-left hover:border-slate-300 dark:hover:border-slate-700 transition-colors cursor-pointer"
+          >
+            <Building2 className="w-4 h-4 text-emerald-600 shrink-0" />
+            <div className="truncate">
+              <span className="block text-[11px] font-bold text-[#0F172A] dark:text-white">Provider</span>
+              <span className="block text-[9px] text-[#64748B] truncate">selam.bus</span>
+            </div>
+          </button>
         </div>
       </div>
 
-      {/* Redirect to Register */}
-      <div className="text-center text-sm text-slate-400">
-        New to Tikora?{" "}
+      {/* Footer Register Link */}
+      <div className="text-center text-xs text-[#64748B] dark:text-slate-400 pt-1">
+        <span>Don&apos;t have an account yet? </span>
         <Link
-          href={AUTH_ROUTES.REGISTER}
-          className="font-bold text-indigo-400 hover:text-indigo-300 inline-flex items-center gap-1 transition-colors"
+          href={AUTH_ROUTES.REGISTER_CUSTOMER}
+          className="font-bold text-[#B45309] dark:text-[#D97706] hover:underline"
         >
-          Create an account
-          <ArrowRight className="w-3.5 h-3.5" />
+          Create Customer Account
         </Link>
       </div>
     </div>

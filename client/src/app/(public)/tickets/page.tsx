@@ -1,3 +1,3 @@
-export default function Page() {
-  return null;
-}
+import SearchPage from "../search/page";
+
+export default SearchPage;
