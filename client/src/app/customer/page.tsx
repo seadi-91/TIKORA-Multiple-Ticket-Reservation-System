@@ -66,26 +66,26 @@ export default function CustomerDashboardOverview() {
       breadcrumbs={[{ label: "Customer Dashboard" }]}
     >
       <div className="space-y-6">
-        {/* Top 4 Stat Widgets - Well-Spaced & Elegant */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        {/* Top 4 Stat Widgets - Multiple 4-Column Display */}
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5 sm:gap-4">
           {stats.map((s, idx) => {
             const Icon = s.icon;
             return (
               <Link
                 key={idx}
                 href={s.href}
-                className="p-5 rounded-2xl bg-white dark:bg-[#161922] border border-[#E2E8F0] dark:border-slate-800 hover:border-slate-300 dark:hover:border-slate-700 shadow-xs hover:shadow-sm transition-all flex items-center justify-between group"
+                className="p-3 sm:p-4 rounded-xl sm:rounded-2xl bg-white dark:bg-[#161922] border border-[#E2E8F0] dark:border-slate-800 hover:border-slate-300 dark:hover:border-slate-700 shadow-xs hover:shadow-sm transition-all flex items-center justify-between gap-2 group"
               >
-                <div>
-                  <span className="text-[11px] font-bold uppercase tracking-wider text-[#64748B] dark:text-slate-400 block">
+                <div className="min-w-0">
+                  <span className="text-[10px] sm:text-[11px] font-bold uppercase tracking-wider text-[#64748B] dark:text-slate-400 block truncate">
                     {s.label}
                   </span>
-                  <span className="text-xl sm:text-2xl font-black text-[#0F172A] dark:text-white mt-1 block">
+                  <span className="text-sm sm:text-2xl font-black text-[#0F172A] dark:text-white mt-0.5 block truncate">
                     {s.value}
                   </span>
                 </div>
-                <div className={`w-11 h-11 rounded-xl flex items-center justify-center shrink-0 shadow-xs group-hover:scale-105 transition-transform ${s.color}`}>
-                  <Icon className="w-5 h-5" />
+                <div className={`w-8 h-8 sm:w-10 sm:h-10 rounded-lg sm:rounded-xl flex items-center justify-center shrink-0 shadow-xs group-hover:scale-105 transition-transform ${s.color}`}>
+                  <Icon className="w-4 h-4 sm:w-5 sm:h-5" />
                 </div>
               </Link>
             );
@@ -150,12 +150,12 @@ export default function CustomerDashboardOverview() {
           </div>
         )}
 
-        {/* Quick Booking Shortcuts - Spacious & Clean */}
-        <div className="rounded-3xl bg-white dark:bg-[#161922] border border-[#E2E8F0] dark:border-slate-800 p-6 shadow-xs space-y-4">
+        {/* Quick Booking Shortcuts - Multiple Column Display */}
+        <div className="rounded-2xl sm:rounded-3xl bg-white dark:bg-[#161922] border border-[#E2E8F0] dark:border-slate-800 p-4 sm:p-6 shadow-xs space-y-3 sm:space-y-4">
           <h3 className="text-xs font-bold text-[#0F172A] dark:text-white uppercase tracking-wider">
             Quick Booking Shortcuts
           </h3>
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3.5">
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 sm:gap-3.5">
             {[
               { label: "Book Express Bus", href: "/bus", icon: Bus, color: "text-blue-500 bg-blue-500/10" },
               { label: "Cinema Showtimes", href: "/cinema", icon: Film, color: "text-purple-500 bg-purple-500/10" },
@@ -167,12 +167,12 @@ export default function CustomerDashboardOverview() {
                 <Link
                   key={i}
                   href={sc.href}
-                  className="p-3.5 rounded-2xl border border-[#E2E8F0] dark:border-slate-800 hover:border-amber-500 hover:shadow-xs flex items-center gap-3 transition-all group"
+                  className="p-2.5 sm:p-3.5 rounded-xl sm:rounded-2xl border border-[#E2E8F0] dark:border-slate-800 hover:border-amber-500 hover:shadow-xs flex items-center gap-2 sm:gap-3 transition-all group"
                 >
-                  <div className={`w-9 h-9 rounded-xl flex items-center justify-center shrink-0 group-hover:scale-105 transition-transform ${sc.color}`}>
-                    <Icon className="w-4 h-4" />
+                  <div className={`w-8 h-8 sm:w-9 sm:h-9 rounded-lg sm:rounded-xl flex items-center justify-center shrink-0 group-hover:scale-105 transition-transform ${sc.color}`}>
+                    <Icon className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
                   </div>
-                  <span className="text-xs font-bold text-[#0F172A] dark:text-white truncate">{sc.label}</span>
+                  <span className="text-[11px] sm:text-xs font-bold text-[#0F172A] dark:text-white truncate">{sc.label}</span>
                 </Link>
               );
             })}

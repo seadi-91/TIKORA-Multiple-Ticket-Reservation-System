@@ -39,11 +39,11 @@ export default function InspectorHelpPage() {
     },
     {
       q: "Why does the scanner say 'WRONG TERMINAL / SERVICE'?",
-      a: "The ticket presented is a genuine TicketHub voucher, but for a different route, movie screening, or concert (e.g. Cinema instead of Bus). Check the expected service shown in the result box and guide the passenger to their correct terminal or venue.",
+      a: "The ticket presented is a genuine TIKORA voucher, but for a different route, movie screening, or concert (e.g. Cinema instead of Bus). Check the expected service shown in the result box and guide the passenger to their correct terminal or venue.",
     },
     {
       q: "Can I inspect tickets without an active internet connection?",
-      a: "Yes. The TicketHub Inspector client caches the passenger manifest for your active gate assignment locally. When internet connectivity is restored, all offline verifications sync automatically to the central server.",
+      a: "Yes. The TIKORA Inspector client caches the passenger manifest for your active gate assignment locally. When internet connectivity is restored, all offline verifications sync automatically to the central server.",
     },
   ];
 
@@ -104,7 +104,7 @@ export default function InspectorHelpPage() {
           </div>
           <h3 className="font-bold text-xs text-foreground">Red: Invalid Signature</h3>
           <p className="text-[11px] text-muted-foreground leading-relaxed">
-            Unrecognized cryptographic voucher. Does not exist in the TicketHub federal registry.
+            Unrecognized cryptographic voucher. Does not exist in the TIKORA central registry.
           </p>
         </div>
       </div>

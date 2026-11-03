@@ -1,7 +1,7 @@
-export const APP_NAME = "TicketHub";
+export const APP_NAME = "TIKORA";
 export const APP_TAGLINE = "Your Modern Multi-Category Ticket Reservation Platform";
 
-// TicketHub Subdued Warm Amber & Bronze Color System (Muted & Premium)
+// TIKORA Subdued Warm Amber & Bronze Color System (Muted & Premium)
 export const BRAND_COLORS = {
   primary: "#B45309", // Warm Muted Amber / Refined Bronze
   primaryHover: "#92400E", // Deep Bronze Amber

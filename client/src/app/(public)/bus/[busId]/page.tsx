@@ -44,7 +44,7 @@ export default function BusDetailPage({ params }: { params: Promise<{ busId: str
 
   const [passengerName, setPassengerName] = useState("Abebe Bekele");
   const [passengerPhone, setPassengerPhone] = useState("+251 91 123 4567");
-  const [passengerEmail, setPassengerEmail] = useState("abebe.customer@tickethub.et");
+  const [passengerEmail, setPassengerEmail] = useState("abebe.customer@tikora.et");
   const [paymentMethod, setPaymentMethod] = useState("TELEBIRR");
   const [confirmedBooking, setConfirmedBooking] = useState<BookingRecord | null>(null);
 

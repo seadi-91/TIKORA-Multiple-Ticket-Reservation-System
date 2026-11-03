@@ -158,7 +158,7 @@ export function BookingCard({ booking, onViewTicket }: BookingCardProps) {
                 Are you sure you want to cancel booking <strong className="text-[#0F172A] dark:text-white">{booking.bookingReference}</strong> for {booking.ticket.title}?
               </p>
               <div className="p-3 rounded-xl bg-amber-50 dark:bg-amber-950/30 text-amber-800 dark:text-amber-300 text-[11px] text-left mt-2">
-                <strong>TicketHub Refund Policy:</strong> Cancellations made more than 24 hours prior to departure/screening receive a 90% instant credit refund.
+                <strong>TIKORA Refund Policy:</strong> Cancellations made more than 24 hours prior to departure/screening receive a 90% instant credit refund.
               </div>
             </div>
 

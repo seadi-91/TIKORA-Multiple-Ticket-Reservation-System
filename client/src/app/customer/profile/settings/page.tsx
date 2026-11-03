@@ -309,7 +309,7 @@ export default function CustomerSettingsPage() {
             <div className="text-center space-y-1.5">
               <h3 className="text-base font-bold text-[#0F172A] dark:text-white">Delete Customer Account?</h3>
               <p className="text-xs text-[#64748B] dark:text-slate-400">
-                Type <strong className="text-rose-600 font-mono">DELETE</strong> below to confirm deletion of your TicketHub profile and active wallet passes.
+                Type <strong className="text-rose-600 font-mono">DELETE</strong> below to confirm deletion of your TIKORA profile and active wallet passes.
               </p>
               <input
                 type="text"

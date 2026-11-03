@@ -101,7 +101,7 @@ export default function AdminProvidersPage() {
             Provider Organizations & Fleet Directory
           </h2>
           <p className="text-xs text-muted-foreground mt-0.5">
-            Audit transportation companies, cinema multiplexes, event producers, and sports clubs operating on TicketHub.
+            Audit transportation companies, cinema multiplexes, event producers, and sports clubs operating on TIKORA.
           </p>
         </div>
 

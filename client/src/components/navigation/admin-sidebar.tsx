@@ -1,6 +1,7 @@
 "use client";
 
-import React from "react";
+import React, { useState, useEffect } from "react";
+import { createPortal } from "react-dom";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
@@ -57,6 +58,22 @@ export function AdminSidebar({
   const pathname = usePathname();
   const { organizations, refunds, supportTickets } = useAdminStore();
   const { logout } = useAuthStore();
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  useEffect(() => {
+    if (mobileOpen) {
+      document.body.style.overflow = "hidden";
+    } else {
+      document.body.style.overflow = "";
+    }
+    return () => {
+      document.body.style.overflow = "";
+    };
+  }, [mobileOpen]);
 
   const pendingProvidersCount = organizations.filter((o) => o.status === "PENDING").length;
   const pendingRefundsCount = refunds.filter((r) => r.status === "PENDING").length;
@@ -178,7 +195,7 @@ export function AdminSidebar({
   ];
 
   const sidebarContent = (
-    <div className="flex flex-col h-full select-none">
+    <div className="flex flex-col h-full bg-white dark:bg-[#161922] text-[#0F172A] dark:text-[#F8FAFC] select-none">
       {/* Brand & Organization Header */}
       <div className="flex items-center justify-between px-4 h-16 border-b border-slate-200/40 dark:border-slate-800/40 shrink-0">
         <Link
@@ -191,8 +208,8 @@ export function AdminSidebar({
           </div>
           {!collapsed && (
             <div className="flex flex-col min-w-0">
-              <span className="font-bold text-sm tracking-tight text-foreground truncate group-hover:text-amber-600 dark:group-hover:text-amber-400 transition-colors">
-                TicketHub
+              <span className="font-bold text-sm tracking-tight text-[#0F172A] dark:text-white truncate group-hover:text-amber-600 dark:group-hover:text-amber-400 transition-colors">
+                TIKORA
               </span>
               <span className="text-[10px] font-semibold uppercase tracking-wider text-amber-600 dark:text-amber-400 flex items-center gap-1">
                 <Sparkles className="w-2.5 h-2.5" /> Super Admin
@@ -204,7 +221,7 @@ export function AdminSidebar({
         {mobileOpen && (
           <button
             onClick={onCloseMobile}
-            className="p-1.5 rounded-lg text-muted-foreground hover:text-foreground hover:bg-muted/80 lg:hidden"
+            className="p-1.5 rounded-lg text-slate-500 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800 lg:hidden"
             aria-label="Close sidebar"
           >
             <X className="w-5 h-5" />
@@ -217,7 +234,7 @@ export function AdminSidebar({
         {navGroups.map((group, groupIdx) => (
           <div key={groupIdx} className="space-y-1">
             {!collapsed && (
-              <p className="px-3 text-[10px] font-bold tracking-wider text-muted-foreground/80 uppercase mb-1">
+              <p className="px-3 text-[10px] font-bold tracking-wider text-slate-400 dark:text-slate-500 uppercase mb-1">
                 {group.group}
               </p>
             )}
@@ -235,14 +252,14 @@ export function AdminSidebar({
                   className={`group relative flex items-center gap-3 px-3 py-2 text-xs font-medium rounded-xl transition-all duration-150 ${
                     active
                       ? "bg-amber-500/10 text-amber-700 dark:text-amber-300 font-bold shadow-xs"
-                      : "text-muted-foreground hover:text-foreground hover:bg-muted/50"
+                      : "text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800/60"
                   } ${collapsed ? "justify-center px-2" : ""}`}
                 >
                   <Icon
                     className={`w-4 h-4 shrink-0 transition-transform duration-150 group-hover:scale-105 ${
                       active
                         ? "text-amber-600 dark:text-amber-400"
-                        : "text-muted-foreground group-hover:text-foreground"
+                        : "text-slate-400 group-hover:text-slate-600 dark:group-hover:text-slate-200"
                     }`}
                   />
                   {!collapsed && <span className="truncate">{item.label}</span>}
@@ -271,12 +288,12 @@ export function AdminSidebar({
         <Link
           href="/"
           target="_blank"
-          className={`flex items-center gap-2.5 px-3 py-2 text-xs font-medium text-muted-foreground hover:text-foreground hover:bg-muted/50 rounded-xl transition-colors ${
+          className={`flex items-center gap-2.5 px-3 py-2 text-xs font-medium text-slate-500 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800/60 rounded-xl transition-colors ${
             collapsed ? "justify-center px-2" : ""
           }`}
           title="Open Customer Portal"
         >
-          <ExternalLink className="w-4 h-4 shrink-0 text-muted-foreground" />
+          <ExternalLink className="w-4 h-4 shrink-0 text-slate-400" />
           {!collapsed && <span>Customer Portal</span>}
         </Link>
 
@@ -285,7 +302,7 @@ export function AdminSidebar({
           {!collapsed ? (
             <div className="flex items-center gap-2 px-2">
               <div className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
-              <span className="text-[11px] font-medium text-muted-foreground">
+              <span className="text-[11px] font-medium text-slate-500 dark:text-slate-400">
                 Root Active
               </span>
             </div>
@@ -296,7 +313,7 @@ export function AdminSidebar({
           {onToggleCollapse && (
             <button
               onClick={onToggleCollapse}
-              className="p-1.5 rounded-lg text-muted-foreground hover:text-foreground hover:bg-muted/80 transition-colors mx-auto"
+              className="p-1.5 rounded-lg text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors mx-auto"
               title={collapsed ? "Expand sidebar" : "Collapse sidebar"}
             >
               {collapsed ? (
@@ -315,29 +332,31 @@ export function AdminSidebar({
     <>
       {/* Desktop Sidebar */}
       <aside
-        className={`hidden lg:flex flex-col fixed top-0 bottom-0 left-0 z-40 bg-card border-r border-slate-200/40 dark:border-slate-800/40 transition-all duration-300 ease-in-out ${
+        className={`hidden lg:flex flex-col fixed top-0 bottom-0 left-0 z-40 bg-white dark:bg-[#161922] border-r border-slate-200 dark:border-slate-800 transition-all duration-300 ease-in-out ${
           collapsed ? "w-16" : "w-64"
         }`}
       >
         {sidebarContent}
       </aside>
 
-      {/* Mobile Drawer Backdrop */}
-      {mobileOpen && (
-        <div
-          className="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs lg:hidden transition-opacity"
-          onClick={onCloseMobile}
-        />
-      )}
-
-      {/* Mobile Sidebar */}
-      <aside
-        className={`fixed top-0 bottom-0 left-0 z-50 w-72 bg-card border-r border-slate-200/40 dark:border-slate-800/40 lg:hidden shadow-2xl transition-transform duration-300 ease-in-out ${
-          mobileOpen ? "translate-x-0" : "-translate-x-full"
-        }`}
-      >
-        {sidebarContent}
-      </aside>
+      {/* Mobile Drawer via Portal */}
+      {mounted &&
+        mobileOpen &&
+        createPortal(
+          <div className="fixed inset-0 z-[9999] lg:hidden flex">
+            {/* Backdrop */}
+            <div
+              className="fixed inset-0 bg-black/60 backdrop-blur-xs transition-opacity"
+              onClick={onCloseMobile}
+              aria-label="Close menu backdrop"
+            />
+            {/* Drawer */}
+            <div className="relative z-10 w-72 max-w-[85vw] h-full bg-white dark:bg-[#161922] border-r border-slate-200 dark:border-slate-800 shadow-2xl flex flex-col justify-between overflow-hidden animate-in slide-in-from-left duration-200">
+              {sidebarContent}
+            </div>
+          </div>,
+          document.body
+        )}
     </>
   );
 }

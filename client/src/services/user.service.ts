@@ -3,7 +3,7 @@ import { CustomerProfile } from "@/types/user.types";
 export const MOCK_CUSTOMER: CustomerProfile = {
   id: "cust-001",
   name: "Abebe Bekele",
-  email: "abebe.customer@tickethub.et",
+  email: "abebe.customer@tikora.et",
   phone: "+251 91 123 4567",
   role: "CUSTOMER",
   status: "ACTIVE",

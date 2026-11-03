@@ -133,7 +133,7 @@ export default function CustomerTicketsWalletPage() {
 
                   <div className="p-2.5 bg-white rounded-xl shadow-xs border border-gray-100 shrink-0 text-center">
                     <QRCodeSVG value={b.qrCodeData} size={95} level="H" />
-                    <span className="text-[8px] font-mono text-gray-500 block mt-1">TicketHub Certified</span>
+                    <span className="text-[8px] font-mono text-gray-500 block mt-1">TIKORA Certified</span>
                   </div>
                 </div>
 

@@ -82,7 +82,7 @@ export function ProviderHeader({ onToggleMobileMenu }: ProviderHeaderProps) {
   };
 
   return (
-    <header className="h-16 border-b border-[#E2E8F0] dark:border-slate-800 bg-white dark:bg-[#161922] px-4 sm:px-6 flex items-center justify-between gap-4 sticky top-0 z-20">
+    <header className="h-16 border-b border-[#E2E8F0] dark:border-slate-800 bg-white/95 dark:bg-[#161922]/95 backdrop-blur-md px-4 sm:px-6 flex items-center justify-between gap-4 sticky top-0 z-20 shadow-xs w-full">
       {/* Left: Mobile Menu Trigger & Search */}
       <div className="flex items-center gap-3 flex-1 max-w-lg">
         {onToggleMobileMenu && (

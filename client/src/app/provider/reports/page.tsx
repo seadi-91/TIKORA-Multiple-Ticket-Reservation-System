@@ -102,34 +102,34 @@ export default function ProviderReportsPage() {
         </div>
       </div>
 
-      {/* KPI Summary Cards */}
-      <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
-        <div className="bg-card border border-border/60 rounded-xl p-4 shadow-xs">
-          <span className="text-muted-foreground text-xs block mb-1">Average Order Value</span>
-          <div className="text-xl font-bold text-foreground">780 ETB</div>
-          <span className="text-[11px] text-emerald-600 flex items-center gap-1 mt-0.5">
-            <TrendingUp className="w-3 h-3" /> +12.4% vs last period
+      {/* KPI Summary Cards - Multiple Column Display (4 Columns) */}
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5 sm:gap-4">
+        <div className="bg-card border border-border/60 rounded-xl p-3 sm:p-4 shadow-xs">
+          <span className="text-muted-foreground text-[10px] sm:text-xs block mb-1 truncate">Average Order Value</span>
+          <div className="text-base sm:text-xl font-bold text-foreground truncate">780 ETB</div>
+          <span className="text-[10px] sm:text-[11px] text-emerald-600 flex items-center gap-1 mt-0.5 truncate">
+            <TrendingUp className="w-3 h-3 shrink-0" /> +12.4%
           </span>
         </div>
 
-        <div className="bg-card border border-border/60 rounded-xl p-4 shadow-xs">
-          <span className="text-muted-foreground text-xs block mb-1">Fleet Occupancy Efficiency</span>
-          <div className="text-xl font-bold text-foreground">74.2%</div>
-          <span className="text-[11px] text-emerald-600 flex items-center gap-1 mt-0.5">
-            <TrendingUp className="w-3 h-3" /> +4.8% optimal load
+        <div className="bg-card border border-border/60 rounded-xl p-3 sm:p-4 shadow-xs">
+          <span className="text-muted-foreground text-[10px] sm:text-xs block mb-1 truncate">Occupancy Rate</span>
+          <div className="text-base sm:text-xl font-bold text-foreground truncate">74.2%</div>
+          <span className="text-[10px] sm:text-[11px] text-emerald-600 flex items-center gap-1 mt-0.5 truncate">
+            <TrendingUp className="w-3 h-3 shrink-0" /> +4.8% load
           </span>
         </div>
 
-        <div className="bg-card border border-border/60 rounded-xl p-4 shadow-xs">
-          <span className="text-muted-foreground text-xs block mb-1">Customer Repeat Rate</span>
-          <div className="text-xl font-bold text-foreground">68.5%</div>
-          <span className="text-[11px] text-muted-foreground">Passengers with 2+ bookings</span>
+        <div className="bg-card border border-border/60 rounded-xl p-3 sm:p-4 shadow-xs">
+          <span className="text-muted-foreground text-[10px] sm:text-xs block mb-1 truncate">Repeat Rate</span>
+          <div className="text-base sm:text-xl font-bold text-foreground truncate">68.5%</div>
+          <span className="text-[10px] sm:text-[11px] text-muted-foreground truncate block">2+ bookings</span>
         </div>
 
-        <div className="bg-card border border-border/60 rounded-xl p-4 shadow-xs">
-          <span className="text-muted-foreground text-xs block mb-1">On-Time Gate Dispatch</span>
-          <div className="text-xl font-bold text-emerald-600">97.4%</div>
-          <span className="text-[11px] text-muted-foreground">Departures within schedule</span>
+        <div className="bg-card border border-border/60 rounded-xl p-3 sm:p-4 shadow-xs">
+          <span className="text-muted-foreground text-[10px] sm:text-xs block mb-1 truncate">On-Time Dispatch</span>
+          <div className="text-base sm:text-xl font-bold text-emerald-600 truncate">97.4%</div>
+          <span className="text-[10px] sm:text-[11px] text-muted-foreground truncate block">On schedule</span>
         </div>
       </div>
 

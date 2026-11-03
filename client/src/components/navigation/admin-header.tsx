@@ -97,7 +97,7 @@ export function AdminHeader({ onToggleMobileMenu }: AdminHeaderProps) {
   };
 
   return (
-    <header className="sticky top-0 z-30 flex items-center justify-between h-16 px-4 md:px-6 bg-card/80 backdrop-blur-md border-b border-slate-200/40 dark:border-slate-800/40 shrink-0">
+    <header className="sticky top-0 z-30 flex items-center justify-between h-16 px-4 md:px-6 bg-white/95 dark:bg-[#161922]/95 backdrop-blur-md border-b border-slate-200/80 dark:border-slate-800 shadow-xs shrink-0 w-full transition-colors">
       {/* Left: Mobile hamburger & Breadcrumbs */}
       <div className="flex items-center gap-3">
         <button
@@ -336,7 +336,7 @@ export function AdminHeader({ onToggleMobileMenu }: AdminHeaderProps) {
             <div className="absolute right-0 mt-2 w-56 rounded-2xl bg-card border border-slate-200/60 dark:border-slate-800/60 shadow-2xl py-2 z-50">
               <div className="px-4 py-2 border-b border-slate-200/40 dark:border-slate-800/40">
                 <p className="text-xs font-bold text-foreground">Peter SuperAdmin</p>
-                <p className="text-[11px] text-muted-foreground truncate">admin@tickethub.et</p>
+                <p className="text-[11px] text-muted-foreground truncate">admin@tikora.et</p>
                 <div className="mt-1 flex items-center gap-1.5">
                   <span className="px-2 py-0.5 text-[9px] font-bold rounded-full bg-amber-500/10 text-amber-600 dark:text-amber-400">
                     PLATFORM ROOT

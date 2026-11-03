@@ -11,8 +11,8 @@ export default function ProviderRootLayout({ children }: { children: React.React
 
   return (
     <div className="min-h-screen bg-[#F8FAFC] dark:bg-[#0F1117] text-[#0F172A] dark:text-[#F8FAFC] flex flex-col">
-      {/* Top Mobile/Desktop Header */}
-      <div className={`transition-all duration-300 ${collapsed ? "lg:pl-18" : "lg:pl-64"}`}>
+      {/* Sticky Top Mobile/Desktop Header */}
+      <div className={`sticky top-0 z-30 transition-all duration-300 ${collapsed ? "lg:pl-18" : "lg:pl-64"}`}>
         <ProviderHeader onToggleMobileMenu={() => setMobileOpen(true)} />
       </div>
 

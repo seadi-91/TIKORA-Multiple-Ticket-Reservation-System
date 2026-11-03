@@ -165,11 +165,11 @@ export default function AdminCommissionsPage() {
           <p className="text-xs text-muted-foreground">Standard rate configured per industry sector</p>
         </div>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-4 gap-2.5 sm:gap-4">
           {categories.map((cat) => (
             <div
               key={cat.id}
-              className="p-4 rounded-2xl border border-slate-200/50 dark:border-slate-800/50 bg-slate-50/50 dark:bg-slate-800/20 space-y-2 flex flex-col justify-between"
+              className="p-3 sm:p-4 rounded-xl sm:rounded-2xl border border-slate-200/50 dark:border-slate-800/50 bg-slate-50/50 dark:bg-slate-800/20 space-y-1.5 sm:space-y-2 flex flex-col justify-between"
             >
               <div className="flex items-center gap-2">
                 <div className="p-2 rounded-xl bg-amber-500/10">

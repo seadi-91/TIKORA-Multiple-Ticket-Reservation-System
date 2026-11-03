@@ -11,8 +11,8 @@ export default function AdminRootLayout({ children }: { children: React.ReactNod
 
   return (
     <div className="min-h-screen bg-[#F8FAFC] dark:bg-[#0F1117] text-[#0F172A] dark:text-[#F8FAFC] flex flex-col">
-      {/* Top Header with dynamic offset */}
-      <div className={`transition-all duration-300 ${collapsed ? "lg:pl-16" : "lg:pl-64"}`}>
+      {/* Sticky Top Header with dynamic offset */}
+      <div className={`sticky top-0 z-30 transition-all duration-300 ${collapsed ? "lg:pl-16" : "lg:pl-64"}`}>
         <AdminHeader onToggleMobileMenu={() => setMobileOpen(true)} />
       </div>
 

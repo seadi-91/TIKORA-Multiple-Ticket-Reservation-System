@@ -47,7 +47,7 @@ export default function EventDetailPage({ params }: { params: Promise<{ eventId:
 
   const [customerName, setCustomerName] = useState("Abebe Bekele");
   const [customerPhone, setCustomerPhone] = useState("+251 91 123 4567");
-  const [customerEmail, setCustomerEmail] = useState("abebe.customer@tickethub.et");
+  const [customerEmail, setCustomerEmail] = useState("abebe.customer@tikora.et");
   const [paymentMethod, setPaymentMethod] = useState("TELEBIRR");
   const [confirmedBooking, setConfirmedBooking] = useState<BookingRecord | null>(null);
 

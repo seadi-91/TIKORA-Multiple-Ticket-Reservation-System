@@ -89,36 +89,36 @@ export default function AdminReportsPage() {
         </div>
       </div>
 
-      {/* KPI Highlights Bar */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-        <div className="p-5 rounded-3xl bg-card border border-slate-200/50 dark:border-slate-800/50 shadow-sm">
-          <p className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider">Period Gross GMV</p>
-          <p className="text-2xl font-bold text-foreground mt-1">4,850,200 ETB</p>
-          <div className="flex items-center gap-1 text-[11px] text-emerald-600 font-medium mt-1">
-            <ArrowUpRight className="w-3.5 h-3.5" />
+      {/* KPI Highlights Bar - Multiple Column Display (4 Columns) */}
+      <div className="grid grid-cols-2 sm:grid-cols-4 md:grid-cols-4 gap-2.5 sm:gap-4">
+        <div className="p-3 sm:p-5 rounded-2xl sm:rounded-3xl bg-card border border-slate-200/50 dark:border-slate-800/50 shadow-sm">
+          <p className="text-[10px] sm:text-[11px] font-semibold text-muted-foreground uppercase tracking-wider truncate">Period Gross GMV</p>
+          <p className="text-base sm:text-2xl font-bold text-foreground mt-0.5 sm:mt-1 truncate">4,850,200 ETB</p>
+          <div className="flex items-center gap-1 text-[10px] sm:text-[11px] text-emerald-600 font-medium mt-0.5 sm:mt-1">
+            <ArrowUpRight className="w-3 h-3 sm:w-3.5 sm:h-3.5" />
             <span>+14.2%</span>
           </div>
         </div>
 
-        <div className="p-5 rounded-3xl bg-card border border-slate-200/50 dark:border-slate-800/50 shadow-sm">
-          <p className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider">Commission Earned</p>
-          <p className="text-2xl font-bold text-emerald-600 dark:text-emerald-400 mt-1">242,510 ETB</p>
-          <div className="flex items-center gap-1 text-[11px] text-emerald-600 font-medium mt-1">
-            <ArrowUpRight className="w-3.5 h-3.5" />
+        <div className="p-3 sm:p-5 rounded-2xl sm:rounded-3xl bg-card border border-slate-200/50 dark:border-slate-800/50 shadow-sm">
+          <p className="text-[10px] sm:text-[11px] font-semibold text-muted-foreground uppercase tracking-wider truncate">Commission Earned</p>
+          <p className="text-base sm:text-2xl font-bold text-emerald-600 dark:text-emerald-400 mt-0.5 sm:mt-1 truncate">242,510 ETB</p>
+          <div className="flex items-center gap-1 text-[10px] sm:text-[11px] text-emerald-600 font-medium mt-0.5 sm:mt-1">
+            <ArrowUpRight className="w-3 h-3 sm:w-3.5 sm:h-3.5" />
             <span>+11.8%</span>
           </div>
         </div>
 
-        <div className="p-5 rounded-3xl bg-card border border-slate-200/50 dark:border-slate-800/50 shadow-sm">
-          <p className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider">Tickets Verified</p>
-          <p className="text-2xl font-bold text-foreground mt-1">17,890</p>
-          <p className="text-[11px] text-muted-foreground mt-1">97.1% redemption rate</p>
+        <div className="p-3 sm:p-5 rounded-2xl sm:rounded-3xl bg-card border border-slate-200/50 dark:border-slate-800/50 shadow-sm">
+          <p className="text-[10px] sm:text-[11px] font-semibold text-muted-foreground uppercase tracking-wider truncate">Tickets Verified</p>
+          <p className="text-base sm:text-2xl font-bold text-foreground mt-0.5 sm:mt-1 truncate">17,890</p>
+          <p className="text-[10px] sm:text-[11px] text-muted-foreground mt-0.5 sm:mt-1 truncate">97.1% redemption</p>
         </div>
 
-        <div className="p-5 rounded-3xl bg-card border border-slate-200/50 dark:border-slate-800/50 shadow-sm">
-          <p className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider">Dispute Rate</p>
-          <p className="text-2xl font-bold text-foreground mt-1">0.04%</p>
-          <p className="text-[11px] text-emerald-600 font-medium mt-1">Low risk status</p>
+        <div className="p-3 sm:p-5 rounded-2xl sm:rounded-3xl bg-card border border-slate-200/50 dark:border-slate-800/50 shadow-sm">
+          <p className="text-[10px] sm:text-[11px] font-semibold text-muted-foreground uppercase tracking-wider truncate">Dispute Rate</p>
+          <p className="text-base sm:text-2xl font-bold text-foreground mt-0.5 sm:mt-1 truncate">0.04%</p>
+          <p className="text-[10px] sm:text-[11px] text-emerald-600 font-medium mt-0.5 sm:mt-1 truncate">Low risk status</p>
         </div>
       </div>
 

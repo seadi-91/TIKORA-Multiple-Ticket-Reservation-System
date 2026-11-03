@@ -95,39 +95,39 @@ export default function ProviderRefundsPage() {
         </div>
       </div>
 
-      {/* KPI Cards */}
-      <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
-        <div className="bg-card border border-amber-600/30 rounded-xl p-4 shadow-xs">
+      {/* KPI Cards - Multiple Column Display (4 Columns) */}
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5 sm:gap-4">
+        <div className="bg-card border border-amber-600/30 rounded-xl p-3 sm:p-4 shadow-xs">
           <div className="flex items-center justify-between text-muted-foreground text-xs mb-1">
-            <span className="font-semibold text-amber-700 dark:text-amber-300">
+            <span className="font-semibold text-amber-700 dark:text-amber-300 text-[10px] sm:text-xs truncate">
               Pending Claims
             </span>
-            <Clock className="w-4 h-4 text-amber-600" />
+            <Clock className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-amber-600 shrink-0" />
           </div>
-          <div className="text-xl font-bold text-amber-700 dark:text-amber-400">
+          <div className="text-base sm:text-xl font-bold text-amber-700 dark:text-amber-400">
             {pendingCount}
           </div>
-          <span className="text-[11px] text-muted-foreground">Awaiting provider review</span>
+          <span className="text-[10px] sm:text-[11px] text-muted-foreground truncate block">Awaiting review</span>
         </div>
 
-        <div className="bg-card border border-border/60 rounded-xl p-4 shadow-xs">
+        <div className="bg-card border border-border/60 rounded-xl p-3 sm:p-4 shadow-xs">
           <div className="flex items-center justify-between text-muted-foreground text-xs mb-1">
-            <span>Approved Refunds</span>
-            <CheckCircle2 className="w-4 h-4 text-emerald-600" />
+            <span className="text-[10px] sm:text-xs truncate">Approved</span>
+            <CheckCircle2 className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-emerald-600 shrink-0" />
           </div>
-          <div className="text-xl font-bold text-foreground">{approvedCount}</div>
-          <span className="text-[11px] text-emerald-600">
+          <div className="text-base sm:text-xl font-bold text-foreground">{approvedCount}</div>
+          <span className="text-[10px] sm:text-[11px] text-emerald-600 truncate block">
             {formatCurrency(totalApprovedAmount)} returned
           </span>
         </div>
 
-        <div className="bg-card border border-border/60 rounded-xl p-4 shadow-xs">
+        <div className="bg-card border border-border/60 rounded-xl p-3 sm:p-4 shadow-xs">
           <div className="flex items-center justify-between text-muted-foreground text-xs mb-1">
-            <span>Rejected Disputes</span>
-            <XCircle className="w-4 h-4 text-rose-600" />
+            <span className="text-[10px] sm:text-xs truncate">Rejected</span>
+            <XCircle className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-rose-600 shrink-0" />
           </div>
-          <div className="text-xl font-bold text-foreground">{rejectedCount}</div>
-          <span className="text-[11px] text-muted-foreground">Did not meet refund policy</span>
+          <div className="text-base sm:text-xl font-bold text-foreground">{rejectedCount}</div>
+          <span className="text-[10px] sm:text-[11px] text-muted-foreground truncate block">Did not meet policy</span>
         </div>
 
         <div className="bg-card border border-border/60 rounded-xl p-4 shadow-xs">

@@ -41,7 +41,7 @@ export function BookingConfirmation({ booking, onClose }: BookingConfirmationPro
         <ShieldCheck className="w-4 h-4 shrink-0 mt-0.5" />
         <div>
           <strong className="block font-semibold">Simulated Ticket Confirmation (Demo Mode)</strong>
-          This reservation has been registered in your TicketHub Customer Wallet with reference{" "}
+          This reservation has been registered in your TIKORA Customer Wallet with reference{" "}
           <strong className="font-mono">{booking.bookingReference}</strong>. No actual bank charge was made.
         </div>
       </div>
@@ -51,7 +51,7 @@ export function BookingConfirmation({ booking, onClose }: BookingConfirmationPro
         {/* Ticket Header */}
         <div className="flex items-center justify-between border-b border-[#E2E8F0] dark:border-slate-800 pb-3">
           <div>
-            <span className="text-[10px] uppercase font-bold text-[#64748B] dark:text-amber-400/60">TicketHub Official Pass</span>
+            <span className="text-[10px] uppercase font-bold text-[#64748B] dark:text-amber-400/60">TIKORA Official Pass</span>
             <h3 className="text-sm font-bold text-[#0F172A] dark:text-white line-clamp-1">{booking.ticket.title}</h3>
           </div>
           <span className="text-xs font-mono font-bold text-[#F59E0B] dark:text-amber-400 px-2.5 py-1 rounded-md bg-[#FFFBEB] dark:bg-amber-950">

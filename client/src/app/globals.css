@@ -2,12 +2,23 @@
 
 @custom-variant dark (&:where(.dark, .dark *));
 
+@theme {
+  --color-card: var(--card-bg);
+  --color-card-border: var(--card-border);
+  --color-muted: var(--text-muted);
+  --color-primary: var(--primary);
+  --color-primary-hover: var(--primary-hover);
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+}
+
 :root {
   --primary: #B45309;
   --primary-hover: #92400E;
   --primary-light-bg: #FAF5ED;
   --background: #F8FAFC;
   --foreground: #0F172A;
+  --card: #FFFFFF;
   --card-bg: #FFFFFF;
   --card-border: #E2E8F0;
   --text-muted: #64748B;
@@ -22,6 +33,7 @@
   --primary-light-bg: #221B12;
   --background: #0F1117;
   --foreground: #F8FAFC;
+  --card: #161922;
   --card-bg: #161922;
   --card-border: #232733;
   --text-muted: #94A3B8;

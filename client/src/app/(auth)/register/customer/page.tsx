@@ -65,7 +65,7 @@ export default function CustomerRegisterPage() {
     }
 
     if (!formData.agreeToTerms) {
-      setError("Please agree to the TicketHub Terms of Service.");
+      setError("Please agree to the TIKORA Terms of Service.");
       return;
     }
 
@@ -85,7 +85,7 @@ export default function CustomerRegisterPage() {
           emailVerified: true,
           createdAt: new Date().toISOString(),
         },
-        "mock-jwt-token-tickethub"
+        "mock-jwt-token-tikora"
       );
 
       setSuccess(true);
@@ -117,7 +117,7 @@ export default function CustomerRegisterPage() {
 
       <div className="space-y-1">
         <h2 className="text-2xl font-black tracking-tight text-[#0F172A] dark:text-white">
-          Create Your TicketHub Account
+          Create Your TIKORA Account
         </h2>
         <p className="text-xs text-[#64748B] dark:text-slate-400">
           Book bus seats, cinema premieres, and festival passes with digital QR delivery.
@@ -222,7 +222,7 @@ export default function CustomerRegisterPage() {
             required
           />
           <span>
-            I agree to the TicketHub{" "}
+            I agree to the TIKORA{" "}
             <Link href="/contact" className="text-[#B45309] dark:text-[#D97706] font-bold underline">
               Terms of Service
             </Link>{" "}

@@ -108,7 +108,7 @@ function InspectorActivationContent() {
         status: "ACTIVE",
       });
 
-      toast.success("Account activated! Welcome to the TicketHub Inspector network.");
+      toast.success("Account activated! Welcome to the TIKORA Inspector network.");
       router.push("/inspector/scanner");
     }, 600);
   };

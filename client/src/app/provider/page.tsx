@@ -141,86 +141,86 @@ export default function ProviderOverviewDashboard() {
         </div>
       </div>
 
-      {/* 6 Key Stat Cards */}
-      <div className="grid grid-cols-2 lg:grid-cols-6 gap-3.5 sm:gap-4">
+      {/* 6 Key Stat Cards - Multiple 3 to 6 Column Display */}
+      <div className="grid grid-cols-3 lg:grid-cols-6 gap-2 sm:gap-3.5">
         {/* Total Revenue */}
-        <div className="p-4 rounded-2xl bg-white dark:bg-[#161922] border border-[#E2E8F0] dark:border-slate-800 shadow-2xs space-y-1">
+        <div className="p-2.5 sm:p-4 rounded-xl sm:rounded-2xl bg-white dark:bg-[#161922] border border-[#E2E8F0] dark:border-slate-800 shadow-2xs space-y-0.5 sm:space-y-1">
           <div className="flex items-center justify-between text-slate-400">
-            <span className="text-[10px] font-bold uppercase tracking-wider">Gross Revenue</span>
-            <CreditCard className="w-4 h-4 text-[#B45309] dark:text-amber-400" />
+            <span className="text-[9px] sm:text-[10px] font-bold uppercase tracking-wider truncate">Gross Revenue</span>
+            <CreditCard className="w-3.5 h-3.5 text-[#B45309] dark:text-amber-400 shrink-0" />
           </div>
-          <div className="text-lg sm:text-xl font-black text-[#0F172A] dark:text-white mt-1 truncate">
+          <div className="text-xs sm:text-xl font-black text-[#0F172A] dark:text-white mt-0.5 truncate">
             {formatCurrency(organization.stats.totalRevenue)}
           </div>
-          <span className="text-[10px] font-semibold text-emerald-600 dark:text-emerald-400 flex items-center gap-0.5">
-            <TrendingUp className="w-3 h-3" />
-            <span>+14.2% this month</span>
+          <span className="text-[9px] sm:text-[10px] font-semibold text-emerald-600 dark:text-emerald-400 flex items-center gap-0.5 truncate">
+            <TrendingUp className="w-2.5 h-2.5 sm:w-3 sm:h-3 shrink-0" />
+            <span className="truncate">+14.2%</span>
           </span>
         </div>
 
         {/* Total Bookings */}
-        <div className="p-4 rounded-2xl bg-white dark:bg-[#161922] border border-[#E2E8F0] dark:border-slate-800 shadow-2xs space-y-1">
+        <div className="p-2.5 sm:p-4 rounded-xl sm:rounded-2xl bg-white dark:bg-[#161922] border border-[#E2E8F0] dark:border-slate-800 shadow-2xs space-y-0.5 sm:space-y-1">
           <div className="flex items-center justify-between text-slate-400">
-            <span className="text-[10px] font-bold uppercase tracking-wider">Bookings</span>
-            <ShoppingBag className="w-4 h-4 text-blue-500" />
+            <span className="text-[9px] sm:text-[10px] font-bold uppercase tracking-wider truncate">Bookings</span>
+            <ShoppingBag className="w-3.5 h-3.5 text-blue-500 shrink-0" />
           </div>
-          <div className="text-lg sm:text-xl font-black text-[#0F172A] dark:text-white mt-1">
+          <div className="text-xs sm:text-xl font-black text-[#0F172A] dark:text-white mt-0.5">
             {organization.stats.totalBookings.toLocaleString()}
           </div>
-          <span className="text-[10px] text-slate-400">Across 14 active lines</span>
+          <span className="text-[9px] sm:text-[10px] text-slate-400 truncate block">14 active lines</span>
         </div>
 
         {/* Tickets Sold */}
-        <div className="p-4 rounded-2xl bg-white dark:bg-[#161922] border border-[#E2E8F0] dark:border-slate-800 shadow-2xs space-y-1">
+        <div className="p-2.5 sm:p-4 rounded-xl sm:rounded-2xl bg-white dark:bg-[#161922] border border-[#E2E8F0] dark:border-slate-800 shadow-2xs space-y-0.5 sm:space-y-1">
           <div className="flex items-center justify-between text-slate-400">
-            <span className="text-[10px] font-bold uppercase tracking-wider">Tickets Issued</span>
-            <Ticket className="w-4 h-4 text-amber-500" />
+            <span className="text-[9px] sm:text-[10px] font-bold uppercase tracking-wider truncate">Tickets Sold</span>
+            <Ticket className="w-3.5 h-3.5 text-amber-500 shrink-0" />
           </div>
-          <div className="text-lg sm:text-xl font-black text-[#0F172A] dark:text-white mt-1">
+          <div className="text-xs sm:text-xl font-black text-[#0F172A] dark:text-white mt-0.5">
             {organization.stats.totalTicketsSold.toLocaleString()}
           </div>
-          <span className="text-[10px] text-slate-400">Scannable QR passes</span>
+          <span className="text-[9px] sm:text-[10px] text-slate-400 truncate block">Scannable passes</span>
         </div>
 
         {/* Available Inventory */}
-        <div className="p-4 rounded-2xl bg-white dark:bg-[#161922] border border-[#E2E8F0] dark:border-slate-800 shadow-2xs space-y-1">
+        <div className="p-2.5 sm:p-4 rounded-xl sm:rounded-2xl bg-white dark:bg-[#161922] border border-[#E2E8F0] dark:border-slate-800 shadow-2xs space-y-0.5 sm:space-y-1">
           <div className="flex items-center justify-between text-slate-400">
-            <span className="text-[10px] font-bold uppercase tracking-wider">Seats Left</span>
-            <Boxes className="w-4 h-4 text-purple-500" />
+            <span className="text-[9px] sm:text-[10px] font-bold uppercase tracking-wider truncate">Seats Left</span>
+            <Boxes className="w-3.5 h-3.5 text-purple-500 shrink-0" />
           </div>
-          <div className="text-lg sm:text-xl font-black text-[#0F172A] dark:text-white mt-1">
+          <div className="text-xs sm:text-xl font-black text-[#0F172A] dark:text-white mt-0.5">
             {organization.stats.availableSeats}
           </div>
-          <span className="text-[10px] text-amber-600 dark:text-amber-400 font-medium">Ready for booking</span>
+          <span className="text-[9px] sm:text-[10px] text-amber-600 dark:text-amber-400 font-medium truncate block">Available now</span>
         </div>
 
         {/* Pending Orders */}
-        <div className="p-4 rounded-2xl bg-white dark:bg-[#161922] border border-[#E2E8F0] dark:border-slate-800 shadow-2xs space-y-1">
+        <div className="p-2.5 sm:p-4 rounded-xl sm:rounded-2xl bg-white dark:bg-[#161922] border border-[#E2E8F0] dark:border-slate-800 shadow-2xs space-y-0.5 sm:space-y-1">
           <div className="flex items-center justify-between text-slate-400">
-            <span className="text-[10px] font-bold uppercase tracking-wider">Pending Orders</span>
-            <Clock className="w-4 h-4 text-amber-500" />
+            <span className="text-[9px] sm:text-[10px] font-bold uppercase tracking-wider truncate">Pending</span>
+            <Clock className="w-3.5 h-3.5 text-amber-500 shrink-0" />
           </div>
-          <div className="text-lg sm:text-xl font-black text-[#0F172A] dark:text-white mt-1">
+          <div className="text-xs sm:text-xl font-black text-[#0F172A] dark:text-white mt-0.5">
             {organization.stats.pendingBookings}
           </div>
-          <span className="text-[10px] text-slate-400">Gate verification queue</span>
+          <span className="text-[9px] sm:text-[10px] text-slate-400 truncate block">Gate queue</span>
         </div>
 
         {/* Payout Balance */}
-        <div className="p-4 rounded-2xl bg-white dark:bg-[#161922] border border-[#E2E8F0] dark:border-slate-800 shadow-2xs space-y-1">
+        <div className="p-2.5 sm:p-4 rounded-xl sm:rounded-2xl bg-white dark:bg-[#161922] border border-[#E2E8F0] dark:border-slate-800 shadow-2xs space-y-0.5 sm:space-y-1">
           <div className="flex items-center justify-between text-slate-400">
-            <span className="text-[10px] font-bold uppercase tracking-wider">Ready Payout</span>
-            <CreditCard className="w-4 h-4 text-emerald-500" />
+            <span className="text-[9px] sm:text-[10px] font-bold uppercase tracking-wider truncate">Ready Payout</span>
+            <CreditCard className="w-3.5 h-3.5 text-emerald-500 shrink-0" />
           </div>
-          <div className="text-lg sm:text-xl font-black text-[#0F172A] dark:text-white mt-1 truncate">
+          <div className="text-xs sm:text-xl font-black text-[#0F172A] dark:text-white mt-0.5 truncate">
             {formatCurrency(organization.stats.availableBalance)}
           </div>
           <Link
             href="/provider/payments"
-            className="text-[10px] font-bold text-[#B45309] dark:text-amber-400 hover:underline flex items-center gap-0.5"
+            className="text-[9px] sm:text-[10px] font-bold text-[#B45309] dark:text-amber-400 hover:underline flex items-center gap-0.5 truncate"
           >
-            <span>Transfer Bank</span>
-            <ArrowRight className="w-3 h-3" />
+            <span>Payout</span>
+            <ArrowRight className="w-2.5 h-2.5 sm:w-3 sm:h-3 shrink-0" />
           </Link>
         </div>
       </div>

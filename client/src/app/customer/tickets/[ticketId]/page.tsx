@@ -58,11 +58,11 @@ export default function FullscreenTicketPassPage({ params }: { params: Promise<{
           <div className="flex items-center justify-between border-b border-[#E2E8F0] dark:border-slate-800 pb-4">
             <div className="flex items-center gap-2">
               <div className="w-8 h-8 rounded-lg bg-[#F59E0B] text-white flex items-center justify-center font-bold text-xs">
-                TH
+                TK
               </div>
               <div>
                 <span className="text-xs font-bold text-[#0F172A] dark:text-white block">
-                  TicketHub Ethiopia
+                  TIKORA Ethiopia
                 </span>
                 <span className="text-[10px] text-[#F59E0B] dark:text-amber-400 font-semibold block">
                   Verified Digital Pass

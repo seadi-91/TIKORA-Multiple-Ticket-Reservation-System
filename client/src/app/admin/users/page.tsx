@@ -408,7 +408,7 @@ export default function AdminUsersPage() {
                   required
                   value={newUserEmail}
                   onChange={(e) => setNewUserEmail(e.target.value)}
-                  placeholder="name@tickethub.et"
+                  placeholder="name@tikora.et"
                   className="w-full h-9 px-3 rounded-xl bg-muted/40 border border-slate-200/50 dark:border-slate-800/50 text-foreground focus:outline-none focus:ring-2 focus:ring-amber-500/30 font-medium"
                 />
               </div>

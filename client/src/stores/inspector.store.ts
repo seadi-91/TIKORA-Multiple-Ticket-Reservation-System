@@ -259,7 +259,7 @@ const INITIAL_HISTORY: VerificationLogItem[] = [
     verificationTime: "05:35 AM",
     location: "Autobus Tera Gate 3",
     result: "INVALID",
-    failureReason: "Cryptographic QR digital signature check failed. Not a TicketHub voucher.",
+    failureReason: "Cryptographic QR digital signature check failed. Not a TIKORA voucher.",
   },
   {
     id: "VLOG-106",
@@ -321,7 +321,7 @@ export const useInspectorStore = create<InspectorStoreState>((set, get) => ({
     dateJoined: "March 15, 2026",
     deviceInfo: {
       deviceModel: "Samsung Galaxy A54 5G (Enterprise)",
-      scannerVersion: "TicketHub Inspector v2.4.1",
+      scannerVersion: "TIKORA Inspector v2.4.1",
       lastSync: "Just now",
     },
   },
@@ -358,10 +358,10 @@ export const useInspectorStore = create<InspectorStoreState>((set, get) => ({
         result: "INVALID",
         ticketReference: rawRef || "UNKNOWN_QR",
         passengerName: "Unregistered Holder",
-        serviceTitle: "TicketHub Central Ledger",
+        serviceTitle: "TIKORA Central Ledger",
         category: currentAssignment.category,
         verifiedAt: timestamp,
-        message: "Digital ticket signature could not be verified in TicketHub registry.",
+        message: "Digital ticket signature could not be verified in TIKORA registry.",
         details: {
           gate: currentAssignment.gate,
         },

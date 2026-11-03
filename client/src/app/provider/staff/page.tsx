@@ -102,42 +102,42 @@ export default function ProviderStaffPage() {
         </div>
       </div>
 
-      {/* KPI Cards */}
-      <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
-        <div className="bg-card border border-border/60 rounded-xl p-4 shadow-xs">
+      {/* KPI Cards - Multiple Column Display (4 Columns) */}
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5 sm:gap-4">
+        <div className="bg-card border border-border/60 rounded-xl p-3 sm:p-4 shadow-xs">
           <div className="flex items-center justify-between text-muted-foreground text-xs mb-1">
-            <span>Total Team Size</span>
-            <Users className="w-4 h-4 text-amber-600" />
+            <span className="text-[10px] sm:text-xs truncate">Total Team</span>
+            <Users className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-amber-600 shrink-0" />
           </div>
-          <div className="text-xl font-bold text-foreground">{staffMembers.length}</div>
-          <span className="text-[11px] text-muted-foreground">Authorized personnel</span>
+          <div className="text-base sm:text-xl font-bold text-foreground truncate">{staffMembers.length}</div>
+          <span className="text-[10px] sm:text-[11px] text-muted-foreground truncate block">Authorized personnel</span>
         </div>
 
-        <div className="bg-card border border-border/60 rounded-xl p-4 shadow-xs">
+        <div className="bg-card border border-border/60 rounded-xl p-3 sm:p-4 shadow-xs">
           <div className="flex items-center justify-between text-muted-foreground text-xs mb-1">
-            <span>Gate Inspectors</span>
-            <QrCode className="w-4 h-4 text-emerald-600" />
+            <span className="text-[10px] sm:text-xs truncate">Inspectors</span>
+            <QrCode className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-emerald-600 shrink-0" />
           </div>
-          <div className="text-xl font-bold text-foreground">{inspectorsCount}</div>
-          <span className="text-[11px] text-emerald-600">Active mobile scanners</span>
+          <div className="text-base sm:text-xl font-bold text-foreground truncate">{inspectorsCount}</div>
+          <span className="text-[10px] sm:text-[11px] text-emerald-600 truncate block">Mobile scanners</span>
         </div>
 
-        <div className="bg-card border border-border/60 rounded-xl p-4 shadow-xs">
+        <div className="bg-card border border-border/60 rounded-xl p-3 sm:p-4 shadow-xs">
           <div className="flex items-center justify-between text-muted-foreground text-xs mb-1">
-            <span>Fleet Dispatchers</span>
-            <Clock className="w-4 h-4 text-blue-600" />
+            <span className="text-[10px] sm:text-xs truncate">Dispatchers</span>
+            <Clock className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-blue-600 shrink-0" />
           </div>
-          <div className="text-xl font-bold text-foreground">{dispatchersCount}</div>
-          <span className="text-[11px] text-muted-foreground">Station operational leads</span>
+          <div className="text-base sm:text-xl font-bold text-foreground truncate">{dispatchersCount}</div>
+          <span className="text-[10px] sm:text-[11px] text-muted-foreground truncate block">Station leads</span>
         </div>
 
-        <div className="bg-card border border-border/60 rounded-xl p-4 shadow-xs">
+        <div className="bg-card border border-border/60 rounded-xl p-3 sm:p-4 shadow-xs">
           <div className="flex items-center justify-between text-muted-foreground text-xs mb-1">
-            <span>Total Scans Logged</span>
-            <UserCheck className="w-4 h-4 text-purple-600" />
+            <span className="text-[10px] sm:text-xs truncate">Total Scans</span>
+            <UserCheck className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-purple-600 shrink-0" />
           </div>
-          <div className="text-xl font-bold text-foreground">{totalScans.toLocaleString()}</div>
-          <span className="text-[11px] text-muted-foreground">Passes verified at boarding</span>
+          <div className="text-base sm:text-xl font-bold text-foreground truncate">{totalScans.toLocaleString()}</div>
+          <span className="text-[10px] sm:text-[11px] text-muted-foreground truncate block">Passes verified</span>
         </div>
       </div>
 

@@ -230,7 +230,7 @@ export default function InviteStaffPage() {
                 {
                   key: "scanTickets",
                   label: "Scan & Validate QR Tickets",
-                  desc: "Grant access to the TicketHub Inspector camera app for boarding validation.",
+                  desc: "Grant access to the TIKORA Inspector camera app for boarding validation.",
                 },
                 {
                   key: "viewManifest",
@@ -306,7 +306,7 @@ export default function InviteStaffPage() {
 
             <div className="bg-muted/30 rounded-lg p-3 text-[11px] text-muted-foreground space-y-1 border border-border/40">
               <p>
-                An email invitation containing login credentials and download link for the TicketHub
+                An email invitation containing login credentials and download link for the TIKORA
                 Inspector application will be delivered upon sending.
               </p>
             </div>

@@ -82,7 +82,7 @@ export default function UnifiedLoginPage() {
           emailVerified: true,
           createdAt: new Date().toISOString(),
         },
-        "mock-jwt-token-tickethub"
+        "mock-jwt-token-tikora"
       );
 
       router.push(redirectPath);
@@ -103,7 +103,7 @@ export default function UnifiedLoginPage() {
     <div className="rounded-3xl bg-white dark:bg-[#161922] border border-[#E2E8F0] dark:border-slate-800 p-6 sm:p-8 shadow-xl shadow-black/5 space-y-6">
       <div className="space-y-1.5 text-center sm:text-left">
         <h2 className="text-2xl font-black tracking-tight text-[#0F172A] dark:text-white">
-          Sign In to TicketHub
+          Sign In to TIKORA
         </h2>
         <p className="text-xs text-[#64748B] dark:text-slate-400">
           Access your digital ticket wallet, bookings, or operator portal.
@@ -188,7 +188,7 @@ export default function UnifiedLoginPage() {
         <div className="grid grid-cols-2 gap-2">
           <button
             type="button"
-            onClick={() => handleDemoPreset("abebe.customer@tickethub.et")}
+            onClick={() => handleDemoPreset("abebe.customer@tikora.et")}
             className="flex items-center gap-2 p-2 rounded-xl bg-[#F8FAFC] dark:bg-[#0F1117] border border-[#E2E8F0] dark:border-slate-800 text-left hover:border-slate-300 dark:hover:border-slate-700 transition-colors cursor-pointer"
           >
             <UserCheck className="w-4 h-4 text-[#B45309] dark:text-[#D97706] shrink-0" />
@@ -200,7 +200,7 @@ export default function UnifiedLoginPage() {
 
           <button
             type="button"
-            onClick={() => handleDemoPreset("selam.bus@tickethub.et")}
+            onClick={() => handleDemoPreset("selam.bus@tikora.et")}
             className="flex items-center gap-2 p-2 rounded-xl bg-[#F8FAFC] dark:bg-[#0F1117] border border-[#E2E8F0] dark:border-slate-800 text-left hover:border-slate-300 dark:hover:border-slate-700 transition-colors cursor-pointer"
           >
             <Building2 className="w-4 h-4 text-emerald-600 shrink-0" />

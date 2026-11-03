@@ -75,48 +75,48 @@ export default function AdminPaymentsPage() {
         </Link>
       </div>
 
-      {/* Financial KPI Cards */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        <div className="p-5 rounded-3xl bg-card border border-slate-200/50 dark:border-slate-800/50 shadow-sm">
-          <div className="flex items-center justify-between text-muted-foreground mb-2">
-            <span className="text-[11px] font-semibold uppercase tracking-wider">Gross Platform GMV</span>
-            <div className="p-2.5 rounded-2xl bg-amber-500/10 text-amber-600 dark:text-amber-400">
-              <DollarSign className="w-4 h-4" />
+      {/* Financial KPI Cards - Multiple Column Display (4 Columns) */}
+      <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-4 gap-2.5 sm:gap-4">
+        <div className="p-3 sm:p-5 rounded-2xl sm:rounded-3xl bg-card border border-slate-200/50 dark:border-slate-800/50 shadow-sm">
+          <div className="flex items-center justify-between text-muted-foreground mb-1.5 sm:mb-2">
+            <span className="text-[10px] sm:text-[11px] font-semibold uppercase tracking-wider truncate">Gross GMV</span>
+            <div className="p-1.5 sm:p-2.5 rounded-xl sm:rounded-2xl bg-amber-500/10 text-amber-600 dark:text-amber-400 shrink-0">
+              <DollarSign className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
             </div>
           </div>
-          <p className="text-2xl font-bold text-foreground">
-            {stats.totalGMV.toLocaleString()} <span className="text-xs text-muted-foreground font-normal">ETB</span>
+          <p className="text-base sm:text-2xl font-bold text-foreground truncate">
+            {stats.totalGMV.toLocaleString()} <span className="text-[10px] sm:text-xs text-muted-foreground font-normal">ETB</span>
           </p>
-          <p className="text-[11px] text-muted-foreground mt-1">Platform gross sales to date</p>
+          <p className="text-[10px] sm:text-[11px] text-muted-foreground mt-0.5 sm:mt-1 truncate">Platform gross sales</p>
         </div>
 
-        <div className="p-5 rounded-3xl bg-card border border-slate-200/50 dark:border-slate-800/50 shadow-sm">
-          <div className="flex items-center justify-between text-muted-foreground mb-2">
-            <span className="text-[11px] font-semibold uppercase tracking-wider">Retained Platform Revenue</span>
-            <div className="p-2.5 rounded-2xl bg-emerald-500/10 text-emerald-600 dark:text-emerald-400">
-              <Percent className="w-4 h-4" />
+        <div className="p-3 sm:p-5 rounded-2xl sm:rounded-3xl bg-card border border-slate-200/50 dark:border-slate-800/50 shadow-sm">
+          <div className="flex items-center justify-between text-muted-foreground mb-1.5 sm:mb-2">
+            <span className="text-[10px] sm:text-[11px] font-semibold uppercase tracking-wider truncate">Net Revenue</span>
+            <div className="p-1.5 sm:p-2.5 rounded-xl sm:rounded-2xl bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 shrink-0">
+              <Percent className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
             </div>
           </div>
-          <p className="text-2xl font-bold text-foreground">
-            {stats.platformRevenue.toLocaleString()} <span className="text-xs text-muted-foreground font-normal">ETB</span>
+          <p className="text-base sm:text-2xl font-bold text-foreground truncate">
+            {stats.platformRevenue.toLocaleString()} <span className="text-[10px] sm:text-xs text-muted-foreground font-normal">ETB</span>
           </p>
-          <p className="text-[11px] text-emerald-600 dark:text-emerald-400 font-medium mt-1">
-            ~5.0% blended commission
+          <p className="text-[10px] sm:text-[11px] text-emerald-600 dark:text-emerald-400 font-medium mt-0.5 sm:mt-1 truncate">
+            ~5.0% commission
           </p>
         </div>
 
-        <div className="p-5 rounded-3xl bg-card border border-slate-200/50 dark:border-slate-800/50 shadow-sm">
-          <div className="flex items-center justify-between text-muted-foreground mb-2">
-            <span className="text-[11px] font-semibold uppercase tracking-wider">Pending Disbursements</span>
-            <div className="p-2.5 rounded-2xl bg-rose-500/10 text-rose-600 dark:text-rose-400">
-              <Clock className="w-4 h-4" />
+        <div className="p-3 sm:p-5 rounded-2xl sm:rounded-3xl bg-card border border-slate-200/50 dark:border-slate-800/50 shadow-sm">
+          <div className="flex items-center justify-between text-muted-foreground mb-1.5 sm:mb-2">
+            <span className="text-[10px] sm:text-[11px] font-semibold uppercase tracking-wider truncate">Pending Payouts</span>
+            <div className="p-1.5 sm:p-2.5 rounded-xl sm:rounded-2xl bg-rose-500/10 text-rose-600 dark:text-rose-400 shrink-0">
+              <Clock className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
             </div>
           </div>
-          <p className="text-2xl font-bold text-foreground">
-            {totalPendingAmount.toLocaleString()} <span className="text-xs text-muted-foreground font-normal">ETB</span>
+          <p className="text-base sm:text-2xl font-bold text-foreground truncate">
+            {totalPendingAmount.toLocaleString()} <span className="text-[10px] sm:text-xs text-muted-foreground font-normal">ETB</span>
           </p>
-          <p className="text-[11px] text-rose-600 dark:text-rose-400 font-medium mt-1">
-            {pendingPayouts.length} payout(s) awaiting approval
+          <p className="text-[10px] sm:text-[11px] text-rose-600 dark:text-rose-400 font-medium mt-0.5 sm:mt-1 truncate">
+            {pendingPayouts.length} pending
           </p>
         </div>
 

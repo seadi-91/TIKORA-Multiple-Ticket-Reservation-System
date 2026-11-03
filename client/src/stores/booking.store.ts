@@ -6,7 +6,7 @@ import { BookingRecord, PassengerInfo, BookingPriceBreakdown } from "@/types/boo
 import { CustomerNotification } from "@/types/notification.types";
 import { PaymentTransaction } from "@/types/payment.types";
 
-// Realistic Seed Bookings for TicketHub Customer
+// Realistic Seed Bookings for TIKORA Customer
 const INITIAL_BOOKINGS: BookingRecord[] = [
   {
     id: "BKG-2026-0891",
@@ -42,20 +42,20 @@ const INITIAL_BOOKINGS: BookingRecord[] = [
       },
     },
     customerName: "Abebe Bekele",
-    customerEmail: "abebe.customer@tickethub.et",
+    customerEmail: "abebe.customer@tikora.et",
     customerPhone: "+251 91 123 4567",
     passengers: [
       {
         fullName: "Abebe Bekele",
         phone: "+251 91 123 4567",
-        email: "abebe.customer@tickethub.et",
+        email: "abebe.customer@tikora.et",
         seatNumber: "12A",
         gender: "MALE",
       },
       {
         fullName: "Selamawit Tadesse",
         phone: "+251 92 987 6543",
-        email: "selamawit@tickethub.et",
+        email: "selamawit@tikora.et",
         seatNumber: "12B",
         gender: "FEMALE",
       },
@@ -109,13 +109,13 @@ const INITIAL_BOOKINGS: BookingRecord[] = [
       },
     },
     customerName: "Abebe Bekele",
-    customerEmail: "abebe.customer@tickethub.et",
+    customerEmail: "abebe.customer@tikora.et",
     customerPhone: "+251 91 123 4567",
     passengers: [
       {
         fullName: "Abebe Bekele",
         phone: "+251 91 123 4567",
-        email: "abebe.customer@tickethub.et",
+        email: "abebe.customer@tikora.et",
         seatNumber: "F-10",
       },
     ],
@@ -166,13 +166,13 @@ const INITIAL_BOOKINGS: BookingRecord[] = [
       },
     },
     customerName: "Abebe Bekele",
-    customerEmail: "abebe.customer@tickethub.et",
+    customerEmail: "abebe.customer@tikora.et",
     customerPhone: "+251 91 123 4567",
     passengers: [
       {
         fullName: "Abebe Bekele",
         phone: "+251 91 123 4567",
-        email: "abebe.customer@tickethub.et",
+        email: "abebe.customer@tikora.et",
         seatNumber: "VIP-PASS-01",
       },
     ],
@@ -331,7 +331,7 @@ export const useBookingStore = create<BookingState>((set, get) => ({
   passengerInfo: {
     fullName: "Abebe Bekele",
     phone: "+251 91 123 4567",
-    email: "abebe.customer@tickethub.et",
+    email: "abebe.customer@tikora.et",
   },
   paymentMethod: "TELEBIRR",
   bookingStep: 1,

@@ -76,7 +76,7 @@ export function InspectorHeader({ onToggleMobileMenu }: InspectorHeaderProps = {
   };
 
   return (
-    <header className="h-14 border-b border-slate-200/40 dark:border-slate-800/40 bg-card/80 backdrop-blur-md px-4 flex items-center justify-between gap-3 sticky top-0 z-30">
+    <header className="h-14 border-b border-slate-200/80 dark:border-slate-800 bg-white/95 dark:bg-[#161922]/95 backdrop-blur-md px-4 flex items-center justify-between gap-3 sticky top-0 z-30 shadow-xs w-full">
       {/* Left: Page Title & Current Gate Assignment */}
       <div className="flex items-center gap-2.5 truncate">
         {onToggleMobileMenu && (

@@ -384,7 +384,7 @@ export default function ProviderSettingsPage() {
                 {
                   key: "payoutDisbursedSMS",
                   title: "Bank Payout Settlement SMS",
-                  desc: "Receive real-time confirmation SMS whenever TicketHub settles payouts to your CBE account.",
+                  desc: "Receive real-time confirmation SMS whenever TIKORA settles payouts to your CBE account.",
                 },
                 {
                   key: "dailyDigestEmail",

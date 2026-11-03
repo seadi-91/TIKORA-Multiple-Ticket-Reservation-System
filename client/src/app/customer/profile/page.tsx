@@ -7,7 +7,7 @@ import { FormUpload } from "@/components/forms/form-upload";
 
 export default function CustomerProfilePage() {
   const [fullName, setFullName] = useState("Abebe Bekele");
-  const [email, setEmail] = useState("abebe.customer@tickethub.et");
+  const [email, setEmail] = useState("abebe.customer@tikora.et");
   const [phone, setPhone] = useState("+251 91 123 4567");
   const [city, setCity] = useState("Addis Ababa");
   const [gender, setGender] = useState("MALE");
@@ -182,7 +182,7 @@ export default function CustomerProfilePage() {
           <div className="rounded-3xl bg-gradient-to-tr from-[#D97706] to-[#F59E0B] p-6 text-white shadow-md space-y-3">
             <div className="flex items-center gap-2">
               <Award className="w-5 h-5 text-amber-300" />
-              <h4 className="text-sm font-bold">TicketHub Rewards</h4>
+              <h4 className="text-sm font-bold">TIKORA Rewards</h4>
             </div>
             <div className="text-2xl font-black">480 Loyalty Points</div>
             <p className="text-xs text-indigo-100/80 leading-relaxed">

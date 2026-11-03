@@ -539,7 +539,7 @@ export const useAdminStore = create<AdminState>((set, get) => ({
     {
       id: "usr-4",
       name: "Peter SuperAdmin",
-      email: "admin@tickethub.et",
+      email: "admin@tikora.et",
       phone: "+251 900 000 001",
       role: "ADMIN",
       status: "ACTIVE",
@@ -878,7 +878,7 @@ export const useAdminStore = create<AdminState>((set, get) => ({
           sender: "Ermias Melaku",
           isStaff: false,
           message:
-            "Greetings TicketHub admin. We submitted our business license and event safety permits yesterday for Millennium Grand Productions. We have tickets to release by Wednesday. Kindly expedite verification.",
+            "Greetings TIKORA admin. We submitted our business license and event safety permits yesterday for Millennium Grand Productions. We have tickets to release by Wednesday. Kindly expedite verification.",
           timestamp: "2026-11-02 09:15",
         },
       ],
@@ -903,7 +903,7 @@ export const useAdminStore = create<AdminState>((set, get) => ({
           timestamp: "2026-11-01 16:30",
         },
         {
-          sender: "TicketHub Support (Super Admin)",
+          sender: "TIKORA Support (Super Admin)",
           isStaff: true,
           message:
             "Hello Hanna, we audited the SMS gateway log and observed a temporary telecommunications queue spike. The booking is confirmed and valid on your dashboard.",
@@ -961,8 +961,8 @@ export const useAdminStore = create<AdminState>((set, get) => ({
   ],
 
   settings: {
-    platformName: "TicketHub Ethiopia",
-    supportEmail: "support@tickethub.et",
+    platformName: "TIKORA Ethiopia",
+    supportEmail: "support@tikora.et",
     supportPhone: "+251 115 500 000",
     maintenanceMode: false,
     allowNewRegistrations: true,
@@ -1272,7 +1272,7 @@ export const useAdminStore = create<AdminState>((set, get) => ({
               messages: [
                 ...t.messages,
                 {
-                  sender: "TicketHub Staff (Super Admin)",
+                  sender: "TIKORA Staff (Super Admin)",
                   isStaff: true,
                   message: reply,
                   timestamp: now,

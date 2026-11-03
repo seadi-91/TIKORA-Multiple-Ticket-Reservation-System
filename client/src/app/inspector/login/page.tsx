@@ -76,7 +76,7 @@ export default function InspectorLoginPage() {
             <QrCode className="w-6 h-6" />
           </div>
           <h1 className="text-xl font-extrabold tracking-tight text-foreground">
-            TicketHub Inspector Portal
+            TIKORA Inspector Portal
           </h1>
           <p className="text-xs text-muted-foreground max-w-xs mx-auto">
             Authorized gate verification console for staff registered by approved providers.

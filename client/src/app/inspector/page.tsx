@@ -157,50 +157,50 @@ export default function InspectorDashboardPage() {
         </div>
       </div>
 
-      {/* KPI Stats Grid (Modern elevated cards, softened borders) */}
-      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3.5 sm:gap-4">
-        <div className="p-4 sm:p-5 rounded-2xl bg-card border border-slate-200/50 dark:border-slate-800/50 shadow-sm hover:shadow-md transition-all hover:-translate-y-0.5">
-          <div className="flex items-center justify-between text-muted-foreground text-xs mb-2">
-            <span className="font-bold uppercase tracking-wider text-[10px]">Scanned Today</span>
-            <div className="w-8 h-8 rounded-xl bg-amber-500/10 text-amber-600 dark:text-amber-400 flex items-center justify-center">
-              <QrCode className="w-4 h-4" />
+      {/* KPI Stats Grid - Multiple Column Display (4 Columns) */}
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5 sm:gap-4">
+        <div className="p-3 sm:p-5 rounded-xl sm:rounded-2xl bg-card border border-slate-200/50 dark:border-slate-800/50 shadow-sm hover:shadow-md transition-all hover:-translate-y-0.5">
+          <div className="flex items-center justify-between text-muted-foreground text-xs mb-1.5 sm:mb-2">
+            <span className="font-bold uppercase tracking-wider text-[9px] sm:text-[10px] truncate">Scanned Today</span>
+            <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-lg sm:rounded-xl bg-amber-500/10 text-amber-600 dark:text-amber-400 flex items-center justify-center shrink-0">
+              <QrCode className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
             </div>
           </div>
-          <div className="text-2xl font-extrabold text-foreground">{totalScans}</div>
-          <span className="text-[11px] text-muted-foreground mt-1 block">Digital passes checked</span>
+          <div className="text-xl sm:text-2xl font-extrabold text-foreground">{totalScans}</div>
+          <span className="text-[10px] sm:text-[11px] text-muted-foreground mt-0.5 sm:mt-1 block truncate">Digital passes checked</span>
         </div>
 
-        <div className="p-4 sm:p-5 rounded-2xl bg-card border border-slate-200/50 dark:border-slate-800/50 shadow-sm hover:shadow-md transition-all hover:-translate-y-0.5">
-          <div className="flex items-center justify-between text-muted-foreground text-xs mb-2">
-            <span className="font-bold uppercase tracking-wider text-[10px]">Valid & Admitted</span>
-            <div className="w-8 h-8 rounded-xl bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 flex items-center justify-center">
-              <CheckCircle2 className="w-4 h-4" />
+        <div className="p-3 sm:p-5 rounded-xl sm:rounded-2xl bg-card border border-slate-200/50 dark:border-slate-800/50 shadow-sm hover:shadow-md transition-all hover:-translate-y-0.5">
+          <div className="flex items-center justify-between text-muted-foreground text-xs mb-1.5 sm:mb-2">
+            <span className="font-bold uppercase tracking-wider text-[9px] sm:text-[10px] truncate">Valid & Admitted</span>
+            <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-lg sm:rounded-xl bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 flex items-center justify-center shrink-0">
+              <CheckCircle2 className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
             </div>
           </div>
-          <div className="text-2xl font-extrabold text-emerald-600 dark:text-emerald-400">{validScans}</div>
-          <span className="text-[11px] text-muted-foreground mt-1 block">Passengers boarded</span>
+          <div className="text-xl sm:text-2xl font-extrabold text-emerald-600 dark:text-emerald-400">{validScans}</div>
+          <span className="text-[10px] sm:text-[11px] text-muted-foreground mt-0.5 sm:mt-1 block truncate">Passengers boarded</span>
         </div>
 
-        <div className="p-4 sm:p-5 rounded-2xl bg-card border border-slate-200/50 dark:border-slate-800/50 shadow-sm hover:shadow-md transition-all hover:-translate-y-0.5">
-          <div className="flex items-center justify-between text-muted-foreground text-xs mb-2">
-            <span className="font-bold uppercase tracking-wider text-[10px]">Interceptions</span>
-            <div className="w-8 h-8 rounded-xl bg-amber-500/10 text-amber-600 dark:text-amber-400 flex items-center justify-center">
-              <ShieldAlert className="w-4 h-4" />
+        <div className="p-3 sm:p-5 rounded-xl sm:rounded-2xl bg-card border border-slate-200/50 dark:border-slate-800/50 shadow-sm hover:shadow-md transition-all hover:-translate-y-0.5">
+          <div className="flex items-center justify-between text-muted-foreground text-xs mb-1.5 sm:mb-2">
+            <span className="font-bold uppercase tracking-wider text-[9px] sm:text-[10px] truncate">Interceptions</span>
+            <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-lg sm:rounded-xl bg-amber-500/10 text-amber-600 dark:text-amber-400 flex items-center justify-center shrink-0">
+              <ShieldAlert className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
             </div>
           </div>
-          <div className="text-2xl font-extrabold text-amber-600 dark:text-amber-400">{duplicateScans}</div>
-          <span className="text-[11px] text-muted-foreground mt-1 block">Duplicate / wrong gate</span>
+          <div className="text-xl sm:text-2xl font-extrabold text-amber-600 dark:text-amber-400">{duplicateScans}</div>
+          <span className="text-[10px] sm:text-[11px] text-muted-foreground mt-0.5 sm:mt-1 block truncate">Duplicate / wrong gate</span>
         </div>
 
-        <div className="p-4 sm:p-5 rounded-2xl bg-card border border-slate-200/50 dark:border-slate-800/50 shadow-sm hover:shadow-md transition-all hover:-translate-y-0.5">
-          <div className="flex items-center justify-between text-muted-foreground text-xs mb-2">
-            <span className="font-bold uppercase tracking-wider text-[10px]">Invalid / Rejected</span>
-            <div className="w-8 h-8 rounded-xl bg-rose-500/10 text-rose-600 dark:text-rose-400 flex items-center justify-center">
-              <XCircle className="w-4 h-4" />
+        <div className="p-3 sm:p-5 rounded-xl sm:rounded-2xl bg-card border border-slate-200/50 dark:border-slate-800/50 shadow-sm hover:shadow-md transition-all hover:-translate-y-0.5">
+          <div className="flex items-center justify-between text-muted-foreground text-xs mb-1.5 sm:mb-2">
+            <span className="font-bold uppercase tracking-wider text-[9px] sm:text-[10px] truncate">Invalid / Rejected</span>
+            <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-lg sm:rounded-xl bg-rose-500/10 text-rose-600 dark:text-rose-400 flex items-center justify-center shrink-0">
+              <XCircle className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
             </div>
           </div>
-          <div className="text-2xl font-extrabold text-rose-600 dark:text-rose-400">{invalidScans}</div>
-          <span className="text-[11px] text-muted-foreground mt-1 block">Signature check failed</span>
+          <div className="text-xl sm:text-2xl font-extrabold text-rose-600 dark:text-rose-400">{invalidScans}</div>
+          <span className="text-[10px] sm:text-[11px] text-muted-foreground mt-0.5 sm:mt-1 block truncate">Signature check failed</span>
         </div>
       </div>
 

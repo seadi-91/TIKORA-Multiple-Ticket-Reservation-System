@@ -153,54 +153,54 @@ export default function ProviderPaymentsPage() {
         </div>
       </div>
 
-      {/* KPI Financial Cards */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+      {/* KPI Financial Cards - Multiple Column Display (4 Columns) */}
+      <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-4 gap-2.5 sm:gap-4">
         {/* Gross Sales */}
-        <div className="bg-card border border-border/60 rounded-xl p-4 shadow-xs">
+        <div className="bg-card border border-border/60 rounded-xl p-3 sm:p-4 shadow-xs">
           <div className="flex items-center justify-between text-muted-foreground text-xs mb-1">
-            <span>Gross Ticket Sales</span>
-            <TrendingUp className="w-4 h-4 text-emerald-600" />
+            <span className="text-[10px] sm:text-xs truncate">Gross Sales</span>
+            <TrendingUp className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-emerald-600 shrink-0" />
           </div>
-          <div className="text-xl font-bold text-foreground">
+          <div className="text-base sm:text-xl font-bold text-foreground truncate">
             {formatCurrency(organization.stats.grossSales)}
           </div>
-          <span className="text-[11px] text-muted-foreground">Total captured revenue</span>
+          <span className="text-[10px] sm:text-[11px] text-muted-foreground truncate block">Captured revenue</span>
         </div>
 
         {/* Commission */}
-        <div className="bg-card border border-border/60 rounded-xl p-4 shadow-xs">
+        <div className="bg-card border border-border/60 rounded-xl p-3 sm:p-4 shadow-xs">
           <div className="flex items-center justify-between text-muted-foreground text-xs mb-1">
-            <span>Platform Commission (5%)</span>
-            <DollarSign className="w-4 h-4 text-muted-foreground" />
+            <span className="text-[10px] sm:text-xs truncate">Commission (5%)</span>
+            <DollarSign className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-muted-foreground shrink-0" />
           </div>
-          <div className="text-xl font-bold text-foreground">
+          <div className="text-base sm:text-xl font-bold text-foreground truncate">
             {formatCurrency(organization.stats.platformCommission)}
           </div>
-          <span className="text-[11px] text-muted-foreground">TicketHub platform service fee</span>
+          <span className="text-[10px] sm:text-[11px] text-muted-foreground truncate block">Platform service fee</span>
         </div>
 
         {/* Net Payout to Date */}
-        <div className="bg-card border border-border/60 rounded-xl p-4 shadow-xs">
+        <div className="bg-card border border-border/60 rounded-xl p-3 sm:p-4 shadow-xs">
           <div className="flex items-center justify-between text-muted-foreground text-xs mb-1">
-            <span>Total Settled to Date</span>
-            <CheckCircle2 className="w-4 h-4 text-blue-600" />
+            <span className="text-[10px] sm:text-xs truncate">Total Settled</span>
+            <CheckCircle2 className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-blue-600 shrink-0" />
           </div>
-          <div className="text-xl font-bold text-blue-600">
+          <div className="text-base sm:text-xl font-bold text-blue-600 truncate">
             {formatCurrency(organization.stats.netPayout)}
           </div>
-          <span className="text-[11px] text-muted-foreground">Transferred to corporate account</span>
+          <span className="text-[10px] sm:text-[11px] text-muted-foreground truncate block">Transferred to bank</span>
         </div>
 
         {/* Available for Withdrawal */}
-        <div className="bg-card border border-amber-600/30 bg-amber-500/5 rounded-xl p-4 shadow-xs">
+        <div className="bg-card border border-amber-600/30 bg-amber-500/5 rounded-xl p-3 sm:p-4 shadow-xs">
           <div className="flex items-center justify-between text-amber-700 dark:text-amber-300 text-xs mb-1 font-semibold">
-            <span>Available Balance</span>
-            <Wallet className="w-4 h-4 text-amber-600" />
+            <span className="text-[10px] sm:text-xs truncate">Available Balance</span>
+            <Wallet className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-amber-600 shrink-0" />
           </div>
-          <div className="text-xl font-bold text-amber-700 dark:text-amber-400">
+          <div className="text-base sm:text-xl font-bold text-amber-700 dark:text-amber-400 truncate">
             {formatCurrency(availableBalance)}
           </div>
-          <span className="text-[11px] text-muted-foreground">Ready for instant bank settlement</span>
+          <span className="text-[10px] sm:text-[11px] text-muted-foreground truncate block">Ready for settlement</span>
         </div>
       </div>
 

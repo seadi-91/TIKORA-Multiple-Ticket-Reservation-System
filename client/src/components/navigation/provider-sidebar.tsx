@@ -1,6 +1,7 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
+import { createPortal } from "react-dom";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
@@ -49,6 +50,22 @@ export function ProviderSidebar({
   const pathname = usePathname();
   const { organization, notifications, refunds } = useProviderStore();
   const { logout } = useAuthStore();
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  useEffect(() => {
+    if (mobileOpen) {
+      document.body.style.overflow = "hidden";
+    } else {
+      document.body.style.overflow = "";
+    }
+    return () => {
+      document.body.style.overflow = "";
+    };
+  }, [mobileOpen]);
 
   const [busExpanded, setBusExpanded] = useState(pathname.startsWith("/provider/bus"));
   const [cinemaExpanded, setCinemaExpanded] = useState(pathname.startsWith("/provider/cinema"));
@@ -201,7 +218,7 @@ export function ProviderSidebar({
             <div>
               <div className="flex items-center gap-1.5">
                 <span className="font-black text-sm tracking-tight text-[#0F172A] dark:text-white">
-                  TicketHub
+                  TIKORA
                 </span>
                 <span className="text-[9px] uppercase font-extrabold tracking-widest px-1.5 py-0.5 rounded-md bg-[#B45309]/10 text-[#B45309] dark:text-amber-400">
                   Provider
@@ -378,18 +395,24 @@ export function ProviderSidebar({
         </div>
       </aside>
 
-      {/* Mobile Drawer Overlay */}
-      {mobileOpen && (
-        <div className="lg:hidden fixed inset-0 z-50 flex">
-          <div
-            className="fixed inset-0 bg-slate-950/50 backdrop-blur-xs transition-opacity"
-            onClick={onCloseMobile}
-          />
-          <div className="relative w-72 max-w-[85vw] h-full shadow-2xl z-10">
-            {sidebarContent}
-          </div>
-        </div>
-      )}
+      {/* Mobile Drawer via Portal */}
+      {mounted &&
+        mobileOpen &&
+        createPortal(
+          <div className="fixed inset-0 z-[9999] lg:hidden flex">
+            {/* Backdrop */}
+            <div
+              className="fixed inset-0 bg-black/60 backdrop-blur-xs transition-opacity"
+              onClick={onCloseMobile}
+              aria-label="Close menu backdrop"
+            />
+            {/* Drawer */}
+            <div className="relative z-10 w-72 max-w-[85vw] h-full bg-white dark:bg-[#161922] border-r border-slate-200 dark:border-slate-800 shadow-2xl flex flex-col justify-between overflow-hidden animate-in slide-in-from-left duration-200">
+              {sidebarContent}
+            </div>
+          </div>,
+          document.body
+        )}
     </>
   );
 }

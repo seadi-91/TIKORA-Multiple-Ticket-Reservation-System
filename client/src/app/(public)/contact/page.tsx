@@ -29,14 +29,14 @@ export default function ContactSupportPage() {
   const faqs = [
     {
       q: "How do I present my ticket at the bus station or cinema hall?",
-      a: "Once booked, your ticket is instantly available in your TicketHub Customer Wallet ('My Digital Tickets'). Open the page on your mobile phone to show the high-contrast QR code to the inspector at the turnstile or boarding gate. You can also download or print the PDF receipt.",
+      a: "Once booked, your ticket is instantly available in your TIKORA Customer Wallet ('My Digital Tickets'). Open the page on your mobile phone to show the high-contrast QR code to the inspector at the turnstile or boarding gate. You can also download or print the PDF receipt.",
     },
     {
       q: "Which payment methods are supported in Ethiopia?",
-      a: "TicketHub supports Telebirr, Commercial Bank of Ethiopia (CBE Birr), Chapa payment gateway, and local Visa/Mastercard debit cards. Transactions are processed in Ethiopian Birr (ETB) with zero hidden foreign exchange charges.",
+      a: "TIKORA supports Telebirr, Commercial Bank of Ethiopia (CBE Birr), Chapa payment gateway, and local Visa/Mastercard debit cards. Transactions are processed in Ethiopian Birr (ETB) with zero hidden foreign exchange charges.",
     },
     {
-      q: "What is TicketHub's refund and cancellation policy?",
+      q: "What is TIKORA's refund and cancellation policy?",
       a: "Cancellations made more than 24 hours before the scheduled departure, movie screening, or event kickoff qualify for a 90% instant credit refund. Cancellations within 24 hours depend on the individual operator's commercial terms.",
     },
     {
@@ -91,7 +91,7 @@ export default function ContactSupportPage() {
               <Mail className="w-5 h-5" />
             </div>
             <h4 className="text-xs font-bold uppercase text-[#64748B] dark:text-amber-400/70">Email Support</h4>
-            <p className="text-sm font-bold text-[#0F172A] dark:text-white">support@tickethub.et</p>
+            <p className="text-sm font-bold text-[#0F172A] dark:text-white">support@tikora.et</p>
             <p className="text-xs text-[#64748B] dark:text-slate-400">Average response time: 25 mins</p>
           </div>
 

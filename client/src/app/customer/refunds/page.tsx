@@ -95,7 +95,7 @@ export default function CustomerRefundsPage() {
         {/* Right 5 cols: Policy Breakdown */}
         <div className="lg:col-span-5 rounded-3xl bg-white dark:bg-[#161922] border border-[#E2E8F0] dark:border-slate-800 p-6 shadow-xs space-y-4">
           <h4 className="text-xs font-bold uppercase tracking-wider text-[#64748B] dark:text-amber-400/60">
-            TicketHub Guarantee
+            TIKORA Guarantee
           </h4>
 
           <div className="space-y-3 text-xs text-[#64748B] dark:text-slate-400">

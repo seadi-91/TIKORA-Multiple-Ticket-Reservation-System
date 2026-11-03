@@ -23,13 +23,13 @@ export default function AboutPage() {
       <main className="flex-1 max-w-5xl mx-auto px-4 sm:px-6 py-12 space-y-12 w-full">
         <div className="text-center space-y-3">
           <span className="text-xs font-bold text-[#F59E0B] dark:text-amber-400 uppercase tracking-wider">
-            About TicketHub Ethiopia
+            About TIKORA Ethiopia
           </span>
           <h1 className="text-3xl sm:text-5xl font-black text-[#0F172A] dark:text-white tracking-tight">
             Connecting Ethiopia with Seamless Digital Passes
           </h1>
           <p className="text-xs sm:text-sm text-[#64748B] dark:text-slate-400 max-w-2xl mx-auto leading-relaxed">
-            Founded with the mission to eliminate ticket queues and black-market pricing, TicketHub is Ethiopia&apos;s unified multi-category reservation platform for bus travel, movie theaters, live concerts, and stadium sports.
+            Founded with the mission to eliminate ticket queues and black-market pricing, TIKORA is Ethiopia&apos;s unified multi-category reservation platform for bus travel, movie theaters, live concerts, and stadium sports.
           </p>
         </div>
 
@@ -71,7 +71,7 @@ export default function AboutPage() {
           <div className="space-y-1 text-center sm:text-left">
             <h3 className="text-xl font-bold">Are you an Operator or Venue?</h3>
             <p className="text-xs text-indigo-100/80 max-w-lg">
-              Start selling tickets on TicketHub today. Get free ticket scanner hardware and Telebirr automatic settlements.
+              Start selling tickets on TIKORA today. Get free ticket scanner hardware and Telebirr automatic settlements.
             </p>
           </div>
 

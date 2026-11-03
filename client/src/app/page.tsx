@@ -103,32 +103,32 @@ export default function HomePage() {
       <Header />
 
       {/* Hero Section - Compact & Modern */}
-      <section className="relative overflow-hidden pt-5 pb-8 sm:pt-8 sm:pb-12 px-3 sm:px-6 border-b border-[#E2E8F0] dark:border-slate-800">
+      <section className="relative overflow-hidden pt-4 pb-6 sm:pt-8 sm:pb-12 px-3 sm:px-6 border-b border-[#E2E8F0] dark:border-slate-800">
         {/* Subtle Ambient Glow */}
         <div className="absolute top-0 left-1/2 -translate-x-1/2 w-full max-w-5xl h-48 bg-gradient-to-b from-slate-200/50 dark:from-slate-800/30 to-transparent pointer-events-none rounded-full blur-3xl" />
 
-        <div className="relative max-w-4xl mx-auto text-center space-y-4">
+        <div className="relative max-w-4xl mx-auto text-center space-y-2.5 sm:space-y-4">
           {/* Tagline Pill - Compact */}
-          <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-slate-100 dark:bg-slate-800/80 text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-slate-700 text-[11px] font-semibold shadow-2xs">
+          <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-slate-100 dark:bg-slate-800/80 text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-slate-700 text-[10px] sm:text-[11px] font-semibold shadow-2xs">
             <Sparkles className="w-3 h-3 text-[#B45309] dark:text-amber-400" />
             <span>Ethiopia&apos;s Smart Multi-Ticket Platform</span>
           </div>
 
-          {/* Main Headline - Compact */}
-          <h1 className="text-2xl sm:text-4xl lg:text-5xl font-black text-[#0F172A] dark:text-white tracking-tight leading-[1.15]">
+          {/* Main Headline - Compact on Mobile */}
+          <h1 className="text-xl sm:text-4xl lg:text-5xl font-black text-[#0F172A] dark:text-white tracking-tight leading-tight">
             Book Tickets for{" "}
             <span className="text-[#B45309] dark:text-[#D97706]">Buses, Cinema,</span>{" "}
             Events & Sports
           </h1>
 
-          <p className="text-xs sm:text-sm text-[#64748B] dark:text-slate-400 max-w-xl mx-auto leading-relaxed">
+          <p className="text-[11px] sm:text-sm text-[#64748B] dark:text-slate-400 max-w-xl mx-auto leading-relaxed">
             Verified operators, instant interactive seat selection, and digital QR passes powered by Telebirr, CBE Birr & Chapa.
           </p>
 
           {/* Search Box Card - Compact */}
-          <div className="rounded-2xl bg-white dark:bg-[#161922] border border-[#E2E8F0] dark:border-slate-800 p-3 sm:p-4 shadow-sm text-left max-w-3xl mx-auto">
+          <div className="rounded-xl sm:rounded-2xl bg-white dark:bg-[#161922] border border-[#E2E8F0] dark:border-slate-800 p-2.5 sm:p-4 shadow-sm text-left max-w-3xl mx-auto">
             {/* Category Switcher Tabs - Compact & Smooth Touch Scroll */}
-            <div className="flex items-center gap-1.5 overflow-x-auto no-scrollbar pb-2.5 border-b border-[#E2E8F0] dark:border-slate-800 mb-3">
+            <div className="flex items-center gap-1.5 overflow-x-auto no-scrollbar pb-2 border-b border-[#E2E8F0] dark:border-slate-800 mb-2.5">
               {[
                 { id: "ALL", label: "All", icon: Ticket },
                 { id: "BUS", label: "Buses", icon: Bus },
@@ -142,22 +142,22 @@ export default function HomePage() {
                   <button
                     key={cat.id}
                     onClick={() => setActiveCategory(cat.id as any)}
-                    className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition-all shrink-0 cursor-pointer min-h-[34px] touch-manipulation ${
+                    className={`flex items-center gap-1 px-2.5 py-1 rounded-lg text-[11px] sm:text-xs font-semibold transition-all shrink-0 cursor-pointer min-h-[30px] touch-manipulation ${
                       isSelected
                         ? "bg-[#B45309] text-white shadow-xs font-bold"
                         : "bg-slate-100 text-[#64748B] hover:text-[#0F172A] dark:bg-slate-800/80 dark:text-slate-300 dark:hover:bg-slate-800"
                     }`}
                   >
-                    <Icon className="w-3.5 h-3.5" />
+                    <Icon className="w-3 h-3 sm:w-3.5 sm:h-3.5" />
                     <span>{cat.label}</span>
                   </button>
                 );
               })}
             </div>
 
-            {/* Form Inputs - Compact & Touch-Friendly */}
-            <form onSubmit={handleHeroSearch} className="grid grid-cols-1 sm:grid-cols-12 gap-2.5">
-              <div className="sm:col-span-5 relative">
+            {/* Form Inputs - Compact 2-Col on Mobile */}
+            <form onSubmit={handleHeroSearch} className="grid grid-cols-2 sm:grid-cols-12 gap-2 sm:gap-2.5">
+              <div className="col-span-2 sm:col-span-5 relative">
                 <label className="block text-[9px] uppercase font-bold text-[#64748B] dark:text-slate-400 mb-0.5">
                   Search Query
                 </label>
@@ -167,13 +167,13 @@ export default function HomePage() {
                     type="text"
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
-                    placeholder="e.g. Selam Bus, Avatar, Jazz Fest..."
-                    className="w-full pl-8 pr-2.5 py-2 sm:py-1.5 rounded-lg border border-[#E2E8F0] dark:border-slate-800 bg-[#F8FAFC] dark:bg-[#0F1117] text-[#0F172A] dark:text-white text-xs focus:outline-none focus:border-[#B45309] min-h-[40px] sm:min-h-0"
+                    placeholder="e.g. Selam Bus, Avatar..."
+                    className="w-full pl-8 pr-2.5 py-1.5 rounded-lg border border-[#E2E8F0] dark:border-slate-800 bg-[#F8FAFC] dark:bg-[#0F1117] text-[#0F172A] dark:text-white text-xs focus:outline-none focus:border-[#B45309] min-h-[36px] sm:min-h-0"
                   />
                 </div>
               </div>
 
-              <div className="sm:col-span-3 relative">
+              <div className="col-span-1 sm:col-span-3 relative">
                 <label className="block text-[9px] uppercase font-bold text-[#64748B] dark:text-slate-400 mb-0.5">
                   City
                 </label>
@@ -182,7 +182,7 @@ export default function HomePage() {
                   <select
                     value={selectedCity}
                     onChange={(e) => setSelectedCity(e.target.value)}
-                    className="w-full pl-8 pr-2.5 py-2 sm:py-1.5 rounded-lg border border-[#E2E8F0] dark:border-slate-800 bg-[#F8FAFC] dark:bg-[#0F1117] text-[#0F172A] dark:text-white text-xs focus:outline-none focus:border-[#B45309] appearance-none cursor-pointer min-h-[40px] sm:min-h-0"
+                    className="w-full pl-8 pr-2 py-1.5 rounded-lg border border-[#E2E8F0] dark:border-slate-800 bg-[#F8FAFC] dark:bg-[#0F1117] text-[#0F172A] dark:text-white text-xs focus:outline-none focus:border-[#B45309] appearance-none cursor-pointer min-h-[36px] sm:min-h-0"
                   >
                     <option value="">All Cities</option>
                     {ETHIOPIAN_CITIES.map((c) => (
@@ -194,25 +194,25 @@ export default function HomePage() {
                 </div>
               </div>
 
-              <div className="sm:col-span-2 relative">
+              <div className="col-span-1 sm:col-span-2 relative">
                 <label className="block text-[9px] uppercase font-bold text-[#64748B] dark:text-slate-400 mb-0.5">
                   Date
                 </label>
                 <div className="relative">
-                  <CalendarIcon className="w-3.5 h-3.5 text-[#64748B] absolute left-2.5 top-1/2 -translate-y-1/2 pointer-events-none" />
+                  <CalendarIcon className="w-3.5 h-3.5 text-[#64748B] absolute left-2 top-1/2 -translate-y-1/2 pointer-events-none" />
                   <input
                     type="date"
                     value={selectedDate}
                     onChange={(e) => setSelectedDate(e.target.value)}
-                    className="w-full pl-8 pr-2 py-2 sm:py-1.5 rounded-lg border border-[#E2E8F0] dark:border-slate-800 bg-[#F8FAFC] dark:bg-[#0F1117] text-[#0F172A] dark:text-white text-xs focus:outline-none focus:border-[#B45309] min-h-[40px] sm:min-h-0"
+                    className="w-full pl-7 pr-1 py-1.5 rounded-lg border border-[#E2E8F0] dark:border-slate-800 bg-[#F8FAFC] dark:bg-[#0F1117] text-[#0F172A] dark:text-white text-xs focus:outline-none focus:border-[#B45309] min-h-[36px] sm:min-h-0"
                   />
                 </div>
               </div>
 
-              <div className="sm:col-span-2 flex items-end">
+              <div className="col-span-2 flex items-end">
                 <button
                   type="submit"
-                  className="w-full py-2.5 sm:py-1.5 px-3 rounded-lg bg-[#B45309] hover:bg-[#92400E] text-white text-xs font-bold transition-all shadow-xs flex items-center justify-center gap-1.5 active:scale-98 cursor-pointer h-10 sm:h-[30px] touch-manipulation"
+                  className="w-full py-2 sm:py-1.5 px-3 rounded-lg bg-[#B45309] hover:bg-[#92400E] text-white text-xs font-bold transition-all shadow-xs flex items-center justify-center gap-1.5 active:scale-98 cursor-pointer h-9 sm:h-[30px] touch-manipulation"
                 >
                   <Search className="w-3.5 h-3.5" />
                   <span>Search</span>
@@ -222,25 +222,25 @@ export default function HomePage() {
           </div>
 
           {/* Quick Metrics Bar - Compact */}
-          <div className="pt-1 flex flex-wrap items-center justify-center gap-4 sm:gap-8 text-[11px] text-[#64748B] dark:text-slate-400">
-            <div className="flex items-center gap-1.5">
-              <QrCode className="w-3.5 h-3.5 text-slate-400 dark:text-slate-500" />
-              <span>Instant Digital QR Passes</span>
+          <div className="pt-0.5 flex flex-wrap items-center justify-center gap-3 sm:gap-8 text-[10px] sm:text-[11px] text-[#64748B] dark:text-slate-400">
+            <div className="flex items-center gap-1">
+              <QrCode className="w-3 h-3 text-slate-400 dark:text-slate-500" />
+              <span>Instant QR Passes</span>
             </div>
-            <div className="flex items-center gap-1.5">
-              <ShieldCheck className="w-3.5 h-3.5 text-slate-400 dark:text-slate-500" />
-              <span>100% Verified Partners</span>
+            <div className="flex items-center gap-1">
+              <ShieldCheck className="w-3 h-3 text-slate-400 dark:text-slate-500" />
+              <span>Verified Partners</span>
             </div>
-            <div className="flex items-center gap-1.5">
-              <CreditCard className="w-3.5 h-3.5 text-slate-400 dark:text-slate-500" />
-              <span>Telebirr, CBE Birr & Chapa</span>
+            <div className="flex items-center gap-1">
+              <CreditCard className="w-3 h-3 text-slate-400 dark:text-slate-500" />
+              <span>Telebirr & CBE Birr</span>
             </div>
           </div>
         </div>
       </section>
 
-      {/* 4 Category Cards - Compact */}
-      <section className="max-w-7xl mx-auto px-3 sm:px-6 py-6 sm:py-8 w-full space-y-4">
+      {/* 4 Category Cards - 2 Columns on Mobile as Requested */}
+      <section className="max-w-7xl mx-auto px-3 sm:px-6 py-4 sm:py-8 w-full space-y-3 sm:space-y-4">
         <div className="flex items-center justify-between">
           <div>
             <span className="text-[10px] font-bold text-[#B45309] dark:text-amber-400 uppercase tracking-wider">
@@ -259,43 +259,43 @@ export default function HomePage() {
           </Link>
         </div>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3.5">
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-2.5 sm:gap-3.5">
           {categoryCards.map((card) => {
             const Icon = card.icon;
             return (
               <div
                 key={card.id}
-                className={`rounded-2xl p-4 border transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md flex flex-col justify-between ${card.bgLight}`}
+                className={`rounded-xl sm:rounded-2xl p-2.5 sm:p-4 border transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md flex flex-col justify-between ${card.bgLight}`}
               >
-                <div className="space-y-2.5">
-                  <div className="flex items-center justify-between">
+                <div className="space-y-1.5 sm:space-y-2.5">
+                  <div className="flex items-center justify-between gap-1">
                     <div
-                      className={`w-9 h-9 rounded-xl bg-gradient-to-tr ${card.color} text-white flex items-center justify-center shadow-xs`}
+                      className={`w-7 h-7 sm:w-9 sm:h-9 rounded-lg sm:rounded-xl bg-gradient-to-tr ${card.color} text-white flex items-center justify-center shadow-xs shrink-0`}
                     >
-                      <Icon className="w-4 h-4" />
+                      <Icon className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
                     </div>
-                    <span className="text-[9px] font-bold px-2 py-0.5 rounded-full bg-white/90 dark:bg-black/50 text-[#0F172A] dark:text-slate-200">
+                    <span className="text-[8px] sm:text-[9px] font-bold px-1.5 sm:px-2 py-0.5 rounded-full bg-white/90 dark:bg-black/50 text-[#0F172A] dark:text-slate-200 truncate">
                       {card.badge}
                     </span>
                   </div>
 
                   <div>
-                    <h3 className="text-sm font-bold text-[#0F172A] dark:text-white">
+                    <h3 className="text-xs sm:text-sm font-bold text-[#0F172A] dark:text-white truncate">
                       {card.title}
                     </h3>
-                    <p className="text-[11px] text-[#64748B] dark:text-slate-400 mt-1 leading-relaxed">
+                    <p className="text-[10px] sm:text-[11px] text-[#64748B] dark:text-slate-400 mt-0.5 sm:mt-1 leading-snug line-clamp-2">
                       {card.description}
                     </p>
                   </div>
                 </div>
 
-                <div className="pt-3">
+                <div className="pt-2 sm:pt-3">
                   <Link
                     href={card.link}
-                    className="inline-flex items-center gap-1.5 text-xs font-bold text-[#B45309] dark:text-amber-400 hover:text-[#92400E] group"
+                    className="inline-flex items-center gap-1 text-[11px] sm:text-xs font-bold text-[#B45309] dark:text-amber-400 hover:text-[#92400E] group"
                   >
-                    <span>{card.actionText}</span>
-                    <ArrowRight className="w-3 h-3 group-hover:translate-x-1 transition-transform" />
+                    <span className="truncate">{card.actionText}</span>
+                    <ArrowRight className="w-2.5 h-2.5 sm:w-3 sm:h-3 group-hover:translate-x-1 transition-transform shrink-0" />
                   </Link>
                 </div>
               </div>
@@ -305,15 +305,15 @@ export default function HomePage() {
       </section>
 
       {/* Featured & Curated Tickets Section - Compact */}
-      <section className="bg-white dark:bg-[#161922] border-y border-[#E2E8F0] dark:border-slate-800 py-6 sm:py-8 px-3 sm:px-6">
-        <div className="max-w-7xl mx-auto space-y-4">
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+      <section className="bg-white dark:bg-[#161922] border-y border-[#E2E8F0] dark:border-slate-800 py-5 sm:py-8 px-3 sm:px-6">
+        <div className="max-w-7xl mx-auto space-y-3 sm:space-y-4">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 sm:gap-3">
             <div>
               <div className="flex items-center gap-1.5 text-[10px] font-bold text-[#B45309] dark:text-amber-400 uppercase tracking-wider">
                 <TrendingUp className="w-3.5 h-3.5" />
                 <span>Featured & Top Rated</span>
               </div>
-              <h2 className="text-lg sm:text-xl font-black text-[#0F172A] dark:text-white">
+              <h2 className="text-base sm:text-xl font-black text-[#0F172A] dark:text-white">
                 Popular Tickets Ready to Book
               </h2>
             </div>
@@ -324,9 +324,9 @@ export default function HomePage() {
                 <button
                   key={cat}
                   onClick={() => setActiveCategory(cat)}
-                  className={`px-2.5 py-1 rounded-lg text-xs font-semibold transition-all shrink-0 cursor-pointer ${
+                  className={`px-2 py-0.5 sm:px-2.5 sm:py-1 rounded-lg text-[11px] sm:text-xs font-semibold transition-all shrink-0 cursor-pointer ${
                     activeCategory === cat
-                      ? "bg-[#B45309] text-white shadow-2xs"
+                      ? "bg-[#B45309] text-white shadow-2xs font-bold"
                       : "bg-slate-100 text-[#64748B] hover:text-[#0F172A] dark:bg-slate-800/80 dark:text-slate-300"
                   }`}
                 >
@@ -336,7 +336,8 @@ export default function HomePage() {
             </div>
           </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 sm:gap-5">
+          {/* 2-Column Grid on Mobile as Requested */}
+          <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-2 sm:gap-4">
             {filteredTickets.slice(0, 8).map((ticket) => (
               <TicketCard key={ticket.id} ticket={ticket} />
             ))}
@@ -344,77 +345,77 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* How TicketHub Works - Compact */}
-      <section className="max-w-7xl mx-auto px-3 sm:px-6 py-6 sm:py-8 w-full space-y-4">
+      {/* How TIKORA Works - Compact 3-Column on Mobile */}
+      <section className="max-w-7xl mx-auto px-3 sm:px-6 py-5 sm:py-8 w-full space-y-3 sm:space-y-4">
         <div className="text-center max-w-xl mx-auto space-y-1">
           <span className="text-[10px] font-bold text-[#B45309] dark:text-[#D97706] uppercase tracking-wider">
             Quick 3-Step Checkout
           </span>
-          <h2 className="text-lg sm:text-xl font-black text-[#0F172A] dark:text-white">
-            How TicketHub Works
+          <h2 className="text-base sm:text-xl font-black text-[#0F172A] dark:text-white">
+            How TIKORA Works
           </h2>
-          <p className="text-xs text-[#64748B] dark:text-slate-400">
+          <p className="text-[11px] sm:text-xs text-[#64748B] dark:text-slate-400">
             Reserve your bus coach seat, movie screening, concert pass, or stadium tribune in under a minute.
           </p>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-3.5">
-          <div className="p-4 rounded-2xl bg-white dark:bg-[#161922] border border-[#E2E8F0] dark:border-slate-800 text-center space-y-2">
-            <div className="w-9 h-9 rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-800 dark:text-slate-200 border border-slate-200 dark:border-slate-700 flex items-center justify-center font-black text-sm mx-auto shadow-2xs">
+        <div className="grid grid-cols-3 gap-2 sm:gap-3.5">
+          <div className="p-2 sm:p-4 rounded-xl sm:rounded-2xl bg-white dark:bg-[#161922] border border-[#E2E8F0] dark:border-slate-800 text-center space-y-1 sm:space-y-2">
+            <div className="w-6 h-6 sm:w-9 sm:h-9 rounded-lg sm:rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-800 dark:text-slate-200 border border-slate-200 dark:border-slate-700 flex items-center justify-center font-black text-xs sm:text-sm mx-auto shadow-2xs">
               1
             </div>
-            <h3 className="text-sm font-bold text-[#0F172A] dark:text-white">
+            <h3 className="text-[11px] sm:text-sm font-bold text-[#0F172A] dark:text-white leading-tight">
               Choose Ticket & Time
             </h3>
-            <p className="text-xs text-[#64748B] dark:text-slate-400 leading-relaxed">
-              Explore bus routes, cinema screenings, music concerts, or stadiums with departure stations and prices.
+            <p className="text-[9px] sm:text-xs text-[#64748B] dark:text-slate-400 leading-snug line-clamp-2 sm:line-clamp-none">
+              Explore bus routes, cinema screenings, music concerts, or stadiums.
             </p>
           </div>
 
-          <div className="p-4 rounded-2xl bg-white dark:bg-[#161922] border border-[#E2E8F0] dark:border-slate-800 text-center space-y-2">
-            <div className="w-9 h-9 rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-800 dark:text-slate-200 border border-slate-200 dark:border-slate-700 flex items-center justify-center font-black text-sm mx-auto shadow-2xs">
+          <div className="p-2 sm:p-4 rounded-xl sm:rounded-2xl bg-white dark:bg-[#161922] border border-[#E2E8F0] dark:border-slate-800 text-center space-y-1 sm:space-y-2">
+            <div className="w-6 h-6 sm:w-9 sm:h-9 rounded-lg sm:rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-800 dark:text-slate-200 border border-slate-200 dark:border-slate-700 flex items-center justify-center font-black text-xs sm:text-sm mx-auto shadow-2xs">
               2
             </div>
-            <h3 className="text-sm font-bold text-[#0F172A] dark:text-white">
+            <h3 className="text-[11px] sm:text-sm font-bold text-[#0F172A] dark:text-white leading-tight">
               Select Your Exact Seat
             </h3>
-            <p className="text-xs text-[#64748B] dark:text-slate-400 leading-relaxed">
-              Interactive 2x2 bus seating grid, 4K IMAX theater rows, or festival pass tiers with live pricing.
+            <p className="text-[9px] sm:text-xs text-[#64748B] dark:text-slate-400 leading-snug line-clamp-2 sm:line-clamp-none">
+              Interactive 2x2 bus grid, 4K theater rows, or festival tiers.
             </p>
           </div>
 
-          <div className="p-4 rounded-2xl bg-white dark:bg-[#161922] border border-[#E2E8F0] dark:border-slate-800 text-center space-y-2">
-            <div className="w-9 h-9 rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-800 dark:text-slate-200 border border-slate-200 dark:border-slate-700 flex items-center justify-center font-black text-sm mx-auto shadow-2xs">
+          <div className="p-2 sm:p-4 rounded-xl sm:rounded-2xl bg-white dark:bg-[#161922] border border-[#E2E8F0] dark:border-slate-800 text-center space-y-1 sm:space-y-2">
+            <div className="w-6 h-6 sm:w-9 sm:h-9 rounded-lg sm:rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-800 dark:text-slate-200 border border-slate-200 dark:border-slate-700 flex items-center justify-center font-black text-xs sm:text-sm mx-auto shadow-2xs">
               3
             </div>
-            <h3 className="text-sm font-bold text-[#0F172A] dark:text-white">
-              Instant QR Boarding Pass
+            <h3 className="text-[11px] sm:text-sm font-bold text-[#0F172A] dark:text-white leading-tight">
+              Instant QR Pass
             </h3>
-            <p className="text-xs text-[#64748B] dark:text-slate-400 leading-relaxed">
-              Pay with Telebirr, CBE Birr, or Chapa. Your verified digital QR pass appears immediately in your wallet.
+            <p className="text-[9px] sm:text-xs text-[#64748B] dark:text-slate-400 leading-snug line-clamp-2 sm:line-clamp-none">
+              Pay with Telebirr, CBE Birr, or Chapa for instant digital entry.
             </p>
           </div>
         </div>
       </section>
 
       {/* Special Offer Banner - Modern Dark Executive Card */}
-      <section className="max-w-7xl mx-auto px-3 sm:px-6 pb-6 w-full">
-        <div className="rounded-2xl bg-[#0F172A] dark:bg-[#161922] border border-slate-800 p-5 sm:p-6 text-white flex flex-col md:flex-row items-center justify-between gap-4 shadow-sm">
-          <div className="space-y-1.5 max-w-lg text-center md:text-left">
-            <span className="text-[10px] font-bold uppercase tracking-widest px-2.5 py-0.5 rounded-full bg-white/10 text-slate-200 inline-block border border-white/10">
+      <section className="max-w-7xl mx-auto px-3 sm:px-6 pb-4 sm:pb-6 w-full">
+        <div className="rounded-xl sm:rounded-2xl bg-[#0F172A] dark:bg-[#161922] border border-slate-800 p-3.5 sm:p-6 text-white flex flex-col md:flex-row items-center justify-between gap-3 sm:gap-4 shadow-sm">
+          <div className="space-y-1 sm:space-y-1.5 max-w-lg text-center md:text-left">
+            <span className="text-[9px] sm:text-[10px] font-bold uppercase tracking-widest px-2 py-0.5 rounded-full bg-white/10 text-slate-200 inline-block border border-white/10">
               Seasonal Promotion
             </span>
-            <h3 className="text-lg sm:text-xl font-black">
+            <h3 className="text-sm sm:text-xl font-black">
               Get 15% Off Your Next Bus or Concert Ticket
             </h3>
-            <p className="text-xs text-slate-300 leading-relaxed">
+            <p className="text-[11px] sm:text-xs text-slate-300 leading-relaxed">
               Use promo code <strong className="text-white underline">SAVE15</strong> with Telebirr or CBE Birr at checkout.
             </p>
           </div>
 
           <Link
             href="/search"
-            className="px-4 py-2 rounded-xl bg-[#B45309] hover:bg-[#92400E] text-white text-xs font-bold transition-all shadow-xs active:scale-95 shrink-0"
+            className="px-3.5 py-1.5 sm:px-4 sm:py-2 rounded-xl bg-[#B45309] hover:bg-[#92400E] text-white text-xs font-bold transition-all shadow-xs active:scale-95 shrink-0"
           >
             Claim Offer
           </Link>
@@ -422,29 +423,29 @@ export default function HomePage() {
       </section>
 
       {/* Testimonials - Compact */}
-      <section className="bg-white dark:bg-[#161922] border-t border-[#E2E8F0] dark:border-slate-800 py-6 sm:py-8 px-3 sm:px-6">
-        <div className="max-w-7xl mx-auto space-y-4">
-          <div className="text-center max-w-xl mx-auto space-y-1">
+      <section className="bg-white dark:bg-[#161922] border-t border-[#E2E8F0] dark:border-slate-800 py-5 sm:py-8 px-3 sm:px-6">
+        <div className="max-w-7xl mx-auto space-y-3 sm:space-y-4">
+          <div className="text-center max-w-xl mx-auto space-y-0.5 sm:space-y-1">
             <span className="text-[10px] font-bold text-[#B45309] dark:text-[#D97706] uppercase tracking-wider">
               Reviews & Feedback
             </span>
-            <h2 className="text-lg sm:text-xl font-black text-[#0F172A] dark:text-white">
+            <h2 className="text-base sm:text-xl font-black text-[#0F172A] dark:text-white">
               Trusted by Ticket Buyers Everywhere
             </h2>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-3.5">
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5 sm:gap-3.5">
             {[
               {
                 name: "Dawit Yohannes",
                 role: "Frequent Bus Commuter",
-                quote: "TicketHub saved me hours at Autobus Tera. I picked my window seat on Selam Bus in seconds and boarded with my Telebirr QR pass.",
+                quote: "TIKORA saved me hours at Autobus Tera. I picked my window seat on Selam Bus in seconds and boarded with my Telebirr QR pass.",
                 rating: 5,
               },
               {
                 name: "Tigist Haile",
                 role: "Cinema & Movie Fan",
-                quote: "Booking IMAX couple seats at Century Mall through TicketHub is smooth. No more counter lines and the seat view is accurate.",
+                quote: "Booking IMAX couple seats at Century Mall through TIKORA is smooth. No more counter lines and the seat view is accurate.",
                 rating: 5,
               },
               {
@@ -456,19 +457,19 @@ export default function HomePage() {
             ].map((t, idx) => (
               <div
                 key={idx}
-                className="p-4 rounded-xl bg-[#F8FAFC] dark:bg-[#0C0E14] border border-[#E2E8F0] dark:border-slate-800 space-y-2"
+                className="p-3 sm:p-4 rounded-xl bg-[#F8FAFC] dark:bg-[#0C0E14] border border-[#E2E8F0] dark:border-slate-800 space-y-1.5"
               >
-                <div className="flex items-center gap-1 text-amber-500">
+                <div className="flex items-center gap-0.5 text-amber-500">
                   {Array.from({ length: t.rating }).map((_, i) => (
-                    <Star key={i} className="w-3.5 h-3.5 fill-amber-400" />
+                    <Star key={i} className="w-3 h-3 fill-amber-400" />
                   ))}
                 </div>
-                <p className="text-xs text-[#0F172A] dark:text-slate-300 leading-relaxed italic">
+                <p className="text-[11px] sm:text-xs text-[#0F172A] dark:text-slate-300 leading-snug italic">
                   &ldquo;{t.quote}&rdquo;
                 </p>
-                <div className="pt-2 border-t border-[#E2E8F0] dark:border-slate-800">
-                  <h4 className="text-xs font-bold text-[#0F172A] dark:text-white">{t.name}</h4>
-                  <span className="text-[10px] text-[#64748B] dark:text-slate-400">{t.role}</span>
+                <div className="pt-1.5 border-t border-[#E2E8F0] dark:border-slate-800">
+                  <h4 className="text-[11px] sm:text-xs font-bold text-[#0F172A] dark:text-white">{t.name}</h4>
+                  <span className="text-[9px] sm:text-[10px] text-[#64748B] dark:text-slate-400">{t.role}</span>
                 </div>
               </div>
             ))}

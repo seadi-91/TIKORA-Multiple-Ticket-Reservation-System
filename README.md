@@ -1,4 +1,4 @@
-# 🎟️ TicketHub — Customer Multi-Ticket Reservation Platform
+# 🎟️ TIKORA — Customer Multi-Ticket Reservation Platform
 
 <div align="center">
 
@@ -18,7 +18,7 @@
 
 ## 📌 Project Overview
 
-**TicketHub** is designed as a commercial customer-facing ticket reservation ecosystem covering four distinct leisure and travel sectors across Ethiopia:
+**TIKORA** is designed as a commercial customer-facing ticket reservation ecosystem covering four distinct leisure and travel sectors across Ethiopia:
 
 * 🚌 **Intercity Bus Fleets**: Real-time route discovery, bus operator filters (Selam Bus, Golden Bus, Sky Bus), and **interactive 2×2 luxury coach seat matrix**.
 * 🎬 **Cinema & Movie Theaters**: Now Showing & Coming Soon premieres (Century Mall, Gast Cinema, Edna Mall) with **curved 4K IMAX theater seat selection** (Standard, VIP, Couple loungers).
@@ -26,13 +26,13 @@
 * ⚽ **Stadium Sports & Derbies**: Ethiopian Premier League fixtures (Sheger Derby: St. George vs Coffee SC) with **tribune and gate entry selection**.
 
 > [!NOTE]
-> **Flight tickets are explicitly excluded** by system design. TicketHub focuses purely on Buses, Cinemas, Concerts/Events, and Stadium Sports.
+> **Flight tickets are explicitly excluded** by system design. TIKORA focuses purely on Buses, Cinemas, Concerts/Events, and Stadium Sports.
 
 ---
 
 ## 🎨 Brand Identity & Color Tokens
 
-TicketHub features a refined, subdued **Warm Amber & Bronze** brand color identity (`#B45309`) with disciplined accent placement and dual-theme (Light & Dark) support:
+TIKORA features a refined, subdued **Warm Amber & Bronze** brand color identity (`#B45309`) with disciplined accent placement and dual-theme (Light & Dark) support:
 
 | Token Name | Hex Code | Visual Swatch | Role / Application |
 | :--- | :--- | :---: | :--- |
