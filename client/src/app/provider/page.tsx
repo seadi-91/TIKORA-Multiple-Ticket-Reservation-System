@@ -131,10 +131,10 @@ export default function ProviderOverviewDashboard() {
               <span className="truncate">Verified Merchant: {organization.legalName}</span>
             </div>
 
-            <h1 className="text-xl sm:text-2xl lg:text-3xl font-black tracking-tight text-white leading-tight">
+            <h1 className="text-sm sm:text-base md:text-lg font-bold tracking-tight text-white leading-tight">
               Operations & Revenue Hub
             </h1>
-            <p className="text-xs sm:text-sm text-slate-300 leading-relaxed max-w-lg">
+            <p className="text-xs text-slate-300 leading-relaxed max-w-lg">
               Live seat matrices, scannable passes, turnstile entry logs, and daily bank payouts.
             </p>
           </div>
@@ -169,7 +169,7 @@ export default function ProviderOverviewDashboard() {
               <CreditCard className="w-3.5 h-3.5" />
             </div>
           </div>
-          <div className="text-sm sm:text-lg font-black text-[#0F172A] dark:text-white truncate">
+          <div className="text-xs sm:text-sm font-bold text-[#0F172A] dark:text-white truncate">
             {formatCurrency(organization.stats.totalRevenue)}
           </div>
           <div className="text-[10px] font-semibold text-emerald-600 dark:text-emerald-400 flex items-center gap-1">
@@ -188,7 +188,7 @@ export default function ProviderOverviewDashboard() {
               <ShoppingBag className="w-3.5 h-3.5" />
             </div>
           </div>
-          <div className="text-sm sm:text-lg font-black text-[#0F172A] dark:text-white truncate">
+          <div className="text-xs sm:text-sm font-bold text-[#0F172A] dark:text-white truncate">
             {organization.stats.totalBookings.toLocaleString()}
           </div>
           <span className="text-[10px] text-slate-500 dark:text-slate-400 truncate block">
@@ -206,7 +206,7 @@ export default function ProviderOverviewDashboard() {
               <Ticket className="w-3.5 h-3.5" />
             </div>
           </div>
-          <div className="text-sm sm:text-lg font-black text-[#0F172A] dark:text-white truncate">
+          <div className="text-xs sm:text-sm font-bold text-[#0F172A] dark:text-white truncate">
             {organization.stats.totalTicketsSold.toLocaleString()}
           </div>
           <span className="text-[10px] text-slate-500 dark:text-slate-400 truncate block">
@@ -224,7 +224,7 @@ export default function ProviderOverviewDashboard() {
               <Boxes className="w-3.5 h-3.5" />
             </div>
           </div>
-          <div className="text-sm sm:text-lg font-black text-[#0F172A] dark:text-white truncate">
+          <div className="text-xs sm:text-sm font-bold text-[#0F172A] dark:text-white truncate">
             {organization.stats.availableSeats}
           </div>
           <span className="text-[10px] font-semibold text-amber-600 dark:text-amber-400 truncate block">
@@ -242,7 +242,7 @@ export default function ProviderOverviewDashboard() {
               <Clock className="w-3.5 h-3.5" />
             </div>
           </div>
-          <div className="text-sm sm:text-lg font-black text-[#0F172A] dark:text-white truncate">
+          <div className="text-xs sm:text-sm font-bold text-[#0F172A] dark:text-white truncate">
             {organization.stats.pendingBookings}
           </div>
           <span className="text-[10px] text-slate-500 dark:text-slate-400 truncate block">
@@ -260,7 +260,7 @@ export default function ProviderOverviewDashboard() {
               <CreditCard className="w-3.5 h-3.5" />
             </div>
           </div>
-          <div className="text-sm sm:text-lg font-black text-[#0F172A] dark:text-white truncate">
+          <div className="text-xs sm:text-sm font-bold text-[#0F172A] dark:text-white truncate">
             {formatCurrency(organization.stats.availableBalance)}
           </div>
           <Link
@@ -279,7 +279,7 @@ export default function ProviderOverviewDashboard() {
         <div className="lg:col-span-8 rounded-2xl sm:rounded-3xl bg-white dark:bg-[#161922] border border-slate-200/50 dark:border-slate-800/40 p-4 sm:p-6 shadow-xs space-y-4">
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-100 dark:border-slate-800/60 pb-3">
             <div>
-              <h2 className="text-base sm:text-lg font-bold text-[#0F172A] dark:text-white">
+              <h2 className="text-xs sm:text-sm font-bold text-[#0F172A] dark:text-white">
                 Revenue & Sales Velocity
               </h2>
               <p className="text-xs text-slate-500 dark:text-slate-400">
@@ -316,7 +316,7 @@ export default function ProviderOverviewDashboard() {
         {/* Category Share Donut (4 Cols) */}
         <div className="lg:col-span-4 rounded-2xl sm:rounded-3xl bg-white dark:bg-[#161922] border border-slate-200/50 dark:border-slate-800/40 p-4 sm:p-6 shadow-xs space-y-4">
           <div className="border-b border-slate-100 dark:border-slate-800/60 pb-3">
-            <h2 className="text-base sm:text-lg font-bold text-[#0F172A] dark:text-white">
+            <h2 className="text-xs sm:text-sm font-bold text-[#0F172A] dark:text-white">
               Revenue by Service Sector
             </h2>
             <p className="text-xs text-slate-500 dark:text-slate-400">
@@ -334,7 +334,7 @@ export default function ProviderOverviewDashboard() {
         <div className="lg:col-span-7 rounded-2xl sm:rounded-3xl bg-white dark:bg-[#161922] border border-slate-200/50 dark:border-slate-800/40 p-4 sm:p-6 shadow-xs space-y-4">
           <div className="flex items-center justify-between border-b border-slate-100 dark:border-slate-800/60 pb-3">
             <div>
-              <h3 className="text-base font-bold text-[#0F172A] dark:text-white">
+              <h3 className="text-xs sm:text-sm font-bold text-[#0F172A] dark:text-white">
                 Recent Passenger Bookings
               </h3>
               <p className="text-xs text-slate-500 dark:text-slate-400">Live booking activity feed</p>
@@ -507,7 +507,7 @@ export default function ProviderOverviewDashboard() {
           <div className="rounded-2xl sm:rounded-3xl bg-white dark:bg-[#161922] border border-slate-200/50 dark:border-slate-800/40 p-4 sm:p-6 shadow-xs space-y-4">
             <div className="flex items-center justify-between border-b border-slate-100 dark:border-slate-800/60 pb-3">
               <div>
-                <h3 className="text-base font-bold text-[#0F172A] dark:text-white">
+                <h3 className="text-xs sm:text-sm font-bold text-[#0F172A] dark:text-white">
                   Top Route Volumes
                 </h3>
                 <p className="text-xs text-slate-500 dark:text-slate-400">

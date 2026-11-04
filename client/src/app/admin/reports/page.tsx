@@ -56,7 +56,7 @@ export default function AdminReportsPage() {
       {/* Page Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h2 className="text-xl md:text-2xl font-bold tracking-tight text-foreground">
+          <h2 className="text-base sm:text-lg font-bold tracking-tight text-foreground">
             Platform Analytics & Executive Reports
           </h2>
           <p className="text-xs text-muted-foreground mt-0.5">
@@ -91,34 +91,34 @@ export default function AdminReportsPage() {
 
       {/* KPI Highlights Bar - Multiple Column Display (4 Columns) */}
       <div className="grid grid-cols-2 sm:grid-cols-4 md:grid-cols-4 gap-2.5 sm:gap-4">
-        <div className="p-3 sm:p-5 rounded-2xl sm:rounded-3xl bg-card border border-slate-200/50 dark:border-slate-800/50 shadow-sm">
+        <div className="p-3 sm:p-4 rounded-xl sm:rounded-2xl bg-card border border-slate-200/50 dark:border-slate-800/50 shadow-xs">
           <p className="text-[10px] sm:text-[11px] font-semibold text-muted-foreground uppercase tracking-wider truncate">Period Gross GMV</p>
-          <p className="text-base sm:text-2xl font-bold text-foreground mt-0.5 sm:mt-1 truncate">4,850,200 ETB</p>
-          <div className="flex items-center gap-1 text-[10px] sm:text-[11px] text-emerald-600 font-medium mt-0.5 sm:mt-1">
-            <ArrowUpRight className="w-3 h-3 sm:w-3.5 sm:h-3.5" />
+          <p className="text-sm sm:text-base lg:text-lg font-bold text-foreground mt-0.5 truncate">4,850,200 ETB</p>
+          <div className="flex items-center gap-1 text-[10px] text-emerald-600 font-medium mt-0.5">
+            <ArrowUpRight className="w-3 h-3" />
             <span>+14.2%</span>
           </div>
         </div>
 
-        <div className="p-3 sm:p-5 rounded-2xl sm:rounded-3xl bg-card border border-slate-200/50 dark:border-slate-800/50 shadow-sm">
+        <div className="p-3 sm:p-4 rounded-xl sm:rounded-2xl bg-card border border-slate-200/50 dark:border-slate-800/50 shadow-xs">
           <p className="text-[10px] sm:text-[11px] font-semibold text-muted-foreground uppercase tracking-wider truncate">Commission Earned</p>
-          <p className="text-base sm:text-2xl font-bold text-emerald-600 dark:text-emerald-400 mt-0.5 sm:mt-1 truncate">242,510 ETB</p>
-          <div className="flex items-center gap-1 text-[10px] sm:text-[11px] text-emerald-600 font-medium mt-0.5 sm:mt-1">
-            <ArrowUpRight className="w-3 h-3 sm:w-3.5 sm:h-3.5" />
+          <p className="text-sm sm:text-base lg:text-lg font-bold text-emerald-600 dark:text-emerald-400 mt-0.5 truncate">242,510 ETB</p>
+          <div className="flex items-center gap-1 text-[10px] text-emerald-600 font-medium mt-0.5">
+            <ArrowUpRight className="w-3 h-3" />
             <span>+11.8%</span>
           </div>
         </div>
 
-        <div className="p-3 sm:p-5 rounded-2xl sm:rounded-3xl bg-card border border-slate-200/50 dark:border-slate-800/50 shadow-sm">
+        <div className="p-3 sm:p-4 rounded-xl sm:rounded-2xl bg-card border border-slate-200/50 dark:border-slate-800/50 shadow-xs">
           <p className="text-[10px] sm:text-[11px] font-semibold text-muted-foreground uppercase tracking-wider truncate">Tickets Verified</p>
-          <p className="text-base sm:text-2xl font-bold text-foreground mt-0.5 sm:mt-1 truncate">17,890</p>
-          <p className="text-[10px] sm:text-[11px] text-muted-foreground mt-0.5 sm:mt-1 truncate">97.1% redemption</p>
+          <p className="text-sm sm:text-base lg:text-lg font-bold text-foreground mt-0.5 truncate">17,890</p>
+          <p className="text-[10px] text-muted-foreground mt-0.5 truncate">97.1% redemption</p>
         </div>
 
-        <div className="p-3 sm:p-5 rounded-2xl sm:rounded-3xl bg-card border border-slate-200/50 dark:border-slate-800/50 shadow-sm">
+        <div className="p-3 sm:p-4 rounded-xl sm:rounded-2xl bg-card border border-slate-200/50 dark:border-slate-800/50 shadow-xs">
           <p className="text-[10px] sm:text-[11px] font-semibold text-muted-foreground uppercase tracking-wider truncate">Dispute Rate</p>
-          <p className="text-base sm:text-2xl font-bold text-foreground mt-0.5 sm:mt-1 truncate">0.04%</p>
-          <p className="text-[10px] sm:text-[11px] text-emerald-600 font-medium mt-0.5 sm:mt-1 truncate">Low risk status</p>
+          <p className="text-sm sm:text-base lg:text-lg font-bold text-foreground mt-0.5 truncate">0.04%</p>
+          <p className="text-[10px] text-emerald-600 font-medium mt-0.5 truncate">Low risk status</p>
         </div>
       </div>
 
@@ -156,17 +156,71 @@ export default function AdminReportsPage() {
           <p className="text-xs text-muted-foreground">Ranked by gross sales volume and verified punctuality</p>
         </div>
 
-        <div className="overflow-x-auto -mx-6 -mb-6">
-          <table className="w-full text-xs text-left">
+        {/* Mobile View: Top Provider Cards */}
+        <div className="block sm:hidden space-y-3">
+          {organizations
+            .filter((o) => o.status === "APPROVED")
+            .map((org, idx) => (
+              <div
+                key={org.id}
+                className="p-3.5 rounded-2xl bg-muted/20 border border-slate-200/50 dark:border-slate-800/50 space-y-3"
+              >
+                <div className="flex items-center justify-between gap-2">
+                  <div className="flex items-center gap-2.5 min-w-0">
+                    <span className="w-6 h-6 rounded-lg bg-amber-500/10 text-amber-600 dark:text-amber-400 font-black text-xs flex items-center justify-center font-mono shrink-0">
+                      #{idx + 1}
+                    </span>
+                    <div className="min-w-0">
+                      <Link
+                        href={`/admin/providers/${org.id}`}
+                        className="font-bold text-xs text-foreground hover:text-amber-600 dark:hover:text-amber-400 truncate block"
+                      >
+                        {org.name}
+                      </Link>
+                      <p className="text-[10px] text-muted-foreground truncate">{org.city} • {org.category}</p>
+                    </div>
+                  </div>
+                  <span className="font-bold text-amber-600 dark:text-amber-400 text-xs shrink-0">
+                    ★ {org.rating}
+                  </span>
+                </div>
+
+                <div className="grid grid-cols-3 gap-2 p-2 rounded-xl bg-card border border-slate-200/40 dark:border-slate-800/40 text-center">
+                  <div>
+                    <span className="text-[9px] uppercase font-bold text-muted-foreground block">Gross Sales</span>
+                    <span className="text-xs font-black text-foreground font-mono mt-0.5 block truncate">
+                      {org.totalRevenue >= 1000 ? `${(org.totalRevenue / 1000).toFixed(0)}k` : org.totalRevenue} ETB
+                    </span>
+                  </div>
+                  <div className="border-x border-slate-200/40 dark:border-slate-800/40">
+                    <span className="text-[9px] uppercase font-bold text-muted-foreground block">Commission</span>
+                    <span className="text-xs font-black text-emerald-600 dark:text-emerald-400 font-mono mt-0.5 block">
+                      {org.commissionRate}%
+                    </span>
+                  </div>
+                  <div>
+                    <span className="text-[9px] uppercase font-bold text-muted-foreground block">Bookings</span>
+                    <span className="text-xs font-extrabold text-foreground mt-0.5 block">
+                      {org.totalBookings.toLocaleString()}
+                    </span>
+                  </div>
+                </div>
+              </div>
+            ))}
+        </div>
+
+        {/* Desktop View: Table */}
+        <div className="hidden sm:block overflow-x-auto -mx-6 -mb-6">
+          <table className="w-full text-xs text-left min-w-[950px]">
             <thead className="bg-slate-50/60 dark:bg-slate-800/40 text-muted-foreground uppercase text-[10px] font-bold tracking-wider">
               <tr>
-                <th className="px-6 py-3.5">Rank & Provider</th>
-                <th className="px-4 py-3.5">Category</th>
-                <th className="px-4 py-3.5">Active Routes/Events</th>
-                <th className="px-4 py-3.5">Bookings</th>
-                <th className="px-4 py-3.5">Gross Sales</th>
-                <th className="px-4 py-3.5">Platform Commission</th>
-                <th className="px-6 py-3.5 text-right">Rating</th>
+                <th className="px-6 py-3.5 whitespace-nowrap min-w-[200px]">Rank & Provider</th>
+                <th className="px-4 py-3.5 whitespace-nowrap min-w-[100px]">Category</th>
+                <th className="px-4 py-3.5 whitespace-nowrap min-w-[130px]">Active Routes/Events</th>
+                <th className="px-4 py-3.5 whitespace-nowrap min-w-[110px]">Bookings</th>
+                <th className="px-4 py-3.5 whitespace-nowrap min-w-[120px]">Gross Sales</th>
+                <th className="px-4 py-3.5 whitespace-nowrap min-w-[140px]">Platform Commission</th>
+                <th className="px-6 py-3.5 whitespace-nowrap text-right min-w-[80px]">Rating</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100 dark:divide-slate-800/40">

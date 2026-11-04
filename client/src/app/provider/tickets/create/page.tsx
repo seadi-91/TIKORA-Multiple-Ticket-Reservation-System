@@ -134,7 +134,7 @@ export default function CreateTicketPage() {
             <ArrowLeft className="w-4 h-4" />
           </Link>
           <div>
-            <h1 className="text-xl font-bold tracking-tight text-foreground">
+            <h1 className="text-base sm:text-lg font-bold tracking-tight text-foreground">
               Publish New Ticket Listing
             </h1>
             <p className="text-xs text-muted-foreground">

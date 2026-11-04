@@ -113,7 +113,7 @@ export default function ProviderSettingsPage() {
       {/* Top Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 border-b border-border/60 pb-5">
         <div>
-          <h1 className="text-xl font-bold tracking-tight text-foreground">
+          <h1 className="text-base sm:text-lg font-bold tracking-tight text-foreground">
             Provider Account Settings
           </h1>
           <p className="text-xs text-muted-foreground">

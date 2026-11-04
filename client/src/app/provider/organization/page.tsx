@@ -93,7 +93,7 @@ export default function ProviderOrganizationPage() {
             <span>/</span>
             <span className="font-semibold text-[#0F172A] dark:text-white">Organization Profile</span>
           </div>
-          <h1 className="text-xl sm:text-2xl font-black text-[#0F172A] dark:text-white tracking-tight">
+          <h1 className="text-base sm:text-lg font-bold text-[#0F172A] dark:text-white tracking-tight">
             Organization Identity & Verification
           </h1>
           <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
@@ -131,12 +131,12 @@ export default function ProviderOrganizationPage() {
         {/* Left 4 Cols: Organization Badge & Status Card */}
         <div className="lg:col-span-4 space-y-5 sm:space-y-6">
           <div className="rounded-2xl sm:rounded-3xl bg-white dark:bg-[#161922] border border-slate-200/50 dark:border-slate-800/40 p-5 sm:p-6 shadow-xs text-center space-y-4">
-            <div className="w-20 h-20 mx-auto rounded-3xl bg-gradient-to-tr from-[#B45309] to-[#D97706] text-white flex items-center justify-center font-black text-2xl shadow-md">
+            <div className="w-16 h-16 mx-auto rounded-2xl bg-gradient-to-tr from-[#B45309] to-[#D97706] text-white flex items-center justify-center font-bold text-base shadow-md">
               {organization.name.substring(0, 2).toUpperCase()}
             </div>
 
             <div>
-              <h2 className="text-lg font-black text-[#0F172A] dark:text-white">
+              <h2 className="text-base sm:text-lg font-bold text-[#0F172A] dark:text-white">
                 {organization.name}
               </h2>
               <span className="text-xs text-slate-400 block mt-0.5">{organization.legalName}</span>

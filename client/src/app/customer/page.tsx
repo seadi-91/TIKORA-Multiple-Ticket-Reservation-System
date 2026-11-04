@@ -80,7 +80,7 @@ export default function CustomerDashboardOverview() {
                   <span className="text-[10px] sm:text-[11px] font-bold uppercase tracking-wider text-[#64748B] dark:text-slate-400 block truncate">
                     {s.label}
                   </span>
-                  <span className="text-sm sm:text-2xl font-black text-[#0F172A] dark:text-white mt-0.5 block truncate">
+                  <span className="text-sm sm:text-base lg:text-lg font-bold text-[#0F172A] dark:text-white mt-0.5 block truncate">
                     {s.value}
                   </span>
                 </div>
@@ -109,7 +109,7 @@ export default function CustomerDashboardOverview() {
                 <span className="text-xs font-semibold uppercase tracking-wide text-slate-400">
                   {nextUpcomingBooking.category} • {nextUpcomingBooking.ticket.organizer}
                 </span>
-                <h3 className="text-xl sm:text-2xl font-black leading-snug text-white">
+                <h3 className="text-base sm:text-lg font-bold leading-snug text-white">
                   {nextUpcomingBooking.ticket.title}
                 </h3>
 

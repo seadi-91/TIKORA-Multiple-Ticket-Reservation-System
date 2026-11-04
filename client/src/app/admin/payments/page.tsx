@@ -58,7 +58,7 @@ export default function AdminPaymentsPage() {
       {/* Page Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h2 className="text-xl md:text-2xl font-bold tracking-tight text-foreground">
+          <h2 className="text-base sm:text-lg font-bold tracking-tight text-foreground">
             Financial Oversight & Provider Disbursements
           </h2>
           <p className="text-xs text-muted-foreground mt-0.5">
@@ -77,67 +77,83 @@ export default function AdminPaymentsPage() {
 
       {/* Financial KPI Cards - Multiple Column Display (4 Columns) */}
       <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-4 gap-2.5 sm:gap-4">
-        <div className="p-3 sm:p-5 rounded-2xl sm:rounded-3xl bg-card border border-slate-200/50 dark:border-slate-800/50 shadow-sm">
+        <div className="p-3 sm:p-4 rounded-xl sm:rounded-2xl bg-card border border-slate-200/50 dark:border-slate-800/50 shadow-xs">
           <div className="flex items-center justify-between text-muted-foreground mb-1.5 sm:mb-2">
             <span className="text-[10px] sm:text-[11px] font-semibold uppercase tracking-wider truncate">Gross GMV</span>
-            <div className="p-1.5 sm:p-2.5 rounded-xl sm:rounded-2xl bg-amber-500/10 text-amber-600 dark:text-amber-400 shrink-0">
-              <DollarSign className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
+            <div className="p-1.5 sm:p-2 rounded-lg sm:rounded-xl bg-amber-500/10 text-amber-600 dark:text-amber-400 shrink-0">
+              <DollarSign className="w-3.5 h-3.5" />
             </div>
           </div>
-          <p className="text-base sm:text-2xl font-bold text-foreground truncate">
+          <p className="text-sm sm:text-base lg:text-lg font-bold text-foreground truncate">
             {stats.totalGMV.toLocaleString()} <span className="text-[10px] sm:text-xs text-muted-foreground font-normal">ETB</span>
           </p>
-          <p className="text-[10px] sm:text-[11px] text-muted-foreground mt-0.5 sm:mt-1 truncate">Platform gross sales</p>
+          <p className="text-[10px] text-muted-foreground mt-0.5 truncate">Platform gross sales</p>
         </div>
 
-        <div className="p-3 sm:p-5 rounded-2xl sm:rounded-3xl bg-card border border-slate-200/50 dark:border-slate-800/50 shadow-sm">
+        <div className="p-3 sm:p-4 rounded-xl sm:rounded-2xl bg-card border border-slate-200/50 dark:border-slate-800/50 shadow-xs">
           <div className="flex items-center justify-between text-muted-foreground mb-1.5 sm:mb-2">
             <span className="text-[10px] sm:text-[11px] font-semibold uppercase tracking-wider truncate">Net Revenue</span>
-            <div className="p-1.5 sm:p-2.5 rounded-xl sm:rounded-2xl bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 shrink-0">
-              <Percent className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
+            <div className="p-1.5 sm:p-2 rounded-lg sm:rounded-xl bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 shrink-0">
+              <Percent className="w-3.5 h-3.5" />
             </div>
           </div>
-          <p className="text-base sm:text-2xl font-bold text-foreground truncate">
+          <p className="text-sm sm:text-base lg:text-lg font-bold text-foreground truncate">
             {stats.platformRevenue.toLocaleString()} <span className="text-[10px] sm:text-xs text-muted-foreground font-normal">ETB</span>
           </p>
-          <p className="text-[10px] sm:text-[11px] text-emerald-600 dark:text-emerald-400 font-medium mt-0.5 sm:mt-1 truncate">
+          <p className="text-[10px] text-emerald-600 dark:text-emerald-400 font-medium mt-0.5 truncate">
             ~5.0% commission
           </p>
         </div>
 
-        <div className="p-3 sm:p-5 rounded-2xl sm:rounded-3xl bg-card border border-slate-200/50 dark:border-slate-800/50 shadow-sm">
+        <div className="p-3 sm:p-4 rounded-xl sm:rounded-2xl bg-card border border-slate-200/50 dark:border-slate-800/50 shadow-xs">
           <div className="flex items-center justify-between text-muted-foreground mb-1.5 sm:mb-2">
             <span className="text-[10px] sm:text-[11px] font-semibold uppercase tracking-wider truncate">Pending Payouts</span>
-            <div className="p-1.5 sm:p-2.5 rounded-xl sm:rounded-2xl bg-rose-500/10 text-rose-600 dark:text-rose-400 shrink-0">
-              <Clock className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
+            <div className="p-1.5 sm:p-2 rounded-lg sm:rounded-xl bg-rose-500/10 text-rose-600 dark:text-rose-400 shrink-0">
+              <Clock className="w-3.5 h-3.5" />
             </div>
           </div>
-          <p className="text-base sm:text-2xl font-bold text-foreground truncate">
+          <p className="text-sm sm:text-base lg:text-lg font-bold text-foreground truncate">
             {totalPendingAmount.toLocaleString()} <span className="text-[10px] sm:text-xs text-muted-foreground font-normal">ETB</span>
           </p>
-          <p className="text-[10px] sm:text-[11px] text-rose-600 dark:text-rose-400 font-medium mt-0.5 sm:mt-1 truncate">
+          <p className="text-[10px] text-rose-600 dark:text-rose-400 font-medium mt-0.5 truncate">
             {pendingPayouts.length} pending
           </p>
         </div>
 
-        <div className="p-5 rounded-3xl bg-card border border-slate-200/50 dark:border-slate-800/50 shadow-sm">
-          <div className="flex items-center justify-between text-muted-foreground mb-2">
-            <span className="text-[11px] font-semibold uppercase tracking-wider">Settled to Providers</span>
-            <div className="p-2.5 rounded-2xl bg-blue-500/10 text-blue-600 dark:text-blue-400">
-              <CreditCard className="w-4 h-4" />
+        <div className="p-3 sm:p-4 rounded-xl sm:rounded-2xl bg-card border border-slate-200/50 dark:border-slate-800/50 shadow-xs">
+          <div className="flex items-center justify-between text-muted-foreground mb-1.5 sm:mb-2">
+            <span className="text-[10px] sm:text-[11px] font-semibold uppercase tracking-wider truncate">Settled to Providers</span>
+            <div className="p-1.5 sm:p-2 rounded-lg sm:rounded-xl bg-blue-500/10 text-blue-600 dark:text-blue-400 shrink-0">
+              <CreditCard className="w-3.5 h-3.5" />
             </div>
           </div>
-          <p className="text-2xl font-bold text-foreground">
+          <p className="text-sm sm:text-base lg:text-lg font-bold text-foreground truncate">
             {(stats.totalGMV - stats.platformRevenue - totalPendingAmount).toLocaleString()}{" "}
-            <span className="text-xs text-muted-foreground font-normal">ETB</span>
+            <span className="text-[10px] sm:text-xs text-muted-foreground font-normal">ETB</span>
           </p>
-          <p className="text-[11px] text-muted-foreground mt-1">Disbursed via CBE & Telebirr</p>
+          <p className="text-[10px] text-muted-foreground mt-0.5 truncate">Disbursed via CBE & Telebirr</p>
         </div>
       </div>
 
       {/* Tabs: Pending Queue vs Processed History (Mobile-First Responsive) */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-200/50 dark:border-slate-800/50 pb-3">
-        <div className="flex items-center gap-2 overflow-x-auto no-scrollbar pb-1 sm:pb-0">
+        {/* Mobile View: Dropdown Switcher */}
+        <div className="block sm:hidden w-full">
+          <label className="text-[11px] font-bold text-muted-foreground uppercase tracking-wider block mb-1.5">
+            Settlement View
+          </label>
+          <select
+            value={activeTab}
+            onChange={(e) => setActiveTab(e.target.value as "PENDING" | "HISTORY")}
+            className="w-full h-10 px-3 text-xs rounded-xl bg-card border border-slate-200/60 dark:border-slate-800/60 text-foreground font-semibold focus:outline-none focus:ring-2 focus:ring-amber-500/30 shadow-xs"
+          >
+            <option value="PENDING">Pending Payouts Queue ({pendingPayouts.length})</option>
+            <option value="HISTORY">Settlement History ({processedPayouts.length})</option>
+          </select>
+        </div>
+
+        {/* Desktop View: Tabs */}
+        <div className="hidden sm:flex items-center gap-2 overflow-x-auto no-scrollbar pb-1 sm:pb-0">
           <button
             onClick={() => setActiveTab("PENDING")}
             className={`px-3.5 py-1.5 text-xs font-semibold rounded-xl transition-all shrink-0 flex items-center gap-2 ${
@@ -188,30 +204,184 @@ export default function AdminPaymentsPage() {
         </div>
       </div>
 
-      {/* Payouts Table (Elevated, Soft Borders, Modern SaaS Rows) */}
-      <div className="rounded-3xl bg-card border border-slate-200/50 dark:border-slate-800/50 shadow-sm overflow-hidden">
+      {/* Mobile View: High-Clarity Elevated Cards */}
+      <div className="block sm:hidden space-y-3.5">
+        {filteredPayouts.length === 0 ? (
+          <div className="p-8 text-center text-muted-foreground text-xs rounded-2xl bg-card border border-slate-200/60 dark:border-slate-800/60 shadow-xs">
+            No payouts found matching your filter criteria.
+          </div>
+        ) : (
+          filteredPayouts.map((pay) => (
+            <div
+              key={pay.id}
+              className="rounded-2xl bg-card border border-slate-200/70 dark:border-slate-800/70 shadow-xs hover:border-amber-500/30 transition-all p-4 space-y-3.5"
+            >
+              {/* Card Header: Reference, Provider Name & Status */}
+              <div className="flex items-start justify-between gap-2.5">
+                <div className="flex items-start gap-3 min-w-0 flex-1">
+                  <div className="w-10 h-10 rounded-xl bg-gradient-to-tr from-amber-500/15 to-amber-500/5 text-amber-600 dark:text-amber-400 flex items-center justify-center shrink-0 font-extrabold text-sm shadow-xs border border-amber-500/20 mt-0.5">
+                    <CreditCard className="w-5 h-5 text-amber-500" />
+                  </div>
+                  <div className="min-w-0 flex-1">
+                    <div className="flex items-center gap-2">
+                      <span className="font-mono font-bold text-sm text-amber-600 dark:text-amber-400">
+                        {pay.reference}
+                      </span>
+                    </div>
+                    <Link
+                      href={`/admin/providers/${pay.providerId}`}
+                      className="font-bold text-foreground hover:text-amber-600 dark:hover:text-amber-400 transition-colors truncate block text-xs mt-0.5"
+                    >
+                      {pay.providerName}
+                    </Link>
+                    <p className="text-[10px] text-muted-foreground font-mono mt-0.5">
+                      Requested: {pay.requestedAt}
+                    </p>
+                  </div>
+                </div>
+
+                <div className="flex items-center gap-1.5 shrink-0">
+                  {pay.status === "PENDING" ? (
+                    <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-500/10 text-amber-600 dark:text-amber-400 ring-1 ring-inset ring-amber-500/20">
+                      <Clock className="w-3 h-3" /> Pending
+                    </span>
+                  ) : pay.status === "PROCESSED" ? (
+                    <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 ring-1 ring-inset ring-emerald-500/20">
+                      <CheckCircle2 className="w-3 h-3" /> Disbursed
+                    </span>
+                  ) : (
+                    <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-rose-500/10 text-rose-600 dark:text-rose-400 ring-1 ring-inset ring-rose-500/20">
+                      <XCircle className="w-3 h-3" /> Declined
+                    </span>
+                  )}
+
+                  <ActionDropdown
+                    items={[
+                      ...(pay.status === "PENDING"
+                        ? [
+                            {
+                              label: "Disburse Settlement",
+                              icon: <Check className="w-4 h-4" />,
+                              variant: "success" as const,
+                              onClick: () => handleApprove(pay.id),
+                            },
+                            {
+                              label: "Decline Payout",
+                              icon: <X className="w-4 h-4" />,
+                              variant: "danger" as const,
+                              onClick: () => handleReject(pay.id),
+                            },
+                          ]
+                        : []),
+                      {
+                        label: "View Operator Organization",
+                        icon: <Building2 className="w-4 h-4" />,
+                        href: `/admin/providers/${pay.providerId}`,
+                      },
+                      {
+                        label: "Audited Ledger Documents",
+                        icon: <FileText className="w-4 h-4" />,
+                        href: `/admin/reports`,
+                      },
+                    ]}
+                  />
+                </div>
+              </div>
+
+              {/* Gateway & Account Strip */}
+              <div className="p-2.5 rounded-xl bg-slate-50 dark:bg-slate-800/40 border border-slate-200/40 dark:border-slate-800/50 space-y-1 text-xs">
+                <div className="flex items-center justify-between">
+                  <span className="text-[10px] uppercase font-bold text-muted-foreground tracking-wider">
+                    Bank / Settlement Account
+                  </span>
+                  <span className="inline-flex items-center gap-1 font-semibold text-[11px] text-foreground bg-muted/60 px-2 py-0.5 rounded">
+                    {pay.payoutMethod.replace(/_/g, " ")}
+                  </span>
+                </div>
+                <div className="flex items-center justify-between text-[11px] pt-1">
+                  <span className="font-mono text-muted-foreground">{pay.accountNumber}</span>
+                  <span className="font-medium text-foreground truncate max-w-[170px]">{pay.accountName}</span>
+                </div>
+              </div>
+
+              {/* 3-Column Financial Grid */}
+              <div className="grid grid-cols-3 gap-2 p-2.5 rounded-xl bg-amber-500/[0.04] dark:bg-amber-500/[0.07] border border-amber-500/15 text-center">
+                <div>
+                  <span className="text-[9px] uppercase font-bold text-muted-foreground tracking-wider block">
+                    Gross Sales
+                  </span>
+                  <span className="text-xs font-black text-foreground font-mono mt-0.5 block truncate">
+                    {pay.amount.toLocaleString()} <span className="text-[9px] text-muted-foreground font-normal">ETB</span>
+                  </span>
+                </div>
+                <div className="border-x border-amber-500/15">
+                  <span className="text-[9px] uppercase font-bold text-muted-foreground tracking-wider block">
+                    Fee Retained
+                  </span>
+                  <span className="text-xs font-black text-emerald-600 dark:text-emerald-400 font-mono mt-0.5 block truncate">
+                    -{pay.fee.toLocaleString()} <span className="text-[9px] font-normal">ETB</span>
+                  </span>
+                </div>
+                <div>
+                  <span className="text-[9px] uppercase font-bold text-muted-foreground tracking-wider block">
+                    Net Payout
+                  </span>
+                  <span className="text-xs font-black text-amber-600 dark:text-amber-400 font-mono mt-0.5 block truncate">
+                    {pay.netAmount.toLocaleString()} <span className="text-[9px] font-normal">ETB</span>
+                  </span>
+                </div>
+              </div>
+
+              {/* Quick Action Buttons for Pending Payouts */}
+              {pay.status === "PENDING" && (
+                <div className="flex items-center gap-2 pt-0.5">
+                  <button
+                    type="button"
+                    onClick={() => handleApprove(pay.id)}
+                    className="flex-1 py-2 px-3 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs flex items-center justify-center gap-1.5 transition-colors shadow-xs cursor-pointer"
+                  >
+                    <Check className="w-3.5 h-3.5" />
+                    <span>Disburse Settlement</span>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => handleReject(pay.id)}
+                    className="py-2 px-3 rounded-xl bg-rose-50 hover:bg-rose-100 dark:bg-rose-950/30 dark:hover:bg-rose-900/40 text-rose-600 dark:text-rose-400 font-bold text-xs flex items-center justify-center gap-1 transition-colors border border-rose-200/60 dark:border-rose-900/50 cursor-pointer"
+                  >
+                    <X className="w-3.5 h-3.5" />
+                    <span>Decline</span>
+                  </button>
+                </div>
+              )}
+            </div>
+          ))
+        )}
+      </div>
+
+      {/* Desktop View: Payouts Table with Spacious Columns & Horizontal Scroll */}
+      <div className="hidden sm:block rounded-3xl bg-card border border-slate-200/50 dark:border-slate-800/50 shadow-sm overflow-hidden">
         <div className="overflow-x-auto">
-          <table className="w-full text-xs text-left">
+          <table className="w-full text-xs text-left min-w-[1020px]">
             <thead className="bg-slate-50/60 dark:bg-slate-800/40 text-muted-foreground uppercase text-[10px] font-bold tracking-wider">
               <tr>
-                <th className="px-5 py-3.5">Reference</th>
-                <th className="px-4 py-3.5">Provider Organization</th>
-                <th className="px-4 py-3.5">Gross / Fee</th>
-                <th className="px-4 py-3.5">Net Disbursement</th>
-                <th className="px-4 py-3.5">Payout Gateway & Account</th>
-                <th className="px-4 py-3.5">Date Requested</th>
-                <th className="px-4 py-3.5">Status</th>
-                <th className="px-5 py-3.5 text-right w-14">Actions</th>
+                <th className="px-5 py-3.5 whitespace-nowrap min-w-[140px]">Reference</th>
+                <th className="px-4 py-3.5 whitespace-nowrap min-w-[180px]">Provider Organization</th>
+                <th className="px-4 py-3.5 whitespace-nowrap min-w-[130px]">Gross / Fee</th>
+                <th className="px-4 py-3.5 whitespace-nowrap min-w-[140px]">Net Disbursement</th>
+                <th className="px-4 py-3.5 whitespace-nowrap min-w-[190px]">Payout Gateway & Account</th>
+                <th className="px-4 py-3.5 whitespace-nowrap min-w-[110px]">Date Requested</th>
+                <th className="px-4 py-3.5 whitespace-nowrap min-w-[100px]">Status</th>
+                <th className="px-4 py-3.5 text-right w-12 shrink-0">Actions</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100 dark:divide-slate-800/40">
               {filteredPayouts.map((pay) => (
                 <tr key={pay.id} className="hover:bg-amber-500/[0.03] dark:hover:bg-amber-500/[0.06] transition-colors">
-                  <td className="px-5 py-3.5 font-mono font-bold text-amber-600 dark:text-amber-400">
+                  <td className="px-5 py-3.5 font-mono font-bold text-amber-600 dark:text-amber-400 whitespace-nowrap">
                     {pay.reference}
                   </td>
-                  <td className="px-4 py-3.5 font-semibold text-foreground">{pay.providerName}</td>
-                  <td className="px-4 py-3.5">
+                  <td className="px-4 py-3.5 font-semibold text-foreground whitespace-nowrap">{pay.providerName}</td>
+                  <td className="px-4 py-3.5 whitespace-nowrap">
                     <div>
                       <p className="text-foreground">{pay.amount.toLocaleString()} ETB</p>
                       <p className="text-[10px] text-muted-foreground font-mono">
@@ -219,11 +389,11 @@ export default function AdminPaymentsPage() {
                       </p>
                     </div>
                   </td>
-                  <td className="px-4 py-3.5 font-bold text-foreground text-sm">
+                  <td className="px-4 py-3.5 font-bold text-foreground text-sm whitespace-nowrap">
                     {pay.netAmount.toLocaleString()}{" "}
                     <span className="text-[10px] text-muted-foreground font-normal">ETB</span>
                   </td>
-                  <td className="px-4 py-3.5">
+                  <td className="px-4 py-3.5 whitespace-nowrap">
                     <div>
                       <p className="font-semibold text-foreground flex items-center gap-1">
                         <CreditCard className="w-3.5 h-3.5 text-amber-600" />

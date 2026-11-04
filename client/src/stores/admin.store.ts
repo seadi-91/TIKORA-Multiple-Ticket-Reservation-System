@@ -61,6 +61,44 @@ export interface AdminUser {
   createdAt: string;
   lastLogin: string;
   totalBookings?: number;
+  nationalId?: string;
+  city?: string;
+  address?: string;
+  totalSpentETB?: number;
+  loyaltyPoints?: number;
+  addedBy?: {
+    name: string;
+    email: string;
+    role: string;
+  };
+}
+
+export interface AdminInspector {
+  id: string;
+  badgeId: string;
+  name: string;
+  email: string;
+  phone: string;
+  nationalId: string;
+  avatar?: string;
+  organizationId: string;
+  organizationName: string;
+  organizationCategory: "BUS" | "CINEMA" | "EVENT" | "SPORTS";
+  assignedStation: string;
+  addedBy: {
+    name: string;
+    email: string;
+    role: string;
+  };
+  createdAt: string;
+  lastActive: string;
+  status: "ACTIVE" | "SUSPENDED" | "INACTIVE";
+  totalScans: number;
+  validScans: number;
+  flaggedScans: number;
+  deviceModel: string;
+  appVersion: string;
+  shiftSchedule: string;
 }
 
 export interface AdminService {
@@ -252,6 +290,7 @@ interface AdminState {
   stats: PlatformStats;
   organizations: AdminOrganization[];
   users: AdminUser[];
+  inspectors: AdminInspector[];
   services: AdminService[];
   categories: AdminCategory[];
   bookings: AdminBooking[];
@@ -271,6 +310,22 @@ interface AdminState {
 
   toggleUserStatus: (id: string) => void;
   createAdminUser: (data: { name: string; email: string; phone: string; role: "ADMIN" | "INSPECTOR" }) => void;
+
+  toggleInspectorStatus: (id: string) => void;
+  updateInspectorAssignment: (id: string, station: string) => void;
+  createInspector: (data: {
+    badgeId: string;
+    name: string;
+    email: string;
+    phone: string;
+    nationalId: string;
+    organizationId: string;
+    organizationName: string;
+    organizationCategory: "BUS" | "CINEMA" | "EVENT" | "SPORTS";
+    assignedStation: string;
+    deviceModel: string;
+    shiftSchedule: string;
+  }) => void;
 
   toggleServiceStatus: (id: string) => void;
   updateCategoryCommission: (categoryId: string, rate: number) => void;
@@ -567,6 +622,16 @@ export const useAdminStore = create<AdminState>((set, get) => ({
       phone: "+251 911 123 456",
       role: "CUSTOMER",
       status: "ACTIVE",
+      nationalId: "ET-FAN-1029384",
+      city: "Addis Ababa",
+      address: "Bole Sub-City, Woreda 03, House 412",
+      totalSpentETB: 18450,
+      loyaltyPoints: 340,
+      addedBy: {
+        name: "Telebirr SSO Auth",
+        email: "system@telebirr.et",
+        role: "Automated OAuth Gateway",
+      },
       createdAt: "2025-06-14",
       lastLogin: "2026-11-02 18:32",
       totalBookings: 14,
@@ -578,7 +643,17 @@ export const useAdminStore = create<AdminState>((set, get) => ({
       phone: "+251 911 234 567",
       role: "ORGANIZATION",
       status: "ACTIVE",
+      nationalId: "ET-FAN-9938102",
+      city: "Addis Ababa",
+      address: "Meskel Square, Selam Bus HQ Office 401",
+      totalSpentETB: 0,
+      loyaltyPoints: 0,
       organizationName: "Selam Bus Line SC",
+      addedBy: {
+        name: "Peter SuperAdmin",
+        email: "admin@tikora.et",
+        role: "Super Administrator",
+      },
       createdAt: "2025-08-12",
       lastLogin: "2026-11-02 20:15",
       totalBookings: 8450,
@@ -590,7 +665,17 @@ export const useAdminStore = create<AdminState>((set, get) => ({
       phone: "+251 912 998 877",
       role: "INSPECTOR",
       status: "ACTIVE",
+      nationalId: "ET-FAN-9842103",
+      city: "Addis Ababa",
+      address: "Autobus Tera Staff Quarters, Addis Ababa",
+      totalSpentETB: 0,
+      loyaltyPoints: 0,
       organizationName: "Selam Bus Line SC",
+      addedBy: {
+        name: "Peter SuperAdmin",
+        email: "admin@tikora.et",
+        role: "Super Administrator",
+      },
       createdAt: "2025-08-18",
       lastLogin: "2026-11-02 19:40",
       totalBookings: 0,
@@ -602,6 +687,16 @@ export const useAdminStore = create<AdminState>((set, get) => ({
       phone: "+251 900 000 001",
       role: "ADMIN",
       status: "ACTIVE",
+      nationalId: "ET-FAN-0000001",
+      city: "Addis Ababa",
+      address: "TIKORA Headquarters, Kazanchis, Addis Ababa",
+      totalSpentETB: 0,
+      loyaltyPoints: 1000,
+      addedBy: {
+        name: "System Root Initializer",
+        email: "root@tikora.et",
+        role: "Bootstrap Authority",
+      },
       createdAt: "2025-01-01",
       lastLogin: "2026-11-02 21:05",
     },
@@ -612,6 +707,16 @@ export const useAdminStore = create<AdminState>((set, get) => ({
       phone: "+251 913 887 654",
       role: "CUSTOMER",
       status: "ACTIVE",
+      nationalId: "ET-FAN-5542109",
+      city: "Hawassa",
+      address: "Piazza Road, Kebele 02, Hawassa",
+      totalSpentETB: 8900,
+      loyaltyPoints: 120,
+      addedBy: {
+        name: "CBE Birr SSO Auth",
+        email: "system@cbe.com.et",
+        role: "Automated OAuth Gateway",
+      },
       createdAt: "2025-10-02",
       lastLogin: "2026-10-28 11:20",
       totalBookings: 6,
@@ -623,9 +728,152 @@ export const useAdminStore = create<AdminState>((set, get) => ({
       phone: "+251 914 000 111",
       role: "CUSTOMER",
       status: "SUSPENDED",
+      nationalId: "ET-FAN-8819203",
+      city: "Addis Ababa",
+      address: "Kera Area, Addis Ababa",
+      totalSpentETB: 1200,
+      loyaltyPoints: 0,
+      addedBy: {
+        name: "Self Registration",
+        email: "public@tikora.et",
+        role: "Direct Web Register",
+      },
       createdAt: "2025-11-12",
       lastLogin: "2026-09-14 08:10",
       totalBookings: 1,
+    },
+  ],
+
+  inspectors: [
+    {
+      id: "ins-1",
+      badgeId: "INS-ET-4081",
+      name: "Almaz Kebede",
+      email: "almaz.selam@selambus.et",
+      phone: "+251 912 998 877",
+      nationalId: "ET-FAN-9842103",
+      organizationId: "org-1",
+      organizationName: "Selam Bus Line SC",
+      organizationCategory: "BUS",
+      assignedStation: "Autobus Tera Gate 4 (Outbound Terminal)",
+      addedBy: {
+        name: "Peter SuperAdmin",
+        email: "admin@tikora.et",
+        role: "Super Administrator",
+      },
+      createdAt: "2025-08-18 10:30 AM",
+      lastActive: "2026-11-03 17:45",
+      status: "ACTIVE",
+      totalScans: 12480,
+      validScans: 12412,
+      flaggedScans: 68,
+      deviceModel: "Sunmi V2 Pro Android POS Scanner",
+      appVersion: "Tikora Gate v2.4.1",
+      shiftSchedule: "Morning Shift: 06:00 - 14:00",
+    },
+    {
+      id: "ins-2",
+      badgeId: "INS-ET-5012",
+      name: "Dawit Hailu",
+      email: "dawit.h@ednamall.et",
+      phone: "+251 911 445 566",
+      nationalId: "ET-FAN-7721904",
+      organizationId: "org-2",
+      organizationName: "Edna Mall Cinema",
+      organizationCategory: "CINEMA",
+      assignedStation: "Bole Edna Mall VIP Hall Gate 1",
+      addedBy: {
+        name: "Michael Assefa",
+        email: "manager@ednamall.et",
+        role: "Provider Admin",
+      },
+      createdAt: "2025-09-05 09:15 AM",
+      lastActive: "2026-11-03 19:10",
+      status: "ACTIVE",
+      totalScans: 8920,
+      validScans: 8895,
+      flaggedScans: 25,
+      deviceModel: "Zebra TC26 Touch Computer",
+      appVersion: "Tikora Gate v2.4.1",
+      shiftSchedule: "Evening Shift: 14:00 - 22:00",
+    },
+    {
+      id: "ins-3",
+      badgeId: "INS-ET-6029",
+      name: "Kidus Yohannes",
+      email: "kidus.y@redfoxevents.et",
+      phone: "+251 922 334 455",
+      nationalId: "ET-FAN-3310928",
+      organizationId: "org-3",
+      organizationName: "Red Fox Entertainment",
+      organizationCategory: "EVENT",
+      assignedStation: "Millennium Hall Gate 2 (VIP Entry)",
+      addedBy: {
+        name: "Peter SuperAdmin",
+        email: "admin@tikora.et",
+        role: "Super Administrator",
+      },
+      createdAt: "2025-10-12 14:00 PM",
+      lastActive: "2026-11-01 22:30",
+      status: "ACTIVE",
+      totalScans: 15200,
+      validScans: 15080,
+      flaggedScans: 120,
+      deviceModel: "Urovo i6310 Handheld Terminal",
+      appVersion: "Tikora Gate v2.4.0",
+      shiftSchedule: "Event Shift: 16:00 - 24:00",
+    },
+    {
+      id: "ins-4",
+      badgeId: "INS-ET-7184",
+      name: "Mulugeta Assefa",
+      email: "mulugeta.a@epl.et",
+      phone: "+251 933 112 233",
+      nationalId: "ET-FAN-5519823",
+      organizationId: "org-4",
+      organizationName: "Ethiopian Premier League",
+      organizationCategory: "SPORTS",
+      assignedStation: "Addis Ababa Stadium Gate 7 (Tribuna East)",
+      addedBy: {
+        name: "Peter SuperAdmin",
+        email: "admin@tikora.et",
+        role: "Super Administrator",
+      },
+      createdAt: "2025-11-01 11:45 AM",
+      lastActive: "2026-11-02 16:00",
+      status: "ACTIVE",
+      totalScans: 22100,
+      validScans: 21850,
+      flaggedScans: 250,
+      deviceModel: "Chainway C66 Barcode Scanner",
+      appVersion: "Tikora Gate v2.4.1",
+      shiftSchedule: "Match Day Shift: 10:00 - 18:00",
+    },
+    {
+      id: "ins-5",
+      badgeId: "INS-ET-8201",
+      name: "Hanan Mohammed",
+      email: "hanan.m@selambus.et",
+      phone: "+251 944 556 677",
+      nationalId: "ET-FAN-1298456",
+      organizationId: "org-1",
+      organizationName: "Selam Bus Line SC",
+      organizationCategory: "BUS",
+      assignedStation: "Kaliti Terminal Gate 1",
+      addedBy: {
+        name: "Solomon Tadesse",
+        email: "operations@selambus.et",
+        role: "Provider Admin",
+      },
+      createdAt: "2026-01-15 08:30 AM",
+      lastActive: "2026-10-20 12:15",
+      status: "SUSPENDED",
+      totalScans: 4120,
+      validScans: 4050,
+      flaggedScans: 70,
+      deviceModel: "Sunmi V2 Pro Android POS Scanner",
+      appVersion: "Tikora Gate v2.3.9",
+      shiftSchedule: "Pending Reassignment",
     },
   ],
 
@@ -1284,6 +1532,92 @@ export const useAdminStore = create<AdminState>((set, get) => ({
       details: `Provisioned privileged account with role: ${data.role}`,
       ipAddress: "197.156.104.22",
       severity: "WARNING",
+    });
+  },
+
+  toggleInspectorStatus: (id: string) => {
+    const inspector = get().inspectors.find((i) => i.id === id);
+    if (!inspector) return;
+    const nextStatus = inspector.status === "ACTIVE" ? "SUSPENDED" : "ACTIVE";
+    set((state) => ({
+      inspectors: state.inspectors.map((i) =>
+        i.id === id ? { ...i, status: nextStatus } : i
+      ),
+    }));
+    get().addAuditLog({
+      action: "INSPECTOR_STATUS_CHANGED",
+      actorName: "Peter SuperAdmin",
+      actorRole: "SUPER_ADMIN",
+      target: `${inspector.name} (${inspector.badgeId})`,
+      details: `Inspector account transitioned from ${inspector.status} to ${nextStatus}.`,
+      ipAddress: "197.156.104.22",
+      severity: nextStatus === "SUSPENDED" ? "WARNING" : "INFO",
+    });
+  },
+
+  updateInspectorAssignment: (id: string, station: string) => {
+    const inspector = get().inspectors.find((i) => i.id === id);
+    if (!inspector) return;
+    set((state) => ({
+      inspectors: state.inspectors.map((i) =>
+        i.id === id ? { ...i, assignedStation: station } : i
+      ),
+    }));
+    get().addAuditLog({
+      action: "INSPECTOR_REASSIGNED",
+      actorName: "Peter SuperAdmin",
+      actorRole: "SUPER_ADMIN",
+      target: `${inspector.name} (${inspector.badgeId})`,
+      details: `Reassigned gate station to '${station}' for ${inspector.organizationName}.`,
+      ipAddress: "197.156.104.22",
+      severity: "INFO",
+    });
+  },
+
+  createInspector: (data) => {
+    const newInspector: AdminInspector = {
+      id: `ins-${Date.now()}`,
+      badgeId: data.badgeId || `INS-ET-${Math.floor(1000 + Math.random() * 9000)}`,
+      name: data.name,
+      email: data.email,
+      phone: data.phone,
+      nationalId: data.nationalId || `ET-FAN-${Math.floor(1000000 + Math.random() * 9000000)}`,
+      organizationId: data.organizationId,
+      organizationName: data.organizationName,
+      organizationCategory: data.organizationCategory,
+      assignedStation: data.assignedStation,
+      addedBy: {
+        name: "Peter SuperAdmin",
+        email: "admin@tikora.et",
+        role: "Super Administrator",
+      },
+      createdAt: new Date().toISOString().replace("T", " ").substring(0, 16),
+      lastActive: "Just now",
+      status: "ACTIVE",
+      totalScans: 0,
+      validScans: 0,
+      flaggedScans: 0,
+      deviceModel: data.deviceModel || "Sunmi V2 Pro Android POS Scanner",
+      appVersion: "Tikora Gate v2.4.1",
+      shiftSchedule: data.shiftSchedule || "Morning Shift: 08:00 - 16:00",
+    };
+
+    set((state) => ({
+      inspectors: [newInspector, ...state.inspectors],
+      stats: {
+        ...state.stats,
+        activeInspectors: state.stats.activeInspectors + 1,
+      },
+    }));
+
+    get().addAuditLog({
+      action: "INSPECTOR_PROVISIONED",
+      actorName: "Peter SuperAdmin",
+      actorRole: "SUPER_ADMIN",
+      target: `${newInspector.name} (${newInspector.badgeId})`,
+      details: `Provisioned field inspector for ${newInspector.organizationName} at ${newInspector.assignedStation}.`,
+      ipAddress: "197.156.104.22",
+      severity: "INFO",
     });
   },
 

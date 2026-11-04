@@ -84,7 +84,6 @@ export function ProviderHeader({ onToggleMobileMenu }: ProviderHeaderProps) {
 
   return (
     <header
-      style={{ backgroundColor: "var(--card-bg, #161922)" }}
       className="h-16 border-b border-[#E2E8F0] dark:border-slate-800 bg-white dark:bg-[#161922] px-4 sm:px-6 flex items-center justify-between gap-4 shadow-xs w-full transition-colors"
     >
       {/* Left: Mobile Menu Trigger & Search */}

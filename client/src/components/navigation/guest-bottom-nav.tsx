@@ -1,6 +1,6 @@
 "use client";
 
-import React from "react";
+import React, { useState, useEffect } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
@@ -17,9 +17,15 @@ export function GuestBottomNav() {
   const pathname = usePathname();
   const { favorites } = useBookingStore();
   const { isAuthenticated, user } = useAuthStore();
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   // Do not show on admin, provider, or inspector views
   if (
+    !pathname ||
     pathname.startsWith("/admin") ||
     pathname.startsWith("/provider") ||
     pathname.startsWith("/inspector") ||
@@ -28,7 +34,9 @@ export function GuestBottomNav() {
     return null;
   }
 
-  const accountHref = isAuthenticated
+  const isAuth = mounted && isAuthenticated;
+
+  const accountHref = isAuth
     ? user?.role === "ADMIN"
       ? "/admin/dashboard"
       : user?.role === "ORGANIZATION"
@@ -56,21 +64,21 @@ export function GuestBottomNav() {
     {
       id: "passes",
       label: "My Passes",
-      href: isAuthenticated ? "/customer/tickets" : "/login",
+      href: isAuth ? "/customer/tickets" : "/login",
       icon: QrCode,
       isActive: pathname === "/customer/tickets",
     },
     {
       id: "saved",
       label: "Saved",
-      href: isAuthenticated ? "/customer/favorites" : "/login",
+      href: isAuth ? "/customer/favorites" : "/login",
       icon: Heart,
-      badge: favorites.length > 0 ? favorites.length : undefined,
+      badge: mounted && favorites.length > 0 ? favorites.length : undefined,
       isActive: pathname === "/customer/favorites",
     },
     {
       id: "account",
-      label: isAuthenticated ? "Account" : "Sign In",
+      label: isAuth ? "Account" : "Sign In",
       href: accountHref,
       icon: User,
       isActive: pathname === "/login" || pathname === "/register" || pathname.startsWith("/customer"),

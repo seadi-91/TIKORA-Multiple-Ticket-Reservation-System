@@ -264,10 +264,14 @@ export default function AdminProviderDetailPage({ params }: PageProps) {
                 <span className="text-muted-foreground">Application Date</span>
                 <span className="font-mono text-foreground">{org.appliedDate}</span>
               </div>
+              <div className="flex justify-between py-2 border-b border-slate-100 dark:border-slate-800/40">
+                <span className="text-muted-foreground">Approved / Onboarded By</span>
+                <span className="font-semibold text-foreground">Peter SuperAdmin (SUPER_ADMIN)</span>
+              </div>
               {org.approvedDate && (
                 <div className="flex justify-between py-2 border-b border-slate-100 dark:border-slate-800/40">
                   <span className="text-muted-foreground">Verification Approval Date</span>
-                  <span className="font-mono text-foreground">{org.approvedDate}</span>
+                  <span className="font-mono text-emerald-600 dark:text-emerald-400 font-bold">{org.approvedDate}</span>
                 </div>
               )}
             </div>

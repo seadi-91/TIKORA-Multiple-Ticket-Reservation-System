@@ -84,7 +84,7 @@ export default function AdminSupportPage() {
       {/* Page Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h2 className="text-xl md:text-2xl font-bold tracking-tight text-foreground">
+          <h2 className="text-base sm:text-lg font-bold tracking-tight text-foreground">
             Customer & Provider Dispute Desk
           </h2>
           <p className="text-xs text-muted-foreground mt-0.5">
@@ -93,8 +93,25 @@ export default function AdminSupportPage() {
         </div>
       </div>
 
-      {/* Status Filter Tabs */}
-      <div className="flex items-center gap-2 border-b border-slate-200/50 dark:border-slate-800/50 pb-3 overflow-x-auto no-scrollbar flex-nowrap">
+      {/* Mobile Filter Dropdown */}
+      <div className="block sm:hidden">
+        <label className="text-[11px] font-bold text-muted-foreground uppercase tracking-wider block mb-1.5">
+          Filter Tickets by Status
+        </label>
+        <select
+          value={statusFilter}
+          onChange={(e) => setStatusFilter(e.target.value)}
+          className="w-full h-10 px-3 text-xs rounded-xl bg-card border border-slate-200/60 dark:border-slate-800/60 text-foreground font-semibold focus:outline-none focus:ring-2 focus:ring-amber-500/30 shadow-xs"
+        >
+          <option value="ALL">All Tickets ({supportTickets.length})</option>
+          <option value="OPEN">Open Priority ({supportTickets.filter((t) => t.status === "OPEN").length})</option>
+          <option value="IN_PROGRESS">Under Review ({supportTickets.filter((t) => t.status === "IN_PROGRESS").length})</option>
+          <option value="RESOLVED">Resolved ({supportTickets.filter((t) => t.status === "RESOLVED").length})</option>
+        </select>
+      </div>
+
+      {/* Desktop Filter Tabs */}
+      <div className="hidden sm:flex items-center gap-2 border-b border-slate-200/50 dark:border-slate-800/50 pb-3 overflow-x-auto no-scrollbar flex-nowrap">
         {[
           { label: "All Tickets", value: "ALL", count: supportTickets.length },
           {
@@ -146,20 +163,137 @@ export default function AdminSupportPage() {
         />
       </div>
 
-      {/* Tickets Master List (Elevated, Soft Borders, Modern Rows) */}
-      <div className="rounded-3xl bg-card border border-slate-200/50 dark:border-slate-800/50 shadow-sm overflow-hidden">
+      {/* Mobile View: High-Clarity Elevated Cards */}
+      <div className="block sm:hidden space-y-3.5">
+        {filteredTickets.length === 0 ? (
+          <div className="p-8 text-center text-muted-foreground text-xs rounded-2xl bg-card border border-slate-200/60 dark:border-slate-800/60 shadow-xs">
+            No support inquiries found matching your query.
+          </div>
+        ) : (
+          filteredTickets.map((t) => (
+            <div
+              key={t.id}
+              className="rounded-2xl bg-card border border-slate-200/70 dark:border-slate-800/70 shadow-xs hover:border-amber-500/30 transition-all p-4 space-y-3.5"
+            >
+              {/* Card Header: Ticket ID, Priority, Status & Actions */}
+              <div className="flex items-start justify-between gap-2.5">
+                <div className="min-w-0 flex-1">
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <span className="font-mono font-bold text-sm text-amber-600 dark:text-amber-400">
+                      {t.ticketNumber}
+                    </span>
+                    {getPriorityBadge(t.priority)}
+                    {t.status === "OPEN" ? (
+                      <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-rose-500/10 text-rose-600 dark:text-rose-400 ring-1 ring-inset ring-rose-500/20">
+                        <Clock className="w-3 h-3" /> Open
+                      </span>
+                    ) : t.status === "IN_PROGRESS" ? (
+                      <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-500/10 text-amber-600 dark:text-amber-400 ring-1 ring-inset ring-amber-500/20">
+                        <Clock className="w-3 h-3" /> In Progress
+                      </span>
+                    ) : (
+                      <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 ring-1 ring-inset ring-emerald-500/20">
+                        <CheckCircle2 className="w-3 h-3" /> Resolved
+                      </span>
+                    )}
+                  </div>
+                  <p className="text-[10px] text-muted-foreground font-mono mt-1">
+                    Filed: {t.createdAt}
+                  </p>
+                </div>
+
+                <ActionDropdown
+                  items={[
+                    {
+                      label: "Open Case Discussion",
+                      icon: <MessageSquare className="w-3.5 h-3.5" />,
+                      onClick: () => {
+                        setSelectedTicket(t);
+                        setNextStatus(t.status === "OPEN" ? "IN_PROGRESS" : "RESOLVED");
+                      },
+                    },
+                    ...(t.status !== "RESOLVED"
+                      ? [
+                          {
+                            label: "Mark As Resolved",
+                            icon: <CheckCircle2 className="w-3.5 h-3.5" />,
+                            variant: "success" as const,
+                            onClick: () => replyToSupportTicket(t.id, "Case resolved by administrator", "RESOLVED"),
+                          },
+                        ]
+                      : []),
+                    {
+                      label: "View Requester Profile",
+                      icon: <User className="w-3.5 h-3.5" />,
+                      href: `/admin/users?q=${encodeURIComponent(t.requesterName)}`,
+                    },
+                  ]}
+                />
+              </div>
+
+              {/* Subject & Category Strip */}
+              <div className="p-2.5 rounded-xl bg-slate-50 dark:bg-slate-800/40 border border-slate-200/40 dark:border-slate-800/50 space-y-1 text-xs">
+                <div className="flex items-center justify-between">
+                  <span className="text-[10px] uppercase font-bold text-muted-foreground tracking-wider">
+                    Category: {t.category}
+                  </span>
+                  <span className="text-[10px] font-semibold text-foreground bg-muted/60 px-2 py-0.5 rounded">
+                    {t.requesterRole}
+                  </span>
+                </div>
+                <p className="font-bold text-foreground text-xs leading-snug">{t.subject}</p>
+              </div>
+
+              {/* Requester Identity Strip */}
+              <div className="flex items-center justify-between text-[11px] p-2.5 rounded-xl bg-slate-50/60 dark:bg-slate-800/25 border border-slate-200/30 dark:border-slate-800/40">
+                <div className="flex items-center gap-2">
+                  <div className="w-7 h-7 rounded-lg bg-amber-500/10 text-amber-600 dark:text-amber-400 font-bold text-[11px] flex items-center justify-center shrink-0">
+                    {t.requesterName.charAt(0)}
+                  </div>
+                  <div>
+                    <p className="font-semibold text-foreground text-xs">{t.requesterName}</p>
+                    <p className="text-[10px] text-muted-foreground">{t.requesterEmail}</p>
+                  </div>
+                </div>
+                <span className="text-[10px] font-mono text-muted-foreground">
+                  {t.messages.length} msg(s)
+                </span>
+              </div>
+
+              {/* Direct Tap Button to Open Conversation */}
+              <button
+                type="button"
+                onClick={() => {
+                  setSelectedTicket(t);
+                  setNextStatus(t.status === "OPEN" ? "IN_PROGRESS" : "RESOLVED");
+                }}
+                className="w-full py-2 px-3 rounded-xl bg-slate-100 hover:bg-amber-500/10 dark:bg-slate-800/70 dark:hover:bg-amber-500/20 text-slate-700 dark:text-slate-200 hover:text-amber-600 dark:hover:text-amber-400 font-semibold text-xs flex items-center justify-between transition-colors border border-slate-200/60 dark:border-slate-700/60 cursor-pointer"
+              >
+                <span className="inline-flex items-center gap-1.5">
+                  <MessageSquare className="w-3.5 h-3.5 text-amber-500 shrink-0" />
+                  <span>Open Ticket Case Thread</span>
+                </span>
+                <span className="text-[10px] font-mono text-muted-foreground">Reply &rarr;</span>
+              </button>
+            </div>
+          ))
+        )}
+      </div>
+
+      {/* Desktop View: Tickets Master List with Spacious Columns & Horizontal Scroll */}
+      <div className="hidden sm:block rounded-3xl bg-card border border-slate-200/50 dark:border-slate-800/50 shadow-sm overflow-hidden">
         <div className="overflow-x-auto">
-          <table className="w-full text-xs text-left">
+          <table className="w-full text-xs text-left min-w-[950px]">
             <thead className="bg-slate-50/60 dark:bg-slate-800/40 text-muted-foreground uppercase text-[10px] font-bold tracking-wider">
               <tr>
-                <th className="px-5 py-3.5">Ticket ID</th>
-                <th className="px-4 py-3.5">Requester</th>
-                <th className="px-4 py-3.5">Role</th>
-                <th className="px-4 py-3.5">Subject & Category</th>
-                <th className="px-4 py-3.5">Priority</th>
-                <th className="px-4 py-3.5">Status</th>
-                <th className="px-4 py-3.5">Date</th>
-                <th className="px-5 py-3.5 text-right">Action</th>
+                <th className="px-5 py-3.5 whitespace-nowrap min-w-[120px]">Ticket ID</th>
+                <th className="px-4 py-3.5 whitespace-nowrap min-w-[160px]">Requester</th>
+                <th className="px-4 py-3.5 whitespace-nowrap min-w-[100px]">Role</th>
+                <th className="px-4 py-3.5 min-w-[180px]">Subject & Category</th>
+                <th className="px-4 py-3.5 whitespace-nowrap min-w-[90px]">Priority</th>
+                <th className="px-4 py-3.5 whitespace-nowrap min-w-[100px]">Status</th>
+                <th className="px-4 py-3.5 whitespace-nowrap min-w-[100px]">Date</th>
+                <th className="px-4 py-3.5 text-right w-12 shrink-0">Action</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100 dark:divide-slate-800/40">

@@ -274,7 +274,7 @@ export default function ProviderBookingsPage() {
       {/* Page Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 border-b border-border/60 pb-5">
         <div>
-          <h1 className="text-xl font-bold tracking-tight text-foreground">
+          <h1 className="text-base sm:text-lg font-bold tracking-tight text-foreground">
             Customer Bookings & Orders
           </h1>
           <p className="text-xs text-muted-foreground">
@@ -297,13 +297,13 @@ export default function ProviderBookingsPage() {
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
         <div className="bg-card border border-border/60 rounded-xl p-4 shadow-xs">
           <span className="text-muted-foreground text-xs block mb-1">Total Bookings</span>
-          <div className="text-xl font-bold text-foreground">{bookings.length}</div>
+          <div className="text-sm sm:text-base font-bold text-foreground">{bookings.length}</div>
           <span className="text-[11px] text-muted-foreground">Live order ledger</span>
         </div>
 
         <div className="bg-card border border-border/60 rounded-xl p-4 shadow-xs">
           <span className="text-muted-foreground text-xs block mb-1">Verified Boarded</span>
-          <div className="text-xl font-bold text-emerald-600">
+          <div className="text-sm sm:text-base font-bold text-emerald-600">
             {bookings.filter((b) => b.bookingStatus === "CHECKED_IN").length}
           </div>
           <span className="text-[11px] text-muted-foreground">Scanned at boarding gates</span>
@@ -311,7 +311,7 @@ export default function ProviderBookingsPage() {
 
         <div className="bg-card border border-border/60 rounded-xl p-4 shadow-xs">
           <span className="text-muted-foreground text-xs block mb-1">Cancelled / Refunded</span>
-          <div className="text-xl font-bold text-rose-600">
+          <div className="text-sm sm:text-base font-bold text-rose-600">
             {bookings.filter((b) => b.bookingStatus === "CANCELLED").length}
           </div>
           <span className="text-[11px] text-muted-foreground">Refund disputes processed</span>
@@ -319,7 +319,7 @@ export default function ProviderBookingsPage() {
 
         <div className="bg-card border border-border/60 rounded-xl p-4 shadow-xs">
           <span className="text-muted-foreground text-xs block mb-1">Total Sales Captured</span>
-          <div className="text-xl font-bold text-amber-600">
+          <div className="text-sm sm:text-base font-bold text-amber-600">
             {formatCurrency(totalGrossRevenue)}
           </div>
           <span className="text-[11px] text-muted-foreground">Telebirr, CBE & Chapa</span>

@@ -184,7 +184,7 @@ export default function CustomerProfilePage() {
               <Award className="w-5 h-5 text-amber-300" />
               <h4 className="text-sm font-bold">TIKORA Rewards</h4>
             </div>
-            <div className="text-2xl font-black">480 Loyalty Points</div>
+            <div className="text-lg font-bold">480 Loyalty Points</div>
             <p className="text-xs text-indigo-100/80 leading-relaxed">
               Earn 10 points for every 100 ETB spent. Redeemable for cinema concessions, VIP concert upgrades, and holiday bus discounts.
             </p>

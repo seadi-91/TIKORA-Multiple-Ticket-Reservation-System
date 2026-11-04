@@ -53,7 +53,7 @@ export default function ProviderReportsPage() {
       {/* Top Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 border-b border-border/60 pb-5">
         <div>
-          <h1 className="text-xl font-bold tracking-tight text-foreground">
+          <h1 className="text-base sm:text-lg font-bold tracking-tight text-foreground">
             Analytics & Executive Performance Reports
           </h1>
           <p className="text-xs text-muted-foreground">
@@ -106,7 +106,7 @@ export default function ProviderReportsPage() {
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5 sm:gap-4">
         <div className="bg-card border border-border/60 rounded-2xl p-3.5 sm:p-4 shadow-xs hover:shadow-sm transition-all">
           <span className="text-muted-foreground text-[10px] sm:text-xs block mb-1 truncate">Average Order Value</span>
-          <div className="text-base sm:text-xl font-bold text-foreground truncate">780 ETB</div>
+          <div className="text-sm sm:text-base font-bold text-foreground truncate">780 ETB</div>
           <span className="text-[10px] sm:text-[11px] text-emerald-600 flex items-center gap-1 mt-0.5 truncate">
             <TrendingUp className="w-3 h-3 shrink-0" /> +12.4%
           </span>
@@ -114,7 +114,7 @@ export default function ProviderReportsPage() {
 
         <div className="bg-card border border-border/60 rounded-2xl p-3.5 sm:p-4 shadow-xs hover:shadow-sm transition-all">
           <span className="text-muted-foreground text-[10px] sm:text-xs block mb-1 truncate">Occupancy Rate</span>
-          <div className="text-base sm:text-xl font-bold text-foreground truncate">74.2%</div>
+          <div className="text-sm sm:text-base font-bold text-foreground truncate">74.2%</div>
           <span className="text-[10px] sm:text-[11px] text-emerald-600 flex items-center gap-1 mt-0.5 truncate">
             <TrendingUp className="w-3 h-3 shrink-0" /> +4.8% load
           </span>
@@ -122,13 +122,13 @@ export default function ProviderReportsPage() {
 
         <div className="bg-card border border-border/60 rounded-2xl p-3.5 sm:p-4 shadow-xs hover:shadow-sm transition-all">
           <span className="text-muted-foreground text-[10px] sm:text-xs block mb-1 truncate">Repeat Rate</span>
-          <div className="text-base sm:text-xl font-bold text-foreground truncate">68.5%</div>
+          <div className="text-sm sm:text-base font-bold text-foreground truncate">68.5%</div>
           <span className="text-[10px] sm:text-[11px] text-muted-foreground truncate block">2+ bookings</span>
         </div>
 
         <div className="bg-card border border-border/60 rounded-2xl p-3.5 sm:p-4 shadow-xs hover:shadow-sm transition-all">
           <span className="text-muted-foreground text-[10px] sm:text-xs block mb-1 truncate">On-Time Dispatch</span>
-          <div className="text-base sm:text-xl font-bold text-emerald-600 truncate">97.4%</div>
+          <div className="text-sm sm:text-base font-bold text-emerald-600 truncate">97.4%</div>
           <span className="text-[10px] sm:text-[11px] text-muted-foreground truncate block">On schedule</span>
         </div>
       </div>

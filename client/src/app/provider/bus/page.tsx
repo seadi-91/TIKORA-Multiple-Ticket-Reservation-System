@@ -49,7 +49,7 @@ export default function ProviderBusHubPage() {
             <span>/</span>
             <span className="font-semibold text-[#0F172A] dark:text-white">Bus Fleet Management</span>
           </div>
-          <h1 className="text-xl sm:text-2xl font-black text-[#0F172A] dark:text-white tracking-tight">
+          <h1 className="text-base sm:text-lg font-bold text-[#0F172A] dark:text-white tracking-tight">
             Intercity Coach & Route Operations
           </h1>
           <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
@@ -85,7 +85,7 @@ export default function ProviderBusHubPage() {
             </span>
             <Route className="w-3.5 h-3.5 text-blue-500 shrink-0" />
           </div>
-          <div className="text-lg sm:text-2xl font-black text-[#0F172A] dark:text-white">
+          <div className="text-xs sm:text-sm font-bold text-[#0F172A] dark:text-white">
             {busRoutes.length} Routes
           </div>
           <span className="text-[10px] text-emerald-600 dark:text-emerald-400 font-semibold block truncate">
@@ -100,7 +100,7 @@ export default function ProviderBusHubPage() {
             </span>
             <Calendar className="w-3.5 h-3.5 text-amber-500 shrink-0" />
           </div>
-          <div className="text-lg sm:text-2xl font-black text-[#0F172A] dark:text-white">
+          <div className="text-xs sm:text-sm font-bold text-[#0F172A] dark:text-white">
             {busSchedules.length} Trips
           </div>
           <span className="text-[10px] text-slate-500 dark:text-slate-400 font-medium block truncate">
@@ -115,7 +115,7 @@ export default function ProviderBusHubPage() {
             </span>
             <Users className="w-3.5 h-3.5 text-purple-500 shrink-0" />
           </div>
-          <div className="text-lg sm:text-2xl font-black text-[#0F172A] dark:text-white">
+          <div className="text-xs sm:text-sm font-bold text-[#0F172A] dark:text-white">
             {occupancyRate}%
           </div>
           <span className="text-[10px] text-emerald-600 font-semibold block truncate">
@@ -130,7 +130,7 @@ export default function ProviderBusHubPage() {
             </span>
             <Bus className="w-3.5 h-3.5 text-emerald-500 shrink-0" />
           </div>
-          <div className="text-lg sm:text-2xl font-black text-[#0F172A] dark:text-white">
+          <div className="text-xs sm:text-sm font-bold text-[#0F172A] dark:text-white">
             {busSchedules.filter((s) => s.status === "BOARDING" || s.status === "ON_TRIP").length} Coaches
           </div>
           <Link

@@ -144,7 +144,7 @@ export default function BookingDetailPage() {
                 Booked on {booking.bookedAt}
               </span>
             </div>
-            <h1 className="text-lg sm:text-xl font-bold tracking-tight text-foreground mt-0.5">
+            <h1 className="text-base sm:text-lg font-bold tracking-tight text-foreground mt-0.5">
               Reservation Manifest
             </h1>
           </div>

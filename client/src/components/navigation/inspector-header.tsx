@@ -78,7 +78,6 @@ export function InspectorHeader({ onToggleMobileMenu }: InspectorHeaderProps = {
 
   return (
     <header
-      style={{ backgroundColor: "var(--card-bg, #161922)" }}
       className="h-16 border-b border-slate-200/80 dark:border-slate-800 bg-white dark:bg-[#161922] px-4 sm:px-6 flex items-center justify-between gap-3 sticky top-0 z-30 shadow-xs w-full transition-colors"
     >
       {/* Left: Page Title & Current Gate Assignment */}

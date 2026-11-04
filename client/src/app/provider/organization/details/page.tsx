@@ -45,12 +45,12 @@ export default function OrganizationDetailsPage() {
       <div className="rounded-3xl bg-white dark:bg-[#161922] border border-[#E2E8F0] dark:border-slate-800 p-6 sm:p-8 shadow-2xs space-y-6">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-6 border-b border-slate-100 dark:border-slate-800">
           <div className="flex items-center gap-4">
-            <div className="w-16 h-16 rounded-2xl bg-[#B45309] text-white flex items-center justify-center font-black text-xl shadow-xs">
+            <div className="w-14 h-14 rounded-2xl bg-[#B45309] text-white flex items-center justify-center font-bold text-base shadow-xs">
               {organization.name.substring(0, 2).toUpperCase()}
             </div>
             <div>
               <div className="flex items-center gap-2">
-                <h1 className="text-xl font-black text-[#0F172A] dark:text-white">
+                <h1 className="text-base sm:text-lg font-bold text-[#0F172A] dark:text-white">
                   {organization.name}
                 </h1>
                 <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-emerald-50 dark:bg-emerald-950 text-emerald-700 dark:text-emerald-300 text-[10px] font-bold">

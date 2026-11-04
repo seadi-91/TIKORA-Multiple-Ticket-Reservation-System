@@ -114,8 +114,8 @@ export default function HomePage() {
             <span>Ethiopia&apos;s Smart Multi-Ticket Platform</span>
           </div>
 
-          {/* Main Headline - Compact on Mobile */}
-          <h1 className="text-xl sm:text-4xl lg:text-5xl font-black text-[#0F172A] dark:text-white tracking-tight leading-tight">
+          {/* Main Headline - Compact on Mobile & Desktop */}
+          <h1 className="text-lg sm:text-2xl lg:text-3xl font-black text-[#0F172A] dark:text-white tracking-tight leading-snug">
             Book Tickets for{" "}
             <span className="text-[#B45309] dark:text-[#D97706]">Buses, Cinema,</span>{" "}
             Events & Sports

@@ -83,6 +83,7 @@ export function AdminHeader({ onToggleMobileMenu }: AdminHeaderProps) {
     if (pathname === "/admin" || pathname === "/admin/dashboard") return "Platform Dashboard";
     if (pathname.startsWith("/admin/providers")) return "Provider Organizations";
     if (pathname.startsWith("/admin/verifications")) return "Document Verifications";
+    if (pathname.startsWith("/admin/inspectors")) return "Field Inspectors & Gate Control";
     if (pathname.startsWith("/admin/users")) return "User & Access Management";
     if (pathname.startsWith("/admin/tickets")) return "Tickets & Service Catalog";
     if (pathname.startsWith("/admin/categories")) return "Platform Categories";
@@ -99,7 +100,6 @@ export function AdminHeader({ onToggleMobileMenu }: AdminHeaderProps) {
 
   return (
     <header
-      style={{ backgroundColor: "var(--card-bg, #161922)" }}
       className="flex items-center justify-between h-16 px-4 sm:px-6 bg-white dark:bg-[#161922] border-b border-slate-200/80 dark:border-slate-800 shadow-xs shrink-0 w-full transition-colors"
     >
       {/* Left: Mobile hamburger & Breadcrumbs */}

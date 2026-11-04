@@ -167,7 +167,7 @@ export default function InventoryManagementPage() {
       {/* Page Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 border-b border-border/60 pb-5">
         <div>
-          <h1 className="text-xl font-bold tracking-tight text-foreground">
+          <h1 className="text-base sm:text-lg font-bold tracking-tight text-foreground">
             Inventory & Seat Allocation Matrix
           </h1>
           <p className="text-xs text-muted-foreground">
@@ -201,7 +201,7 @@ export default function InventoryManagementPage() {
             <span>Total Fleet / Hall Seats</span>
             <Layers className="w-4 h-4 text-amber-600" />
           </div>
-          <div className="text-xl font-bold text-foreground">{totalCapacity.toLocaleString()}</div>
+          <div className="text-sm sm:text-base font-bold text-foreground">{totalCapacity.toLocaleString()}</div>
           <p className="text-[11px] text-muted-foreground mt-0.5">Across {inventory.length} active listings</p>
         </div>
 
@@ -210,7 +210,7 @@ export default function InventoryManagementPage() {
             <span>Sold / Reserved</span>
             <Users className="w-4 h-4 text-blue-600" />
           </div>
-          <div className="text-xl font-bold text-foreground">{totalSold.toLocaleString()}</div>
+          <div className="text-sm sm:text-base font-bold text-foreground">{totalSold.toLocaleString()}</div>
           <p className="text-[11px] text-muted-foreground mt-0.5">Confirmed reservations</p>
         </div>
 
@@ -219,7 +219,7 @@ export default function InventoryManagementPage() {
             <span>Remaining Stock</span>
             <Ticket className="w-4 h-4 text-emerald-600" />
           </div>
-          <div className="text-xl font-bold text-foreground">{totalAvailable.toLocaleString()}</div>
+          <div className="text-sm sm:text-base font-bold text-foreground">{totalAvailable.toLocaleString()}</div>
           <p className="text-[11px] text-muted-foreground mt-0.5">Seats open for purchase</p>
         </div>
 
@@ -228,7 +228,7 @@ export default function InventoryManagementPage() {
             <span>Average Occupancy</span>
             <AlertTriangle className="w-4 h-4 text-amber-600" />
           </div>
-          <div className="text-xl font-bold text-foreground">{overallOccupancy}%</div>
+          <div className="text-sm sm:text-base font-bold text-foreground">{overallOccupancy}%</div>
           <div className="flex items-center gap-1.5 text-[11px] text-muted-foreground mt-0.5">
             <span className="w-2 h-2 rounded-full bg-amber-500" />
             <span>{lowStockCount} listings below 20%</span>

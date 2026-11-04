@@ -209,7 +209,6 @@ export function ProviderSidebar({
 
   const sidebarContent = (
     <div
-      style={{ backgroundColor: "var(--card-bg, #161922)" }}
       className="flex flex-col h-full bg-white dark:bg-[#161922] border-r border-[#E2E8F0] dark:border-slate-800 select-none"
     >
       {/* Brand Header */}
@@ -397,7 +396,6 @@ export function ProviderSidebar({
     <>
       {/* Desktop Persistent Sidebar */}
       <aside
-        style={{ backgroundColor: "var(--card-bg, #161922)" }}
         className={`hidden lg:flex flex-col shrink-0 sticky top-0 h-screen bg-white dark:bg-[#161922] border-r border-slate-200/80 dark:border-slate-800 transition-all duration-300 ease-in-out select-none ${
           collapsed ? "w-18" : "w-64"
         }`}
@@ -418,7 +416,6 @@ export function ProviderSidebar({
             />
             {/* Drawer Panel - Solid Opaque Background */}
             <aside
-              style={{ backgroundColor: "var(--card-bg, #161922)" }}
               className="fixed top-0 bottom-0 left-0 z-10 w-72 max-w-[85vw] h-full bg-white dark:bg-[#161922] border-r border-slate-200 dark:border-slate-800 shadow-2xl flex flex-col justify-between overflow-hidden"
             >
               {sidebarContent}

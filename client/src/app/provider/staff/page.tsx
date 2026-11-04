@@ -84,7 +84,7 @@ export default function ProviderStaffPage() {
       {/* Top Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 border-b border-border/60 pb-5">
         <div>
-          <h1 className="text-xl font-bold tracking-tight text-foreground">
+          <h1 className="text-base sm:text-lg font-bold tracking-tight text-foreground">
             Staff & Ticket Inspector Management
           </h1>
           <p className="text-xs text-muted-foreground">
@@ -109,7 +109,7 @@ export default function ProviderStaffPage() {
             <span className="text-[10px] sm:text-xs truncate">Total Team</span>
             <Users className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-amber-600 shrink-0" />
           </div>
-          <div className="text-base sm:text-xl font-bold text-foreground truncate">{staffMembers.length}</div>
+          <div className="text-sm sm:text-base font-bold text-foreground truncate">{staffMembers.length}</div>
           <span className="text-[10px] sm:text-[11px] text-muted-foreground truncate block">Authorized personnel</span>
         </div>
 
@@ -118,7 +118,7 @@ export default function ProviderStaffPage() {
             <span className="text-[10px] sm:text-xs truncate">Inspectors</span>
             <QrCode className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-emerald-600 shrink-0" />
           </div>
-          <div className="text-base sm:text-xl font-bold text-foreground truncate">{inspectorsCount}</div>
+          <div className="text-sm sm:text-base font-bold text-foreground truncate">{inspectorsCount}</div>
           <span className="text-[10px] sm:text-[11px] text-emerald-600 truncate block">Mobile scanners</span>
         </div>
 
@@ -127,7 +127,7 @@ export default function ProviderStaffPage() {
             <span className="text-[10px] sm:text-xs truncate">Dispatchers</span>
             <Clock className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-blue-600 shrink-0" />
           </div>
-          <div className="text-base sm:text-xl font-bold text-foreground truncate">{dispatchersCount}</div>
+          <div className="text-sm sm:text-base font-bold text-foreground truncate">{dispatchersCount}</div>
           <span className="text-[10px] sm:text-[11px] text-muted-foreground truncate block">Station leads</span>
         </div>
 
@@ -136,7 +136,7 @@ export default function ProviderStaffPage() {
             <span className="text-[10px] sm:text-xs truncate">Total Scans</span>
             <UserCheck className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-purple-600 shrink-0" />
           </div>
-          <div className="text-base sm:text-xl font-bold text-foreground truncate">{totalScans.toLocaleString()}</div>
+          <div className="text-sm sm:text-base font-bold text-foreground truncate">{totalScans.toLocaleString()}</div>
           <span className="text-[10px] sm:text-[11px] text-muted-foreground truncate block">Passes verified</span>
         </div>
       </div>

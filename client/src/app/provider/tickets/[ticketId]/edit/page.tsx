@@ -92,7 +92,7 @@ export default function EditTicketPage() {
               </span>
               <span className="text-xs text-amber-600 font-semibold">• Editing Mode</span>
             </div>
-            <h1 className="text-xl font-bold tracking-tight text-foreground">
+            <h1 className="text-base sm:text-lg font-bold tracking-tight text-foreground">
               Edit Ticket Listing
             </h1>
           </div>

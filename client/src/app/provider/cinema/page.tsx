@@ -32,7 +32,7 @@ export default function ProviderCinemaPage() {
             <span>/</span>
             <span className="font-semibold text-[#0F172A] dark:text-white">Cinema Operations</span>
           </div>
-          <h1 className="text-xl sm:text-2xl font-black text-[#0F172A] dark:text-white tracking-tight">
+          <h1 className="text-base sm:text-lg font-bold text-[#0F172A] dark:text-white tracking-tight">
             Movie Screening & Theater Management
           </h1>
           <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
@@ -63,7 +63,7 @@ export default function ProviderCinemaPage() {
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
         <div className="p-4 rounded-2xl bg-white dark:bg-[#161922] border border-[#E2E8F0] dark:border-slate-800 shadow-2xs space-y-1">
           <span className="text-[10px] uppercase font-bold text-slate-400">Active Movies</span>
-          <div className="text-xl sm:text-2xl font-black text-[#0F172A] dark:text-white">
+          <div className="text-xs sm:text-sm font-bold text-[#0F172A] dark:text-white">
             {movies.length} Premieres
           </div>
           <span className="text-[10px] text-emerald-600 font-semibold">Now Showing</span>
@@ -71,7 +71,7 @@ export default function ProviderCinemaPage() {
 
         <div className="p-4 rounded-2xl bg-white dark:bg-[#161922] border border-[#E2E8F0] dark:border-slate-800 shadow-2xs space-y-1">
           <span className="text-[10px] uppercase font-bold text-slate-400">Laser Halls & Screens</span>
-          <div className="text-xl sm:text-2xl font-black text-[#0F172A] dark:text-white">
+          <div className="text-xs sm:text-sm font-bold text-[#0F172A] dark:text-white">
             4 Screens
           </div>
           <span className="text-[10px] text-slate-400 font-medium">IMAX 4K + Dolby Atmos</span>
@@ -79,7 +79,7 @@ export default function ProviderCinemaPage() {
 
         <div className="p-4 rounded-2xl bg-white dark:bg-[#161922] border border-[#E2E8F0] dark:border-slate-800 shadow-2xs space-y-1">
           <span className="text-[10px] uppercase font-bold text-slate-400">Daily Showtimes</span>
-          <div className="text-xl sm:text-2xl font-black text-[#0F172A] dark:text-white">
+          <div className="text-xs sm:text-sm font-bold text-[#0F172A] dark:text-white">
             12 Screenings
           </div>
           <span className="text-[10px] text-slate-400 font-medium">Morning, Matinee, Evening</span>
@@ -87,7 +87,7 @@ export default function ProviderCinemaPage() {
 
         <div className="p-4 rounded-2xl bg-white dark:bg-[#161922] border border-[#E2E8F0] dark:border-slate-800 shadow-2xs space-y-1">
           <span className="text-[10px] uppercase font-bold text-slate-400">Seating Classes</span>
-          <div className="text-xl sm:text-2xl font-black text-[#0F172A] dark:text-white">
+          <div className="text-xs sm:text-sm font-bold text-[#0F172A] dark:text-white">
             3 Tiers
           </div>
           <span className="text-[10px] text-slate-400">Standard, VIP & Couple Loungers</span>
@@ -98,7 +98,7 @@ export default function ProviderCinemaPage() {
       <div className="rounded-3xl bg-white dark:bg-[#161922] border border-[#E2E8F0] dark:border-slate-800 p-6 shadow-2xs space-y-4">
         <div className="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-3">
           <div>
-            <h2 className="text-base font-bold text-[#0F172A] dark:text-white">
+            <h2 className="text-xs sm:text-sm font-bold text-[#0F172A] dark:text-white">
               Current Screening Features
             </h2>
             <p className="text-xs text-slate-400">Blockbusters scheduled across theater halls</p>

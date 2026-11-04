@@ -90,7 +90,7 @@ export default function AdminCommissionsPage() {
       {/* Page Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h2 className="text-xl md:text-2xl font-bold tracking-tight text-foreground">
+          <h2 className="text-base sm:text-lg font-bold tracking-tight text-foreground">
             Platform Commission Rules & Fee Architecture
           </h2>
           <p className="text-xs text-muted-foreground mt-0.5">
@@ -201,41 +201,90 @@ export default function AdminCommissionsPage() {
           </p>
         </div>
 
-        <div className="overflow-x-auto -mx-6 -mb-6">
-          <table className="w-full text-xs text-left">
+        {/* Mobile View: Commission Split Cards */}
+        <div className="block sm:hidden space-y-3">
+          {sampleTransactions.map((tx) => (
+            <div
+              key={tx.id}
+              className="p-3.5 rounded-2xl bg-muted/20 border border-slate-200/50 dark:border-slate-800/50 space-y-3"
+            >
+              <div className="flex items-center justify-between gap-2">
+                <div>
+                  <span className="font-mono font-bold text-xs text-amber-600 dark:text-amber-400">
+                    {tx.bookingRef}
+                  </span>
+                  <p className="font-semibold text-xs text-foreground mt-0.5">{tx.provider}</p>
+                </div>
+                <span className="px-2 py-0.5 rounded-lg text-[10px] font-semibold bg-muted text-foreground">
+                  {tx.category}
+                </span>
+              </div>
+
+              <div className="grid grid-cols-3 gap-2 p-2 rounded-xl bg-card border border-slate-200/40 dark:border-slate-800/40 text-center">
+                <div>
+                  <span className="text-[9px] uppercase font-bold text-muted-foreground block">Gross Fare</span>
+                  <span className="text-xs font-black text-foreground font-mono mt-0.5 block truncate">
+                    {tx.gross} ETB
+                  </span>
+                </div>
+                <div className="border-x border-slate-200/40 dark:border-slate-800/40">
+                  <span className="text-[9px] uppercase font-bold text-muted-foreground block">TIKORA Fee</span>
+                  <span className="text-xs font-black text-emerald-600 dark:text-emerald-400 font-mono mt-0.5 block">
+                    +{tx.platformFee} ETB
+                  </span>
+                </div>
+                <div>
+                  <span className="text-[9px] uppercase font-bold text-muted-foreground block">Provider Net</span>
+                  <span className="text-xs font-black text-foreground font-mono mt-0.5 block truncate">
+                    {tx.providerNet} ETB
+                  </span>
+                </div>
+              </div>
+
+              <div className="flex items-center justify-between text-[10px] font-mono text-muted-foreground pt-1 border-t border-slate-200/30 dark:border-slate-800/30">
+                <span>{tx.date}</span>
+                <span className="font-bold text-amber-600 dark:text-amber-400">{tx.rate}% Rate</span>
+              </div>
+            </div>
+          ))}
+        </div>
+
+        {/* Desktop View: Table */}
+        <div className="hidden sm:block overflow-x-auto -mx-6 -mb-6">
+          <table className="w-full text-xs text-left min-w-[1020px]">
             <thead className="bg-slate-50/60 dark:bg-slate-800/40 text-muted-foreground uppercase text-[10px] font-bold tracking-wider">
               <tr>
-                <th className="px-6 py-3.5">Booking Ref</th>
-                <th className="px-4 py-3.5">Provider Name</th>
-                <th className="px-4 py-3.5">Sector</th>
-                <th className="px-4 py-3.5">Gross Fare</th>
-                <th className="px-4 py-3.5">Commission %</th>
-                <th className="px-4 py-3.5">Platform Retained</th>
-                <th className="px-4 py-3.5">Provider Net</th>
-                <th className="px-4 py-3.5 font-mono">Settlement Date</th>
-                <th className="px-6 py-3.5 text-right">Actions</th>
+                <th className="px-6 py-3.5 whitespace-nowrap min-w-[140px]">Booking Ref</th>
+                <th className="px-4 py-3.5 whitespace-nowrap min-w-[170px]">Provider Name</th>
+                <th className="px-4 py-3.5 whitespace-nowrap min-w-[90px]">Sector</th>
+                <th className="px-4 py-3.5 whitespace-nowrap min-w-[110px]">Gross Fare</th>
+                <th className="px-4 py-3.5 whitespace-nowrap min-w-[100px]">Commission %</th>
+                <th className="px-4 py-3.5 whitespace-nowrap min-w-[120px]">Platform Retained</th>
+                <th className="px-4 py-3.5 whitespace-nowrap min-w-[120px]">Provider Net</th>
+                <th className="px-4 py-3.5 font-mono whitespace-nowrap min-w-[120px]">Settlement Date</th>
+                <th className="px-6 py-3.5 text-right w-12 shrink-0">Actions</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100 dark:divide-slate-800/40">
               {sampleTransactions.map((tx) => (
                 <tr key={tx.id} className="hover:bg-amber-500/[0.03] dark:hover:bg-amber-500/[0.06] transition-colors">
-                  <td className="px-6 py-3.5 font-mono font-bold text-amber-600 dark:text-amber-400">
+                  <td className="px-6 py-3.5 font-mono font-bold text-amber-600 dark:text-amber-400 whitespace-nowrap">
                     {tx.bookingRef}
                   </td>
-                  <td className="px-4 py-3.5 font-semibold text-foreground">{tx.provider}</td>
-                  <td className="px-4 py-3.5">
+                  <td className="px-4 py-3.5 font-semibold text-foreground whitespace-nowrap">{tx.provider}</td>
+                  <td className="px-4 py-3.5 whitespace-nowrap">
                     <span className="px-2 py-0.5 rounded-lg text-[10px] font-medium bg-muted text-foreground">
                       {tx.category}
                     </span>
                   </td>
-                  <td className="px-4 py-3.5 font-semibold text-foreground">{tx.gross} ETB</td>
-                  <td className="px-4 py-3.5 font-bold text-amber-600 dark:text-amber-400">{tx.rate}%</td>
-                  <td className="px-4 py-3.5 font-bold text-emerald-600 dark:text-emerald-400">
+                  <td className="px-4 py-3.5 font-semibold text-foreground whitespace-nowrap">{tx.gross} ETB</td>
+                  <td className="px-4 py-3.5 font-bold text-amber-600 dark:text-amber-400 whitespace-nowrap">{tx.rate}%</td>
+                  <td className="px-4 py-3.5 font-bold text-emerald-600 dark:text-emerald-400 whitespace-nowrap">
                     +{tx.platformFee} ETB
                   </td>
-                  <td className="px-4 py-3.5 font-bold text-foreground">{tx.providerNet} ETB</td>
-                  <td className="px-4 py-3.5 font-mono text-muted-foreground">{tx.date}</td>
-                  <td className="px-6 py-3.5 text-right">
+                  <td className="px-4 py-3.5 font-bold text-foreground whitespace-nowrap">{tx.providerNet} ETB</td>
+                  <td className="px-4 py-3.5 font-mono text-muted-foreground whitespace-nowrap">{tx.date}</td>
+                  <td className="px-6 py-3.5 text-right whitespace-nowrap w-12">
                     <div className="flex items-center justify-end">
                       <ActionDropdown
                         items={[

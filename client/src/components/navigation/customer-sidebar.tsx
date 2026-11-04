@@ -86,7 +86,6 @@ export function CustomerSidebar() {
 
   return (
     <aside
-      style={{ backgroundColor: "var(--card-bg, #161922)" }}
       className="w-full lg:w-64 shrink-0 rounded-3xl border border-slate-200/80 dark:border-slate-800/80 bg-white dark:bg-[#161922] p-4 sm:p-5 shadow-sm space-y-5"
     >
       {/* Customer Profile Widget - Refined & Calm */}

@@ -203,7 +203,7 @@ export function PublicNavbar({ onSearchClick }: PublicNavbarProps) {
             title="My Saved Wishlist"
           >
             <Heart className="w-3.5 h-3.5" />
-            {favorites.length > 0 && (
+            {mounted && favorites.length > 0 && (
               <span className="absolute -top-1 -right-1 w-3.5 h-3.5 rounded-full bg-[#B45309] text-white text-[8px] font-bold flex items-center justify-center">
                 {favorites.length}
               </span>
@@ -217,7 +217,7 @@ export function PublicNavbar({ onSearchClick }: PublicNavbarProps) {
             title="Notification Center"
           >
             <Bell className="w-3.5 h-3.5" />
-            {unreadNotifsCount > 0 && (
+            {mounted && unreadNotifsCount > 0 && (
               <span className="absolute -top-1 -right-1 w-3.5 h-3.5 rounded-full bg-[#B45309] text-white text-[8px] font-bold flex items-center justify-center">
                 {unreadNotifsCount}
               </span>
@@ -274,7 +274,7 @@ export function PublicNavbar({ onSearchClick }: PublicNavbarProps) {
           </div>
 
           {/* User Profile Dropdown or Sign In Button */}
-          {isAuthenticated ? (
+          {mounted && isAuthenticated ? (
             <div className="relative" ref={userDropdownRef}>
               <button
                 type="button"
@@ -385,13 +385,11 @@ export function PublicNavbar({ onSearchClick }: PublicNavbarProps) {
           {/* Left Drawer Panel - Solid Opaque Background */}
           <aside
             aria-label="Mobile Navigation Drawer"
-            style={{ backgroundColor: "var(--card-bg, #161922)" }}
             className="fixed top-0 bottom-0 left-0 z-10 w-[310px] max-w-[85vw] h-full bg-white dark:bg-[#161922] border-r border-[#E2E8F0] dark:border-slate-800 shadow-2xl flex flex-col justify-between overflow-hidden"
           >
             {/* Drawer Top Header: Logo + Close Button */}
             <div
-              style={{ backgroundColor: "var(--card-bg, #161922)" }}
-              className="p-4 border-b border-[#E2E8F0] dark:border-slate-800 flex items-center justify-between shrink-0"
+              className="p-4 border-b border-[#E2E8F0] dark:border-slate-800 flex items-center justify-between shrink-0 bg-white dark:bg-[#161922]"
             >
               <div className="flex items-center gap-2.5">
                 <div className="w-8 h-8 rounded-lg bg-[#B45309] text-white flex items-center justify-center shadow-xs shrink-0">
@@ -775,8 +773,7 @@ export function PublicNavbar({ onSearchClick }: PublicNavbarProps) {
 
             {/* Drawer Bottom Actions: Sign Out or Officer Login */}
             <div
-              style={{ backgroundColor: "var(--card-bg, #161922)" }}
-              className="p-4 border-t border-[#E2E8F0] dark:border-slate-800 space-y-2 bg-slate-50/50 dark:bg-slate-800/20 shrink-0"
+              className="p-4 border-t border-[#E2E8F0] dark:border-slate-800 space-y-2 bg-slate-50 dark:bg-slate-900 shrink-0"
             >
               {isAuthenticated ? (
                 <button

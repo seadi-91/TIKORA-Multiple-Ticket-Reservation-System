@@ -127,7 +127,7 @@ export default function StaffDetailPage() {
             </div>
             <div>
               <div className="flex items-center gap-2">
-                <h1 className="text-lg sm:text-xl font-bold tracking-tight text-foreground">
+                <h1 className="text-base sm:text-lg font-bold tracking-tight text-foreground">
                   {member.fullName}
                 </h1>
                 <span
@@ -172,7 +172,7 @@ export default function StaffDetailPage() {
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
         <div className="bg-card border border-border/60 rounded-xl p-4 shadow-xs">
           <span className="text-muted-foreground text-xs block mb-1">Lifetime Passes Scanned</span>
-          <div className="text-xl font-bold text-amber-600">
+          <div className="text-sm sm:text-base font-bold text-amber-600">
             {member.scannedTicketsCount.toLocaleString()}
           </div>
           <span className="text-[11px] text-muted-foreground">Scanned at boarding gates</span>
@@ -180,7 +180,7 @@ export default function StaffDetailPage() {
 
         <div className="bg-card border border-border/60 rounded-xl p-4 shadow-xs">
           <span className="text-muted-foreground text-xs block mb-1">Scan Accuracy</span>
-          <div className="text-xl font-bold text-emerald-600">99.8%</div>
+          <div className="text-sm sm:text-base font-bold text-emerald-600">99.8%</div>
           <span className="text-[11px] text-muted-foreground">Zero false validations</span>
         </div>
 

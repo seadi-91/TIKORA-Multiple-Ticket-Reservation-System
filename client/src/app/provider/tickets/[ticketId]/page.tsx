@@ -175,7 +175,7 @@ export default function ProviderTicketDetailPage() {
                 {isActive ? "Active Sales" : "Sales Paused"}
               </span>
             </div>
-            <h1 className="text-lg sm:text-xl font-bold tracking-tight text-foreground mt-0.5">
+            <h1 className="text-base sm:text-lg font-bold tracking-tight text-foreground mt-0.5">
               {ticket.title}
             </h1>
           </div>
@@ -225,7 +225,7 @@ export default function ProviderTicketDetailPage() {
             <span>Ticket Price</span>
             <DollarSign className="w-4 h-4 text-amber-600" />
           </div>
-          <div className="text-xl font-bold text-foreground">
+          <div className="text-sm sm:text-base font-bold text-foreground">
             {formatCurrency(ticket.price)}
           </div>
           <p className="text-[11px] text-muted-foreground mt-0.5">Per allocated seat</p>
@@ -236,7 +236,7 @@ export default function ProviderTicketDetailPage() {
             <span>Occupancy Rate</span>
             <Users className="w-4 h-4 text-emerald-600" />
           </div>
-          <div className="text-xl font-bold text-foreground">{occupancyRate}%</div>
+          <div className="text-sm sm:text-base font-bold text-foreground">{occupancyRate}%</div>
           <div className="w-full bg-muted rounded-full h-1.5 mt-2 overflow-hidden">
             <div
               className={`h-full rounded-full ${occupancyRate >= 80
@@ -255,7 +255,7 @@ export default function ProviderTicketDetailPage() {
             <span>Seats Reserved</span>
             <Ticket className="w-4 h-4 text-blue-600" />
           </div>
-          <div className="text-xl font-bold text-foreground">
+          <div className="text-sm sm:text-base font-bold text-foreground">
             {bookedSeats}{" "}
             <span className="text-xs font-normal text-muted-foreground">
               / {ticket.totalSeats}
@@ -271,7 +271,7 @@ export default function ProviderTicketDetailPage() {
             <span>Gross Revenue</span>
             <ShieldCheck className="w-4 h-4 text-amber-600" />
           </div>
-          <div className="text-xl font-bold text-foreground">
+          <div className="text-sm sm:text-base font-bold text-foreground">
             {formatCurrency(totalGrossRevenue)}
           </div>
           <p className="text-[11px] text-muted-foreground mt-0.5">From this listing</p>

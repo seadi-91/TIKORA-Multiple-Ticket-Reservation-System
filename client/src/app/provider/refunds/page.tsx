@@ -77,7 +77,7 @@ export default function ProviderRefundsPage() {
       {/* Page Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 border-b border-border/60 pb-5">
         <div>
-          <h1 className="text-xl font-bold tracking-tight text-foreground">
+          <h1 className="text-base sm:text-lg font-bold tracking-tight text-foreground">
             Refunds & Customer Disputes
           </h1>
           <p className="text-xs text-muted-foreground">
@@ -104,7 +104,7 @@ export default function ProviderRefundsPage() {
             </span>
             <Clock className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-amber-600 shrink-0" />
           </div>
-          <div className="text-base sm:text-xl font-bold text-amber-700 dark:text-amber-400">
+          <div className="text-sm sm:text-base font-bold text-amber-700 dark:text-amber-400">
             {pendingCount}
           </div>
           <span className="text-[10px] sm:text-[11px] text-muted-foreground truncate block">Awaiting review</span>
@@ -115,7 +115,7 @@ export default function ProviderRefundsPage() {
             <span className="text-[10px] sm:text-xs truncate">Approved</span>
             <CheckCircle2 className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-emerald-600 shrink-0" />
           </div>
-          <div className="text-base sm:text-xl font-bold text-foreground">{approvedCount}</div>
+          <div className="text-sm sm:text-base font-bold text-foreground">{approvedCount}</div>
           <span className="text-[10px] sm:text-[11px] text-emerald-600 truncate block">
             {formatCurrency(totalApprovedAmount)} returned
           </span>
@@ -126,7 +126,7 @@ export default function ProviderRefundsPage() {
             <span className="text-[10px] sm:text-xs truncate">Rejected</span>
             <XCircle className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-rose-600 shrink-0" />
           </div>
-          <div className="text-base sm:text-xl font-bold text-foreground">{rejectedCount}</div>
+          <div className="text-sm sm:text-base font-bold text-foreground">{rejectedCount}</div>
           <span className="text-[10px] sm:text-[11px] text-muted-foreground truncate block">Did not meet policy</span>
         </div>
 
@@ -135,7 +135,7 @@ export default function ProviderRefundsPage() {
             <span>Avg Response Time</span>
             <RotateCcw className="w-4 h-4 text-blue-600" />
           </div>
-          <div className="text-xl font-bold text-foreground">3.2 hrs</div>
+          <div className="text-sm sm:text-base font-bold text-foreground">3.2 hrs</div>
           <span className="text-[11px] text-muted-foreground">Within SLA target of 24h</span>
         </div>
       </div>

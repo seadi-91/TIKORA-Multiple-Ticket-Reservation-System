@@ -127,7 +127,7 @@ export default function ProviderPaymentsPage() {
       {/* Top Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 border-b border-border/60 pb-5">
         <div>
-          <h1 className="text-xl font-bold tracking-tight text-foreground">
+          <h1 className="text-base sm:text-lg font-bold tracking-tight text-foreground">
             Revenue & Payout Settlements
           </h1>
           <p className="text-xs text-muted-foreground">
@@ -161,7 +161,7 @@ export default function ProviderPaymentsPage() {
             <span className="text-[10px] sm:text-xs truncate">Gross Sales</span>
             <TrendingUp className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-emerald-600 shrink-0" />
           </div>
-          <div className="text-base sm:text-xl font-bold text-foreground truncate">
+          <div className="text-sm sm:text-base font-bold text-foreground truncate">
             {formatCurrency(organization.stats.grossSales)}
           </div>
           <span className="text-[10px] sm:text-[11px] text-muted-foreground truncate block">Captured revenue</span>
@@ -173,7 +173,7 @@ export default function ProviderPaymentsPage() {
             <span className="text-[10px] sm:text-xs truncate">Commission (5%)</span>
             <DollarSign className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-muted-foreground shrink-0" />
           </div>
-          <div className="text-base sm:text-xl font-bold text-foreground truncate">
+          <div className="text-sm sm:text-base font-bold text-foreground truncate">
             {formatCurrency(organization.stats.platformCommission)}
           </div>
           <span className="text-[10px] sm:text-[11px] text-muted-foreground truncate block">Platform service fee</span>
@@ -185,7 +185,7 @@ export default function ProviderPaymentsPage() {
             <span className="text-[10px] sm:text-xs truncate">Total Settled</span>
             <CheckCircle2 className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-blue-600 shrink-0" />
           </div>
-          <div className="text-base sm:text-xl font-bold text-blue-600 truncate">
+          <div className="text-sm sm:text-base font-bold text-blue-600 truncate">
             {formatCurrency(organization.stats.netPayout)}
           </div>
           <span className="text-[10px] sm:text-[11px] text-muted-foreground truncate block">Transferred to bank</span>
@@ -197,7 +197,7 @@ export default function ProviderPaymentsPage() {
             <span className="text-[10px] sm:text-xs truncate">Available Balance</span>
             <Wallet className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-amber-600 shrink-0" />
           </div>
-          <div className="text-base sm:text-xl font-bold text-amber-700 dark:text-amber-400 truncate">
+          <div className="text-sm sm:text-base font-bold text-amber-700 dark:text-amber-400 truncate">
             {formatCurrency(availableBalance)}
           </div>
           <span className="text-[10px] sm:text-[11px] text-muted-foreground truncate block">Ready for settlement</span>
@@ -422,7 +422,7 @@ export default function ProviderPaymentsPage() {
               <span className="text-amber-700 dark:text-amber-300 font-semibold block">
                 Available Withdrawable Balance:
               </span>
-              <span className="text-lg font-bold text-foreground font-mono">
+              <span className="text-sm sm:text-base font-bold text-foreground font-mono">
                 {formatCurrency(availableBalance)}
               </span>
             </div>

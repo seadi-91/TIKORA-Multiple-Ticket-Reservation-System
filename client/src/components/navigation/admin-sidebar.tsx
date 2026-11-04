@@ -25,6 +25,7 @@ import {
   Sparkles,
   X,
   LogOut,
+  ScanLine,
 } from "lucide-react";
 import { useAdminStore } from "@/stores/admin.store";
 import { useAuthStore } from "@/stores/auth.store";
@@ -139,6 +140,11 @@ export function AdminSidebar({
           icon: Users,
         },
         {
+          label: "Field Inspectors",
+          href: "/admin/inspectors",
+          icon: ScanLine,
+        },
+        {
           label: "Services & Tickets",
           href: "/admin/tickets",
           icon: Ticket,
@@ -197,10 +203,7 @@ export function AdminSidebar({
   ];
 
   const sidebarContent = (
-    <div
-      style={{ backgroundColor: "var(--card-bg, #161922)" }}
-      className="flex flex-col h-full bg-white dark:bg-[#161922] text-[#0F172A] dark:text-[#F8FAFC] select-none"
-    >
+    <div className="flex flex-col h-full bg-white dark:bg-[#161922] text-[#0F172A] dark:text-[#F8FAFC] select-none">
       {/* Brand & Organization Header */}
       <div className="flex items-center justify-between px-4 h-16 border-b border-slate-200/40 dark:border-slate-800/40 shrink-0">
         <Link
@@ -355,7 +358,6 @@ export function AdminSidebar({
     <>
       {/* Desktop Persistent Sidebar */}
       <aside
-        style={{ backgroundColor: "var(--card-bg, #161922)" }}
         className={`hidden lg:flex flex-col shrink-0 sticky top-0 h-screen bg-white dark:bg-[#161922] border-r border-slate-200/80 dark:border-slate-800 transition-all duration-300 ease-in-out select-none ${
           collapsed ? "w-18" : "w-64"
         }`}
@@ -376,7 +378,6 @@ export function AdminSidebar({
             />
             {/* Drawer Panel - Solid Opaque Background */}
             <aside
-              style={{ backgroundColor: "var(--card-bg, #161922)" }}
               className="fixed top-0 bottom-0 left-0 z-10 w-72 max-w-[85vw] h-full bg-white dark:bg-[#161922] border-r border-slate-200 dark:border-slate-800 shadow-2xl flex flex-col justify-between overflow-hidden"
             >
               {sidebarContent}

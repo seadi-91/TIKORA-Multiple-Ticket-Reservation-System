@@ -28,6 +28,9 @@ import {
   Zap,
   Layers,
   Sparkles,
+  Filter,
+  Menu,
+  X,
 } from "lucide-react";
 import { useAdminStore, AdminSettings } from "@/stores/admin.store";
 import { formatCurrency } from "@/lib/format-currency";
@@ -67,6 +70,7 @@ export default function AdminSettingsPage() {
   const [activeSection, setActiveSection] = useState<SettingSection>("GENERAL");
   const [searchQuery, setSearchQuery] = useState("");
   const [showResetConfirm, setShowResetConfirm] = useState(false);
+  const [mobileDrawerOpen, setMobileDrawerOpen] = useState(false);
 
   // Form state initialized with store settings
   const [form, setForm] = useState<AdminSettings>({ ...settings });
@@ -322,7 +326,7 @@ export default function AdminSettingsPage() {
             </span>
             <span className="text-[11px] font-mono text-muted-foreground">TIKORA v2.4</span>
           </div>
-          <h1 className="text-lg sm:text-xl font-black text-foreground tracking-tight">
+          <h1 className="text-base sm:text-lg font-bold text-foreground tracking-tight">
             System & Platform Configuration
           </h1>
         </div>
@@ -408,8 +412,143 @@ export default function AdminSettingsPage() {
           Right: Focused Configuration Details Panel
           ========================================================================= */}
       <div className="rounded-3xl bg-white dark:bg-[#161922] border border-slate-200/60 dark:border-slate-800/60 shadow-sm overflow-hidden flex flex-col md:flex-row min-h-[640px]">
-        {/* Left Settings Sidebar */}
-        <aside className="w-full md:w-64 lg:w-72 shrink-0 border-r border-slate-200/60 dark:border-slate-800/60 bg-slate-50/70 dark:bg-[#11131a] p-3 sm:p-4 flex flex-col justify-between space-y-4">
+        {/* Mobile Settings Section Bar (Filter Button & Direct Dropdown) */}
+        <div className="md:hidden p-3 bg-slate-50 dark:bg-slate-900/60 border-b border-slate-200/60 dark:border-slate-800/60 flex items-center justify-between gap-2.5">
+          <button
+            type="button"
+            onClick={() => setMobileDrawerOpen(true)}
+            className="flex items-center gap-2 px-3 py-2 rounded-xl bg-card border border-slate-200/80 dark:border-slate-800 text-xs font-bold text-foreground shadow-2xs hover:border-amber-500/40 transition-all cursor-pointer active:scale-95"
+          >
+            <Filter className="w-3.5 h-3.5 text-amber-500" />
+            <span>Sections</span>
+            <span className="w-1.5 h-1.5 rounded-full bg-amber-500" />
+          </button>
+
+          {/* Quick Dropdown selector for mobile */}
+          <div className="flex-1 min-w-0">
+            <select
+              value={activeSection}
+              onChange={(e) => setActiveSection(e.target.value as SettingSection)}
+              className="w-full h-9 px-2.5 text-xs rounded-xl bg-card border border-slate-200/80 dark:border-slate-800 text-foreground font-semibold focus:outline-none focus:ring-2 focus:ring-amber-500/30 truncate"
+            >
+              {navGroups.map((g) => (
+                <optgroup key={g.group} label={g.group}>
+                  {g.items.map((i) => (
+                    <option key={i.id} value={i.id}>
+                      {i.label}
+                    </option>
+                  ))}
+                </optgroup>
+              ))}
+            </select>
+          </div>
+        </div>
+
+        {/* Mobile Left-Side Slide-Out Drawer (when Filter / Sections is tapped) */}
+        {mobileDrawerOpen && (
+          <div className="fixed inset-0 z-50 md:hidden flex animate-in fade-in duration-200">
+            {/* Backdrop */}
+            <div
+              className="fixed inset-0 bg-black/60 backdrop-blur-xs"
+              onClick={() => setMobileDrawerOpen(false)}
+            />
+
+            {/* Left Drawer Container */}
+            <div className="relative w-[300px] max-w-[85vw] h-full bg-white dark:bg-[#11131a] border-r border-slate-200/80 dark:border-slate-800 shadow-2xl flex flex-col p-4 space-y-3.5 z-10 animate-in slide-in-from-left duration-200">
+              <div className="flex items-center justify-between pb-3 border-b border-slate-200/60 dark:border-slate-800/60">
+                <div className="flex items-center gap-2">
+                  <div className="p-1.5 rounded-lg bg-amber-500/10 text-amber-600 dark:text-amber-400">
+                    <Filter className="w-4 h-4" />
+                  </div>
+                  <div>
+                    <h3 className="font-bold text-xs text-foreground">Settings Navigation</h3>
+                    <p className="text-[10px] text-muted-foreground">Select section to configure</p>
+                  </div>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setMobileDrawerOpen(false)}
+                  className="p-1.5 rounded-xl text-muted-foreground hover:text-foreground hover:bg-slate-100 dark:hover:bg-slate-800 cursor-pointer"
+                >
+                  <X className="w-4 h-4" />
+                </button>
+              </div>
+
+              {/* Quick Search Input inside Drawer */}
+              <div className="relative">
+                <Search className="w-3.5 h-3.5 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
+                <input
+                  type="text"
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  placeholder="Filter settings..."
+                  className="w-full pl-8 pr-7 py-1.5 rounded-xl text-xs bg-slate-50 dark:bg-[#161922] border border-slate-200 dark:border-slate-800 text-foreground placeholder:text-muted-foreground focus:outline-none focus:border-amber-500"
+                />
+                {searchQuery && (
+                  <button
+                    type="button"
+                    onClick={() => setSearchQuery("")}
+                    className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 text-xs"
+                  >
+                    ✕
+                  </button>
+                )}
+              </div>
+
+              {/* Navigation Items list inside Drawer */}
+              <div className="flex-1 overflow-y-auto space-y-4 pr-1 scrollbar-thin">
+                {filteredNavGroups.map((group, gIdx) => (
+                  <div key={gIdx} className="space-y-1">
+                    <span className="text-[10px] font-extrabold uppercase tracking-wider text-slate-400 dark:text-slate-500 px-2 block">
+                      {group.group}
+                    </span>
+                    <div className="space-y-0.5">
+                      {group.items.map((item) => {
+                        const Icon = item.icon;
+                        const isActive = activeSection === item.id;
+                        return (
+                          <button
+                            key={item.id}
+                            type="button"
+                            onClick={() => {
+                              setActiveSection(item.id);
+                              setMobileDrawerOpen(false);
+                            }}
+                            className={`w-full flex items-center justify-between p-2 rounded-xl text-left transition-all cursor-pointer ${
+                              isActive
+                                ? "bg-[#B45309] text-white shadow-xs font-bold"
+                                : "text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800/60"
+                            }`}
+                          >
+                            <div className="flex items-center gap-2.5 min-w-0">
+                              <Icon className={`w-4 h-4 shrink-0 ${isActive ? "text-white" : "text-slate-400"}`} />
+                              <div className="min-w-0">
+                                <span className="text-xs truncate block leading-tight">{item.label}</span>
+                                <span className={`text-[9px] truncate block ${isActive ? "text-white/80" : "text-slate-400"}`}>
+                                  {item.sub}
+                                </span>
+                              </div>
+                            </div>
+                            <ChevronRight className={`w-3.5 h-3.5 shrink-0 ${isActive ? "text-white" : "text-slate-400/40"}`} />
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </div>
+                ))}
+              </div>
+
+              {/* Drawer Footer */}
+              <div className="p-2.5 rounded-xl bg-slate-50 dark:bg-slate-900 border border-slate-200/60 dark:border-slate-800 text-[10px] text-muted-foreground flex items-center justify-between">
+                <span>TIKORA Governance</span>
+                <span className="font-mono text-emerald-600 dark:text-emerald-400 font-bold">Live v2.4</span>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Desktop Left Settings Sidebar */}
+        <aside className="hidden md:flex md:w-64 lg:w-72 shrink-0 border-r border-slate-200/60 dark:border-slate-800/60 bg-slate-50/70 dark:bg-[#11131a] p-3 sm:p-4 flex-col justify-between space-y-4">
           <div className="space-y-3">
             {/* Quick Search Input */}
             <div className="relative">

@@ -42,7 +42,7 @@ export default function ProviderSportsPage() {
             <span>/</span>
             <span className="font-semibold text-[#0F172A] dark:text-white">Stadium Sports</span>
           </div>
-          <h1 className="text-xl sm:text-2xl font-black text-[#0F172A] dark:text-white tracking-tight">
+          <h1 className="text-base sm:text-lg font-bold text-[#0F172A] dark:text-white tracking-tight">
             Stadium Tournaments & Matchday Fixtures
           </h1>
           <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
