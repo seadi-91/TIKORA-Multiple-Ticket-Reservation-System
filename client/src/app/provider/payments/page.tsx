@@ -239,11 +239,11 @@ export default function ProviderPaymentsPage() {
         </div>
       </div>
 
-      {/* Settlement Transactions Table */}
-      <div className="bg-card border border-slate-200/50 dark:border-slate-800/50 rounded-3xl shadow-sm overflow-hidden">
-        <div className="p-5 border-b border-slate-200/40 dark:border-slate-800/40 flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+      {/* Settlement Transactions Table & Mobile Cards */}
+      <div className="bg-card border border-slate-200/50 dark:border-slate-800/40 rounded-2xl sm:rounded-3xl shadow-xs overflow-hidden">
+        <div className="p-4 sm:p-5 border-b border-slate-200/40 dark:border-slate-800/40 flex flex-col sm:flex-row sm:items-center justify-between gap-2">
           <div>
-            <h3 className="text-sm font-bold text-foreground">Payout & Settlement History</h3>
+            <h3 className="text-sm sm:text-base font-bold text-foreground">Payout & Settlement History</h3>
             <p className="text-xs text-muted-foreground mt-0.5">
               Official record of electronic funds transfers to your designated bank.
             </p>
@@ -253,7 +253,8 @@ export default function ProviderPaymentsPage() {
           </span>
         </div>
 
-        <div className="overflow-x-auto">
+        {/* Desktop Table View */}
+        <div className="hidden md:block overflow-x-auto">
           <table className="w-full text-left border-collapse text-xs">
             <thead>
               <tr className="bg-slate-50/60 dark:bg-slate-800/40 text-muted-foreground uppercase text-[10px] font-bold tracking-wider">
@@ -337,6 +338,63 @@ export default function ProviderPaymentsPage() {
               ))}
             </tbody>
           </table>
+        </div>
+
+        {/* Mobile View: High-End Settlement Cards */}
+        <div className="block md:hidden p-3 space-y-2.5">
+          {transactions.map((tx) => (
+            <div
+              key={tx.id}
+              className="p-3.5 rounded-xl bg-slate-50/70 dark:bg-slate-800/30 border border-slate-200/40 dark:border-slate-800/40 space-y-2.5"
+            >
+              <div className="flex items-center justify-between gap-2">
+                <span className="font-mono font-bold text-xs text-amber-600 dark:text-amber-400">
+                  {tx.reference}
+                </span>
+
+                <div className="flex items-center gap-2">
+                  <span
+                    className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[9px] font-bold ${
+                      tx.status === "COMPLETED"
+                        ? "bg-emerald-500/10 text-emerald-600"
+                        : "bg-amber-500/10 text-amber-600"
+                    }`}
+                  >
+                    {tx.status}
+                  </span>
+
+                  <ActionDropdown
+                    items={[
+                      {
+                        label: "View Receipt",
+                        icon: <FileText className="w-3.5 h-3.5" />,
+                        onClick: () =>
+                          toast.success(`Generated receipt slip for ${tx.reference}`),
+                      },
+                      {
+                        label: "Copy Ref",
+                        icon: <Copy className="w-3.5 h-3.5" />,
+                        onClick: () => {
+                          navigator.clipboard.writeText(tx.reference);
+                          toast.success("Reference copied");
+                        },
+                      },
+                    ]}
+                  />
+                </div>
+              </div>
+
+              <div>
+                <span className="font-semibold text-xs text-foreground block">{tx.bankName}</span>
+                <span className="text-[11px] font-mono text-muted-foreground block">Acct: {tx.accountNumber}</span>
+              </div>
+
+              <div className="flex items-center justify-between pt-2 border-t border-slate-200/40 dark:border-slate-800/40 text-xs">
+                <span className="text-[11px] font-mono text-muted-foreground">{tx.date}</span>
+                <span className="font-mono font-black text-emerald-600">{formatCurrency(tx.netPayout)}</span>
+              </div>
+            </div>
+          ))}
         </div>
       </div>
 

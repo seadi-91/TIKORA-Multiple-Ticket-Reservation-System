@@ -10,14 +10,9 @@ export default function AdminRootLayout({ children }: { children: React.ReactNod
   const [mobileOpen, setMobileOpen] = useState(false);
 
   return (
-    <div className="min-h-screen bg-[#F8FAFC] dark:bg-[#0F1117] text-[#0F172A] dark:text-[#F8FAFC] flex flex-col">
-      {/* Sticky Top Header with dynamic offset */}
-      <div className={`sticky top-0 z-30 transition-all duration-300 ${collapsed ? "lg:pl-16" : "lg:pl-64"}`}>
-        <AdminHeader onToggleMobileMenu={() => setMobileOpen(true)} />
-      </div>
-
-      {/* Main Container */}
-      <div className="flex-1 flex w-full">
+    <div className="min-h-screen min-h-[100dvh] bg-[#F8FAFC] dark:bg-[#0F1117] text-[#0F172A] dark:text-[#F8FAFC] flex flex-col">
+      <div className="flex-1 flex w-full min-w-0">
+        {/* Desktop Sticky Sidebar */}
         <AdminSidebar
           collapsed={collapsed}
           onToggleCollapse={() => setCollapsed(!collapsed)}
@@ -25,13 +20,16 @@ export default function AdminRootLayout({ children }: { children: React.ReactNod
           onCloseMobile={() => setMobileOpen(false)}
         />
 
-        <main
-          className={`flex-1 min-w-0 transition-all duration-300 p-4 sm:p-6 lg:p-8 pb-24 lg:pb-8 ${
-            collapsed ? "lg:pl-20" : "lg:pl-70"
-          }`}
-        >
-          <div className="max-w-7xl mx-auto space-y-6">{children}</div>
-        </main>
+        {/* Right Content Area: Sticky Header + Main Page */}
+        <div className="flex-1 flex flex-col min-w-0 w-full">
+          <div className="sticky top-0 z-30 w-full">
+            <AdminHeader onToggleMobileMenu={() => setMobileOpen(true)} />
+          </div>
+
+          <main className="flex-1 min-w-0 p-3 sm:p-6 lg:p-8 pb-24 lg:pb-8">
+            <div className="max-w-7xl mx-auto w-full space-y-6">{children}</div>
+          </main>
+        </div>
       </div>
 
       {/* Mobile Bottom Navigation Bar */}

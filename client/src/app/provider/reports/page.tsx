@@ -104,7 +104,7 @@ export default function ProviderReportsPage() {
 
       {/* KPI Summary Cards - Multiple Column Display (4 Columns) */}
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5 sm:gap-4">
-        <div className="bg-card border border-border/60 rounded-xl p-3 sm:p-4 shadow-xs">
+        <div className="bg-card border border-border/60 rounded-2xl p-3.5 sm:p-4 shadow-xs hover:shadow-sm transition-all">
           <span className="text-muted-foreground text-[10px] sm:text-xs block mb-1 truncate">Average Order Value</span>
           <div className="text-base sm:text-xl font-bold text-foreground truncate">780 ETB</div>
           <span className="text-[10px] sm:text-[11px] text-emerald-600 flex items-center gap-1 mt-0.5 truncate">
@@ -112,7 +112,7 @@ export default function ProviderReportsPage() {
           </span>
         </div>
 
-        <div className="bg-card border border-border/60 rounded-xl p-3 sm:p-4 shadow-xs">
+        <div className="bg-card border border-border/60 rounded-2xl p-3.5 sm:p-4 shadow-xs hover:shadow-sm transition-all">
           <span className="text-muted-foreground text-[10px] sm:text-xs block mb-1 truncate">Occupancy Rate</span>
           <div className="text-base sm:text-xl font-bold text-foreground truncate">74.2%</div>
           <span className="text-[10px] sm:text-[11px] text-emerald-600 flex items-center gap-1 mt-0.5 truncate">
@@ -120,13 +120,13 @@ export default function ProviderReportsPage() {
           </span>
         </div>
 
-        <div className="bg-card border border-border/60 rounded-xl p-3 sm:p-4 shadow-xs">
+        <div className="bg-card border border-border/60 rounded-2xl p-3.5 sm:p-4 shadow-xs hover:shadow-sm transition-all">
           <span className="text-muted-foreground text-[10px] sm:text-xs block mb-1 truncate">Repeat Rate</span>
           <div className="text-base sm:text-xl font-bold text-foreground truncate">68.5%</div>
           <span className="text-[10px] sm:text-[11px] text-muted-foreground truncate block">2+ bookings</span>
         </div>
 
-        <div className="bg-card border border-border/60 rounded-xl p-3 sm:p-4 shadow-xs">
+        <div className="bg-card border border-border/60 rounded-2xl p-3.5 sm:p-4 shadow-xs hover:shadow-sm transition-all">
           <span className="text-muted-foreground text-[10px] sm:text-xs block mb-1 truncate">On-Time Dispatch</span>
           <div className="text-base sm:text-xl font-bold text-emerald-600 truncate">97.4%</div>
           <span className="text-[10px] sm:text-[11px] text-muted-foreground truncate block">On schedule</span>
@@ -134,17 +134,17 @@ export default function ProviderReportsPage() {
       </div>
 
       {/* Charts Grid */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-5 sm:gap-6">
         {/* Revenue Trend Line Chart */}
-        <div className="lg:col-span-2 bg-card border border-border/60 rounded-xl p-5 shadow-xs space-y-4">
-          <div className="flex items-center justify-between">
+        <div className="lg:col-span-2 bg-card border border-border/60 rounded-2xl sm:rounded-3xl p-4 sm:p-6 shadow-xs space-y-4">
+          <div className="flex items-center justify-between border-b border-border/40 pb-3">
             <div>
-              <h3 className="text-sm font-bold text-foreground">Revenue Velocity & Volume</h3>
+              <h3 className="text-sm sm:text-base font-bold text-foreground">Revenue Velocity & Volume</h3>
               <p className="text-xs text-muted-foreground">
                 Gross ticket sales trajectory over the selected period
               </p>
             </div>
-            <span className="text-xs font-mono font-bold text-amber-600">
+            <span className="text-xs font-mono font-bold text-amber-600 dark:text-amber-400">
               Total: 482,500 ETB
             </span>
           </div>
@@ -154,23 +154,21 @@ export default function ProviderReportsPage() {
         </div>
 
         {/* Sector Distribution Pie Chart */}
-        <div className="bg-card border border-border/60 rounded-xl p-5 shadow-xs space-y-4">
-          <div>
-            <h3 className="text-sm font-bold text-foreground">Revenue by Category</h3>
-            <p className="text-xs text-muted-foreground">
-              Sector share breakdown across services
-            </p>
+        <div className="bg-card border border-border/60 rounded-2xl sm:rounded-3xl p-4 sm:p-6 shadow-xs space-y-4">
+          <div className="border-b border-border/40 pb-3">
+            <h3 className="text-sm sm:text-base font-bold text-foreground">Revenue by Category</h3>
+            <p className="text-xs text-muted-foreground">Distribution across transport & events</p>
           </div>
           <div className="h-64">
-            <DashboardPieChart data={sectorPieData} />
+            <DashboardPieChart data={sectorPieData} height={240} />
           </div>
         </div>
       </div>
 
       {/* Bar Chart: Top Routes */}
-      <div className="bg-card border border-border/60 rounded-xl p-5 shadow-xs space-y-4">
+      <div className="bg-card border border-border/60 rounded-2xl sm:rounded-3xl p-4 sm:p-6 shadow-xs space-y-4">
         <div>
-          <h3 className="text-sm font-bold text-foreground">Top Performing Route Corridors</h3>
+          <h3 className="text-sm sm:text-base font-bold text-foreground">Top Performing Route Corridors</h3>
           <p className="text-xs text-muted-foreground">
             Ranked by gross sales volume and seat fill rate
           </p>
@@ -181,7 +179,7 @@ export default function ProviderReportsPage() {
       </div>
 
       {/* Route & Service Detailed Performance Table */}
-      <div className="bg-card border border-border/60 rounded-xl shadow-xs overflow-hidden">
+      <div className="bg-card border border-border/60 rounded-2xl sm:rounded-3xl shadow-xs overflow-hidden">
         <div className="p-4 border-b border-border/60 flex items-center justify-between">
           <div>
             <h3 className="text-sm font-bold text-foreground">Route & Segment Ledger</h3>

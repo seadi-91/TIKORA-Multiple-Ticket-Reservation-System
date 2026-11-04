@@ -37,6 +37,7 @@ import { AUTH_ROUTES, CUSTOMER_ROUTES } from "@/lib/constants";
 import { useTheme, Theme } from "@/providers/theme-provider";
 import { useBookingStore } from "@/stores/booking.store";
 import { useAuthStore } from "@/stores/auth.store";
+import { toast } from "sonner";
 
 interface PublicNavbarProps {
   onSearchClick?: () => void;
@@ -345,8 +346,10 @@ export function PublicNavbar({ onSearchClick }: PublicNavbarProps) {
                     <button
                       type="button"
                       onClick={() => {
-                        logout();
                         setUserDropdownOpen(false);
+                        logout();
+                        toast.success("Signed out successfully");
+                        window.location.href = "/login";
                       }}
                       className="w-full flex items-center gap-2 p-1.5 rounded-lg text-xs font-semibold text-rose-600 dark:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-950/30 cursor-pointer"
                     >
@@ -371,21 +374,25 @@ export function PublicNavbar({ onSearchClick }: PublicNavbarProps) {
 
       {/* Modern Slide-Out Left Sidebar Drawer for Mobile Rendered at Root Portal */}
       {mounted && mobileMenuOpen && createPortal(
-        <div className="lg:hidden fixed inset-0 z-[9999] flex w-screen h-[100dvh] animate-in fade-in duration-200">
+        <div className="lg:hidden fixed inset-0 z-[9999]">
           {/* Backdrop Blur Overlay */}
           <div
-            className="fixed inset-0 bg-black/60 backdrop-blur-xs transition-opacity"
+            className="fixed inset-0 bg-black/60 backdrop-blur-xs transition-opacity duration-200"
             onClick={() => setMobileMenuOpen(false)}
             aria-hidden="true"
           />
 
-          {/* Left Drawer Panel */}
+          {/* Left Drawer Panel - Solid Opaque Background */}
           <aside
             aria-label="Mobile Navigation Drawer"
-            className="relative z-[10000] w-[310px] max-w-[85vw] h-[100dvh] bg-white dark:bg-[#161922] border-r border-[#E2E8F0] dark:border-slate-800 shadow-2xl flex flex-col justify-between overflow-hidden animate-in slide-in-from-left duration-250"
+            style={{ backgroundColor: "var(--card-bg, #161922)" }}
+            className="fixed top-0 bottom-0 left-0 z-10 w-[310px] max-w-[85vw] h-full bg-white dark:bg-[#161922] border-r border-[#E2E8F0] dark:border-slate-800 shadow-2xl flex flex-col justify-between overflow-hidden"
           >
             {/* Drawer Top Header: Logo + Close Button */}
-            <div className="p-4 border-b border-[#E2E8F0] dark:border-slate-800 flex items-center justify-between shrink-0">
+            <div
+              style={{ backgroundColor: "var(--card-bg, #161922)" }}
+              className="p-4 border-b border-[#E2E8F0] dark:border-slate-800 flex items-center justify-between shrink-0"
+            >
               <div className="flex items-center gap-2.5">
                 <div className="w-8 h-8 rounded-lg bg-[#B45309] text-white flex items-center justify-center shadow-xs shrink-0">
                   <Ticket className="w-4 h-4 transform -rotate-12" />
@@ -767,13 +774,18 @@ export function PublicNavbar({ onSearchClick }: PublicNavbarProps) {
             </div>
 
             {/* Drawer Bottom Actions: Sign Out or Officer Login */}
-            <div className="p-4 border-t border-[#E2E8F0] dark:border-slate-800 space-y-2 bg-slate-50/50 dark:bg-slate-800/20 shrink-0">
+            <div
+              style={{ backgroundColor: "var(--card-bg, #161922)" }}
+              className="p-4 border-t border-[#E2E8F0] dark:border-slate-800 space-y-2 bg-slate-50/50 dark:bg-slate-800/20 shrink-0"
+            >
               {isAuthenticated ? (
                 <button
                   type="button"
                   onClick={() => {
-                    logout();
                     setMobileMenuOpen(false);
+                    logout();
+                    toast.success("Signed out successfully");
+                    window.location.href = "/login";
                   }}
                   className="w-full flex items-center justify-center gap-2 py-2.5 px-3 rounded-xl bg-rose-50 dark:bg-rose-950/40 text-rose-600 dark:text-rose-400 font-bold text-xs hover:bg-rose-100 dark:hover:bg-rose-950/60 transition-colors cursor-pointer"
                 >

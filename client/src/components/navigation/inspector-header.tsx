@@ -22,6 +22,7 @@ import {
 import { useInspectorStore } from "@/stores/inspector.store";
 import { useAuthStore } from "@/stores/auth.store";
 import { useTheme } from "@/providers/theme-provider";
+import { toast } from "sonner";
 
 interface InspectorHeaderProps {
   onToggleMobileMenu?: () => void;
@@ -76,7 +77,10 @@ export function InspectorHeader({ onToggleMobileMenu }: InspectorHeaderProps = {
   };
 
   return (
-    <header className="h-14 border-b border-slate-200/80 dark:border-slate-800 bg-white/95 dark:bg-[#161922]/95 backdrop-blur-md px-4 flex items-center justify-between gap-3 sticky top-0 z-30 shadow-xs w-full">
+    <header
+      style={{ backgroundColor: "var(--card-bg, #161922)" }}
+      className="h-16 border-b border-slate-200/80 dark:border-slate-800 bg-white dark:bg-[#161922] px-4 sm:px-6 flex items-center justify-between gap-3 sticky top-0 z-30 shadow-xs w-full transition-colors"
+    >
       {/* Left: Page Title & Current Gate Assignment */}
       <div className="flex items-center gap-2.5 truncate">
         {onToggleMobileMenu && (
@@ -262,12 +266,13 @@ export function InspectorHeader({ onToggleMobileMenu }: InspectorHeaderProps = {
                   onClick={() => {
                     setShowProfileMenu(false);
                     logout();
+                    toast.success("Signed out successfully");
                     window.location.href = "/inspector/login";
                   }}
-                  className="w-full flex items-center gap-2 px-3 py-2 text-rose-600 dark:text-rose-400 hover:bg-rose-500/10 transition-colors"
+                  className="w-full flex items-center gap-2 px-3 py-2 text-xs font-semibold text-rose-600 dark:text-rose-400 hover:bg-rose-500/10 transition-colors cursor-pointer"
                 >
                   <LogOut className="w-3.5 h-3.5" />
-                  <span>Log Out</span>
+                  <span>Sign Out</span>
                 </button>
               </div>
             </div>

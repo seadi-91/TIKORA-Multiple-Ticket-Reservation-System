@@ -12,10 +12,10 @@ interface DashboardLayoutProps {
 
 export function DashboardLayout({ children }: DashboardLayoutProps) {
   return (
-    <div className="min-h-screen flex flex-col bg-[#F8FAFC] dark:bg-[#0C0E14] text-[#0F172A] dark:text-[#F8FAFC]">
+    <div className="min-h-screen min-h-[100dvh] flex flex-col bg-[#F8FAFC] dark:bg-[#0F1117] text-[#0F172A] dark:text-[#F8FAFC]">
       <PublicNavbar />
 
-      <main className="flex-1 max-w-7xl w-full mx-auto px-3 sm:px-6 lg:px-8 py-4 sm:py-8 pb-24 lg:pb-8">
+      <main className="flex-1 max-w-7xl w-full mx-auto px-3 sm:px-6 lg:px-8 py-3 sm:py-6 lg:py-8 pb-24 lg:pb-8">
         <div className="flex flex-col lg:flex-row items-start gap-6 lg:gap-8">
           <div className="hidden lg:block shrink-0">
             <CustomerSidebar />

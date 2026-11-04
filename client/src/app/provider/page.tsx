@@ -21,12 +21,20 @@ import {
   AlertCircle,
   Eye,
   Filter,
+  Copy,
+  Download,
+  MoreVertical,
+  MapPin,
+  Check,
+  Sparkles,
 } from "lucide-react";
 import { useProviderStore } from "@/stores/provider.store";
 import { formatCurrency } from "@/lib/format-currency";
 import { DashboardLineChart } from "@/components/charts/line-chart";
 import { DashboardPieChart } from "@/components/charts/pie-chart";
 import { DashboardBarChart } from "@/components/charts/bar-chart";
+import { ActionDropdown } from "@/components/ui/action-dropdown";
+import { toast } from "sonner";
 
 export default function ProviderOverviewDashboard() {
   const { organization, busRoutes, busSchedules, staffMembers, refunds } = useProviderStore();
@@ -104,153 +112,193 @@ export default function ProviderOverviewDashboard() {
     },
   ];
 
-  const pendingRefundCount = refunds.filter((r) => r.status === "PENDING").length;
+  const handleCopy = (text: string, label: string) => {
+    navigator.clipboard.writeText(text);
+    toast.success(`${label} copied to clipboard`);
+  };
 
   return (
-    <div className="space-y-6">
-      {/* Welcome Banner */}
-      <div className="rounded-3xl bg-gradient-to-r from-slate-900 to-[#1E293B] text-white p-6 sm:p-8 shadow-sm flex flex-col md:flex-row items-start md:items-center justify-between gap-6 border border-slate-800">
-        <div className="space-y-2 max-w-xl">
-          <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 text-[11px] font-bold">
-            <ShieldCheck className="w-3.5 h-3.5" />
-            <span>Verified Merchant: {organization.legalName}</span>
+    <div className="space-y-5 sm:space-y-6">
+      {/* Modern Welcome Hero Banner */}
+      <div className="relative overflow-hidden rounded-2xl sm:rounded-3xl bg-gradient-to-br from-slate-900 via-slate-900 to-amber-950/40 text-white p-5 sm:p-7 shadow-sm border border-slate-800/80">
+        {/* Soft Ambient Radial Glow */}
+        <div className="absolute -top-16 -right-16 w-56 h-56 bg-amber-500/10 rounded-full blur-3xl pointer-events-none" />
+
+        <div className="relative z-10 flex flex-col md:flex-row items-start md:items-center justify-between gap-5 sm:gap-6">
+          <div className="space-y-2 max-w-xl">
+            <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-emerald-500/15 text-emerald-300 ring-1 ring-emerald-500/30 text-[11px] font-bold">
+              <ShieldCheck className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
+              <span className="truncate">Verified Merchant: {organization.legalName}</span>
+            </div>
+
+            <h1 className="text-xl sm:text-2xl lg:text-3xl font-black tracking-tight text-white leading-tight">
+              Operations & Revenue Hub
+            </h1>
+            <p className="text-xs sm:text-sm text-slate-300 leading-relaxed max-w-lg">
+              Live seat matrices, scannable passes, turnstile entry logs, and daily bank payouts.
+            </p>
           </div>
 
-          <h1 className="text-2xl sm:text-3xl font-black tracking-tight text-white">
-            Operations & Revenue Hub
-          </h1>
-          <p className="text-xs sm:text-sm text-slate-300 leading-relaxed">
-            Real-time passenger bookings, seat availability matrices, electronic gate turnstiles, and daily bank settlements.
-          </p>
-        </div>
-
-        <div className="flex flex-wrap items-center gap-2.5">
-          <Link
-            href="/provider/bus/routes"
-            className="inline-flex items-center gap-1.5 px-4 py-2.5 rounded-xl bg-[#B45309] hover:bg-[#92400E] text-white font-bold text-xs shadow-xs active:scale-95 transition-all"
-          >
-            <Plus className="w-3.5 h-3.5" />
-            <span>New Route</span>
-          </Link>
-          <Link
-            href="/provider/reports"
-            className="inline-flex items-center gap-1.5 px-4 py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 font-bold text-xs transition-all"
-          >
-            <span>Financial Report</span>
-          </Link>
+          <div className="flex flex-wrap items-center gap-2.5 w-full sm:w-auto">
+            <Link
+              href="/provider/bus/routes"
+              className="inline-flex items-center justify-center gap-1.5 px-4 py-2.5 rounded-xl bg-[#B45309] hover:bg-[#92400E] text-white font-bold text-xs shadow-xs active:scale-95 transition-all flex-1 sm:flex-initial"
+            >
+              <Plus className="w-3.5 h-3.5" />
+              <span>New Route</span>
+            </Link>
+            <Link
+              href="/provider/reports"
+              className="inline-flex items-center justify-center gap-1.5 px-4 py-2.5 rounded-xl bg-white/10 hover:bg-white/15 text-slate-200 ring-1 ring-white/15 font-bold text-xs backdrop-blur-xs transition-all flex-1 sm:flex-initial"
+            >
+              <span>Financial Report</span>
+            </Link>
+          </div>
         </div>
       </div>
 
-      {/* 6 Key Stat Cards - Multiple 3 to 6 Column Display */}
-      <div className="grid grid-cols-3 lg:grid-cols-6 gap-2 sm:gap-3.5">
-        {/* Total Revenue */}
-        <div className="p-2.5 sm:p-4 rounded-xl sm:rounded-2xl bg-white dark:bg-[#161922] border border-[#E2E8F0] dark:border-slate-800 shadow-2xs space-y-0.5 sm:space-y-1">
-          <div className="flex items-center justify-between text-slate-400">
-            <span className="text-[9px] sm:text-[10px] font-bold uppercase tracking-wider truncate">Gross Revenue</span>
-            <CreditCard className="w-3.5 h-3.5 text-[#B45309] dark:text-amber-400 shrink-0" />
+      {/* 6 Key Stat Cards - Soft border, high aesthetic, responsive mobile 2-col to 6-col desktop */}
+      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-2.5 sm:gap-3.5">
+        {/* Gross Revenue */}
+        <div className="p-3.5 sm:p-4 rounded-2xl bg-white dark:bg-[#161922] border border-slate-200/50 dark:border-slate-800/40 shadow-xs hover:shadow-sm transition-all duration-200 space-y-1.5 group">
+          <div className="flex items-center justify-between">
+            <span className="text-[10px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 truncate">
+              Gross Revenue
+            </span>
+            <div className="w-7 h-7 rounded-lg bg-amber-500/10 text-[#B45309] dark:text-amber-400 flex items-center justify-center shrink-0">
+              <CreditCard className="w-3.5 h-3.5" />
+            </div>
           </div>
-          <div className="text-xs sm:text-xl font-black text-[#0F172A] dark:text-white mt-0.5 truncate">
+          <div className="text-sm sm:text-lg font-black text-[#0F172A] dark:text-white truncate">
             {formatCurrency(organization.stats.totalRevenue)}
           </div>
-          <span className="text-[9px] sm:text-[10px] font-semibold text-emerald-600 dark:text-emerald-400 flex items-center gap-0.5 truncate">
-            <TrendingUp className="w-2.5 h-2.5 sm:w-3 sm:h-3 shrink-0" />
-            <span className="truncate">+14.2%</span>
-          </span>
+          <div className="text-[10px] font-semibold text-emerald-600 dark:text-emerald-400 flex items-center gap-1">
+            <TrendingUp className="w-3 h-3 shrink-0" />
+            <span>+14.2%</span>
+          </div>
         </div>
 
         {/* Total Bookings */}
-        <div className="p-2.5 sm:p-4 rounded-xl sm:rounded-2xl bg-white dark:bg-[#161922] border border-[#E2E8F0] dark:border-slate-800 shadow-2xs space-y-0.5 sm:space-y-1">
-          <div className="flex items-center justify-between text-slate-400">
-            <span className="text-[9px] sm:text-[10px] font-bold uppercase tracking-wider truncate">Bookings</span>
-            <ShoppingBag className="w-3.5 h-3.5 text-blue-500 shrink-0" />
+        <div className="p-3.5 sm:p-4 rounded-2xl bg-white dark:bg-[#161922] border border-slate-200/50 dark:border-slate-800/40 shadow-xs hover:shadow-sm transition-all duration-200 space-y-1.5 group">
+          <div className="flex items-center justify-between">
+            <span className="text-[10px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 truncate">
+              Bookings
+            </span>
+            <div className="w-7 h-7 rounded-lg bg-blue-500/10 text-blue-600 dark:text-blue-400 flex items-center justify-center shrink-0">
+              <ShoppingBag className="w-3.5 h-3.5" />
+            </div>
           </div>
-          <div className="text-xs sm:text-xl font-black text-[#0F172A] dark:text-white mt-0.5">
+          <div className="text-sm sm:text-lg font-black text-[#0F172A] dark:text-white truncate">
             {organization.stats.totalBookings.toLocaleString()}
           </div>
-          <span className="text-[9px] sm:text-[10px] text-slate-400 truncate block">14 active lines</span>
+          <span className="text-[10px] text-slate-500 dark:text-slate-400 truncate block">
+            14 active lines
+          </span>
         </div>
 
         {/* Tickets Sold */}
-        <div className="p-2.5 sm:p-4 rounded-xl sm:rounded-2xl bg-white dark:bg-[#161922] border border-[#E2E8F0] dark:border-slate-800 shadow-2xs space-y-0.5 sm:space-y-1">
-          <div className="flex items-center justify-between text-slate-400">
-            <span className="text-[9px] sm:text-[10px] font-bold uppercase tracking-wider truncate">Tickets Sold</span>
-            <Ticket className="w-3.5 h-3.5 text-amber-500 shrink-0" />
+        <div className="p-3.5 sm:p-4 rounded-2xl bg-white dark:bg-[#161922] border border-slate-200/50 dark:border-slate-800/40 shadow-xs hover:shadow-sm transition-all duration-200 space-y-1.5 group">
+          <div className="flex items-center justify-between">
+            <span className="text-[10px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 truncate">
+              Tickets Sold
+            </span>
+            <div className="w-7 h-7 rounded-lg bg-amber-500/10 text-amber-600 dark:text-amber-400 flex items-center justify-center shrink-0">
+              <Ticket className="w-3.5 h-3.5" />
+            </div>
           </div>
-          <div className="text-xs sm:text-xl font-black text-[#0F172A] dark:text-white mt-0.5">
+          <div className="text-sm sm:text-lg font-black text-[#0F172A] dark:text-white truncate">
             {organization.stats.totalTicketsSold.toLocaleString()}
           </div>
-          <span className="text-[9px] sm:text-[10px] text-slate-400 truncate block">Scannable passes</span>
+          <span className="text-[10px] text-slate-500 dark:text-slate-400 truncate block">
+            Verified passes
+          </span>
         </div>
 
         {/* Available Inventory */}
-        <div className="p-2.5 sm:p-4 rounded-xl sm:rounded-2xl bg-white dark:bg-[#161922] border border-[#E2E8F0] dark:border-slate-800 shadow-2xs space-y-0.5 sm:space-y-1">
-          <div className="flex items-center justify-between text-slate-400">
-            <span className="text-[9px] sm:text-[10px] font-bold uppercase tracking-wider truncate">Seats Left</span>
-            <Boxes className="w-3.5 h-3.5 text-purple-500 shrink-0" />
+        <div className="p-3.5 sm:p-4 rounded-2xl bg-white dark:bg-[#161922] border border-slate-200/50 dark:border-slate-800/40 shadow-xs hover:shadow-sm transition-all duration-200 space-y-1.5 group">
+          <div className="flex items-center justify-between">
+            <span className="text-[10px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 truncate">
+              Seats Left
+            </span>
+            <div className="w-7 h-7 rounded-lg bg-purple-500/10 text-purple-600 dark:text-purple-400 flex items-center justify-center shrink-0">
+              <Boxes className="w-3.5 h-3.5" />
+            </div>
           </div>
-          <div className="text-xs sm:text-xl font-black text-[#0F172A] dark:text-white mt-0.5">
+          <div className="text-sm sm:text-lg font-black text-[#0F172A] dark:text-white truncate">
             {organization.stats.availableSeats}
           </div>
-          <span className="text-[9px] sm:text-[10px] text-amber-600 dark:text-amber-400 font-medium truncate block">Available now</span>
+          <span className="text-[10px] font-semibold text-amber-600 dark:text-amber-400 truncate block">
+            Available now
+          </span>
         </div>
 
         {/* Pending Orders */}
-        <div className="p-2.5 sm:p-4 rounded-xl sm:rounded-2xl bg-white dark:bg-[#161922] border border-[#E2E8F0] dark:border-slate-800 shadow-2xs space-y-0.5 sm:space-y-1">
-          <div className="flex items-center justify-between text-slate-400">
-            <span className="text-[9px] sm:text-[10px] font-bold uppercase tracking-wider truncate">Pending</span>
-            <Clock className="w-3.5 h-3.5 text-amber-500 shrink-0" />
+        <div className="p-3.5 sm:p-4 rounded-2xl bg-white dark:bg-[#161922] border border-slate-200/50 dark:border-slate-800/40 shadow-xs hover:shadow-sm transition-all duration-200 space-y-1.5 group">
+          <div className="flex items-center justify-between">
+            <span className="text-[10px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 truncate">
+              Pending
+            </span>
+            <div className="w-7 h-7 rounded-lg bg-rose-500/10 text-rose-600 dark:text-rose-400 flex items-center justify-center shrink-0">
+              <Clock className="w-3.5 h-3.5" />
+            </div>
           </div>
-          <div className="text-xs sm:text-xl font-black text-[#0F172A] dark:text-white mt-0.5">
+          <div className="text-sm sm:text-lg font-black text-[#0F172A] dark:text-white truncate">
             {organization.stats.pendingBookings}
           </div>
-          <span className="text-[9px] sm:text-[10px] text-slate-400 truncate block">Gate queue</span>
+          <span className="text-[10px] text-slate-500 dark:text-slate-400 truncate block">
+            Gate queue
+          </span>
         </div>
 
         {/* Payout Balance */}
-        <div className="p-2.5 sm:p-4 rounded-xl sm:rounded-2xl bg-white dark:bg-[#161922] border border-[#E2E8F0] dark:border-slate-800 shadow-2xs space-y-0.5 sm:space-y-1">
-          <div className="flex items-center justify-between text-slate-400">
-            <span className="text-[9px] sm:text-[10px] font-bold uppercase tracking-wider truncate">Ready Payout</span>
-            <CreditCard className="w-3.5 h-3.5 text-emerald-500 shrink-0" />
+        <div className="p-3.5 sm:p-4 rounded-2xl bg-white dark:bg-[#161922] border border-slate-200/50 dark:border-slate-800/40 shadow-xs hover:shadow-sm transition-all duration-200 space-y-1.5 group">
+          <div className="flex items-center justify-between">
+            <span className="text-[10px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 truncate">
+              Ready Payout
+            </span>
+            <div className="w-7 h-7 rounded-lg bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 flex items-center justify-center shrink-0">
+              <CreditCard className="w-3.5 h-3.5" />
+            </div>
           </div>
-          <div className="text-xs sm:text-xl font-black text-[#0F172A] dark:text-white mt-0.5 truncate">
+          <div className="text-sm sm:text-lg font-black text-[#0F172A] dark:text-white truncate">
             {formatCurrency(organization.stats.availableBalance)}
           </div>
           <Link
             href="/provider/payments"
-            className="text-[9px] sm:text-[10px] font-bold text-[#B45309] dark:text-amber-400 hover:underline flex items-center gap-0.5 truncate"
+            className="text-[10px] font-bold text-[#B45309] dark:text-amber-400 hover:underline flex items-center gap-0.5 truncate"
           >
-            <span>Payout</span>
-            <ArrowRight className="w-2.5 h-2.5 sm:w-3 sm:h-3 shrink-0" />
+            <span>Transfer</span>
+            <ArrowRight className="w-2.5 h-2.5" />
           </Link>
         </div>
       </div>
 
       {/* Analytics Charts Section */}
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
-        {/* Left 8 Cols: Sales Trend Chart */}
-        <div className="lg:col-span-8 rounded-3xl bg-white dark:bg-[#161922] border border-[#E2E8F0] dark:border-slate-800 p-5 sm:p-6 shadow-2xs space-y-4">
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-100 dark:border-slate-800 pb-3">
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-5 sm:gap-6 items-start">
+        {/* Sales Trend Chart (8 Cols) */}
+        <div className="lg:col-span-8 rounded-2xl sm:rounded-3xl bg-white dark:bg-[#161922] border border-slate-200/50 dark:border-slate-800/40 p-4 sm:p-6 shadow-xs space-y-4">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-100 dark:border-slate-800/60 pb-3">
             <div>
               <h2 className="text-base sm:text-lg font-bold text-[#0F172A] dark:text-white">
                 Revenue & Sales Velocity
               </h2>
-              <p className="text-xs text-slate-400">
-                Daily settled ticket transactions across CBE Birr, Telebirr & Chapa.
+              <p className="text-xs text-slate-500 dark:text-slate-400">
+                Daily settled transactions via Telebirr, CBE Birr & Chapa.
               </p>
             </div>
 
-            <div className="flex items-center gap-1 p-1 bg-slate-100 dark:bg-slate-800/80 rounded-xl">
+            <div className="flex items-center gap-1 p-1 bg-slate-100 dark:bg-slate-800/80 rounded-xl self-start sm:self-auto">
               {(["7D", "30D", "90D"] as const).map((r) => (
                 <button
                   key={r}
                   onClick={() => setTimeRange(r)}
                   className={`px-3 py-1 rounded-lg text-xs font-bold transition-all cursor-pointer ${
                     timeRange === r
-                      ? "bg-white dark:bg-[#161922] text-[#B45309] dark:text-amber-400 shadow-2xs"
+                      ? "bg-white dark:bg-[#161922] text-[#B45309] dark:text-amber-400 shadow-xs"
                       : "text-slate-500 hover:text-[#0F172A] dark:text-slate-400"
                   }`}
                 >
-                  {r === "7D" ? "Last 7 Days" : r === "30D" ? "30 Days" : "Quarter"}
+                  {r === "7D" ? "7 Days" : r === "30D" ? "30 Days" : "Quarter"}
                 </button>
               ))}
             </div>
@@ -265,13 +313,15 @@ export default function ProviderOverviewDashboard() {
           />
         </div>
 
-        {/* Right 4 Cols: Category Share Donut */}
-        <div className="lg:col-span-4 rounded-3xl bg-white dark:bg-[#161922] border border-[#E2E8F0] dark:border-slate-800 p-5 sm:p-6 shadow-2xs space-y-4">
-          <div>
+        {/* Category Share Donut (4 Cols) */}
+        <div className="lg:col-span-4 rounded-2xl sm:rounded-3xl bg-white dark:bg-[#161922] border border-slate-200/50 dark:border-slate-800/40 p-4 sm:p-6 shadow-xs space-y-4">
+          <div className="border-b border-slate-100 dark:border-slate-800/60 pb-3">
             <h2 className="text-base sm:text-lg font-bold text-[#0F172A] dark:text-white">
               Revenue by Service Sector
             </h2>
-            <p className="text-xs text-slate-400">Distribution across transportation & entertainment.</p>
+            <p className="text-xs text-slate-500 dark:text-slate-400">
+              Breakdown across coach, sports & entertainment.
+            </p>
           </div>
 
           <DashboardPieChart data={categoryShareData} height={260} />
@@ -279,15 +329,15 @@ export default function ProviderOverviewDashboard() {
       </div>
 
       {/* Top Routes & Recent Bookings Grid */}
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
-        {/* Left 7 Cols: Recent Customer Bookings Table */}
-        <div className="lg:col-span-7 rounded-3xl bg-white dark:bg-[#161922] border border-[#E2E8F0] dark:border-slate-800 p-5 sm:p-6 shadow-2xs space-y-4">
-          <div className="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-3">
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-5 sm:gap-6 items-start">
+        {/* Recent Customer Bookings (7 Cols) */}
+        <div className="lg:col-span-7 rounded-2xl sm:rounded-3xl bg-white dark:bg-[#161922] border border-slate-200/50 dark:border-slate-800/40 p-4 sm:p-6 shadow-xs space-y-4">
+          <div className="flex items-center justify-between border-b border-slate-100 dark:border-slate-800/60 pb-3">
             <div>
               <h3 className="text-base font-bold text-[#0F172A] dark:text-white">
                 Recent Passenger Bookings
               </h3>
-              <p className="text-xs text-slate-400">Live feed from web portal & mobile apps</p>
+              <p className="text-xs text-slate-500 dark:text-slate-400">Live booking activity feed</p>
             </div>
             <Link
               href="/provider/bookings"
@@ -298,20 +348,25 @@ export default function ProviderOverviewDashboard() {
             </Link>
           </div>
 
-          <div className="overflow-x-auto">
+          {/* Desktop View Table: Soft borders, clean typography, 3-dot dropdown */}
+          <div className="hidden md:block overflow-x-auto">
             <table className="w-full text-left border-collapse">
               <thead>
-                <tr className="border-b border-slate-100 dark:border-slate-800 text-[10px] uppercase font-bold text-slate-400 tracking-wider">
+                <tr className="border-b border-slate-100 dark:border-slate-800/60 text-[10px] uppercase font-bold text-slate-400 dark:text-slate-500 tracking-wider">
                   <th className="py-2.5 px-3">Reference / Customer</th>
-                  <th className="py-2.5 px-3">Service / Line</th>
+                  <th className="py-2.5 px-3">Service & Route</th>
                   <th className="py-2.5 px-3">Seats</th>
                   <th className="py-2.5 px-3">Fare</th>
-                  <th className="py-2.5 px-3 text-right">Status</th>
+                  <th className="py-2.5 px-3">Status</th>
+                  <th className="py-2.5 px-3 text-right">Action</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-slate-100 dark:divide-slate-800/80 text-xs">
+              <tbody className="divide-y divide-slate-100 dark:divide-slate-800/50 text-xs">
                 {recentBookings.map((b) => (
-                  <tr key={b.id} className="hover:bg-slate-50/60 dark:hover:bg-slate-800/30 transition-colors">
+                  <tr
+                    key={b.id}
+                    className="hover:bg-slate-50/70 dark:hover:bg-slate-800/30 transition-colors"
+                  >
                     <td className="py-3 px-3">
                       <span className="font-mono font-bold text-[#0F172A] dark:text-white block">
                         {b.id}
@@ -321,7 +376,7 @@ export default function ProviderOverviewDashboard() {
                       </span>
                     </td>
                     <td className="py-3 px-3">
-                      <span className="font-medium text-[#0F172A] dark:text-slate-200 block truncate max-w-[180px]">
+                      <span className="font-medium text-[#0F172A] dark:text-slate-200 block truncate max-w-[170px]">
                         {b.service}
                       </span>
                       <span className="text-[10px] text-slate-400">{b.date}</span>
@@ -337,34 +392,127 @@ export default function ProviderOverviewDashboard() {
                       </span>
                       <span className="text-[10px] text-slate-400">{b.gateway}</span>
                     </td>
-                    <td className="py-3 px-3 text-right">
+                    <td className="py-3 px-3">
                       <span
-                        className={`text-[10px] font-bold px-2 py-0.5 rounded-full inline-block ${
+                        className={`text-[10px] font-bold px-2.5 py-0.5 rounded-full inline-block ${
                           b.status === "CONFIRMED"
-                            ? "bg-emerald-50 text-emerald-700 dark:bg-emerald-950/60 dark:text-emerald-300"
-                            : "bg-amber-50 text-amber-700 dark:bg-amber-950/60 dark:text-amber-300"
+                            ? "bg-emerald-500/10 text-emerald-700 dark:text-emerald-400"
+                            : "bg-amber-500/10 text-amber-700 dark:text-amber-400"
                         }`}
                       >
                         {b.status}
                       </span>
+                    </td>
+                    <td className="py-3 px-3 text-right">
+                      <ActionDropdown
+                        items={[
+                          {
+                            label: "View Booking Details",
+                            icon: <Eye className="w-3.5 h-3.5" />,
+                            href: `/provider/bookings`,
+                          },
+                          {
+                            label: "Copy Reference ID",
+                            icon: <Copy className="w-3.5 h-3.5" />,
+                            onClick: () => handleCopy(b.id, "Reference"),
+                          },
+                          {
+                            label: "Download E-Ticket",
+                            icon: <Download className="w-3.5 h-3.5" />,
+                            onClick: () => toast.success(`E-Ticket ${b.id} exported as PDF`),
+                          },
+                        ]}
+                      />
                     </td>
                   </tr>
                 ))}
               </tbody>
             </table>
           </div>
+
+          {/* Mobile View: High-End Card Feed (No horizontal scrolling!) */}
+          <div className="block md:hidden space-y-2.5">
+            {recentBookings.map((b) => (
+              <div
+                key={b.id}
+                className="p-3.5 rounded-xl bg-slate-50/70 dark:bg-slate-800/30 border border-slate-200/40 dark:border-slate-800/40 space-y-2.5"
+              >
+                {/* Header: Reference + Status + 3-Dot Action */}
+                <div className="flex items-center justify-between gap-2">
+                  <div className="flex items-center gap-2">
+                    <span className="font-mono font-bold text-xs text-[#B45309] dark:text-amber-400">
+                      {b.id}
+                    </span>
+                    <span
+                      className={`text-[9px] font-bold px-2 py-0.5 rounded-full ${
+                        b.status === "CONFIRMED"
+                          ? "bg-emerald-500/10 text-emerald-700 dark:text-emerald-400"
+                          : "bg-amber-500/10 text-amber-700 dark:text-amber-400"
+                      }`}
+                    >
+                      {b.status}
+                    </span>
+                  </div>
+
+                  <ActionDropdown
+                    items={[
+                      {
+                        label: "View Details",
+                        icon: <Eye className="w-3.5 h-3.5" />,
+                        href: `/provider/bookings`,
+                      },
+                      {
+                        label: "Copy Reference",
+                        icon: <Copy className="w-3.5 h-3.5" />,
+                        onClick: () => handleCopy(b.id, "Reference"),
+                      },
+                      {
+                        label: "Download PDF",
+                        icon: <Download className="w-3.5 h-3.5" />,
+                        onClick: () => toast.success(`E-Ticket ${b.id} downloaded`),
+                      },
+                    ]}
+                  />
+                </div>
+
+                {/* Service Details */}
+                <div>
+                  <h4 className="text-xs font-bold text-[#0F172A] dark:text-white leading-tight">
+                    {b.service}
+                  </h4>
+                  <div className="flex items-center gap-2 text-[11px] text-slate-500 dark:text-slate-400 mt-1">
+                    <span>{b.customer}</span>
+                    <span>•</span>
+                    <span className="font-mono">{b.seats}</span>
+                  </div>
+                </div>
+
+                {/* Footer: Amount & Gateway */}
+                <div className="flex items-center justify-between pt-2 border-t border-slate-200/40 dark:border-slate-800/40 text-xs">
+                  <span className="font-black text-[#0F172A] dark:text-white">
+                    {formatCurrency(b.amount)}
+                  </span>
+                  <span className="text-[10px] font-medium text-slate-500 dark:text-slate-400 bg-slate-200/50 dark:bg-slate-700/50 px-2 py-0.5 rounded-md">
+                    {b.gateway}
+                  </span>
+                </div>
+              </div>
+            ))}
+          </div>
         </div>
 
-        {/* Right 5 Cols: Route Volume Chart & Operational Dispatch */}
-        <div className="lg:col-span-5 space-y-6">
+        {/* Route Volumes & Field Operations (5 Cols) */}
+        <div className="lg:col-span-5 space-y-5 sm:space-y-6">
           {/* Highway Route Performance */}
-          <div className="rounded-3xl bg-white dark:bg-[#161922] border border-[#E2E8F0] dark:border-slate-800 p-5 sm:p-6 shadow-2xs space-y-4">
-            <div className="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-3">
+          <div className="rounded-2xl sm:rounded-3xl bg-white dark:bg-[#161922] border border-slate-200/50 dark:border-slate-800/40 p-4 sm:p-6 shadow-xs space-y-4">
+            <div className="flex items-center justify-between border-b border-slate-100 dark:border-slate-800/60 pb-3">
               <div>
                 <h3 className="text-base font-bold text-[#0F172A] dark:text-white">
                   Top Route Volumes
                 </h3>
-                <p className="text-xs text-slate-400">Total revenue generated by highway segment</p>
+                <p className="text-xs text-slate-500 dark:text-slate-400">
+                  Revenue by highway sector
+                </p>
               </div>
               <Link
                 href="/provider/bus/routes"
@@ -378,7 +526,7 @@ export default function ProviderOverviewDashboard() {
           </div>
 
           {/* Operational Team Quick Status */}
-          <div className="rounded-3xl bg-white dark:bg-[#161922] border border-[#E2E8F0] dark:border-slate-800 p-5 shadow-2xs space-y-3">
+          <div className="rounded-2xl sm:rounded-3xl bg-white dark:bg-[#161922] border border-slate-200/50 dark:border-slate-800/40 p-4 sm:p-5 shadow-xs space-y-3">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
                 <Users className="w-4 h-4 text-[#B45309]" />
@@ -386,7 +534,7 @@ export default function ProviderOverviewDashboard() {
                   Gate Inspectors On Duty
                 </h4>
               </div>
-              <span className="text-[10px] font-bold text-emerald-600 dark:text-emerald-400 px-2 py-0.5 rounded-md bg-emerald-50 dark:bg-emerald-950">
+              <span className="text-[10px] font-bold text-emerald-600 dark:text-emerald-400 px-2 py-0.5 rounded-md bg-emerald-500/10">
                 {staffMembers.filter((s) => s.status === "ACTIVE").length} Active
               </span>
             </div>
@@ -395,22 +543,22 @@ export default function ProviderOverviewDashboard() {
               {staffMembers.slice(0, 3).map((st) => (
                 <div
                   key={st.id}
-                  className="flex items-center justify-between p-2 rounded-xl bg-slate-50 dark:bg-slate-800/40 border border-slate-100 dark:border-slate-800"
+                  className="flex items-center justify-between p-2.5 rounded-xl bg-slate-50/70 dark:bg-slate-800/30 border border-slate-200/40 dark:border-slate-800/40"
                 >
-                  <div className="flex items-center gap-2 min-w-0">
-                    <div className="w-7 h-7 rounded-lg bg-slate-200 dark:bg-slate-700 text-slate-700 dark:text-slate-200 flex items-center justify-center font-bold text-xs shrink-0">
+                  <div className="flex items-center gap-2.5 min-w-0">
+                    <div className="w-8 h-8 rounded-lg bg-amber-500/10 text-amber-700 dark:text-amber-300 flex items-center justify-center font-bold text-xs shrink-0">
                       {st.fullName.substring(0, 2).toUpperCase()}
                     </div>
                     <div className="min-w-0">
                       <span className="text-xs font-bold text-[#0F172A] dark:text-white block truncate">
                         {st.fullName}
                       </span>
-                      <span className="text-[10px] text-slate-400 block truncate">
+                      <span className="text-[10px] text-slate-500 dark:text-slate-400 block truncate">
                         {st.assignedStation}
                       </span>
                     </div>
                   </div>
-                  <span className="text-[10px] font-mono text-slate-500 shrink-0">
+                  <span className="text-[10px] font-mono font-medium text-slate-600 dark:text-slate-400 shrink-0">
                     {st.scannedTicketsCount} Scanned
                   </span>
                 </div>
@@ -429,4 +577,3 @@ export default function ProviderOverviewDashboard() {
     </div>
   );
 }
-

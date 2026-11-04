@@ -13,12 +13,16 @@ import {
   Eye,
   EyeOff,
   AlertTriangle,
+  LogOut,
 } from "lucide-react";
 import { PageContainer } from "@/components/layout/page-container";
 import { useTheme } from "@/providers/theme-provider";
+import { useAuthStore } from "@/stores/auth.store";
+import { toast } from "sonner";
 
 export default function CustomerSettingsPage() {
   const { theme, setTheme } = useTheme();
+  const { logout } = useAuthStore();
 
   // Password state
   const [currentPassword, setCurrentPassword] = useState("");
@@ -270,7 +274,36 @@ export default function CustomerSettingsPage() {
           </div>
         </div>
 
-        {/* 5. Privacy & Account Deletion */}
+        {/* 5. Active Session & Sign Out */}
+        <div className="rounded-3xl bg-white dark:bg-[#161922] border border-slate-200/50 dark:border-slate-800/40 p-6 sm:p-8 shadow-xs space-y-4">
+          <div className="flex items-center gap-3 border-b border-slate-100 dark:border-slate-800/60 pb-4">
+            <div className="w-10 h-10 rounded-xl bg-amber-500/10 text-amber-600 flex items-center justify-center">
+              <LogOut className="w-5 h-5" />
+            </div>
+            <div>
+              <h3 className="text-base font-bold text-foreground">Active Session</h3>
+              <p className="text-xs text-muted-foreground">Log out of your current device session securely.</p>
+            </div>
+          </div>
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+            <p className="text-xs text-muted-foreground max-w-lg">
+              Signing out terminates your current active session on this device and clears all cached tickets and wallet passes.
+            </p>
+            <button
+              type="button"
+              onClick={() => {
+                logout();
+                toast.success("Signed out successfully");
+                window.location.href = "/login";
+              }}
+              className="px-4 py-2.5 rounded-xl bg-rose-50 dark:bg-rose-950/40 text-rose-600 dark:text-rose-400 text-xs font-bold hover:bg-rose-100 dark:hover:bg-rose-900/40 transition-colors cursor-pointer shrink-0"
+            >
+              Sign Out of TIKORA
+            </button>
+          </div>
+        </div>
+
+        {/* 6. Privacy & Account Deletion */}
         <div className="rounded-3xl bg-white dark:bg-[#161922] border border-rose-200 dark:border-rose-950/60 p-6 sm:p-8 shadow-xs space-y-4">
           <div className="flex items-center gap-3 border-b border-rose-100 dark:border-rose-950/40 pb-4">
             <div className="w-10 h-10 rounded-xl bg-rose-50 dark:bg-rose-950 text-rose-600 flex items-center justify-center">

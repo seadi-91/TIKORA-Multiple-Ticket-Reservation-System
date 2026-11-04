@@ -26,6 +26,7 @@ import {
 } from "lucide-react";
 import { useInspectorStore } from "@/stores/inspector.store";
 import { useAuthStore } from "@/stores/auth.store";
+import { toast } from "sonner";
 
 interface NavItem {
   label: string;
@@ -138,11 +139,15 @@ export function InspectorSidebar({
 
   const handleLogout = () => {
     logout();
+    toast.success("Signed out successfully");
     window.location.href = "/inspector/login";
   };
 
   const sidebarContent = (
-    <div className="flex flex-col h-full bg-white dark:bg-[#161922] text-[#0F172A] dark:text-[#F8FAFC] select-none">
+    <div
+      style={{ backgroundColor: "var(--card-bg, #161922)" }}
+      className="flex flex-col h-full bg-white dark:bg-[#161922] text-[#0F172A] dark:text-[#F8FAFC] select-none"
+    >
       {/* Header / Brand */}
       <div className="h-14 flex items-center justify-between px-3 border-b border-slate-200 dark:border-slate-800 shrink-0">
         <Link
@@ -283,8 +288,10 @@ export function InspectorSidebar({
     <>
       {/* Desktop Persistent Sidebar */}
       <aside
-        className={`hidden lg:flex flex-col shrink-0 sticky top-0 h-screen bg-white dark:bg-[#161922] border-r border-slate-200 dark:border-slate-800 transition-all duration-300 ${collapsed ? "w-16" : "w-64"
-          }`}
+        style={{ backgroundColor: "var(--card-bg, #161922)" }}
+        className={`hidden lg:flex flex-col shrink-0 sticky top-0 h-screen bg-white dark:bg-[#161922] border-r border-slate-200/80 dark:border-slate-800 transition-all duration-300 ease-in-out select-none ${
+          collapsed ? "w-18" : "w-64"
+        }`}
       >
         {sidebarContent}
       </aside>
@@ -293,17 +300,20 @@ export function InspectorSidebar({
       {mounted &&
         mobileOpen &&
         createPortal(
-          <div className="fixed inset-0 z-[9999] lg:hidden flex">
+          <div className="fixed inset-0 z-[9999] lg:hidden">
             {/* Backdrop */}
             <div
-              className="fixed inset-0 bg-black/60 backdrop-blur-xs transition-opacity"
+              className="fixed inset-0 bg-black/60 backdrop-blur-xs transition-opacity duration-200"
               onClick={handleCloseMobile}
               aria-label="Close menu backdrop"
             />
-            {/* Drawer */}
-            <div className="relative z-10 w-72 max-w-[85vw] h-full bg-white dark:bg-[#161922] border-r border-slate-200 dark:border-slate-800 shadow-2xl flex flex-col justify-between overflow-hidden animate-in slide-in-from-left duration-200">
+            {/* Drawer Panel - Solid Opaque Background */}
+            <aside
+              style={{ backgroundColor: "var(--card-bg, #161922)" }}
+              className="fixed top-0 bottom-0 left-0 z-10 w-72 max-w-[85vw] h-full bg-white dark:bg-[#161922] border-r border-slate-200 dark:border-slate-800 shadow-2xl flex flex-col justify-between overflow-hidden"
+            >
               {sidebarContent}
-            </div>
+            </aside>
           </div>,
           document.body
         )}

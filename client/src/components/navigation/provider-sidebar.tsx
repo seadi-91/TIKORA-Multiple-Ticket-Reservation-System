@@ -33,6 +33,7 @@ import {
 } from "lucide-react";
 import { useProviderStore } from "@/stores/provider.store";
 import { useAuthStore } from "@/stores/auth.store";
+import { toast } from "sonner";
 
 interface ProviderSidebarProps {
   collapsed?: boolean;
@@ -207,7 +208,10 @@ export function ProviderSidebar({
   ];
 
   const sidebarContent = (
-    <div className="flex flex-col h-full bg-white dark:bg-[#161922] border-r border-[#E2E8F0] dark:border-slate-800 select-none">
+    <div
+      style={{ backgroundColor: "var(--card-bg, #161922)" }}
+      className="flex flex-col h-full bg-white dark:bg-[#161922] border-r border-[#E2E8F0] dark:border-slate-800 select-none"
+    >
       {/* Brand Header */}
       <div className="h-16 px-4 flex items-center justify-between border-b border-[#E2E8F0] dark:border-slate-800 shrink-0">
         <Link href="/provider" className="flex items-center gap-2.5 group">
@@ -373,8 +377,14 @@ export function ProviderSidebar({
         </Link>
 
         <button
-          onClick={logout}
-          className="w-full flex items-center gap-2.5 px-2.5 py-1.5 rounded-xl text-xs font-medium text-rose-600 dark:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-950/40 transition-colors cursor-pointer"
+          type="button"
+          onClick={() => {
+            if (onCloseMobile) onCloseMobile();
+            logout();
+            toast.success("Signed out successfully");
+            window.location.href = "/login";
+          }}
+          className="w-full flex items-center gap-2.5 px-2.5 py-1.5 rounded-xl text-xs font-semibold text-rose-600 dark:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-950/40 transition-colors cursor-pointer"
         >
           <LogOut className="w-3.5 h-3.5" />
           {!collapsed && <span>Sign Out</span>}
@@ -387,29 +397,32 @@ export function ProviderSidebar({
     <>
       {/* Desktop Persistent Sidebar */}
       <aside
-        className={`hidden lg:block shrink-0 transition-all duration-300 ${collapsed ? "w-18" : "w-64"
-          }`}
+        style={{ backgroundColor: "var(--card-bg, #161922)" }}
+        className={`hidden lg:flex flex-col shrink-0 sticky top-0 h-screen bg-white dark:bg-[#161922] border-r border-slate-200/80 dark:border-slate-800 transition-all duration-300 ease-in-out select-none ${
+          collapsed ? "w-18" : "w-64"
+        }`}
       >
-        <div className={`fixed top-0 bottom-0 z-30 transition-all duration-300 ${collapsed ? "w-18" : "w-64"}`}>
-          {sidebarContent}
-        </div>
+        {sidebarContent}
       </aside>
 
       {/* Mobile Drawer via Portal */}
       {mounted &&
         mobileOpen &&
         createPortal(
-          <div className="fixed inset-0 z-[9999] lg:hidden flex">
+          <div className="fixed inset-0 z-[9999] lg:hidden">
             {/* Backdrop */}
             <div
-              className="fixed inset-0 bg-black/60 backdrop-blur-xs transition-opacity"
+              className="fixed inset-0 bg-black/60 backdrop-blur-xs transition-opacity duration-200"
               onClick={onCloseMobile}
               aria-label="Close menu backdrop"
             />
-            {/* Drawer */}
-            <div className="relative z-10 w-72 max-w-[85vw] h-full bg-white dark:bg-[#161922] border-r border-slate-200 dark:border-slate-800 shadow-2xl flex flex-col justify-between overflow-hidden animate-in slide-in-from-left duration-200">
+            {/* Drawer Panel - Solid Opaque Background */}
+            <aside
+              style={{ backgroundColor: "var(--card-bg, #161922)" }}
+              className="fixed top-0 bottom-0 left-0 z-10 w-72 max-w-[85vw] h-full bg-white dark:bg-[#161922] border-r border-slate-200 dark:border-slate-800 shadow-2xl flex flex-col justify-between overflow-hidden"
+            >
               {sidebarContent}
-            </div>
+            </aside>
           </div>,
           document.body
         )}

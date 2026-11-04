@@ -174,19 +174,78 @@ export interface AdminAuditLog {
 }
 
 export interface AdminSettings {
+  // General & Branding
   platformName: string;
+  tagline: string;
   supportEmail: string;
   supportPhone: string;
+  headquartersAddress: string;
+  operatingRegion: string;
+  defaultTimezone: string;
+  defaultLanguage: string;
   maintenanceMode: boolean;
+  maintenanceNotice: string;
   allowNewRegistrations: boolean;
-  defaultCommissionRate: number;
+  allowGuestCheckout: boolean;
+
+  // Financial & Commissions
   currency: string;
+  defaultCommissionRate: number;
+  busCommissionRate: number;
+  cinemaCommissionRate: number;
+  eventCommissionRate: number;
+  sportsCommissionRate: number;
+  vatTaxRate: number;
+  platformServiceFeeETB: number;
+  cartHoldDurationMinutes: number;
+  maxTicketsPerBooking: number;
+
+  // Payments & Payouts
   telebirrEnabled: boolean;
+  telebirrMerchantId: string;
+  telebirrAutoSettle: boolean;
   cbeBirrEnabled: boolean;
+  cbeBirrMerchantCode: string;
   chapaEnabled: boolean;
-  twoFactorRequiredForAdmins: boolean;
-  sessionTimeoutMinutes: number;
+  chapaMode: "LIVE" | "TEST";
+  minPayoutThresholdETB: number;
+  payoutSchedule: "DAILY" | "WEEKLY" | "MANUAL";
+  payoutProcessingFeeETB: number;
+
+  // Refunds & Disputes
   autoApproveRefundThreshold: number;
+  busCancellationCutoffHours: number;
+  cinemaCancellationCutoffHours: number;
+  eventCancellationCutoffHours: number;
+  sportsCancellationCutoffHours: number;
+  cancellationPenaltyRate: number;
+  disputeAutoEscalateHours: number;
+
+  // Security & Authentication
+  twoFactorRequiredForAdmins: boolean;
+  twoFactorRequiredForProviders: boolean;
+  sessionTimeoutMinutes: number;
+  maxFailedLoginsLockout: number;
+  lockoutDurationMinutes: number;
+  enforcePasswordComplexity: boolean;
+  ipWhitelistingEnabled: boolean;
+  whitelistedAdminIPs: string;
+  auditLogRetentionDays: number;
+
+  // QR Code & Gate Verification
+  qrSignatureAlgorithm: "HMAC_SHA256" | "ECDSA_SECP256K1";
+  qrDynamicRotationEnabled: boolean;
+  qrRotationIntervalSeconds: number;
+  offlineScanWindowHours: number;
+  allowDuplicateCheckInOverride: boolean;
+
+  // Notifications & Gateway Integration
+  smsGatewayProvider: "ETHIO_TELECOM" | "TWILIO" | "CUSTOM_USSD";
+  smsSenderId: string;
+  smsTicketReceiptsEnabled: boolean;
+  emailReceiptsEnabled: boolean;
+  highValueTransactionAlertETB: number;
+  systemAlertEmail: string;
 }
 
 interface AdminState {
@@ -961,19 +1020,78 @@ export const useAdminStore = create<AdminState>((set, get) => ({
   ],
 
   settings: {
+    // General & Branding
     platformName: "TIKORA Ethiopia",
+    tagline: "Ethiopia's Unified Smart Ticket & Transit Hub",
     supportEmail: "support@tikora.et",
     supportPhone: "+251 115 500 000",
+    headquartersAddress: "Bole Medhanialem, Mega Building 4th Floor, Addis Ababa",
+    operatingRegion: "Federal Democratic Republic of Ethiopia",
+    defaultTimezone: "Africa/Addis_Ababa (UTC+3)",
+    defaultLanguage: "en",
     maintenanceMode: false,
+    maintenanceNotice: "System upgrade in progress. Public bookings will resume shortly.",
     allowNewRegistrations: true,
-    defaultCommissionRate: 5.0,
+    allowGuestCheckout: true,
+
+    // Financial & Commissions
     currency: "ETB",
+    defaultCommissionRate: 5.0,
+    busCommissionRate: 4.5,
+    cinemaCommissionRate: 6.0,
+    eventCommissionRate: 7.5,
+    sportsCommissionRate: 5.0,
+    vatTaxRate: 15.0,
+    platformServiceFeeETB: 10,
+    cartHoldDurationMinutes: 10,
+    maxTicketsPerBooking: 8,
+
+    // Payments & Payouts
     telebirrEnabled: true,
+    telebirrMerchantId: "TB-ET-994821",
+    telebirrAutoSettle: true,
     cbeBirrEnabled: true,
+    cbeBirrMerchantCode: "CBE-BIRR-44018",
     chapaEnabled: true,
-    twoFactorRequiredForAdmins: true,
-    sessionTimeoutMinutes: 60,
+    chapaMode: "LIVE",
+    minPayoutThresholdETB: 1000,
+    payoutSchedule: "DAILY",
+    payoutProcessingFeeETB: 25,
+
+    // Refunds & Disputes
     autoApproveRefundThreshold: 300,
+    busCancellationCutoffHours: 4,
+    cinemaCancellationCutoffHours: 2,
+    eventCancellationCutoffHours: 24,
+    sportsCancellationCutoffHours: 6,
+    cancellationPenaltyRate: 10.0,
+    disputeAutoEscalateHours: 48,
+
+    // Security & Authentication
+    twoFactorRequiredForAdmins: true,
+    twoFactorRequiredForProviders: false,
+    sessionTimeoutMinutes: 60,
+    maxFailedLoginsLockout: 5,
+    lockoutDurationMinutes: 30,
+    enforcePasswordComplexity: true,
+    ipWhitelistingEnabled: false,
+    whitelistedAdminIPs: "197.156.104.22, 196.188.241.10",
+    auditLogRetentionDays: 90,
+
+    // QR Code & Gate Verification
+    qrSignatureAlgorithm: "HMAC_SHA256",
+    qrDynamicRotationEnabled: true,
+    qrRotationIntervalSeconds: 60,
+    offlineScanWindowHours: 12,
+    allowDuplicateCheckInOverride: false,
+
+    // Notifications & Gateway Integration
+    smsGatewayProvider: "ETHIO_TELECOM",
+    smsSenderId: "TIKORA",
+    smsTicketReceiptsEnabled: true,
+    emailReceiptsEnabled: true,
+    highValueTransactionAlertETB: 50000,
+    systemAlertEmail: "security-ops@tikora.et",
   },
 
   approveOrganization: (id: string) => {

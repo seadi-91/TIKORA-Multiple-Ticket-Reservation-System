@@ -24,9 +24,11 @@ import {
   Crown,
   Sparkles,
   X,
+  LogOut,
 } from "lucide-react";
 import { useAdminStore } from "@/stores/admin.store";
 import { useAuthStore } from "@/stores/auth.store";
+import { toast } from "sonner";
 
 interface AdminSidebarProps {
   collapsed?: boolean;
@@ -195,7 +197,10 @@ export function AdminSidebar({
   ];
 
   const sidebarContent = (
-    <div className="flex flex-col h-full bg-white dark:bg-[#161922] text-[#0F172A] dark:text-[#F8FAFC] select-none">
+    <div
+      style={{ backgroundColor: "var(--card-bg, #161922)" }}
+      className="flex flex-col h-full bg-white dark:bg-[#161922] text-[#0F172A] dark:text-[#F8FAFC] select-none"
+    >
       {/* Brand & Organization Header */}
       <div className="flex items-center justify-between px-4 h-16 border-b border-slate-200/40 dark:border-slate-800/40 shrink-0">
         <Link
@@ -297,6 +302,24 @@ export function AdminSidebar({
           {!collapsed && <span>Customer Portal</span>}
         </Link>
 
+        {/* Sign Out Button */}
+        <button
+          type="button"
+          onClick={() => {
+            if (onCloseMobile) onCloseMobile();
+            logout();
+            toast.success("Signed out successfully");
+            window.location.href = "/login";
+          }}
+          className={`w-full flex items-center gap-2.5 px-3 py-2 text-xs font-semibold text-rose-600 dark:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-950/40 rounded-xl transition-colors cursor-pointer ${
+            collapsed ? "justify-center px-2" : ""
+          }`}
+          title="Sign Out"
+        >
+          <LogOut className="w-4 h-4 shrink-0" />
+          {!collapsed && <span>Sign Out</span>}
+        </button>
+
         {/* Toggle Collapse Button for Desktop */}
         <div className="hidden lg:flex items-center justify-between pt-2 border-t border-slate-200/40 dark:border-slate-800/40">
           {!collapsed ? (
@@ -330,10 +353,11 @@ export function AdminSidebar({
 
   return (
     <>
-      {/* Desktop Sidebar */}
+      {/* Desktop Persistent Sidebar */}
       <aside
-        className={`hidden lg:flex flex-col fixed top-0 bottom-0 left-0 z-40 bg-white dark:bg-[#161922] border-r border-slate-200 dark:border-slate-800 transition-all duration-300 ease-in-out ${
-          collapsed ? "w-16" : "w-64"
+        style={{ backgroundColor: "var(--card-bg, #161922)" }}
+        className={`hidden lg:flex flex-col shrink-0 sticky top-0 h-screen bg-white dark:bg-[#161922] border-r border-slate-200/80 dark:border-slate-800 transition-all duration-300 ease-in-out select-none ${
+          collapsed ? "w-18" : "w-64"
         }`}
       >
         {sidebarContent}
@@ -343,17 +367,20 @@ export function AdminSidebar({
       {mounted &&
         mobileOpen &&
         createPortal(
-          <div className="fixed inset-0 z-[9999] lg:hidden flex">
+          <div className="fixed inset-0 z-[9999] lg:hidden">
             {/* Backdrop */}
             <div
-              className="fixed inset-0 bg-black/60 backdrop-blur-xs transition-opacity"
+              className="fixed inset-0 bg-black/60 backdrop-blur-xs transition-opacity duration-200"
               onClick={onCloseMobile}
               aria-label="Close menu backdrop"
             />
-            {/* Drawer */}
-            <div className="relative z-10 w-72 max-w-[85vw] h-full bg-white dark:bg-[#161922] border-r border-slate-200 dark:border-slate-800 shadow-2xl flex flex-col justify-between overflow-hidden animate-in slide-in-from-left duration-200">
+            {/* Drawer Panel - Solid Opaque Background */}
+            <aside
+              style={{ backgroundColor: "var(--card-bg, #161922)" }}
+              className="fixed top-0 bottom-0 left-0 z-10 w-72 max-w-[85vw] h-full bg-white dark:bg-[#161922] border-r border-slate-200 dark:border-slate-800 shadow-2xl flex flex-col justify-between overflow-hidden"
+            >
               {sidebarContent}
-            </div>
+            </aside>
           </div>,
           document.body
         )}

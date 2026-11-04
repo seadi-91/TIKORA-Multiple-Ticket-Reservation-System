@@ -25,6 +25,7 @@ import {
 import { useAdminStore } from "@/stores/admin.store";
 import { useAuthStore } from "@/stores/auth.store";
 import { useTheme } from "@/providers/theme-provider";
+import { toast } from "sonner";
 
 interface AdminHeaderProps {
   onToggleMobileMenu?: () => void;
@@ -97,7 +98,10 @@ export function AdminHeader({ onToggleMobileMenu }: AdminHeaderProps) {
   };
 
   return (
-    <header className="sticky top-0 z-30 flex items-center justify-between h-16 px-4 md:px-6 bg-white/95 dark:bg-[#161922]/95 backdrop-blur-md border-b border-slate-200/80 dark:border-slate-800 shadow-xs shrink-0 w-full transition-colors">
+    <header
+      style={{ backgroundColor: "var(--card-bg, #161922)" }}
+      className="flex items-center justify-between h-16 px-4 sm:px-6 bg-white dark:bg-[#161922] border-b border-slate-200/80 dark:border-slate-800 shadow-xs shrink-0 w-full transition-colors"
+    >
       {/* Left: Mobile hamburger & Breadcrumbs */}
       <div className="flex items-center gap-3">
         <button
@@ -375,15 +379,17 @@ export function AdminHeader({ onToggleMobileMenu }: AdminHeaderProps) {
                 <div className="my-1 border-t border-slate-200/40 dark:border-slate-800/40" />
 
                 <button
+                  type="button"
                   onClick={() => {
                     setShowProfileMenu(false);
                     logout();
-                    router.push("/auth/login");
+                    toast.success("Signed out successfully");
+                    window.location.href = "/login";
                   }}
-                  className="w-full flex items-center gap-2.5 px-4 py-2 text-rose-600 dark:text-rose-400 hover:bg-rose-500/10 transition-colors"
+                  className="w-full flex items-center gap-2.5 px-4 py-2 text-xs font-semibold text-rose-600 dark:text-rose-400 hover:bg-rose-500/10 transition-colors cursor-pointer"
                 >
                   <LogOut className="w-4 h-4" />
-                  <span>Log out</span>
+                  <span>Sign Out</span>
                 </button>
               </div>
             </div>

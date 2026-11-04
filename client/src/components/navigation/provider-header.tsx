@@ -28,6 +28,7 @@ import {
 import { useProviderStore } from "@/stores/provider.store";
 import { useAuthStore } from "@/stores/auth.store";
 import { useTheme } from "@/providers/theme-provider";
+import { toast } from "sonner";
 
 interface ProviderHeaderProps {
   onToggleMobileMenu?: () => void;
@@ -82,7 +83,10 @@ export function ProviderHeader({ onToggleMobileMenu }: ProviderHeaderProps) {
   };
 
   return (
-    <header className="h-16 border-b border-[#E2E8F0] dark:border-slate-800 bg-white/95 dark:bg-[#161922]/95 backdrop-blur-md px-4 sm:px-6 flex items-center justify-between gap-4 sticky top-0 z-20 shadow-xs w-full">
+    <header
+      style={{ backgroundColor: "var(--card-bg, #161922)" }}
+      className="h-16 border-b border-[#E2E8F0] dark:border-slate-800 bg-white dark:bg-[#161922] px-4 sm:px-6 flex items-center justify-between gap-4 shadow-xs w-full transition-colors"
+    >
       {/* Left: Mobile Menu Trigger & Search */}
       <div className="flex items-center gap-3 flex-1 max-w-lg">
         {onToggleMobileMenu && (
@@ -363,7 +367,13 @@ export function ProviderHeader({ onToggleMobileMenu }: ProviderHeaderProps) {
 
               <div className="pt-1 border-t border-slate-100 dark:border-slate-800">
                 <button
-                  onClick={logout}
+                  type="button"
+                  onClick={() => {
+                    setShowProfileMenu(false);
+                    logout();
+                    toast.success("Signed out successfully");
+                    window.location.href = "/login";
+                  }}
                   className="w-full flex items-center gap-2 px-2.5 py-1.5 rounded-lg text-xs font-semibold text-rose-600 dark:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-950/40 transition-colors cursor-pointer"
                 >
                   <LogOut className="w-3.5 h-3.5" />

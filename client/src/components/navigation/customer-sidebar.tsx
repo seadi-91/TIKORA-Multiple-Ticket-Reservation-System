@@ -21,6 +21,7 @@ import {
 import { CUSTOMER_ROUTES, AUTH_ROUTES } from "@/lib/constants";
 import { useBookingStore } from "@/stores/booking.store";
 import { useAuthStore } from "@/stores/auth.store";
+import { toast } from "sonner";
 
 export function CustomerSidebar() {
   const pathname = usePathname();
@@ -84,7 +85,10 @@ export function CustomerSidebar() {
   ];
 
   return (
-    <aside className="w-full lg:w-64 xl:w-72 shrink-0 rounded-3xl border border-[#E2E8F0] dark:border-slate-800 bg-white dark:bg-[#161922] p-5 shadow-sm space-y-6">
+    <aside
+      style={{ backgroundColor: "var(--card-bg, #161922)" }}
+      className="w-full lg:w-64 shrink-0 rounded-3xl border border-slate-200/80 dark:border-slate-800/80 bg-white dark:bg-[#161922] p-4 sm:p-5 shadow-sm space-y-5"
+    >
       {/* Customer Profile Widget - Refined & Calm */}
       <div className="flex items-center gap-3.5 p-3 rounded-2xl bg-slate-50 dark:bg-slate-800/40 border border-slate-200/80 dark:border-slate-800">
         <div className="w-11 h-11 rounded-xl bg-slate-900 dark:bg-slate-800 text-white flex items-center justify-center font-bold text-sm shadow-xs shrink-0">
@@ -144,14 +148,18 @@ export function CustomerSidebar() {
 
       {/* Logout Action */}
       <div className="border-t border-[#E2E8F0] dark:border-slate-800 pt-3">
-        <Link
-          href={AUTH_ROUTES.LOGIN}
-          onClick={() => logout()}
-          className="flex items-center gap-2.5 px-3.5 py-2.5 rounded-xl text-xs font-bold text-rose-600 dark:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-950/40 transition-colors"
+        <button
+          type="button"
+          onClick={() => {
+            logout();
+            toast.success("Signed out successfully");
+            window.location.href = "/login";
+          }}
+          className="w-full flex items-center gap-2.5 px-3.5 py-2.5 rounded-xl text-xs font-bold text-rose-600 dark:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-950/40 transition-colors cursor-pointer"
         >
           <LogOut className="w-4 h-4" />
           <span>Sign Out</span>
-        </Link>
+        </button>
       </div>
     </aside>
   );

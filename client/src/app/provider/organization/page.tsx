@@ -127,10 +127,10 @@ export default function ProviderOrganizationPage() {
       )}
 
       {/* Main Grid */}
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-5 sm:gap-6 items-start">
         {/* Left 4 Cols: Organization Badge & Status Card */}
-        <div className="lg:col-span-4 space-y-6">
-          <div className="rounded-3xl bg-white dark:bg-[#161922] border border-[#E2E8F0] dark:border-slate-800 p-6 shadow-2xs text-center space-y-4">
+        <div className="lg:col-span-4 space-y-5 sm:space-y-6">
+          <div className="rounded-2xl sm:rounded-3xl bg-white dark:bg-[#161922] border border-slate-200/50 dark:border-slate-800/40 p-5 sm:p-6 shadow-xs text-center space-y-4">
             <div className="w-20 h-20 mx-auto rounded-3xl bg-gradient-to-tr from-[#B45309] to-[#D97706] text-white flex items-center justify-center font-black text-2xl shadow-md">
               {organization.name.substring(0, 2).toUpperCase()}
             </div>
@@ -143,11 +143,11 @@ export default function ProviderOrganizationPage() {
             </div>
 
             {/* Approval Status Badge */}
-            <div className="p-3 rounded-2xl bg-slate-50 dark:bg-slate-800/40 border border-slate-100 dark:border-slate-800 space-y-2">
+            <div className="p-3.5 rounded-2xl bg-slate-50/70 dark:bg-slate-800/30 border border-slate-200/40 dark:border-slate-800/40 space-y-2">
               <span className="text-[10px] uppercase font-bold text-slate-400 tracking-wider block">
                 Platform Verification Status
               </span>
-              <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-50 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-300 text-xs font-bold border border-emerald-200 dark:border-emerald-800/40">
+              <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-500/10 text-emerald-700 dark:text-emerald-300 text-xs font-bold border border-emerald-500/20">
                 <ShieldCheck className="w-4 h-4 text-emerald-600" />
                 <span>
                   {organization.approvalStatus === "APPROVED"
@@ -184,7 +184,7 @@ export default function ProviderOrganizationPage() {
           </div>
 
           {/* Quick Bank Settlement Widget */}
-          <div className="rounded-3xl bg-white dark:bg-[#161922] border border-[#E2E8F0] dark:border-slate-800 p-6 shadow-2xs space-y-3">
+          <div className="rounded-2xl sm:rounded-3xl bg-white dark:bg-[#161922] border border-slate-200/50 dark:border-slate-800/40 p-5 sm:p-6 shadow-xs space-y-3">
             <div className="flex items-center gap-2">
               <CreditCard className="w-4 h-4 text-[#B45309]" />
               <h3 className="text-xs font-bold text-[#0F172A] dark:text-white uppercase tracking-wider">
@@ -192,7 +192,7 @@ export default function ProviderOrganizationPage() {
               </h3>
             </div>
 
-            <div className="p-3 rounded-2xl bg-amber-50/50 dark:bg-amber-950/20 border border-amber-200/60 dark:border-amber-900/40 space-y-1">
+            <div className="p-3.5 rounded-2xl bg-amber-500/5 dark:bg-amber-950/20 border border-amber-500/15 dark:border-amber-900/40 space-y-1">
               <span className="text-[10px] text-slate-400 block font-medium">Bank Institution</span>
               <strong className="text-xs text-[#0F172A] dark:text-white block font-bold">
                 {organization.payoutAccount.bankName}
@@ -215,7 +215,7 @@ export default function ProviderOrganizationPage() {
         </div>
 
         {/* Right 8 Cols: Entity Information Details & Form */}
-        <div className="lg:col-span-8 rounded-3xl bg-white dark:bg-[#161922] border border-[#E2E8F0] dark:border-slate-800 p-6 shadow-2xs space-y-6">
+        <div className="lg:col-span-8 rounded-2xl sm:rounded-3xl bg-white dark:bg-[#161922] border border-slate-200/50 dark:border-slate-800/40 p-5 sm:p-6 shadow-xs space-y-6">
           <form onSubmit={handleSave} className="space-y-6">
             {/* General Legal Information */}
             <div>

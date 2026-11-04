@@ -178,9 +178,10 @@ export default function ProviderRefundsPage() {
         </div>
       </div>
 
-      {/* Refunds Table */}
-      <div className="bg-card border border-slate-200/50 dark:border-slate-800/50 rounded-3xl shadow-sm overflow-hidden">
-        <div className="overflow-x-auto">
+      {/* Refunds Table & Mobile Cards */}
+      <div className="bg-card border border-slate-200/50 dark:border-slate-800/40 rounded-2xl sm:rounded-3xl shadow-xs overflow-hidden">
+        {/* Desktop Table View */}
+        <div className="hidden md:block overflow-x-auto">
           <table className="w-full text-left border-collapse text-xs">
             <thead>
               <tr className="bg-slate-50/60 dark:bg-slate-800/40 text-muted-foreground uppercase text-[10px] font-bold tracking-wider">
@@ -308,6 +309,97 @@ export default function ProviderRefundsPage() {
               )}
             </tbody>
           </table>
+        </div>
+
+        {/* Mobile View: High-End Refund Request Cards */}
+        <div className="block md:hidden p-3 space-y-2.5">
+          {filteredRefunds.length === 0 ? (
+            <div className="py-8 text-center text-muted-foreground text-xs">
+              No refund requests found in this view.
+            </div>
+          ) : (
+            filteredRefunds.map((r) => (
+              <div
+                key={r.id}
+                className="p-3.5 rounded-xl bg-slate-50/70 dark:bg-slate-800/30 border border-slate-200/40 dark:border-slate-800/40 space-y-2.5"
+              >
+                <div className="flex items-center justify-between gap-2">
+                  <span className="font-mono font-bold text-xs text-amber-600 dark:text-amber-400">
+                    {r.bookingReference}
+                  </span>
+
+                  <div className="flex items-center gap-2">
+                    <span
+                      className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[9px] font-bold ${
+                        r.status === "APPROVED"
+                          ? "bg-emerald-500/10 text-emerald-600"
+                          : r.status === "REJECTED"
+                          ? "bg-rose-500/10 text-rose-600"
+                          : "bg-amber-500/10 text-amber-600"
+                      }`}
+                    >
+                      {r.status}
+                    </span>
+
+                    <ActionDropdown
+                      items={[
+                        ...(r.status === "PENDING"
+                          ? [
+                              {
+                                label: "Approve Refund",
+                                icon: <CheckCircle2 className="w-3.5 h-3.5" />,
+                                variant: "success" as const,
+                                onClick: () =>
+                                  handleApprove(
+                                    r.id,
+                                    r.bookingReference,
+                                    r.requestedAmount
+                                  ),
+                              },
+                              {
+                                label: "Decline Claim",
+                                icon: <XCircle className="w-3.5 h-3.5" />,
+                                variant: "danger" as const,
+                                onClick: () =>
+                                  handleReject(r.id, r.bookingReference),
+                              },
+                            ]
+                          : []),
+                        {
+                          label: "Copy Ref",
+                          icon: <Copy className="w-3.5 h-3.5" />,
+                          onClick: () => {
+                            navigator.clipboard.writeText(r.bookingReference);
+                            toast.success("Booking reference copied");
+                          },
+                        },
+                      ]}
+                    />
+                  </div>
+                </div>
+
+                <div>
+                  <h4 className="text-xs font-bold text-foreground leading-tight">
+                    {r.serviceTitle}
+                  </h4>
+                  <div className="flex items-center gap-2 text-[11px] text-muted-foreground mt-0.5">
+                    <span>{r.customerName}</span>
+                    <span>•</span>
+                    <span className="font-mono">{r.requestDate}</span>
+                  </div>
+                </div>
+
+                <div className="p-2.5 rounded-lg bg-card border border-border/40 text-[11px] text-muted-foreground italic">
+                  &quot;{r.reason}&quot;
+                </div>
+
+                <div className="flex items-center justify-between pt-1 border-t border-slate-200/30 dark:border-slate-800/30 text-xs">
+                  <span className="text-[10px] text-muted-foreground uppercase font-bold">Claim Amount</span>
+                  <span className="font-mono font-bold text-foreground">{formatCurrency(r.requestedAmount)}</span>
+                </div>
+              </div>
+            ))
+          )}
         </div>
       </div>
     </div>
