@@ -32,10 +32,10 @@ export default function AuthLayout({
             </div>
             <div>
               <span className="text-2xl font-black tracking-tight text-white flex items-center gap-1">
-                Ticket<span className="text-[#B45309] dark:text-[#D97706]">Hub</span>
+                TIK<span className="text-[#B45309] dark:text-[#D97706]">ORA</span>
               </span>
               <span className="block text-[11px] uppercase tracking-widest text-slate-400 font-bold">
-                Multi-Category Ticketing
+                Verified Ticket Hub
               </span>
             </div>
           </Link>
@@ -112,8 +112,8 @@ export default function AuthLayout({
       </aside>
 
       {/* Main Form Content Container */}
-      <main className="flex-1 flex flex-col justify-center items-center p-6 sm:p-10 lg:p-16 xl:p-20 bg-[#F8FAFC] dark:bg-[#0F1117]">
-        <div className="w-full max-w-md space-y-6">
+      <main className="flex-1 flex flex-col justify-center items-center p-4 sm:p-8 lg:p-12 xl:p-16 bg-[#F8FAFC] dark:bg-[#0F1117]">
+        <div className="w-full max-w-md sm:max-w-xl lg:max-w-2xl space-y-6">
           {/* Mobile Logo Header */}
           <div className="lg:hidden text-center space-y-2 mb-6">
             <Link href="/" className="inline-flex items-center gap-2.5">
@@ -121,7 +121,7 @@ export default function AuthLayout({
                 <Ticket className="w-5 h-5 transform -rotate-12" />
               </div>
               <span className="text-xl font-black text-[#0F172A] dark:text-white">
-                Ticket<span className="text-[#B45309] dark:text-[#D97706]">Hub</span>
+                TIK<span className="text-[#B45309] dark:text-[#D97706]">ORA</span>
               </span>
             </Link>
           </div>
