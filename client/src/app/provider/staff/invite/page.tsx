@@ -11,20 +11,153 @@ import {
   Phone,
   Send,
   User,
+  ShieldCheck,
 } from "lucide-react";
 import { useProviderStore, ProviderStaffMember } from "@/stores/provider.store";
+import { TicketCategory } from "@/types/ticket.types";
 import { toast } from "sonner";
+
+const getSectorStaffConfig = (cat: TicketCategory) => {
+  switch (cat) {
+    case "CINEMA":
+      return {
+        sectorName: "Cinema Screening Operations",
+        stationLabel: "Auditorium / Screening Hall Station",
+        stationDefault: "Hall 1 Entrance (VIP Laser)",
+        emailPlaceholder: "usher@centurycinema.et",
+        stationPlaceholder: "e.g. Hall 1 Entrance (VIP Laser Dolby Atmos)",
+        roles: [
+          {
+            role: "INSPECTOR" as const,
+            title: "Cinema Hall Usher & QR Scanner",
+            desc: "Validates patron QR passes at screening room entrance using mobile inspector camera.",
+          },
+          {
+            role: "DISPATCHER" as const,
+            title: "Projection & Floor Supervisor",
+            desc: "Oversees movie schedule runtimes, hall readiness, and auditorium turnover.",
+          },
+          {
+            role: "CASHIER" as const,
+            title: "Box Office & Concessions Cashier",
+            desc: "Processes walk-in ticket counter sales and snack bar concessions.",
+          },
+          {
+            role: "MANAGER" as const,
+            title: "Cinema Hall General Manager",
+            desc: "Supervises theater staff, film programming schedule, and daily ticket box-office audits.",
+          },
+        ],
+        manifestDesc: "Permit viewing auditorium seating manifests and patron contact details.",
+      };
+    case "EVENT":
+      return {
+        sectorName: "Concerts & Festival Operations",
+        stationLabel: "Venue Entrance / Gate Turnstile",
+        stationDefault: "Main Gate Turnstile A",
+        emailPlaceholder: "staff@addislive.et",
+        stationPlaceholder: "e.g. Main Gate Turnstile A (Millennium Hall)",
+        roles: [
+          {
+            role: "INSPECTOR" as const,
+            title: "Festival Gate Scanner",
+            desc: "Validates VIP and General QR wristbands and digital passes at venue entry turnstiles.",
+          },
+          {
+            role: "DISPATCHER" as const,
+            title: "VIP Accreditation Lead",
+            desc: "Manages stage-access credentials, VIP wristband issuance, and guest-list entries.",
+          },
+          {
+            role: "CASHIER" as const,
+            title: "Gate Box Office Cashier",
+            desc: "Handles on-site ticket sales, wristband replacements, and token charges.",
+          },
+          {
+            role: "MANAGER" as const,
+            title: "Event Production Manager",
+            desc: "Oversees venue capacity, crowd control marshalling, and emergency protocols.",
+          },
+        ],
+        manifestDesc: "Permit viewing attendee manifests, VIP lists, and ticketing contact details.",
+      };
+    case "SPORTS":
+      return {
+        sectorName: "Stadium & Sports Operations",
+        stationLabel: "Stadium Gate Turnstile / Section",
+        stationDefault: "Stadium Gate 4 (Grandstand VIP)",
+        emailPlaceholder: "stewards@stgeorgesports.et",
+        stationPlaceholder: "e.g. Stadium Gate 4 (Grandstand VIP)",
+        roles: [
+          {
+            role: "INSPECTOR" as const,
+            title: "Stadium Turnstile Scanner",
+            desc: "Scans matchday tickets at stadium turnstiles and grandstand entrances.",
+          },
+          {
+            role: "DISPATCHER" as const,
+            title: "Tribune Marshal Lead",
+            desc: "Directs sector security, seating section crowd safety, and VIP box access.",
+          },
+          {
+            role: "CASHIER" as const,
+            title: "Stadium Box Office Cashier",
+            desc: "Processes matchday counter ticket sales and match program passes.",
+          },
+          {
+            role: "MANAGER" as const,
+            title: "Matchday Arena Director",
+            desc: "Supervises stadium ticketing gates, federations liaison, and security coordination.",
+          },
+        ],
+        manifestDesc: "Permit viewing stadium spectator manifests and matchday passholder lists.",
+      };
+    default:
+      return {
+        sectorName: "Intercity Bus Operations",
+        stationLabel: "Departure Terminal / Gate",
+        stationDefault: "Autobus Tera Gate 3",
+        emailPlaceholder: "solomon@selambus.et",
+        stationPlaceholder: "e.g. Autobus Tera Gate 3 (Hawassa Gate)",
+        roles: [
+          {
+            role: "INSPECTOR" as const,
+            title: "Gate Ticket Inspector",
+            desc: "Validates passenger QR passes via inspector mobile scanner app at departure gates.",
+          },
+          {
+            role: "DISPATCHER" as const,
+            title: "Fleet Dispatcher",
+            desc: "Assigns drivers, monitors coach departures, and oversees passenger manifests.",
+          },
+          {
+            role: "CASHIER" as const,
+            title: "Counter Cashier",
+            desc: "Processes counter walk-in reservations and cash ticket issuance at terminals.",
+          },
+          {
+            role: "MANAGER" as const,
+            title: "Branch Manager",
+            desc: "Supervises terminal operations, reviews daily sales reports, and adjusts schedules.",
+          },
+        ],
+        manifestDesc: "Permit viewing passenger names, seat assignments, and phone contact details.",
+      };
+  }
+};
 
 export default function InviteStaffPage() {
   const router = useRouter();
+  const organization = useProviderStore((state) => state.organization);
   const { addStaffMember } = useProviderStore();
+  const sectorConfig = getSectorStaffConfig(organization.category);
 
   const [formData, setFormData] = useState({
     fullName: "",
     email: "",
     phone: "+251 ",
     role: "INSPECTOR" as ProviderStaffMember["role"],
-    assignedStation: "Autobus Tera Gate 3",
+    assignedStation: sectorConfig.stationDefault,
   });
 
   const [permissions, setPermissions] = useState({
@@ -76,11 +209,17 @@ export default function InviteStaffPage() {
             <ArrowLeft className="w-4 h-4" />
           </Link>
           <div>
+            <div className="flex items-center gap-2 mb-1">
+              <span className="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full bg-amber-500/10 text-amber-600 border border-amber-500/20">
+                {organization.category} Sector
+              </span>
+              <span className="text-xs text-muted-foreground">{organization.name}</span>
+            </div>
             <h1 className="text-base sm:text-lg font-bold tracking-tight text-foreground">
               Invite Staff & Gate Inspector
             </h1>
             <p className="text-xs text-muted-foreground">
-              Add authorized personnel for ticket validation, fleet dispatch, or counter booking.
+              Add authorized personnel for ticket validation, dispatch, or counter booking for {sectorConfig.sectorName}.
             </p>
           </div>
         </div>
@@ -124,7 +263,7 @@ export default function InviteStaffPage() {
                     required
                     value={formData.email}
                     onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                    placeholder="solomon@selambus.et"
+                    placeholder={sectorConfig.emailPlaceholder}
                     className="w-full pl-9 pr-3.5 py-2 text-xs rounded-lg border border-border/70 bg-background text-foreground focus:outline-none focus:ring-1 focus:ring-amber-500"
                   />
                 </div>
@@ -155,28 +294,7 @@ export default function InviteStaffPage() {
             </h3>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-              {[
-                {
-                  role: "INSPECTOR" as const,
-                  title: "Gate Ticket Inspector",
-                  desc: "Validates passenger QR passes via inspector mobile scanner app at departure gates.",
-                },
-                {
-                  role: "DISPATCHER" as const,
-                  title: "Fleet Dispatcher",
-                  desc: "Assigns drivers, monitors coach departures, and oversees passenger manifests.",
-                },
-                {
-                  role: "CASHIER" as const,
-                  title: "Counter Cashier",
-                  desc: "Processes counter walk-in reservations and cash ticket issuance at terminals.",
-                },
-                {
-                  role: "MANAGER" as const,
-                  title: "Branch Manager",
-                  desc: "Supervises terminal operations, reviews daily sales reports, and adjusts schedules.",
-                },
-              ].map((item) => {
+              {sectorConfig.roles.map((item) => {
                 const isSelected = formData.role === item.role;
                 return (
                   <button
@@ -202,7 +320,7 @@ export default function InviteStaffPage() {
 
             <div>
               <label className="block text-xs font-medium text-foreground mb-1.5">
-                Assigned Operational Station / Terminal
+                {sectorConfig.stationLabel}
               </label>
               <div className="relative">
                 <MapPin className="w-3.5 h-3.5 absolute left-3 top-2.5 text-muted-foreground" />
@@ -212,7 +330,7 @@ export default function InviteStaffPage() {
                   onChange={(e) =>
                     setFormData({ ...formData, assignedStation: e.target.value })
                   }
-                  placeholder="e.g. Autobus Tera Gate 3"
+                  placeholder={sectorConfig.stationPlaceholder}
                   className="w-full pl-9 pr-3.5 py-2 text-xs rounded-lg border border-border/70 bg-background text-foreground focus:outline-none focus:ring-1 focus:ring-amber-500"
                 />
               </div>
@@ -234,8 +352,8 @@ export default function InviteStaffPage() {
                 },
                 {
                   key: "viewManifest",
-                  label: "View Passenger Manifests",
-                  desc: "Permit viewing passenger names, seat assignments, and phone contact details.",
+                  label: "View Manifests & Attendee Lists",
+                  desc: sectorConfig.manifestDesc,
                 },
                 {
                   key: "editListings",

@@ -37,8 +37,176 @@ import { ActionDropdown } from "@/components/ui/action-dropdown";
 import { toast } from "sonner";
 
 export default function ProviderOverviewDashboard() {
-  const { organization, busRoutes, busSchedules, staffMembers, refunds } = useProviderStore();
+  const { organization, staffMembers } = useProviderStore();
   const [timeRange, setTimeRange] = useState<"7D" | "30D" | "90D">("30D");
+
+  // Dynamic sector configuration strictly tailored to the organization's category
+  const getSectorConfig = () => {
+    switch (organization.category) {
+      case "CINEMA":
+        return {
+          sectorName: "Cinema & Movie Multiplex",
+          heroTitle: "Cinema Box Office & Screening Hub",
+          heroSubtitle: "Live screening halls, 4K laser Dolby Atmos showtimes, VIP seat occupancy, and concession ticketing.",
+          primaryAction: { label: "Add Showtime", href: "/provider/cinema/showtimes" },
+          secondaryAction: { label: "Movie Catalog", href: "/provider/cinema/movies" },
+          chartTitle: "Top Box Office Movies",
+          chartSubtitle: "Screening gross revenue by movie title",
+          chartLink: "/provider/cinema/movies",
+          chartLinkLabel: "Movies",
+          performanceData: [
+            { name: "Avatar: Fire & Ash 3D", value: 182000, secondaryValue: 520 },
+            { name: "Dune: Part Two Atmos", value: 135000, secondaryValue: 390 },
+            { name: "Gladiator II 4K Laser", value: 98000, secondaryValue: 280 },
+            { name: "Habesha Romance Comedy", value: 76000, secondaryValue: 210 },
+          ],
+          shareTitle: "Revenue by Hall Tier",
+          shareSubtitle: "VIP Laser Atmos vs Standard 2D",
+          shareData: [
+            { name: "VIP Laser Atmos", value: 55, color: "#6366F1" },
+            { name: "3D Digital Hall 1", value: 30, color: "#818CF8" },
+            { name: "Standard 2D Hall 2", value: 15, color: "#A5B4FC" },
+          ],
+          recentBookingsTitle: "Recent Moviegoers Bookings",
+          serviceColumnTitle: "Movie & Screening",
+          recentBookings: [
+            { id: "TH-CIN-8829", customer: "Dawit Mengistu", service: "Avatar: Fire & Ash 3D (04:30 PM)", date: "Nov 15, 2026", seats: "F12, F13", pax: 2, amount: 900, gateway: "Telebirr", status: "CONFIRMED" },
+            { id: "TH-CIN-8830", customer: "Lidia Hailu", service: "Dune: Part Two Dolby Atmos (07:00 PM)", date: "Nov 15, 2026", seats: "VIP C4", pax: 1, amount: 650, gateway: "CBE Birr", status: "CONFIRMED" },
+            { id: "TH-CIN-8831", customer: "Mikiyas Girma", service: "Gladiator II 4K Laser (08:30 PM)", date: "Nov 16, 2026", seats: "E08, E09", pax: 2, amount: 900, gateway: "Telebirr", status: "CONFIRMED" },
+            { id: "TH-CIN-8832", customer: "Tigist Alemu", service: "Habesha Wedding Comedy (02:00 PM)", date: "Nov 16, 2026", seats: "D05", pax: 1, amount: 350, gateway: "Chapa", status: "PENDING" },
+          ],
+          inspectorRoleTitle: "Screening Hall Ushers & Scanners",
+          inspectorsList: [
+            { id: "cin-st-1", name: "Daniel Assefa", station: "Hall 1 (VIP Laser Gate)", scans: 840 },
+            { id: "cin-st-2", name: "Sara Tekle", station: "Hall 2 (Dolby Atmos)", scans: 620 },
+            { id: "cin-st-3", name: "Brook Haile", station: "Concession Lobby Scanner", scans: 410 },
+          ],
+        };
+
+      case "EVENT":
+        return {
+          sectorName: "Live Events & Concerts",
+          heroTitle: "Concerts & Festival Promotion Hub",
+          heroSubtitle: "Tiered festival ticketing, VIP backstage wristbands, venue turnstiles, and live gate manifests.",
+          primaryAction: { label: "Publish Event", href: "/provider/events/create" },
+          secondaryAction: { label: "All Events", href: "/provider/events" },
+          chartTitle: "Top Event Ticket Sales",
+          chartSubtitle: "Gross booking volume by festival & concert",
+          chartLink: "/provider/events",
+          chartLinkLabel: "Events",
+          performanceData: [
+            { name: "Addis Jazz & Blues Fest", value: 240000, secondaryValue: 480 },
+            { name: "Afrobeat Live Millennium", value: 195000, secondaryValue: 390 },
+            { name: "New Year Eve Grand Gala", value: 160000, secondaryValue: 250 },
+            { name: "Tech Expo Summit 2026", value: 85000, secondaryValue: 190 },
+          ],
+          shareTitle: "Revenue by Ticket Tier",
+          shareSubtitle: "VIP Tables vs General Standing",
+          shareData: [
+            { name: "VIP Tables & Lounges", value: 48, color: "#D97706" },
+            { name: "General Admission", value: 38, color: "#B45309" },
+            { name: "Early Bird Tickets", value: 14, color: "#F59E0B" },
+          ],
+          recentBookingsTitle: "Recent Event Pass Orders",
+          serviceColumnTitle: "Concert & Pass Tier",
+          recentBookings: [
+            { id: "TH-EVT-8829", customer: "Dawit Mengistu", service: "Addis International Jazz & Afrobeat Festival", date: "Nov 20, 2026", seats: "VIP Table 4", pax: 4, amount: 3944, gateway: "Chapa", status: "CONFIRMED" },
+            { id: "TH-EVT-8830", customer: "Hiwot Assefa", service: "Afrobeat Live Festival - Millennium Hall", date: "Nov 21, 2026", seats: "General Standing x2", pax: 2, amount: 1600, gateway: "Telebirr", status: "CONFIRMED" },
+            { id: "TH-EVT-8831", customer: "Kassahun Desta", service: "Ethiopian New Year Eve Music Night", date: "Nov 25, 2026", seats: "Front Row VIP", pax: 1, amount: 2500, gateway: "CBE Birr", status: "CONFIRMED" },
+            { id: "TH-EVT-8832", customer: "Sara Tefera", service: "Tech & Startup Innovation Gala", date: "Nov 28, 2026", seats: "Delegate Pass", pax: 1, amount: 1200, gateway: "Telebirr", status: "PENDING" },
+          ],
+          inspectorRoleTitle: "Turnstile Gate Staff & Scanners",
+          inspectorsList: [
+            { id: "evt-st-1", name: "Almaz Kassa", station: "Main Gate Turnstile A", scans: 1280 },
+            { id: "evt-st-2", name: "Yared Belay", station: "VIP Wristband Booth", scans: 690 },
+            { id: "evt-st-3", name: "Helen Negash", station: "Backstage Accreditation", scans: 310 },
+          ],
+        };
+
+      case "SPORTS":
+        return {
+          sectorName: "Stadium Sports & Derbies",
+          heroTitle: "Stadium Matchday & Turnstile Hub",
+          heroSubtitle: "Electronic turnstile gates, tribune tiers (Bleachers, Covered, VIP), and season derby passes.",
+          primaryAction: { label: "Schedule Match", href: "/provider/sports/create" },
+          secondaryAction: { label: "All Fixtures", href: "/provider/sports" },
+          chartTitle: "Top Matchday Fixtures",
+          chartSubtitle: "Turnstile gate ticket gross",
+          chartLink: "/provider/sports",
+          chartLinkLabel: "Fixtures",
+          performanceData: [
+            { name: "St. George vs Coffee", value: 290000, secondaryValue: 850 },
+            { name: "Fasil Kenema Derby", value: 165000, secondaryValue: 480 },
+            { name: "Bahir Dar City Match", value: 120000, secondaryValue: 350 },
+            { name: "Adama City Match", value: 95000, secondaryValue: 280 },
+          ],
+          shareTitle: "Revenue by Tribune Tier",
+          shareSubtitle: "VIP Covered vs West Bleachers",
+          shareData: [
+            { name: "Covered VIP Tribune", value: 50, color: "#10B981" },
+            { name: "West Bleachers", value: 30, color: "#059669" },
+            { name: "East Gate General", value: 20, color: "#34D399" },
+          ],
+          recentBookingsTitle: "Recent Matchday Ticket Orders",
+          serviceColumnTitle: "Fixture & Stand",
+          recentBookings: [
+            { id: "TH-SPT-8829", customer: "Marta Solomon", service: "St. George SC vs Ethiopian Coffee SC (Derby)", date: "Nov 18, 2026", seats: "VIP Tribune A-12", pax: 1, amount: 800, gateway: "Telebirr", status: "CONFIRMED" },
+            { id: "TH-SPT-8830", customer: "Abel Kebede", service: "Ethiopian Premier League Matchday 14", date: "Nov 19, 2026", seats: "Covered Stand Gate 2", pax: 2, amount: 1000, gateway: "CBE Birr", status: "CONFIRMED" },
+            { id: "TH-SPT-8831", customer: "Yonas Mekonnen", service: "National Cup Semi-Final Clash", date: "Nov 22, 2026", seats: "West Bleachers x2", pax: 2, amount: 400, gateway: "Telebirr", status: "CONFIRMED" },
+            { id: "TH-SPT-8832", customer: "Eden Daniel", service: "Addis City Basketball Finals: Game 5", date: "Nov 24, 2026", seats: "Court-Side Row 2", pax: 2, amount: 1044, gateway: "Chapa", status: "PENDING" },
+          ],
+          inspectorRoleTitle: "Electronic Turnstile Scanners",
+          inspectorsList: [
+            { id: "spt-st-1", name: "Tilahun Girmay", station: "Turnstile Gate 4 (Grandstand)", scans: 1450 },
+            { id: "spt-st-2", name: "Binyam Worku", station: "Turnstile 1 (VIP Tribune)", scans: 820 },
+            { id: "spt-st-3", name: "Solomon Abebe", station: "North Bleachers Turnstile", scans: 950 },
+          ],
+        };
+
+      case "BUS":
+      default:
+        return {
+          sectorName: "Intercity Bus Operations",
+          heroTitle: "Bus Operations & Fleet Dispatch Hub",
+          heroSubtitle: "Live highway coach schedules, seat matrix allocations, terminal gates, and passenger manifests.",
+          primaryAction: { label: "New Route", href: "/provider/bus/routes" },
+          secondaryAction: { label: "Fleet Schedules", href: "/provider/bus/schedules" },
+          chartTitle: "Top Highway Routes",
+          chartSubtitle: "Gross booking volume by highway sector",
+          chartLink: "/provider/bus/routes",
+          chartLinkLabel: "Routes",
+          performanceData: [
+            { name: "Addis → Hawassa", value: 185000, secondaryValue: 240 },
+            { name: "Addis → Bahir Dar", value: 142000, secondaryValue: 180 },
+            { name: "Addis → Dire Dawa", value: 92000, secondaryValue: 110 },
+            { name: "Addis → Gondar", value: 63500, secondaryValue: 65 },
+          ],
+          shareTitle: "Revenue by Coach Class",
+          shareSubtitle: "VIP Luxury vs Standard Express share",
+          shareData: [
+            { name: "VIP Luxury Coach", value: 58, color: "#B45309" },
+            { name: "Standard Express", value: 32, color: "#D97706" },
+            { name: "Minibus Shuttle", value: 10, color: "#F59E0B" },
+          ],
+          recentBookingsTitle: "Recent Passenger Bookings",
+          serviceColumnTitle: "Route & Departure",
+          recentBookings: [
+            { id: "TH-BUS-8829", customer: "Abebe Bekele", service: "Addis Ababa → Hawassa (06:00 AM)", date: "Nov 15, 2026", seats: "12A, 12B", pax: 2, amount: 1508, gateway: "Telebirr", status: "CONFIRMED" },
+            { id: "TH-BUS-8830", customer: "Selamawit Tadesse", service: "Addis Ababa → Bahir Dar (05:30 AM)", date: "Nov 15, 2026", seats: "04A", pax: 1, amount: 1102, gateway: "CBE Birr", status: "CONFIRMED" },
+            { id: "TH-BUS-8831", customer: "Yared Tesfaye", service: "Addis Ababa → Jimma Express (06:30 AM)", date: "Nov 16, 2026", seats: "07B, 07C", pax: 2, amount: 1350, gateway: "Telebirr", status: "CONFIRMED" },
+            { id: "TH-BUS-8832", customer: "Bethlehem Assefa", service: "Addis Ababa → Dire Dawa (05:00 AM)", date: "Nov 16, 2026", seats: "15A", pax: 1, amount: 1250, gateway: "Chapa", status: "PENDING" },
+          ],
+          inspectorRoleTitle: "Boarding Gate Inspectors",
+          inspectorsList: [
+            { id: "bus-st-1", name: "Tewodros Kassahun", station: "Autobus Tera Gate 3", scans: 1420 },
+            { id: "bus-st-2", name: "Almaz Kebede", station: "Lamberet Terminal Bay 2", scans: 890 },
+            { id: "bus-st-3", name: "Dawit Wolde", station: "Kality Cross-country Bay", scans: 540 },
+          ],
+        };
+    }
+  };
+
+  const sector = getSectorConfig();
 
   // Sample analytics data based on selected time range
   const revenueTrendData = [
@@ -49,67 +217,6 @@ export default function ProviderOverviewDashboard() {
     { name: "Fri", value: 89400 },
     { name: "Sat", value: 98200 },
     { name: "Sun", value: 71300 },
-  ];
-
-  const categoryShareData = [
-    { name: "Intercity Bus", value: 52, color: "#B45309" },
-    { name: "Concerts & Events", value: 24, color: "#D97706" },
-    { name: "Cinema & IMAX", value: 14, color: "#6366F1" },
-    { name: "Stadium Sports", value: 10, color: "#10B981" },
-  ];
-
-  const routePerformanceData = [
-    { name: "Addis → Hawassa", value: 185000, secondaryValue: 240 },
-    { name: "Addis → Bahir Dar", value: 142000, secondaryValue: 180 },
-    { name: "Addis → Dire Dawa", value: 92000, secondaryValue: 110 },
-    { name: "Addis → Gondar", value: 63500, secondaryValue: 65 },
-  ];
-
-  const recentBookings = [
-    {
-      id: "TH-BUS-8829",
-      customer: "Abebe Bekele",
-      service: "Addis Ababa → Hawassa (06:00 AM)",
-      date: "Nov 15, 2026",
-      seats: "12A, 12B",
-      pax: 2,
-      amount: 1508,
-      gateway: "Telebirr",
-      status: "CONFIRMED",
-    },
-    {
-      id: "TH-BUS-8830",
-      customer: "Selamawit Tadesse",
-      service: "Addis Ababa → Bahir Dar (05:30 AM)",
-      date: "Nov 15, 2026",
-      seats: "04A",
-      pax: 1,
-      amount: 1102,
-      gateway: "CBE Birr",
-      status: "CONFIRMED",
-    },
-    {
-      id: "TH-EVT-4401",
-      customer: "Dawit Mengistu",
-      service: "Addis International Jazz & Afrobeat Festival",
-      date: "Nov 20, 2026",
-      seats: "VIP Table 4",
-      pax: 4,
-      amount: 3944,
-      gateway: "Chapa",
-      status: "CONFIRMED",
-    },
-    {
-      id: "TH-SPT-9921",
-      customer: "Marta Solomon",
-      service: "National Basketball League Finals: Game 5",
-      date: "Nov 18, 2026",
-      seats: "Court-Side Row 2",
-      pax: 2,
-      amount: 1044,
-      gateway: "Telebirr",
-      status: "PENDING",
-    },
   ];
 
   const handleCopy = (text: string, label: string) => {
@@ -128,30 +235,30 @@ export default function ProviderOverviewDashboard() {
           <div className="space-y-2 max-w-xl">
             <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-emerald-500/15 text-emerald-300 ring-1 ring-emerald-500/30 text-[11px] font-bold">
               <ShieldCheck className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
-              <span className="truncate">Verified Merchant: {organization.legalName}</span>
+              <span className="truncate">{sector.sectorName} • {organization.legalName}</span>
             </div>
 
             <h1 className="text-sm sm:text-base md:text-lg font-bold tracking-tight text-white leading-tight">
-              Operations & Revenue Hub
+              {sector.heroTitle}
             </h1>
             <p className="text-xs text-slate-300 leading-relaxed max-w-lg">
-              Live seat matrices, scannable passes, turnstile entry logs, and daily bank payouts.
+              {sector.heroSubtitle}
             </p>
           </div>
 
           <div className="flex flex-wrap items-center gap-2.5 w-full sm:w-auto">
             <Link
-              href="/provider/bus/routes"
+              href={sector.primaryAction.href}
               className="inline-flex items-center justify-center gap-1.5 px-4 py-2.5 rounded-xl bg-[#B45309] hover:bg-[#92400E] text-white font-bold text-xs shadow-xs active:scale-95 transition-all flex-1 sm:flex-initial"
             >
               <Plus className="w-3.5 h-3.5" />
-              <span>New Route</span>
+              <span>{sector.primaryAction.label}</span>
             </Link>
             <Link
-              href="/provider/reports"
+              href={sector.secondaryAction.href}
               className="inline-flex items-center justify-center gap-1.5 px-4 py-2.5 rounded-xl bg-white/10 hover:bg-white/15 text-slate-200 ring-1 ring-white/15 font-bold text-xs backdrop-blur-xs transition-all flex-1 sm:flex-initial"
             >
-              <span>Financial Report</span>
+              <span>{sector.secondaryAction.label}</span>
             </Link>
           </div>
         </div>
@@ -317,14 +424,14 @@ export default function ProviderOverviewDashboard() {
         <div className="lg:col-span-4 rounded-2xl sm:rounded-3xl bg-white dark:bg-[#161922] border border-slate-200/50 dark:border-slate-800/40 p-4 sm:p-6 shadow-xs space-y-4">
           <div className="border-b border-slate-100 dark:border-slate-800/60 pb-3">
             <h2 className="text-xs sm:text-sm font-bold text-[#0F172A] dark:text-white">
-              Revenue by Service Sector
+              {sector.shareTitle}
             </h2>
             <p className="text-xs text-slate-500 dark:text-slate-400">
-              Breakdown across coach, sports & entertainment.
+              {sector.shareSubtitle}
             </p>
           </div>
 
-          <DashboardPieChart data={categoryShareData} height={260} />
+          <DashboardPieChart data={sector.shareData} height={260} />
         </div>
       </div>
 
@@ -335,7 +442,7 @@ export default function ProviderOverviewDashboard() {
           <div className="flex items-center justify-between border-b border-slate-100 dark:border-slate-800/60 pb-3">
             <div>
               <h3 className="text-xs sm:text-sm font-bold text-[#0F172A] dark:text-white">
-                Recent Passenger Bookings
+                {sector.recentBookingsTitle}
               </h3>
               <p className="text-xs text-slate-500 dark:text-slate-400">Live booking activity feed</p>
             </div>
@@ -354,7 +461,7 @@ export default function ProviderOverviewDashboard() {
               <thead>
                 <tr className="border-b border-slate-100 dark:border-slate-800/60 text-[10px] uppercase font-bold text-slate-400 dark:text-slate-500 tracking-wider">
                   <th className="py-2.5 px-3">Reference / Customer</th>
-                  <th className="py-2.5 px-3">Service & Route</th>
+                  <th className="py-2.5 px-3">{sector.serviceColumnTitle}</th>
                   <th className="py-2.5 px-3">Seats</th>
                   <th className="py-2.5 px-3">Fare</th>
                   <th className="py-2.5 px-3">Status</th>
@@ -362,7 +469,7 @@ export default function ProviderOverviewDashboard() {
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100 dark:divide-slate-800/50 text-xs">
-                {recentBookings.map((b) => (
+                {sector.recentBookings.map((b) => (
                   <tr
                     key={b.id}
                     className="hover:bg-slate-50/70 dark:hover:bg-slate-800/30 transition-colors"
@@ -432,7 +539,7 @@ export default function ProviderOverviewDashboard() {
 
           {/* Mobile View: High-End Card Feed (No horizontal scrolling!) */}
           <div className="block md:hidden space-y-2.5">
-            {recentBookings.map((b) => (
+            {sector.recentBookings.map((b) => (
               <div
                 key={b.id}
                 className="p-3.5 rounded-xl bg-slate-50/70 dark:bg-slate-800/30 border border-slate-200/40 dark:border-slate-800/40 space-y-2.5"
@@ -503,26 +610,26 @@ export default function ProviderOverviewDashboard() {
 
         {/* Route Volumes & Field Operations (5 Cols) */}
         <div className="lg:col-span-5 space-y-5 sm:space-y-6">
-          {/* Highway Route Performance */}
+          {/* Sector Volume Performance */}
           <div className="rounded-2xl sm:rounded-3xl bg-white dark:bg-[#161922] border border-slate-200/50 dark:border-slate-800/40 p-4 sm:p-6 shadow-xs space-y-4">
             <div className="flex items-center justify-between border-b border-slate-100 dark:border-slate-800/60 pb-3">
               <div>
                 <h3 className="text-xs sm:text-sm font-bold text-[#0F172A] dark:text-white">
-                  Top Route Volumes
+                  {sector.chartTitle}
                 </h3>
                 <p className="text-xs text-slate-500 dark:text-slate-400">
-                  Revenue by highway sector
+                  {sector.chartSubtitle}
                 </p>
               </div>
               <Link
-                href="/provider/bus/routes"
+                href={sector.chartLink}
                 className="text-xs font-bold text-[#B45309] dark:text-amber-400 hover:underline"
               >
-                Routes
+                {sector.chartLinkLabel}
               </Link>
             </div>
 
-            <DashboardBarChart data={routePerformanceData} height={200} valueSuffix=" ETB" />
+            <DashboardBarChart data={sector.performanceData} height={200} valueSuffix=" ETB" />
           </div>
 
           {/* Operational Team Quick Status */}
@@ -531,35 +638,35 @@ export default function ProviderOverviewDashboard() {
               <div className="flex items-center gap-2">
                 <Users className="w-4 h-4 text-[#B45309]" />
                 <h4 className="text-xs font-bold text-[#0F172A] dark:text-white">
-                  Gate Inspectors On Duty
+                  {sector.inspectorRoleTitle}
                 </h4>
               </div>
               <span className="text-[10px] font-bold text-emerald-600 dark:text-emerald-400 px-2 py-0.5 rounded-md bg-emerald-500/10">
-                {staffMembers.filter((s) => s.status === "ACTIVE").length} Active
+                {sector.inspectorsList.length} Active
               </span>
             </div>
 
             <div className="space-y-2">
-              {staffMembers.slice(0, 3).map((st) => (
+              {sector.inspectorsList.map((st) => (
                 <div
                   key={st.id}
                   className="flex items-center justify-between p-2.5 rounded-xl bg-slate-50/70 dark:bg-slate-800/30 border border-slate-200/40 dark:border-slate-800/40"
                 >
                   <div className="flex items-center gap-2.5 min-w-0">
                     <div className="w-8 h-8 rounded-lg bg-amber-500/10 text-amber-700 dark:text-amber-300 flex items-center justify-center font-bold text-xs shrink-0">
-                      {st.fullName.substring(0, 2).toUpperCase()}
+                      {st.name.substring(0, 2).toUpperCase()}
                     </div>
                     <div className="min-w-0">
                       <span className="text-xs font-bold text-[#0F172A] dark:text-white block truncate">
-                        {st.fullName}
+                        {st.name}
                       </span>
                       <span className="text-[10px] text-slate-500 dark:text-slate-400 block truncate">
-                        {st.assignedStation}
+                        {st.station}
                       </span>
                     </div>
                   </div>
                   <span className="text-[10px] font-mono font-medium text-slate-600 dark:text-slate-400 shrink-0">
-                    {st.scannedTicketsCount} Scanned
+                    {st.scans} Scanned
                   </span>
                 </div>
               ))}

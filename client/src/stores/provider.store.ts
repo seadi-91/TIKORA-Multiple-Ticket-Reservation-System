@@ -158,14 +158,423 @@ interface ProviderStoreState {
   markAllNotificationsAsRead: () => void;
   // Payout Request
   requestPayout: (amount: number) => void;
+  // Sector Switching
+  setOrganizationCategory: (category: TicketCategory) => void;
 }
+
+const getInitialCategory = (): TicketCategory => {
+  if (typeof window !== "undefined") {
+    try {
+      const saved = localStorage.getItem("tikora_provider_category") as TicketCategory;
+      if (saved && ["BUS", "CINEMA", "EVENT", "SPORTS"].includes(saved)) {
+        return saved;
+      }
+    } catch (err) {}
+  }
+  return "BUS";
+};
+
+const initialCat = getInitialCategory();
+
+const getInitialOrgMeta = (cat: TicketCategory) => {
+  switch (cat) {
+    case "CINEMA":
+      return {
+        name: "Century Cinema Addis",
+        legalName: "Century Cinema & Entertainment PLC",
+        description: "Premier digital cinema and multiplex screening theatre operating modern Dolby Atmos and laser projection halls.",
+      };
+    case "EVENT":
+      return {
+        name: "Addis Live Events & Concerts",
+        legalName: "Addis Live Entertainment & Festival SC",
+        description: "Official event promoter and live festival management company organizing cultural and music concerts across Millennium Hall.",
+      };
+    case "SPORTS":
+      return {
+        name: "St. George Stadium Club",
+        legalName: "St. George Football & Sports Club Association",
+        description: "Official sports franchise and stadium matchday pass distributor for Ethiopian Premier League and regional tournament derbies.",
+      };
+    default:
+      return {
+        name: "Selam Bus Lines S.C.",
+        legalName: "Selam Bus Line Share Company",
+        description: "Ethiopia's pioneer luxury cross-country passenger transport corporation operating high-standard Scania and Yutong express coaches across 12 federal highways.",
+      };
+  }
+};
+
+const initialOrgMeta = getInitialOrgMeta(initialCat);
+
+export const getInitialStaffForCategory = (cat: TicketCategory): ProviderStaffMember[] => {
+  switch (cat) {
+    case "CINEMA":
+      return [
+        {
+          id: "st-cnm-1",
+          fullName: "Selamawit Tadesse",
+          email: "selamawit.t@centurycinema.et",
+          phone: "+251 91 199 4433",
+          role: "MANAGER",
+          assignedStation: "Century Megaplex Box Office Management",
+          status: "ACTIVE",
+          scannedTicketsCount: 3940,
+          lastActive: "12 mins ago",
+          dateAdded: "2025-02-10",
+        },
+        {
+          id: "st-cnm-2",
+          fullName: "Biruk Girma",
+          email: "biruk.g@centurycinema.et",
+          phone: "+251 92 233 8899",
+          role: "INSPECTOR",
+          assignedStation: "Hall 1 (VIP Laser Dolby Atmos) Scanner",
+          status: "ACTIVE",
+          scannedTicketsCount: 2150,
+          lastActive: "Just now",
+          dateAdded: "2025-05-18",
+        },
+        {
+          id: "st-cnm-3",
+          fullName: "Bethelhem Assefa",
+          email: "bethelhem.a@centurycinema.et",
+          phone: "+251 93 344 1122",
+          role: "INSPECTOR",
+          assignedStation: "Hall 2 (RealD 3D Surround) Scanner",
+          status: "ACTIVE",
+          scannedTicketsCount: 1820,
+          lastActive: "18 mins ago",
+          dateAdded: "2025-08-01",
+        },
+        {
+          id: "st-cnm-4",
+          fullName: "Dawit Zewdu",
+          email: "dawit.z@centurycinema.et",
+          phone: "+251 94 455 3344",
+          role: "DISPATCHER",
+          assignedStation: "Digital Projection & Hall Turnover Control",
+          status: "ACTIVE",
+          scannedTicketsCount: 640,
+          lastActive: "45 mins ago",
+          dateAdded: "2026-01-14",
+        },
+        {
+          id: "st-cnm-5",
+          fullName: "Mahlet Bekele",
+          email: "mahlet.b@centurycinema.et",
+          phone: "+251 95 566 5566",
+          role: "CASHIER",
+          assignedStation: "Movie Concessions & Box Office Counter",
+          status: "ACTIVE",
+          scannedTicketsCount: 520,
+          lastActive: "2 hours ago",
+          dateAdded: "2026-02-19",
+        },
+      ];
+    case "EVENT":
+      return [
+        {
+          id: "st-evt-1",
+          fullName: "Natnael Haile",
+          email: "natnael.h@addislive.et",
+          phone: "+251 91 188 7766",
+          role: "MANAGER",
+          assignedStation: "Millennium Hall Festival Operations",
+          status: "ACTIVE",
+          scannedTicketsCount: 5120,
+          lastActive: "8 mins ago",
+          dateAdded: "2025-01-15",
+        },
+        {
+          id: "st-evt-2",
+          fullName: "Ruth Mengistu",
+          email: "ruth.m@addislive.et",
+          phone: "+251 92 244 5511",
+          role: "INSPECTOR",
+          assignedStation: "VIP Red Carpet Turnstile Scanner",
+          status: "ACTIVE",
+          scannedTicketsCount: 3410,
+          lastActive: "Just now",
+          dateAdded: "2025-04-20",
+        },
+        {
+          id: "st-evt-3",
+          fullName: "Ermias Tesfaye",
+          email: "ermias.t@addislive.et",
+          phone: "+251 93 355 6622",
+          role: "INSPECTOR",
+          assignedStation: "General Admission Turnstile A Scanner",
+          status: "ACTIVE",
+          scannedTicketsCount: 2890,
+          lastActive: "30 mins ago",
+          dateAdded: "2025-07-12",
+        },
+        {
+          id: "st-evt-4",
+          fullName: "Senait Kebede",
+          email: "senait.k@addislive.et",
+          phone: "+251 94 466 7733",
+          role: "DISPATCHER",
+          assignedStation: "Stage Credential & Wristband Dispatch",
+          status: "ACTIVE",
+          scannedTicketsCount: 980,
+          lastActive: "1 hour ago",
+          dateAdded: "2026-01-08",
+        },
+        {
+          id: "st-evt-5",
+          fullName: "Henok Alemayehu",
+          email: "henok.a@addislive.et",
+          phone: "+251 95 577 8844",
+          role: "CASHIER",
+          assignedStation: "Festival Entry Box Office Counter",
+          status: "ACTIVE",
+          scannedTicketsCount: 740,
+          lastActive: "3 hours ago",
+          dateAdded: "2026-02-15",
+        },
+      ];
+    case "SPORTS":
+      return [
+        {
+          id: "st-spt-1",
+          fullName: "Getachew Reda",
+          email: "getachew.r@stgeorgesports.et",
+          phone: "+251 91 177 3344",
+          role: "MANAGER",
+          assignedStation: "Addis Ababa Stadium Matchday Operations",
+          status: "ACTIVE",
+          scannedTicketsCount: 6340,
+          lastActive: "5 mins ago",
+          dateAdded: "2025-02-01",
+        },
+        {
+          id: "st-spt-2",
+          fullName: "Yohannes Wolde",
+          email: "yohannes.w@stgeorgesports.et",
+          phone: "+251 92 255 6677",
+          role: "INSPECTOR",
+          assignedStation: "Stadium Gate 4 (Grandstand VIP) Scanner",
+          status: "ACTIVE",
+          scannedTicketsCount: 4210,
+          lastActive: "Just now",
+          dateAdded: "2025-05-10",
+        },
+        {
+          id: "st-spt-3",
+          fullName: "Tigist Melaku",
+          email: "tigist.m@stgeorgesports.et",
+          phone: "+251 93 366 7788",
+          role: "INSPECTOR",
+          assignedStation: "Gate 1 (Bleachers Turnstile) Scanner",
+          status: "ACTIVE",
+          scannedTicketsCount: 3650,
+          lastActive: "20 mins ago",
+          dateAdded: "2025-08-22",
+        },
+        {
+          id: "st-spt-4",
+          fullName: "Samson Bekele",
+          email: "samson.b@stgeorgesports.et",
+          phone: "+251 94 477 8899",
+          role: "DISPATCHER",
+          assignedStation: "Tribune Crowd Safety & Pitch Security",
+          status: "ACTIVE",
+          scannedTicketsCount: 1120,
+          lastActive: "2 hours ago",
+          dateAdded: "2026-01-20",
+        },
+        {
+          id: "st-spt-5",
+          fullName: "Frehiwot Desta",
+          email: "frehiwot.d@stgeorgesports.et",
+          phone: "+251 95 588 9900",
+          role: "CASHIER",
+          assignedStation: "Matchday Ticket Kiosk 1",
+          status: "ACTIVE",
+          scannedTicketsCount: 890,
+          lastActive: "4 hours ago",
+          dateAdded: "2026-02-25",
+        },
+      ];
+    default:
+      return [
+        {
+          id: "st-1",
+          fullName: "Almaz Kebede",
+          email: "almaz.k@selambus.et",
+          phone: "+251 91 199 8877",
+          role: "MANAGER",
+          assignedStation: "Autobus Tera Central Dispatch",
+          status: "ACTIVE",
+          scannedTicketsCount: 4210,
+          lastActive: "10 mins ago",
+          dateAdded: "2025-03-12",
+        },
+        {
+          id: "st-2",
+          fullName: "Yared Tefera",
+          email: "yared.t@selambus.et",
+          phone: "+251 92 233 4455",
+          role: "INSPECTOR",
+          assignedStation: "Autobus Tera Gate 3 (Hawassa Gate)",
+          status: "ACTIVE",
+          scannedTicketsCount: 1845,
+          lastActive: "Just now",
+          dateAdded: "2025-06-01",
+        },
+        {
+          id: "st-3",
+          fullName: "Mesfin Alemu",
+          email: "mesfin.a@selambus.et",
+          phone: "+251 93 344 5566",
+          role: "INSPECTOR",
+          assignedStation: "Lamberet Gate 1 (Bahir Dar Gate)",
+          status: "ACTIVE",
+          scannedTicketsCount: 1420,
+          lastActive: "25 mins ago",
+          dateAdded: "2025-08-15",
+        },
+        {
+          id: "st-4",
+          fullName: "Hanna Worku",
+          email: "hanna.w@selambus.et",
+          phone: "+251 94 455 6677",
+          role: "DISPATCHER",
+          assignedStation: "Headquarters Operations Desk",
+          status: "ACTIVE",
+          scannedTicketsCount: 890,
+          lastActive: "1 hour ago",
+          dateAdded: "2026-01-10",
+        },
+        {
+          id: "st-5",
+          fullName: "Desta Hailu",
+          email: "desta.h@selambus.et",
+          phone: "+251 95 566 7788",
+          role: "CASHIER",
+          assignedStation: "Ticket Sales Counter 2",
+          status: "ACTIVE",
+          scannedTicketsCount: 310,
+          lastActive: "3 hours ago",
+          dateAdded: "2026-02-20",
+        },
+      ];
+  }
+};
+
+export const getInitialRefundsForCategory = (cat: TicketCategory): ProviderRefundItem[] => {
+  switch (cat) {
+    case "CINEMA":
+      return [
+        {
+          id: "ref-cnm-1",
+          bookingReference: "TH-CNM-4419",
+          customerName: "Meron Worku",
+          serviceTitle: "Avatar: The Way of Water 3D Dolby",
+          category: "CINEMA",
+          requestedAmount: 500,
+          reason: "Customer booked wrong screening time session",
+          requestDate: "2026-11-03",
+          status: "PENDING",
+        },
+        {
+          id: "ref-cnm-2",
+          bookingReference: "TH-CNM-5520",
+          customerName: "Kassahun Desta",
+          serviceTitle: "Gladiator II: Ethiopian Premiere",
+          category: "CINEMA",
+          requestedAmount: 380,
+          reason: "Showtime conflict with work schedule",
+          requestDate: "2026-11-01",
+          status: "APPROVED",
+        },
+      ];
+    case "EVENT":
+      return [
+        {
+          id: "ref-evt-1",
+          bookingReference: "TH-EVT-1094",
+          customerName: "Robel Assefa",
+          serviceTitle: "Addis International Jazz & Afrobeat Festival",
+          category: "EVENT",
+          requestedAmount: 850,
+          reason: "Customer requested cancellation within 48h refund policy window",
+          requestDate: "2026-10-30",
+          status: "APPROVED",
+        },
+        {
+          id: "ref-evt-2",
+          bookingReference: "TH-EVT-9921",
+          customerName: "Alazar Mengistu",
+          serviceTitle: "Teddy Afro New Year Concert Tour",
+          category: "EVENT",
+          requestedAmount: 1200,
+          reason: "Medical emergency travel cancellation",
+          requestDate: "2026-11-02",
+          status: "PENDING",
+        },
+      ];
+    case "SPORTS":
+      return [
+        {
+          id: "ref-spt-1",
+          bookingReference: "TH-SPT-3910",
+          customerName: "Marta Solomon",
+          serviceTitle: "National Basketball League Finals: Game 5",
+          category: "SPORTS",
+          requestedAmount: 450,
+          reason: "Duplicate seat booking by family member",
+          requestDate: "2026-11-01",
+          status: "PENDING",
+        },
+        {
+          id: "ref-spt-2",
+          bookingReference: "TH-SPT-8812",
+          customerName: "Dawit Wolde",
+          serviceTitle: "Ethiopian Premier League Derby: St. George vs Coffee",
+          category: "SPORTS",
+          requestedAmount: 400,
+          reason: "Purchased incorrect stadium entrance gate ticket",
+          requestDate: "2026-11-02",
+          status: "APPROVED",
+        },
+      ];
+    default:
+      return [
+        {
+          id: "ref-1",
+          bookingReference: "TH-BUS-9021",
+          customerName: "Solomon Getachew",
+          serviceTitle: "Addis Ababa → Hawassa (06:00 AM)",
+          category: "BUS",
+          requestedAmount: 650,
+          reason: "Trip rescheduled due to emergency family travel change",
+          requestDate: "2026-11-02",
+          status: "PENDING",
+        },
+        {
+          id: "ref-2",
+          bookingReference: "TH-BUS-8871",
+          customerName: "Kassahun Desta",
+          serviceTitle: "Addis Ababa to Bahir Dar Lake Cruiser",
+          category: "BUS",
+          requestedAmount: 950,
+          reason: "Passenger missed morning express connection",
+          requestDate: "2026-11-01",
+          status: "APPROVED",
+        },
+      ];
+  }
+};
 
 export const useProviderStore = create<ProviderStoreState>((set) => ({
   organization: {
     id: "org-selam-01",
-    name: "Selam Bus Lines S.C.",
-    legalName: "Selam Bus Line Share Company",
-    category: "BUS",
+    name: initialOrgMeta.name,
+    legalName: initialOrgMeta.legalName,
+    category: initialCat,
     verified: true,
     approvalStatus: "APPROVED",
     tinNumber: "0048192841",
@@ -176,8 +585,7 @@ export const useProviderStore = create<ProviderStoreState>((set) => ({
     website: "https://selambus.et",
     address: "Meskel Square, Behind Stadium, Kirkos Subcity",
     city: "Addis Ababa",
-    description:
-      "Ethiopia's pioneer luxury cross-country passenger transport corporation operating high-standard Scania and Yutong express coaches across 12 federal highways.",
+    description: initialOrgMeta.description,
     contactPerson: {
       fullName: "Tewodros Kassahun",
       role: "Chief Operating Officer",
@@ -391,104 +799,9 @@ export const useProviderStore = create<ProviderStoreState>((set) => ({
     },
   ],
 
-  staffMembers: [
-    {
-      id: "st-1",
-      fullName: "Almaz Kebede",
-      email: "almaz.k@selambus.et",
-      phone: "+251 91 199 8877",
-      role: "MANAGER",
-      assignedStation: "Autobus Tera Central Dispatch",
-      status: "ACTIVE",
-      scannedTicketsCount: 4210,
-      lastActive: "10 mins ago",
-      dateAdded: "2025-03-12",
-    },
-    {
-      id: "st-2",
-      fullName: "Yared Tefera",
-      email: "yared.t@selambus.et",
-      phone: "+251 92 233 4455",
-      role: "INSPECTOR",
-      assignedStation: "Autobus Tera Gate 3 (Hawassa Gate)",
-      status: "ACTIVE",
-      scannedTicketsCount: 1845,
-      lastActive: "Just now",
-      dateAdded: "2025-06-01",
-    },
-    {
-      id: "st-3",
-      fullName: "Mesfin Alemu",
-      email: "mesfin.a@selambus.et",
-      phone: "+251 93 344 5566",
-      role: "INSPECTOR",
-      assignedStation: "Lamberet Gate 1 (Bahir Dar Gate)",
-      status: "ACTIVE",
-      scannedTicketsCount: 1420,
-      lastActive: "25 mins ago",
-      dateAdded: "2025-08-15",
-    },
-    {
-      id: "st-4",
-      fullName: "Hanna Worku",
-      email: "hanna.w@selambus.et",
-      phone: "+251 94 455 6677",
-      role: "DISPATCHER",
-      assignedStation: "Headquarters Operations Desk",
-      status: "ACTIVE",
-      scannedTicketsCount: 890,
-      lastActive: "1 hour ago",
-      dateAdded: "2026-01-10",
-    },
-    {
-      id: "st-5",
-      fullName: "Desta Hailu",
-      email: "desta.h@selambus.et",
-      phone: "+251 95 566 7788",
-      role: "CASHIER",
-      assignedStation: "Ticket Sales Counter 2",
-      status: "ACTIVE",
-      scannedTicketsCount: 310,
-      lastActive: "3 hours ago",
-      dateAdded: "2026-02-20",
-    },
-  ],
+  staffMembers: getInitialStaffForCategory(initialCat),
 
-  refunds: [
-    {
-      id: "ref-1",
-      bookingReference: "TH-BUS-7741",
-      customerName: "Dawit Mengistu",
-      serviceTitle: "Addis Ababa to Hawassa Express",
-      category: "BUS",
-      requestedAmount: 650,
-      reason: "Trip rescheduled due to emergency family travel change",
-      requestDate: "2026-11-02",
-      status: "PENDING",
-    },
-    {
-      id: "ref-2",
-      bookingReference: "TH-SPT-3910",
-      customerName: "Marta Solomon",
-      serviceTitle: "National Basketball League Finals: Game 5",
-      category: "SPORTS",
-      requestedAmount: 450,
-      reason: "Duplicate seat booking by family member",
-      requestDate: "2026-11-01",
-      status: "PENDING",
-    },
-    {
-      id: "ref-3",
-      bookingReference: "TH-EVT-1094",
-      customerName: "Robel Assefa",
-      serviceTitle: "Addis International Jazz & Afrobeat Festival",
-      category: "EVENT",
-      requestedAmount: 850,
-      reason: "Customer requested cancellation within 48h window",
-      requestDate: "2026-10-30",
-      status: "APPROVED",
-    },
-  ],
+  refunds: getInitialRefundsForCategory(initialCat),
 
   notifications: [
     {
@@ -625,5 +938,51 @@ export const useProviderStore = create<ProviderStoreState>((set) => ({
         },
       },
     })),
+
+  setOrganizationCategory: (category: TicketCategory) => {
+    if (typeof window !== "undefined") {
+      try {
+        localStorage.setItem("tikora_provider_category", category);
+      } catch (err) {
+        console.warn("Storage error for provider category:", err);
+      }
+    }
+
+    set((state) => {
+      let name = state.organization.name;
+      let legalName = state.organization.legalName;
+      let description = state.organization.description;
+
+      if (category === "CINEMA") {
+        name = "Century Cinema Addis";
+        legalName = "Century Cinema & Entertainment PLC";
+        description = "Premier digital cinema and multiplex screening theatre operating modern Dolby Atmos and laser projection halls.";
+      } else if (category === "EVENT") {
+        name = "Addis Live Events & Concerts";
+        legalName = "Addis Live Entertainment & Festival SC";
+        description = "Official event promoter and live festival management company organizing cultural and music concerts across Millennium Hall.";
+      } else if (category === "SPORTS") {
+        name = "St. George Stadium Club";
+        legalName = "St. George Football & Sports Club Association";
+        description = "Official sports franchise and stadium matchday pass distributor for Ethiopian Premier League and regional tournament derbies.";
+      } else if (category === "BUS") {
+        name = "Selam Bus Lines S.C.";
+        legalName = "Selam Bus Line Share Company";
+        description = "Ethiopia's pioneer luxury cross-country passenger transport corporation operating high-standard Scania and Yutong express coaches across 12 federal highways.";
+      }
+
+      return {
+        organization: {
+          ...state.organization,
+          category,
+          name,
+          legalName,
+          description,
+        },
+        staffMembers: getInitialStaffForCategory(category),
+        refunds: getInitialRefundsForCategory(category),
+      };
+    });
+  },
 }));
 

@@ -14,15 +14,16 @@ import { TicketService } from "@/services/ticket.service";
 import { formatCurrency } from "@/lib/format-currency";
 import { TicketCategory } from "@/types/ticket.types";
 import { ActionDropdown } from "@/components/ui/action-dropdown";
+import { useProviderStore } from "@/stores/provider.store";
 
 export default function ProviderTicketsPage() {
+  const { organization } = useProviderStore();
   const allTickets = TicketService.getAllTickets();
-  const [tickets, setTickets] = useState(allTickets);
+  const sectorTickets = allTickets.filter((t) => t.category === organization.category);
+  const [tickets, setTickets] = useState(sectorTickets);
   const [search, setSearch] = useState("");
-  const [selectedCat, setSelectedCat] = useState<TicketCategory | "ALL">("ALL");
 
   const filtered = tickets.filter((t) => {
-    if (selectedCat !== "ALL" && t.category !== selectedCat) return false;
     if (
       search &&
       !t.title.toLowerCase().includes(search.toLowerCase()) &&
@@ -45,11 +46,17 @@ export default function ProviderTicketsPage() {
             <span>/</span>
             <span className="font-semibold text-[#0F172A] dark:text-white">Tickets & Listings</span>
           </div>
+          <div className="flex items-center gap-2 mb-1">
+            <span className="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full bg-amber-500/10 text-amber-600 border border-amber-500/20">
+              {organization.category} Domain
+            </span>
+            <span className="text-xs text-muted-foreground">{organization.name}</span>
+          </div>
           <h1 className="text-base sm:text-lg font-bold text-[#0F172A] dark:text-white tracking-tight">
             Central Ticket Inventory & Pass Catalog
           </h1>
           <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
-            Manage ticket types, prices in ETB, remaining seat allocations, and public availability.
+            Manage ticket types, prices in ETB, and seat allocations strictly isolated to {organization.name}.
           </p>
         </div>
 
@@ -75,21 +82,16 @@ export default function ProviderTicketsPage() {
       {/* Filter / Search Bar */}
       <div className="rounded-3xl bg-card border border-slate-200/50 dark:border-slate-800/50 p-4 shadow-sm flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3">
         <div className="flex items-center gap-2 overflow-x-auto no-scrollbar flex-nowrap">
-          {/* Category Tabs */}
-          <div className="flex items-center gap-1.5 overflow-x-auto no-scrollbar flex-nowrap">
-            {(["ALL", "BUS", "CINEMA", "EVENT", "SPORTS"] as const).map((cat) => (
-              <button
-                key={cat}
-                onClick={() => setSelectedCat(cat)}
-                className={`px-3.5 py-1.5 rounded-xl text-xs font-semibold transition-all shrink-0 cursor-pointer ${
-                  selectedCat === cat
-                    ? "bg-amber-600 text-white shadow-sm"
-                    : "bg-slate-100 dark:bg-slate-800/60 text-muted-foreground hover:bg-slate-200 dark:hover:bg-slate-800 hover:text-foreground"
-                }`}
-              >
-                {cat === "ALL" ? "All Sectors" : cat}
-              </button>
-            ))}
+          <div className="flex items-center gap-2">
+            <span className="px-3.5 py-1.5 rounded-xl text-xs font-semibold bg-amber-600 text-white shadow-sm inline-flex items-center gap-1.5">
+              <span>{organization.category} Catalog</span>
+              <span className="px-1.5 py-0.2 rounded-full bg-white/20 text-[10px]">
+                {filtered.length} listings
+              </span>
+            </span>
+            <span className="text-[11px] text-muted-foreground hidden sm:inline">
+              Locked to registered sector
+            </span>
           </div>
         </div>
 
@@ -97,7 +99,7 @@ export default function ProviderTicketsPage() {
           <Search className="w-3.5 h-3.5 text-muted-foreground absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none" />
           <input
             type="text"
-            placeholder="Search ticket title or city..."
+            placeholder={`Search ${organization.category.toLowerCase()} tickets...`}
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             className="w-full pl-9 pr-3 py-2 rounded-xl border border-slate-200/60 dark:border-slate-800/60 bg-card text-xs text-foreground focus:outline-none focus:ring-2 focus:ring-amber-500/30"

@@ -18,6 +18,7 @@ import {
   Trash2,
 } from "lucide-react";
 import { TicketCategory } from "@/types/ticket.types";
+import { useProviderStore } from "@/stores/provider.store";
 import { toast } from "sonner";
 
 interface TicketTier {
@@ -30,7 +31,8 @@ interface TicketTier {
 
 export default function CreateTicketPage() {
   const router = useRouter();
-  const [category, setCategory] = useState<TicketCategory>("BUS");
+  const organization = useProviderStore((state) => state.organization);
+  const category = organization.category;
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   // Form Fields
@@ -38,20 +40,48 @@ export default function CreateTicketPage() {
     title: "",
     description: "",
     city: "Addis Ababa",
-    location: "",
+    location:
+      category === "BUS"
+        ? "Autobus Tera Gate 3, Addis Ababa"
+        : category === "CINEMA"
+        ? "Century Cinema Megaplex, Addis Ababa"
+        : category === "EVENT"
+        ? "Millennium Hall Main Auditorium"
+        : "Addis Ababa Stadium",
     date: "2026-11-20",
-    time: "08:00 AM",
-    basePrice: 500,
-    totalCapacity: 50,
+    time:
+      category === "BUS"
+        ? "06:00 AM"
+        : category === "CINEMA"
+        ? "05:30 PM"
+        : category === "EVENT"
+        ? "06:00 PM"
+        : "03:00 PM",
+    basePrice:
+      category === "BUS"
+        ? 650
+        : category === "CINEMA"
+        ? 300
+        : category === "EVENT"
+        ? 850
+        : 350,
+    totalCapacity: category === "BUS" ? 50 : category === "CINEMA" ? 120 : 500,
     status: "AVAILABLE",
-    badge: "Popular Express",
+    badge:
+      category === "BUS"
+        ? "Luxury Express"
+        : category === "CINEMA"
+        ? "Laser 4K Atmos"
+        : category === "EVENT"
+        ? "Live Concert"
+        : "Derby Match",
     // Bus specific
     origin: "Addis Ababa (Autobus Tera)",
     destination: "Hawassa (Main Terminal)",
     busType: "Luxury VIP Coach",
     // Event specific
     performer: "",
-    gateTime: "06:00 PM",
+    gateTime: "04:00 PM",
     ageRestriction: "All Ages",
     // Sports specific
     homeTeam: "",
@@ -168,44 +198,38 @@ export default function CreateTicketPage() {
       <form id="ticket-form" onSubmit={handleSubmit} className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Left Column: Main Form */}
         <div className="lg:col-span-2 space-y-6">
-          {/* Category Selector */}
-          <div className="bg-card border border-border/60 rounded-xl p-5 shadow-xs">
-            <label className="block text-xs font-bold uppercase tracking-wider text-muted-foreground mb-3">
-              1. Choose Ticket Sector
-            </label>
-            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-              {[
-                { cat: "BUS" as TicketCategory, label: "Intercity Bus", icon: Bus, desc: "Highway express coach" },
-                { cat: "EVENT" as TicketCategory, label: "Concert & Event", icon: Music, desc: "Live festival or show" },
-                { cat: "SPORTS" as TicketCategory, label: "Stadium Sports", icon: Trophy, desc: "Matchday arena fixture" },
-                { cat: "CINEMA" as TicketCategory, label: "Cinema / Movies", icon: Film, desc: "Screening hall session" },
-              ].map((item) => {
-                const Icon = item.icon;
-                const isSelected = category === item.cat;
-                return (
-                  <button
-                    key={item.cat}
-                    type="button"
-                    onClick={() => setCategory(item.cat)}
-                    className={`flex flex-col text-left p-3.5 rounded-xl border text-xs transition-all ${isSelected
-                        ? "border-amber-600 bg-amber-500/10 text-foreground ring-1 ring-amber-600/30"
-                        : "border-border/60 bg-muted/20 text-muted-foreground hover:bg-muted/50 hover:text-foreground"
-                      }`}
-                  >
-                    <div className="flex items-center justify-between mb-2">
-                      <div
-                        className={`w-7 h-7 rounded-lg flex items-center justify-center ${isSelected ? "bg-amber-600 text-white" : "bg-muted text-muted-foreground"
-                          }`}
-                      >
-                        <Icon className="w-3.5 h-3.5" />
-                      </div>
-                      {isSelected && <CheckCircle2 className="w-4 h-4 text-amber-600" />}
-                    </div>
-                    <span className="font-semibold text-foreground text-xs">{item.label}</span>
-                    <span className="text-[10px] text-muted-foreground mt-0.5 line-clamp-1">{item.desc}</span>
-                  </button>
-                );
-              })}
+          {/* Locked Sector Domain Notice */}
+          <div className="bg-card border border-border/60 rounded-xl p-4 sm:p-5 shadow-xs">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-xl bg-amber-500/10 border border-amber-500/20 text-amber-600 flex items-center justify-center shrink-0">
+                  {category === "BUS" && <Bus className="w-5 h-5" />}
+                  {category === "CINEMA" && <Film className="w-5 h-5" />}
+                  {category === "EVENT" && <Music className="w-5 h-5" />}
+                  {category === "SPORTS" && <Trophy className="w-5 h-5" />}
+                </div>
+                <div>
+                  <div className="flex items-center gap-2">
+                    <h2 className="text-sm font-bold text-foreground">
+                      {category === "BUS" && "Intercity Bus Operations"}
+                      {category === "CINEMA" && "Cinema Screening Hall Operations"}
+                      {category === "EVENT" && "Concerts & Festival Operations"}
+                      {category === "SPORTS" && "Stadium & Sports Operations"}
+                    </h2>
+                    <span className="inline-flex items-center gap-1 text-[10px] font-semibold px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20">
+                      <CheckCircle2 className="w-3 h-3" />
+                      Authorized Sector
+                    </span>
+                  </div>
+                  <p className="text-[11px] text-muted-foreground mt-0.5">
+                    Organization: <span className="font-semibold text-foreground">{organization.name}</span> • All tickets are strictly restricted to your registered sector.
+                  </p>
+                </div>
+              </div>
+              <div className="text-left sm:text-right sm:border-l sm:border-border/60 sm:pl-4">
+                <span className="text-[10px] uppercase font-bold text-muted-foreground tracking-wider block">Domain</span>
+                <span className="text-xs font-bold text-amber-600">{category}</span>
+              </div>
             </div>
           </div>
 

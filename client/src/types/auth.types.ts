@@ -13,6 +13,7 @@ export interface AuthUser {
   status: AccountStatus;
   avatarUrl?: string;
   organizationId?: string;
+  organizationCategory?: OrganizationCategory;
   emailVerified?: boolean;
   createdAt: string;
 }

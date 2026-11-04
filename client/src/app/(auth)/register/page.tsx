@@ -27,6 +27,7 @@ import {
 } from "lucide-react";
 import { AUTH_ROUTES, APP_NAME } from "@/lib/constants";
 import { useAuthStore } from "@/stores/auth.store";
+import { useProviderStore } from "@/stores/provider.store";
 import { OrganizationCategory } from "@/types/auth.types";
 import { toast } from "sonner";
 
@@ -273,6 +274,8 @@ function RegisterWizardContent() {
     try {
       await new Promise((resolve) => setTimeout(resolve, 900));
 
+      useProviderStore.getState().setOrganizationCategory(providerData.category);
+
       setAuth(
         {
           id: `prov-${Date.now()}`,
@@ -281,6 +284,7 @@ function RegisterWizardContent() {
           phone: providerData.phone.trim(),
           role: "ORGANIZATION",
           organizationId: `org-${Date.now()}`,
+          organizationCategory: providerData.category,
           status: "PENDING_APPROVAL",
           emailVerified: true,
           createdAt: new Date().toISOString().split("T")[0],

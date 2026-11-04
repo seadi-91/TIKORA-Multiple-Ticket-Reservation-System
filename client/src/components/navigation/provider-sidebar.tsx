@@ -78,6 +78,62 @@ export function ProviderSidebar({
     return pathname === href || pathname.startsWith(`${href}/`);
   };
 
+  // Dynamically filter services strictly based on the provider's registered sector
+  const getSectorServiceItems = () => {
+    switch (organization.category) {
+      case "CINEMA":
+        return [
+          {
+            label: "Cinema Operations",
+            href: "/provider/cinema",
+            icon: Film,
+            hasSubmenu: true,
+            isExpanded: cinemaExpanded,
+            onToggle: () => setCinemaExpanded(!cinemaExpanded),
+            subItems: [
+              { label: "Screenings Hub", href: "/provider/cinema", exact: true },
+              { label: "Movie Catalog", href: "/provider/cinema/movies" },
+              { label: "Showtimes", href: "/provider/cinema/showtimes" },
+            ],
+          },
+        ];
+      case "EVENT":
+        return [
+          {
+            label: "Events & Concerts",
+            href: "/provider/events",
+            icon: Calendar,
+          },
+        ];
+      case "SPORTS":
+        return [
+          {
+            label: "Stadium Sports",
+            href: "/provider/sports",
+            icon: Trophy,
+          },
+        ];
+      case "BUS":
+      default:
+        return [
+          {
+            label: "Bus Operations",
+            href: "/provider/bus",
+            icon: Bus,
+            hasSubmenu: true,
+            isExpanded: busExpanded,
+            onToggle: () => setBusExpanded(!busExpanded),
+            subItems: [
+              { label: "Fleet Hub", href: "/provider/bus", exact: true },
+              { label: "Routes & Fares", href: "/provider/bus/routes" },
+              { label: "Schedules", href: "/provider/bus/schedules" },
+              { label: "Daily Trips", href: "/provider/bus/trips" },
+            ],
+          },
+        ];
+    }
+  };
+
   const navGroups = [
     {
       group: "MAIN",
@@ -100,46 +156,8 @@ export function ProviderSidebar({
       ],
     },
     {
-      group: "SERVICES",
-      items: [
-        {
-          label: "Bus Operations",
-          href: "/provider/bus",
-          icon: Bus,
-          hasSubmenu: true,
-          isExpanded: busExpanded,
-          onToggle: () => setBusExpanded(!busExpanded),
-          subItems: [
-            { label: "Fleet Hub", href: "/provider/bus", exact: true },
-            { label: "Routes & Fares", href: "/provider/bus/routes" },
-            { label: "Schedules", href: "/provider/bus/schedules" },
-            { label: "Daily Trips", href: "/provider/bus/trips" },
-          ],
-        },
-        {
-          label: "Events & Concerts",
-          href: "/provider/events",
-          icon: Calendar,
-        },
-        {
-          label: "Stadium Sports",
-          href: "/provider/sports",
-          icon: Trophy,
-        },
-        {
-          label: "Cinema & Movies",
-          href: "/provider/cinema",
-          icon: Film,
-          hasSubmenu: true,
-          isExpanded: cinemaExpanded,
-          onToggle: () => setCinemaExpanded(!cinemaExpanded),
-          subItems: [
-            { label: "Screenings Hub", href: "/provider/cinema", exact: true },
-            { label: "Movie Catalog", href: "/provider/cinema/movies" },
-            { label: "Showtimes", href: "/provider/cinema/showtimes" },
-          ],
-        },
-      ],
+      group: `${organization.category} OPERATIONS`,
+      items: getSectorServiceItems(),
     },
     {
       group: "INVENTORY & SALES",
@@ -224,11 +242,11 @@ export function ProviderSidebar({
                   TIKORA
                 </span>
                 <span className="text-[9px] uppercase font-extrabold tracking-widest px-1.5 py-0.5 rounded-md bg-[#B45309]/10 text-[#B45309] dark:text-amber-400">
-                  Provider
+                  {organization.category}
                 </span>
               </div>
-              <span className="text-[10px] text-[#64748B] dark:text-slate-400 block -mt-0.5">
-                Merchant Operations
+              <span className="text-[10px] text-[#64748B] dark:text-slate-400 block -mt-0.5 truncate max-w-[140px]">
+                {organization.name}
               </span>
             </div>
           )}

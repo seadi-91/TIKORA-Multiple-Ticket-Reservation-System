@@ -23,6 +23,7 @@ import { TicketCategory } from "@/types/ticket.types";
 import { formatCurrency } from "@/lib/format-currency";
 import { toast } from "sonner";
 import { ActionDropdown } from "@/components/ui/action-dropdown";
+import { useProviderStore } from "@/stores/provider.store";
 
 interface InventoryRow {
   id: string;
@@ -38,7 +39,8 @@ interface InventoryRow {
 }
 
 export default function InventoryManagementPage() {
-  const allTickets = TicketService.getAllTickets();
+  const { organization } = useProviderStore();
+  const allTickets = TicketService.getAllTickets().filter((t) => t.category === organization.category);
 
   // Initial inventory state based on tickets
   const [inventory, setInventory] = useState<InventoryRow[]>(
@@ -62,7 +64,6 @@ export default function InventoryManagementPage() {
     })
   );
 
-  const [selectedCategory, setSelectedCategory] = useState<string>("ALL");
   const [searchQuery, setSearchQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState<string>("ALL");
 
@@ -73,13 +74,12 @@ export default function InventoryManagementPage() {
 
   // Filtered rows
   const filteredInventory = inventory.filter((item) => {
-    const matchesCat = selectedCategory === "ALL" || item.category === selectedCategory;
     const matchesQuery =
       searchQuery.trim() === "" ||
       item.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
       item.location.toLowerCase().includes(searchQuery.toLowerCase());
     const matchesStatus = statusFilter === "ALL" || item.status === statusFilter;
-    return matchesCat && matchesQuery && matchesStatus;
+    return matchesQuery && matchesStatus;
   });
 
   // KPI Calculations
@@ -239,28 +239,17 @@ export default function InventoryManagementPage() {
       {/* Filter and Search Bar */}
       <div className="bg-card border border-slate-200/50 dark:border-slate-800/50 rounded-3xl p-5 shadow-sm space-y-3">
         <div className="flex flex-col sm:flex-row gap-3 items-stretch sm:items-center justify-between">
-          {/* Sector Tabs */}
-          <div className="flex items-center gap-1.5 overflow-x-auto no-scrollbar flex-nowrap pb-1 sm:pb-0">
-            {[
-              { id: "ALL", label: "All Sectors" },
-              { id: "BUS", label: "Bus Fleet" },
-              { id: "EVENT", label: "Events & Shows" },
-              { id: "SPORTS", label: "Stadium Sports" },
-              { id: "CINEMA", label: "Cinema Halls" },
-            ].map((tab) => (
-              <button
-                key={tab.id}
-                type="button"
-                onClick={() => setSelectedCategory(tab.id)}
-                className={`px-3.5 py-1.5 text-xs font-semibold rounded-xl transition-all shrink-0 ${
-                  selectedCategory === tab.id
-                    ? "bg-amber-600 text-white shadow-sm"
-                    : "bg-slate-100 dark:bg-slate-800/60 text-muted-foreground hover:bg-slate-200 dark:hover:bg-slate-800 hover:text-foreground"
-                }`}
-              >
-                {tab.label}
-              </button>
-            ))}
+          {/* Sector Badge */}
+          <div className="flex items-center gap-2">
+            <span className="px-3.5 py-1.5 text-xs font-semibold rounded-xl bg-amber-600 text-white shadow-sm inline-flex items-center gap-1.5">
+              <span>{organization.category} Matrix</span>
+              <span className="px-1.5 py-0.2 rounded-full bg-white/20 text-[10px]">
+                {filteredInventory.length}
+              </span>
+            </span>
+            <span className="text-xs text-muted-foreground hidden sm:inline">
+              Allocated exclusively for {organization.name}
+            </span>
           </div>
 
           {/* Search & Stock Filter */}

@@ -18,7 +18,7 @@ import { toast } from "sonner";
 import { ActionDropdown } from "@/components/ui/action-dropdown";
 
 export default function ProviderStaffPage() {
-  const { staffMembers, toggleStaffStatus, deleteStaffMember } = useProviderStore();
+  const { organization, staffMembers, toggleStaffStatus, deleteStaffMember } = useProviderStore();
   const [roleFilter, setRoleFilter] = useState<string>("ALL");
   const [searchQuery, setSearchQuery] = useState("");
 
@@ -84,11 +84,17 @@ export default function ProviderStaffPage() {
       {/* Top Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 border-b border-border/60 pb-5">
         <div>
+          <div className="flex items-center gap-2 mb-1">
+            <span className="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full bg-amber-500/10 text-amber-600 border border-amber-500/20">
+              {organization.category} Sector Personnel
+            </span>
+            <span className="text-xs text-muted-foreground">{organization.name}</span>
+          </div>
           <h1 className="text-base sm:text-lg font-bold tracking-tight text-foreground">
             Staff & Ticket Inspector Management
           </h1>
           <p className="text-xs text-muted-foreground">
-            Assign terminal gate inspectors, ticket scanners, dispatchers, and cashiers.
+            Assign terminal gate inspectors, ticket scanners, dispatchers, and cashiers for {organization.name}.
           </p>
         </div>
 

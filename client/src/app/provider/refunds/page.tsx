@@ -24,11 +24,13 @@ import { toast } from "sonner";
 import { ActionDropdown } from "@/components/ui/action-dropdown";
 
 export default function ProviderRefundsPage() {
-  const { refunds, processRefund } = useProviderStore();
+  const { organization, refunds, processRefund } = useProviderStore();
   const [statusFilter, setStatusFilter] = useState<string>("ALL");
   const [searchQuery, setSearchQuery] = useState("");
 
-  const filteredRefunds = refunds.filter((r) => {
+  const sectorRefunds = refunds.filter((r) => r.category === organization.category);
+
+  const filteredRefunds = sectorRefunds.filter((r) => {
     const matchesStatus = statusFilter === "ALL" || r.status === statusFilter;
     const q = searchQuery.toLowerCase().trim();
     const matchesSearch =
@@ -40,10 +42,10 @@ export default function ProviderRefundsPage() {
     return matchesStatus && matchesSearch;
   });
 
-  const pendingCount = refunds.filter((r) => r.status === "PENDING").length;
-  const approvedCount = refunds.filter((r) => r.status === "APPROVED").length;
-  const rejectedCount = refunds.filter((r) => r.status === "REJECTED").length;
-  const totalApprovedAmount = refunds
+  const pendingCount = sectorRefunds.filter((r) => r.status === "PENDING").length;
+  const approvedCount = sectorRefunds.filter((r) => r.status === "APPROVED").length;
+  const rejectedCount = sectorRefunds.filter((r) => r.status === "REJECTED").length;
+  const totalApprovedAmount = sectorRefunds
     .filter((r) => r.status === "APPROVED")
     .reduce((acc, r) => acc + r.requestedAmount, 0);
 
@@ -77,11 +79,17 @@ export default function ProviderRefundsPage() {
       {/* Page Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 border-b border-border/60 pb-5">
         <div>
+          <div className="flex items-center gap-2 mb-1">
+            <span className="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full bg-amber-500/10 text-amber-600 border border-amber-500/20">
+              {organization.category} Refund Claims
+            </span>
+            <span className="text-xs text-muted-foreground">{organization.name}</span>
+          </div>
           <h1 className="text-base sm:text-lg font-bold tracking-tight text-foreground">
             Refunds & Customer Disputes
           </h1>
           <p className="text-xs text-muted-foreground">
-            Review cancellation claims, passenger refund requests, and customer dispute resolutions.
+            Review cancellation claims, customer refund requests, and ticket disputes for {organization.name}.
           </p>
         </div>
 

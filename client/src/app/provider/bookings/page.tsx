@@ -19,6 +19,7 @@ import { formatCurrency } from "@/lib/format-currency";
 import { TicketCategory } from "@/types/ticket.types";
 import { toast } from "sonner";
 import { ActionDropdown } from "@/components/ui/action-dropdown";
+import { useProviderStore } from "@/stores/provider.store";
 
 interface ProviderBookingRecord {
   id: string;
@@ -192,17 +193,139 @@ const INITIAL_BOOKINGS: ProviderBookingRecord[] = [
     bookingStatus: "CANCELLED",
     createdAt: "2026-11-09 11:20",
   },
+  // Additional Cinema Bookings
+  {
+    id: "BKG-8880",
+    reference: "TH-CNM-4425",
+    customerName: "Ephrem Negash",
+    customerPhone: "+251 92 443 1188",
+    customerEmail: "ephrem.n@gmail.com",
+    serviceTitle: "Gladiator II: Ethiopian Premiere",
+    category: "CINEMA",
+    travelDate: "2026-11-15",
+    departureTime: "02:30 PM",
+    seats: ["H1-D04", "H1-D05"],
+    totalAmount: 560,
+    paymentMethod: "CBE_BIRR",
+    paymentStatus: "PAID",
+    bookingStatus: "CHECKED_IN",
+    createdAt: "2026-11-13 14:10",
+  },
+  {
+    id: "BKG-8881",
+    reference: "TH-CNM-4430",
+    customerName: "Selamawit Bekele",
+    customerPhone: "+251 93 112 4455",
+    customerEmail: "selam.b@outlook.com",
+    serviceTitle: "Mufasa: The Lion King",
+    category: "CINEMA",
+    travelDate: "2026-11-15",
+    departureTime: "04:00 PM",
+    seats: ["H2-C10", "H2-C11", "H2-C12"],
+    totalAmount: 780,
+    paymentMethod: "TELEBIRR",
+    paymentStatus: "PAID",
+    bookingStatus: "CONFIRMED",
+    createdAt: "2026-11-14 11:00",
+  },
+  {
+    id: "BKG-8882",
+    reference: "TH-CNM-4435",
+    customerName: "Kalkidan Girma",
+    customerPhone: "+251 94 887 6622",
+    customerEmail: "kalkidan.g@gmail.com",
+    serviceTitle: "Gladiator II: Prime Evening Screening",
+    category: "CINEMA",
+    travelDate: "2026-11-15",
+    departureTime: "05:30 PM",
+    seats: ["H1-VIP-01", "H1-VIP-02"],
+    totalAmount: 900,
+    paymentMethod: "CHAPA",
+    paymentStatus: "PAID",
+    bookingStatus: "CHECKED_IN",
+    createdAt: "2026-11-14 16:30",
+  },
+  // Additional Event Bookings
+  {
+    id: "BKG-8890",
+    reference: "TH-EVT-9925",
+    customerName: "Blen Assefa",
+    customerPhone: "+251 91 223 9988",
+    customerEmail: "blen.a@gmail.com",
+    serviceTitle: "Teddy Afro New Year Concert Tour",
+    category: "EVENT",
+    travelDate: "2026-11-28",
+    departureTime: "07:00 PM",
+    seats: ["VIP-RedCarpet-04"],
+    totalAmount: 1500,
+    paymentMethod: "TELEBIRR",
+    paymentStatus: "PAID",
+    bookingStatus: "CONFIRMED",
+    createdAt: "2026-11-13 19:45",
+  },
+  {
+    id: "BKG-8891",
+    reference: "TH-EVT-9930",
+    customerName: "Yohannes Hailu",
+    customerPhone: "+251 93 445 7766",
+    customerEmail: "yohannes.h@gmail.com",
+    serviceTitle: "Addis International Jazz & Afrobeat Festival",
+    category: "EVENT",
+    travelDate: "2026-12-05",
+    departureTime: "04:00 PM",
+    seats: ["GA-Pass-089", "GA-Pass-090"],
+    totalAmount: 1700,
+    paymentMethod: "CBE_BIRR",
+    paymentStatus: "PAID",
+    bookingStatus: "CONFIRMED",
+    createdAt: "2026-11-14 09:20",
+  },
+  // Additional Sports Bookings
+  {
+    id: "BKG-8900",
+    reference: "TH-SPT-3320",
+    customerName: "Daniel Abebe",
+    customerPhone: "+251 91 334 5566",
+    customerEmail: "daniel.a@gmail.com",
+    serviceTitle: "Ethiopian Premier League Derby: St. George vs Coffee",
+    category: "SPORTS",
+    travelDate: "2026-11-22",
+    departureTime: "03:00 PM",
+    seats: ["Grandstand-VIP-14", "Grandstand-VIP-15"],
+    totalAmount: 800,
+    paymentMethod: "TELEBIRR",
+    paymentStatus: "PAID",
+    bookingStatus: "CHECKED_IN",
+    createdAt: "2026-11-14 12:15",
+  },
+  {
+    id: "BKG-8901",
+    reference: "TH-SPT-3325",
+    customerName: "Mulugeta Tadesse",
+    customerPhone: "+251 92 667 8899",
+    customerEmail: "mulugeta.t@gmail.com",
+    serviceTitle: "National Basketball League Finals: Game 5",
+    category: "SPORTS",
+    travelDate: "2026-11-25",
+    departureTime: "05:00 PM",
+    seats: ["Courtside-A04"],
+    totalAmount: 450,
+    paymentMethod: "CBE_BIRR",
+    paymentStatus: "PAID",
+    bookingStatus: "CONFIRMED",
+    createdAt: "2026-11-14 15:40",
+  },
 ];
 
 export default function ProviderBookingsPage() {
-  const [bookings, setBookings] = useState<ProviderBookingRecord[]>(INITIAL_BOOKINGS);
+  const { organization } = useProviderStore();
+  const sectorBookings = INITIAL_BOOKINGS.filter((b) => b.category === organization.category);
+  const [bookings, setBookings] = useState<ProviderBookingRecord[]>(sectorBookings);
   const [searchQuery, setSearchQuery] = useState("");
-  const [categoryFilter, setCategoryFilter] = useState<string>("ALL");
   const [paymentFilter, setPaymentFilter] = useState<string>("ALL");
   const [statusFilter, setStatusFilter] = useState<string>("ALL");
 
   const filteredBookings = bookings.filter((b) => {
-    const matchesCategory = categoryFilter === "ALL" || b.category === categoryFilter;
     const matchesPayment = paymentFilter === "ALL" || b.paymentStatus === paymentFilter;
     const matchesStatus = statusFilter === "ALL" || b.bookingStatus === statusFilter;
     const q = searchQuery.toLowerCase().trim();
@@ -213,7 +336,7 @@ export default function ProviderBookingsPage() {
       b.customerPhone.toLowerCase().includes(q) ||
       b.serviceTitle.toLowerCase().includes(q);
 
-    return matchesCategory && matchesPayment && matchesStatus && matchesSearch;
+    return matchesPayment && matchesStatus && matchesSearch;
   });
 
   const totalGrossRevenue = bookings
@@ -274,11 +397,17 @@ export default function ProviderBookingsPage() {
       {/* Page Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 border-b border-border/60 pb-5">
         <div>
+          <div className="flex items-center gap-2 mb-1">
+            <span className="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full bg-amber-500/10 text-amber-600 border border-amber-500/20">
+              {organization.category} Orders
+            </span>
+            <span className="text-xs text-muted-foreground">{organization.name}</span>
+          </div>
           <h1 className="text-base sm:text-lg font-bold tracking-tight text-foreground">
             Customer Bookings & Orders
           </h1>
           <p className="text-xs text-muted-foreground">
-            Monitor confirmed passenger reservations, ticket check-ins, and transactional details.
+            Monitor confirmed reservations, admissions, and ticket check-ins for {organization.name}.
           </p>
         </div>
 
@@ -329,28 +458,17 @@ export default function ProviderBookingsPage() {
       {/* Filter and Search Bar */}
       <div className="bg-card border border-slate-200/50 dark:border-slate-800/50 rounded-3xl p-5 shadow-sm space-y-3">
         <div className="flex flex-col sm:flex-row gap-3 items-stretch sm:items-center justify-between">
-          {/* Category Tabs */}
-          <div className="flex items-center gap-1.5 overflow-x-auto no-scrollbar flex-nowrap pb-1 sm:pb-0">
-            {[
-              { id: "ALL", label: "All Sectors" },
-              { id: "BUS", label: "Bus" },
-              { id: "EVENT", label: "Events" },
-              { id: "SPORTS", label: "Sports" },
-              { id: "CINEMA", label: "Cinema" },
-            ].map((tab) => (
-              <button
-                key={tab.id}
-                type="button"
-                onClick={() => setCategoryFilter(tab.id)}
-                className={`px-3.5 py-1.5 text-xs font-semibold rounded-xl transition-all shrink-0 ${
-                  categoryFilter === tab.id
-                    ? "bg-amber-600 text-white shadow-sm"
-                    : "bg-slate-100 dark:bg-slate-800/60 text-muted-foreground hover:bg-slate-200 dark:hover:bg-slate-800 hover:text-foreground"
-                }`}
-              >
-                {tab.label}
-              </button>
-            ))}
+          {/* Sector Badge */}
+          <div className="flex items-center gap-2">
+            <span className="px-3.5 py-1.5 rounded-xl text-xs font-semibold bg-amber-600 text-white shadow-sm inline-flex items-center gap-1.5">
+              <span>{organization.category} Bookings</span>
+              <span className="px-1.5 py-0.2 rounded-full bg-white/20 text-[10px]">
+                {filteredBookings.length}
+              </span>
+            </span>
+            <span className="text-xs text-muted-foreground hidden sm:inline">
+              Orders for {organization.name}
+            </span>
           </div>
 
           {/* Search Bar */}
@@ -394,14 +512,12 @@ export default function ProviderBookingsPage() {
             <option value="CANCELLED">Cancelled</option>
           </select>
 
-          {(categoryFilter !== "ALL" ||
-            paymentFilter !== "ALL" ||
+          {(paymentFilter !== "ALL" ||
             statusFilter !== "ALL" ||
             searchQuery !== "") && (
             <button
               type="button"
               onClick={() => {
-                setCategoryFilter("ALL");
                 setPaymentFilter("ALL");
                 setStatusFilter("ALL");
                 setSearchQuery("");
