@@ -295,7 +295,7 @@ export function ProviderSidebar({
       )}
 
       {/* Navigation Groups */}
-      <div className="flex-1 overflow-y-auto px-2.5 py-3 space-y-4 scrollbar-thin">
+      <div className="flex-1 overflow-y-auto px-2.5 py-3 space-y-4 [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden scrollbar-none">
         {navGroups.map((group, gIdx) => (
           <div key={gIdx} className="space-y-1">
             {!collapsed && (

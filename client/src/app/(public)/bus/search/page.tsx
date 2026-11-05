@@ -12,9 +12,14 @@ import {
   ArrowRight,
   Filter,
   SlidersHorizontal,
+  ChevronLeft,
+  Armchair,
+  Check,
+  Sparkles,
 } from "lucide-react";
 import { Header } from "@/components/layout/header";
 import { Footer } from "@/components/layout/footer";
+import { TicketCard } from "@/components/tickets/ticket-card";
 import { BusService } from "@/services/bus.service";
 import { formatCurrency } from "@/lib/format-currency";
 import { formatDate } from "@/lib/format-date";
@@ -34,142 +39,79 @@ function BusSearchContent() {
   });
 
   return (
-    <div className="max-w-7xl mx-auto px-4 sm:px-6 py-8 space-y-6 w-full">
-      {/* Search Header */}
-      <div className="rounded-3xl bg-white dark:bg-[#161922] border border-[#E2E8F0] dark:border-slate-800 p-6 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 shadow-xs">
-        <div>
-          <span className="text-xs font-bold text-[#F59E0B] dark:text-amber-400 uppercase tracking-wider">
-            Bus Search Results
-          </span>
-          <h1 className="text-xl sm:text-2xl font-black text-[#0F172A] dark:text-white flex items-center gap-2 mt-1">
+    <div className="max-w-7xl mx-auto px-4 sm:px-6 py-8 sm:py-10 space-y-6 w-full">
+      {/* Search Header Banner */}
+      <div className="rounded-3xl bg-white dark:bg-[#161922] border border-slate-200/90 dark:border-slate-800/90 p-6 sm:p-8 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-5 shadow-sm">
+        <div className="space-y-1.5">
+          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-blue-50 dark:bg-blue-950/60 text-blue-700 dark:text-blue-300 text-xs font-semibold border border-blue-200/60 dark:border-blue-800/40">
+            <Bus className="w-3.5 h-3.5" />
+            <span>Bus Search Results</span>
+          </div>
+
+          <h1 className="text-2xl sm:text-3xl font-black text-slate-900 dark:text-white flex items-center gap-3">
             <span>{from}</span>
-            <ArrowRight className="w-5 h-5 text-[#F59E0B]" />
+            <ArrowRight className="w-5 h-5 text-amber-500 shrink-0" />
             <span>{to}</span>
           </h1>
-          <p className="text-xs text-[#64748B] dark:text-amber-300/70 mt-1">
-            Departure Date: <strong className="text-[#0F172A] dark:text-white">{formatDate(date)}</strong> • {filteredBuses.length} Coaches Available
+
+          <p className="text-xs text-slate-500 dark:text-slate-400">
+            Departure Date: <strong className="text-slate-800 dark:text-slate-200">{formatDate(date)}</strong> •{" "}
+            <span className="text-amber-600 dark:text-amber-400 font-semibold">{filteredBuses.length} Coaches Available</span>
           </p>
         </div>
 
         <Link
           href="/bus"
-          className="text-xs font-bold text-[#F59E0B] dark:text-amber-400 hover:underline"
+          className="inline-flex items-center gap-1.5 px-4 py-2 rounded-2xl bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 text-xs font-bold transition-all border border-slate-200 dark:border-slate-700 active:scale-95"
         >
-          Modify Route Search
+          <ChevronLeft className="w-4 h-4" />
+          <span>Modify Route Search</span>
         </Link>
       </div>
 
       {/* Operator Filter Chips */}
-      <div className="flex items-center gap-2 overflow-x-auto pb-1 scrollbar-none">
-        <span className="text-xs font-bold text-[#64748B] dark:text-amber-400/60 flex items-center gap-1.5 mr-2">
-          <Filter className="w-3.5 h-3.5" />
-          <span>Operator:</span>
+      <div className="flex items-center gap-1 overflow-x-auto pb-1 scrollbar-none">
+        <span className="text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mr-1 shrink-0">
+          Operator:
         </span>
         {["ALL", "Selam Bus Line SC", "Abay Bus Transport", "Golden Bus Transport", "Sky Bus Ethiopia"].map((op) => (
           <button
             key={op}
             onClick={() => setOperatorFilter(op)}
-            className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all shrink-0 cursor-pointer ${
+            className={`px-2.5 py-1 rounded-lg text-[10px] font-bold tracking-wide transition-all shrink-0 cursor-pointer ${
               operatorFilter === op
-                ? "bg-[#F59E0B] text-white shadow-xs"
-                : "bg-white dark:bg-[#161922] border border-[#E2E8F0] dark:border-slate-800 text-[#64748B] hover:text-[#0F172A] dark:text-amber-300"
+                ? "bg-slate-900 dark:bg-white text-white dark:text-slate-950 shadow-xs"
+                : "bg-white dark:bg-[#161922] border border-slate-200 dark:border-slate-800 text-slate-600 hover:text-slate-900 dark:text-slate-300 hover:border-slate-300 dark:hover:border-slate-700"
             }`}
           >
-            {op === "ALL" ? "All Operators" : op}
+            {op === "ALL" ? "All Fleets" : op}
           </button>
         ))}
       </div>
 
-      {/* Bus Cards List */}
-      <div className="space-y-4">
+      {/* Bus Cards Compact Grid */}
+      <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3">
         {filteredBuses.map((bus) => (
-          <div
-            key={bus.id}
-            className="rounded-3xl bg-white dark:bg-[#161922] border border-[#E2E8F0] dark:border-slate-800 p-5 sm:p-6 shadow-xs hover:shadow-md transition-all flex flex-col md:flex-row items-start md:items-center justify-between gap-6"
-          >
-            {/* Left: Operator & Route */}
-            <div className="space-y-3 flex-1">
-              <div className="flex flex-wrap items-center gap-2">
-                <span className="text-xs font-bold text-[#F59E0B] dark:text-amber-300 px-2.5 py-1 rounded-md bg-[#FFFBEB] dark:bg-amber-950">
-                  {bus.organizer}
-                </span>
-                <span className="text-[11px] text-[#64748B] dark:text-amber-400/70 font-semibold">
-                  {bus.categoryDetails?.busType}
-                </span>
-                {bus.badge && (
-                  <span className="text-[10px] font-semibold px-2 py-0.5 rounded-md bg-amber-100 text-amber-800 dark:bg-amber-950/80 dark:text-amber-300">
-                    {bus.badge}
-                  </span>
-                )}
-              </div>
-
-              <div>
-                <h3 className="text-base sm:text-lg font-bold text-[#0F172A] dark:text-white">
-                  {bus.title}
-                </h3>
-                <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-[#64748B] dark:text-slate-400 mt-1">
-                  <span className="flex items-center gap-1 font-semibold text-[#0F172A] dark:text-white">
-                    <Clock className="w-3.5 h-3.5 text-[#F59E0B]" />
-                    <span>Departure: {bus.time}</span>
-                  </span>
-                  <span>Duration: {bus.duration}</span>
-                  <span className="flex items-center gap-1">
-                    <MapPin className="w-3.5 h-3.5 text-[#F59E0B]" />
-                    <span>Boarding: {bus.categoryDetails?.boardingStation}</span>
-                  </span>
-                </div>
-              </div>
-
-              {/* Amenities */}
-              {bus.amenities && (
-                <div className="flex flex-wrap items-center gap-2 pt-1">
-                  {bus.amenities.map((a, i) => (
-                    <span
-                      key={i}
-                      className="text-[10px] px-2 py-0.5 rounded-md bg-gray-50 dark:bg-[#0C0E14] text-[#64748B] dark:text-amber-300/80 border border-[#E2E8F0] dark:border-slate-800"
-                    >
-                      {a}
-                    </span>
-                  ))}
-                </div>
-              )}
-            </div>
-
-            {/* Right: Fare & Seat Selection CTA */}
-            <div className="w-full md:w-auto flex md:flex-col items-center md:items-end justify-between border-t md:border-t-0 pt-4 md:pt-0 border-[#E2E8F0] dark:border-slate-800 gap-3">
-              <div className="text-left md:text-right">
-                <span className="text-[10px] uppercase font-bold text-[#64748B] dark:text-amber-400/60 block">
-                  Per Passenger Fare
-                </span>
-                <span className="text-2xl font-black text-[#F59E0B] dark:text-amber-400">
-                  {formatCurrency(bus.price)}
-                </span>
-                <span className="text-[11px] text-emerald-700 dark:text-amber-300 block font-medium">
-                  {bus.availableSeats} seats remaining
-                </span>
-              </div>
-
-              <Link
-                href={`/bus/${bus.id}`}
-                className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-[#F59E0B] hover:bg-[#D97706] text-white text-xs font-bold transition-all shadow-md active:scale-95"
-              >
-                <span>Select Seats</span>
-                <ArrowRight className="w-4 h-4" />
-              </Link>
-            </div>
-          </div>
+          <TicketCard key={bus.id} ticket={bus} />
         ))}
       </div>
+
+      {filteredBuses.length === 0 && (
+        <div className="py-12 text-center rounded-2xl bg-white dark:bg-[#161922] border border-dashed border-slate-300 dark:border-slate-800 space-y-1">
+          <p className="text-xs font-bold text-slate-800 dark:text-white">No buses found</p>
+          <p className="text-[10px] text-slate-500">Try selecting another operator or reset filters.</p>
+        </div>
+      )}
     </div>
   );
 }
 
 export default function BusSearchPage() {
   return (
-    <div className="min-h-screen flex flex-col bg-[#F8FAFC] dark:bg-[#0C0E14] text-[#0F172A] dark:text-[#F8FAFC]">
+    <div className="min-h-screen flex flex-col bg-[#F8FAFC] dark:bg-[#0B0D13] text-[#0F172A] dark:text-[#F8FAFC]">
       <Header />
       <main className="flex-1">
-        <Suspense fallback={<div className="p-12 text-center text-xs text-[#64748B]">Loading bus routes...</div>}>
+        <Suspense fallback={<div className="p-12 text-center text-xs text-slate-400">Loading bus routes...</div>}>
           <BusSearchContent />
         </Suspense>
       </main>

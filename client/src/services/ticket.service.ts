@@ -1,5 +1,12 @@
 import { TicketItem, TicketCategory, TicketFilterState } from "@/types/ticket.types";
 
+export const FIXED_CATEGORY_IMAGES = {
+  BUS: "https://images.unsplash.com/photo-1544620347-c4fd4a3d5957?auto=format&fit=crop&w=600&q=80",
+  CINEMA: "https://images.unsplash.com/photo-1489599849927-2ee91cede3ba?auto=format&fit=crop&w=600&q=80",
+  EVENT: "https://images.unsplash.com/photo-1501386761578-eac5c94b800a?auto=format&fit=crop&w=600&q=80",
+  SPORTS: "https://images.unsplash.com/photo-1508098682722-e99c43a406b2?auto=format&fit=crop&w=600&q=80",
+} as const;
+
 export const MOCK_TICKETS: TicketItem[] = [
   // ==================== BUS TICKETS ====================
   {
@@ -20,6 +27,7 @@ export const MOCK_TICKETS: TicketItem[] = [
     rating: 4.8,
     reviewCount: 342,
     badge: "Direct Express",
+    imageUrl: FIXED_CATEGORY_IMAGES.BUS,
     description: "Premium daily express service from Addis Ababa to the resort lakeside city of Hawassa. Features high-speed WiFi, onboard USB chargers, complimentary bottled water, and air suspension.",
     duration: "4h 30m",
     amenities: ["Free High-Speed Wi-Fi", "USB Charging Ports", "Dual AC System", "Reclining Leather Seats", "Snack Pack"],
@@ -50,6 +58,7 @@ export const MOCK_TICKETS: TicketItem[] = [
     rating: 4.7,
     reviewCount: 289,
     badge: "Scenic Route",
+    imageUrl: FIXED_CATEGORY_IMAGES.BUS,
     description: "Scenic journey over the breathtaking Blue Nile Gorge straight to Bahir Dar. Comfortable seating with professional certified drivers and meal stops.",
     duration: "9h 15m",
     amenities: ["Air Conditioning", "Overhead Luggage", "Audio Entertainment", "Reclining Seats", "First Aid Kit"],
@@ -80,6 +89,7 @@ export const MOCK_TICKETS: TicketItem[] = [
     rating: 4.6,
     reviewCount: 198,
     badge: "Air Conditioned",
+    imageUrl: FIXED_CATEGORY_IMAGES.BUS,
     description: "Fast transit along the modern expressway connecting Addis Ababa to the eastern commercial hub of Dire Dawa.",
     duration: "7h 45m",
     amenities: ["Wi-Fi", "USB Ports", "Air Conditioning", "Reclining Seats"],
@@ -110,6 +120,7 @@ export const MOCK_TICKETS: TicketItem[] = [
     rating: 4.9,
     reviewCount: 512,
     badge: "Expressway",
+    imageUrl: FIXED_CATEGORY_IMAGES.BUS,
     description: "Hourly non-stop commute through the Addis-Adama Toll Expressway.",
     duration: "1h 15m",
     amenities: ["Fast Commute", "Luggage Space", "Air Conditioning"],
@@ -140,6 +151,7 @@ export const MOCK_TICKETS: TicketItem[] = [
     rating: 4.9,
     reviewCount: 420,
     badge: "IMAX 4K",
+    imageUrl: FIXED_CATEGORY_IMAGES.CINEMA,
     description: "From legendary director Ridley Scott, Gladiator II continues the epic saga of power, intrigue, and vengeance set in Ancient Rome. Experience it on Ethiopia's largest laser 4K projection.",
     duration: "2h 28m",
     amenities: ["Dolby Atmos 7.1", "Laser 4K Projection", "Couple Loungers", "Popcorn & Soda Bar", "Online Seat Selection"],
@@ -168,6 +180,7 @@ export const MOCK_TICKETS: TicketItem[] = [
     rating: 4.8,
     reviewCount: 215,
     badge: "Kids & Family",
+    imageUrl: FIXED_CATEGORY_IMAGES.CINEMA,
     description: "Walt Disney Animation Studios' epic animated musical Moana 2 reunites Moana and Maui three years later for an expansive new voyage alongside a crew of unlikely seafarers.",
     duration: "1h 40m",
     amenities: ["3D Glasses Included", "Dolby Digital Surround", "Concession Stand", "Free Mall Parking"],
@@ -196,6 +209,7 @@ export const MOCK_TICKETS: TicketItem[] = [
     rating: 4.9,
     reviewCount: 380,
     badge: "Dolby Atmos",
+    imageUrl: FIXED_CATEGORY_IMAGES.CINEMA,
     description: "Paul Atreides unites with Chani and the Fremen while seeking revenge against the conspirators who destroyed his family. Masterpiece sci-fi experience.",
     duration: "2h 46m",
     amenities: ["Dolby Atmos Sound", "Recliner Seats", "Gourmet Snack Bar"],
@@ -226,6 +240,7 @@ export const MOCK_TICKETS: TicketItem[] = [
     rating: 4.9,
     reviewCount: 610,
     badge: "Live Music",
+    imageUrl: FIXED_CATEGORY_IMAGES.EVENT,
     description: "The 12th edition of the renowned Ethio-Jazz and Afro-Fusion gathering, featuring world-class live ensembles, traditional culinary booths, and artisanal craft markets in the lush gardens of Ghion Hotel.",
     duration: "6 hours",
     amenities: ["Outdoor Stage", "VIP Beverage Bar", "Artisanal Food Courtyard", "Live Broadcast"],
@@ -257,6 +272,7 @@ export const MOCK_TICKETS: TicketItem[] = [
     rating: 4.8,
     reviewCount: 180,
     badge: "Conference",
+    imageUrl: FIXED_CATEGORY_IMAGES.EVENT,
     description: "The premier technology and startup conference uniting East Africa's leading developers, investors, and policymakers. Keynotes on Digital Payments, AI, and Cloud Infrastructure.",
     duration: "Full Day (8:30 AM - 6:00 PM)",
     amenities: ["Buffet Lunch Included", "Conference Swag Kit", "High-Speed Wi-Fi", "B2B Networking Lounge"],
@@ -288,6 +304,7 @@ export const MOCK_TICKETS: TicketItem[] = [
     rating: 4.7,
     reviewCount: 230,
     badge: "Comedy Show",
+    imageUrl: FIXED_CATEGORY_IMAGES.EVENT,
     description: "A night of hilarious humor featuring Ethiopia's top comedic talent, live improv, and musical parodies.",
     duration: "3 hours",
     amenities: ["Plush Seating", "Cocktail Bar", "Free Parking"],
@@ -320,6 +337,7 @@ export const MOCK_TICKETS: TicketItem[] = [
     rating: 4.9,
     reviewCount: 920,
     badge: "Sheger Derby",
+    imageUrl: FIXED_CATEGORY_IMAGES.SPORTS,
     description: "The fiercest and most historic rivalry in Ethiopian football: The Sheger Derby! Watch St. George SC clash with Ethiopia Coffee SC in an electric stadium atmosphere.",
     duration: "2 hours",
     amenities: ["Police Security Escort", "Turnstile Electronic QR Entry", "Food & Water Kiosks", "First Aid Stations"],
@@ -353,6 +371,7 @@ export const MOCK_TICKETS: TicketItem[] = [
     rating: 4.7,
     reviewCount: 140,
     badge: "Championship",
+    imageUrl: FIXED_CATEGORY_IMAGES.SPORTS,
     description: "Deciding Game 5 for the National Basketball Championship trophy. High-octane hardwood action, cheer teams, and half-time dunk contests.",
     duration: "2 hours",
     amenities: ["Indoor Climate Control", "Courtside Refreshments", "Electronic Scoreboard"],

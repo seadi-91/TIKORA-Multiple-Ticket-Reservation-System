@@ -17,7 +17,7 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
 
       <main className="flex-1 max-w-7xl w-full mx-auto px-3 sm:px-6 lg:px-8 py-3 sm:py-6 lg:py-8 pb-24 lg:pb-8">
         <div className="flex flex-col lg:flex-row items-start gap-6 lg:gap-8">
-          <div className="hidden lg:block shrink-0">
+          <div className="hidden lg:block shrink-0 sticky top-20">
             <CustomerSidebar />
           </div>
           <div className="flex-1 w-full min-w-0">{children}</div>

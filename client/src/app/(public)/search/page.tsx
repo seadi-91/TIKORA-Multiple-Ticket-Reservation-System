@@ -8,6 +8,7 @@ import { TicketFilter } from "@/components/tickets/ticket-filter";
 import { TicketList } from "@/components/tickets/ticket-list";
 import { TicketService } from "@/services/ticket.service";
 import { TicketFilterState } from "@/types/ticket.types";
+import { Sparkles, Compass } from "lucide-react";
 
 function SearchContent() {
   const searchParams = useSearchParams();
@@ -56,18 +57,27 @@ function SearchContent() {
   const results = TicketService.searchTickets(filters);
 
   return (
-    <div className="max-w-7xl mx-auto px-3 sm:px-6 py-4 sm:py-6 space-y-4 w-full">
+    <div className="max-w-7xl mx-auto px-4 sm:px-6 py-6 sm:py-8 space-y-6 w-full">
       {/* Top Header */}
-      <div>
-        <span className="text-[10px] font-bold text-[#F59E0B] dark:text-amber-400 uppercase tracking-wider">
-          Explore Tickets
-        </span>
-        <h1 className="text-lg sm:text-xl font-black text-[#0F172A] dark:text-white mt-0.5">
-          Ticket Discovery Engine
-        </h1>
-        <p className="text-xs text-[#64748B] dark:text-slate-400">
-          Showing <strong className="text-[#F59E0B] dark:text-amber-400">{results.length}</strong> available passes across Ethiopia.
-        </p>
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 bg-gradient-to-r from-amber-500/10 via-amber-500/[0.03] to-transparent p-5 sm:p-6 rounded-3xl border border-amber-500/20 shadow-xs">
+        <div>
+          <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-amber-500/15 text-amber-700 dark:text-amber-300 text-[11px] font-bold ring-1 ring-amber-500/20 mb-2">
+            <Compass className="w-3.5 h-3.5 text-amber-600" />
+            <span>TIKORA Explorer Engine</span>
+          </div>
+          <h1 className="text-base sm:text-lg font-extrabold text-foreground">
+            Explore & Discover Verified Passes
+          </h1>
+          <p className="text-xs text-muted-foreground mt-0.5">
+            Intercity buses, cinema showtimes, live music concerts, and stadium matchdays.
+          </p>
+        </div>
+
+        <div className="flex items-center gap-2 self-start sm:self-auto shrink-0">
+          <div className="px-4 py-2 rounded-2xl bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 shadow-xs text-xs font-bold text-foreground">
+            <span className="text-amber-600 dark:text-amber-400 font-black">{results.length}</span> Active Passes
+          </div>
+        </div>
       </div>
 
       {/* Filter Component */}
@@ -77,7 +87,7 @@ function SearchContent() {
         onResetFilters={handleResetFilters}
       />
 
-      {/* Ticket List / Grid */}
+      {/* Ticket Results Grid */}
       <TicketList
         tickets={results}
         viewMode={filters.viewMode}
@@ -92,7 +102,7 @@ export default function SearchPage() {
     <div className="min-h-screen flex flex-col bg-[#F8FAFC] dark:bg-[#0F1117] text-[#0F172A] dark:text-[#F8FAFC]">
       <Header />
       <main className="flex-1">
-        <Suspense fallback={<div className="p-12 text-center text-xs text-[#64748B]">Loading search...</div>}>
+        <Suspense fallback={<div className="p-12 text-center text-xs text-muted-foreground">Loading tickets...</div>}>
           <SearchContent />
         </Suspense>
       </main>

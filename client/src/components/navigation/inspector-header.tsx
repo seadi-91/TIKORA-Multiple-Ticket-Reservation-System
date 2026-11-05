@@ -266,7 +266,7 @@ export function InspectorHeader({ onToggleMobileMenu }: InspectorHeaderProps = {
                     setShowProfileMenu(false);
                     logout();
                     toast.success("Signed out successfully");
-                    window.location.href = "/inspector/login";
+                    window.location.href = "/login";
                   }}
                   className="w-full flex items-center gap-2 px-3 py-2 text-xs font-semibold text-rose-600 dark:text-rose-400 hover:bg-rose-500/10 transition-colors cursor-pointer"
                 >

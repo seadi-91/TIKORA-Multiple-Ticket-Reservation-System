@@ -358,7 +358,7 @@ function InspectorActivationContent() {
         {/* Footer navigation */}
         <div className="text-center text-xs text-muted-foreground space-y-2">
           <Link
-            href="/inspector/login"
+            href="/login"
             className="text-foreground hover:text-amber-600 dark:hover:text-amber-400 font-medium transition-colors"
           >
             Already activated your password? Log in to Scanner →
