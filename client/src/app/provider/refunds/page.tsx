@@ -162,9 +162,9 @@ export default function ProviderRefundsPage() {
                 key={tab.id}
                 type="button"
                 onClick={() => setStatusFilter(tab.id)}
-                className={`px-3.5 py-1.5 text-xs font-semibold rounded-xl transition-all shrink-0 ${
+                className={`px-2 py-0.5 text-micro font-medium rounded-md transition-all shrink-0 cursor-pointer ${
                   statusFilter === tab.id
-                    ? "bg-amber-600 text-white shadow-sm"
+                    ? "bg-amber-600 text-white shadow-xs font-semibold"
                     : "bg-slate-100 dark:bg-slate-800/60 text-muted-foreground hover:bg-slate-200 dark:hover:bg-slate-800 hover:text-foreground"
                 }`}
               >
@@ -174,13 +174,13 @@ export default function ProviderRefundsPage() {
           </div>
 
           <div className="relative flex-1 sm:max-w-xs">
-            <Search className="w-3.5 h-3.5 absolute left-3.5 top-1/2 -translate-y-1/2 text-muted-foreground pointer-events-none" />
+            <Search className="w-3 h-3 absolute left-2.5 top-1/2 -translate-y-1/2 text-muted-foreground pointer-events-none" />
             <input
               type="text"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               placeholder="Search reference, customer, or reason..."
-              className="w-full pl-9 pr-3 py-2 text-xs rounded-xl border border-slate-200/60 dark:border-slate-800/60 bg-card text-foreground focus:outline-none focus:ring-2 focus:ring-amber-500/30"
+              className="w-full pl-7.5 pr-2.5 h-7.5 text-micro rounded-md border border-slate-200/60 dark:border-slate-800/60 bg-card text-foreground focus:outline-none focus:ring-2 focus:ring-amber-500/30"
             />
           </div>
         </div>
@@ -246,22 +246,20 @@ export default function ProviderRefundsPage() {
 
                     <td className="py-3.5 px-4 text-center">
                       <span
-                        className={`inline-flex items-center gap-1 px-2.5 py-0.5 rounded-lg text-[10px] font-semibold border ${
-                          r.status === "APPROVED"
+                        className={`inline-flex items-center gap-1 px-2.5 py-0.5 rounded-lg text-[10px] font-semibold border ${r.status === "APPROVED"
                             ? "bg-emerald-500/10 text-emerald-600 border-emerald-500/20"
                             : r.status === "REJECTED"
-                            ? "bg-rose-500/10 text-rose-600 border-rose-500/20"
-                            : "bg-amber-500/10 text-amber-600 border-amber-500/20"
-                        }`}
+                              ? "bg-rose-500/10 text-rose-600 border-rose-500/20"
+                              : "bg-amber-500/10 text-amber-600 border-amber-500/20"
+                          }`}
                       >
                         <span
-                          className={`w-1.5 h-1.5 rounded-full ${
-                            r.status === "APPROVED"
+                          className={`w-1.5 h-1.5 rounded-full ${r.status === "APPROVED"
                               ? "bg-emerald-600"
                               : r.status === "REJECTED"
-                              ? "bg-rose-600"
-                              : "bg-amber-500"
-                          }`}
+                                ? "bg-rose-600"
+                                : "bg-amber-500"
+                            }`}
                         />
                         {r.status}
                       </span>
@@ -273,25 +271,25 @@ export default function ProviderRefundsPage() {
                           items={[
                             ...(r.status === "PENDING"
                               ? [
-                                  {
-                                    label: "Approve Refund",
-                                    icon: <CheckCircle2 className="w-3.5 h-3.5" />,
-                                    variant: "success" as const,
-                                    onClick: () =>
-                                      handleApprove(
-                                        r.id,
-                                        r.bookingReference,
-                                        r.requestedAmount
-                                      ),
-                                  },
-                                  {
-                                    label: "Decline Claim",
-                                    icon: <XCircle className="w-3.5 h-3.5" />,
-                                    variant: "danger" as const,
-                                    onClick: () =>
-                                      handleReject(r.id, r.bookingReference),
-                                  },
-                                ]
+                                {
+                                  label: "Approve Refund",
+                                  icon: <CheckCircle2 className="w-3.5 h-3.5" />,
+                                  variant: "success" as const,
+                                  onClick: () =>
+                                    handleApprove(
+                                      r.id,
+                                      r.bookingReference,
+                                      r.requestedAmount
+                                    ),
+                                },
+                                {
+                                  label: "Decline Claim",
+                                  icon: <XCircle className="w-3.5 h-3.5" />,
+                                  variant: "danger" as const,
+                                  onClick: () =>
+                                    handleReject(r.id, r.bookingReference),
+                                },
+                              ]
                               : []),
                             {
                               label: "Copy Booking Ref",
@@ -338,13 +336,12 @@ export default function ProviderRefundsPage() {
 
                   <div className="flex items-center gap-2">
                     <span
-                      className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[9px] font-bold ${
-                        r.status === "APPROVED"
+                      className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[9px] font-bold ${r.status === "APPROVED"
                           ? "bg-emerald-500/10 text-emerald-600"
                           : r.status === "REJECTED"
-                          ? "bg-rose-500/10 text-rose-600"
-                          : "bg-amber-500/10 text-amber-600"
-                      }`}
+                            ? "bg-rose-500/10 text-rose-600"
+                            : "bg-amber-500/10 text-amber-600"
+                        }`}
                     >
                       {r.status}
                     </span>
@@ -353,25 +350,25 @@ export default function ProviderRefundsPage() {
                       items={[
                         ...(r.status === "PENDING"
                           ? [
-                              {
-                                label: "Approve Refund",
-                                icon: <CheckCircle2 className="w-3.5 h-3.5" />,
-                                variant: "success" as const,
-                                onClick: () =>
-                                  handleApprove(
-                                    r.id,
-                                    r.bookingReference,
-                                    r.requestedAmount
-                                  ),
-                              },
-                              {
-                                label: "Decline Claim",
-                                icon: <XCircle className="w-3.5 h-3.5" />,
-                                variant: "danger" as const,
-                                onClick: () =>
-                                  handleReject(r.id, r.bookingReference),
-                              },
-                            ]
+                            {
+                              label: "Approve Refund",
+                              icon: <CheckCircle2 className="w-3.5 h-3.5" />,
+                              variant: "success" as const,
+                              onClick: () =>
+                                handleApprove(
+                                  r.id,
+                                  r.bookingReference,
+                                  r.requestedAmount
+                                ),
+                            },
+                            {
+                              label: "Decline Claim",
+                              icon: <XCircle className="w-3.5 h-3.5" />,
+                              variant: "danger" as const,
+                              onClick: () =>
+                                handleReject(r.id, r.bookingReference),
+                            },
+                          ]
                           : []),
                         {
                           label: "Copy Ref",

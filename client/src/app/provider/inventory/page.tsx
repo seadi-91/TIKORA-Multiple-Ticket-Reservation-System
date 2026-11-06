@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import Link from "next/link";
 import {
   AlertTriangle,
@@ -66,6 +66,32 @@ export default function InventoryManagementPage() {
 
   const [searchQuery, setSearchQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState<string>("ALL");
+
+  useEffect(() => {
+    const sectorTickets = TicketService.getAllTickets().filter(
+      (t) => t.category === organization.category
+    );
+    setInventory(
+      sectorTickets.map((t) => {
+        let status: "NORMAL" | "LOW_STOCK" | "SOLD_OUT" = "NORMAL";
+        if (t.availableSeats === 0) status = "SOLD_OUT";
+        else if (t.availableSeats <= Math.ceil(t.totalSeats * 0.2)) status = "LOW_STOCK";
+
+        return {
+          id: t.id,
+          title: t.title,
+          category: t.category,
+          date: t.date,
+          time: t.time,
+          location: t.location,
+          totalCapacity: t.totalSeats,
+          availableSeats: t.availableSeats,
+          price: t.price,
+          status,
+        };
+      })
+    );
+  }, [organization.category]);
 
   // Seat Adjustment Modal State
   const [adjustModalItem, setAdjustModalItem] = useState<InventoryRow | null>(null);

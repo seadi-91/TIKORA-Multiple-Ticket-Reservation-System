@@ -2,7 +2,7 @@
 
 import React from "react";
 import Link from "next/link";
-import { Heart, ArrowRight } from "lucide-react";
+import { Heart, ArrowRight, MapPin, Calendar, Clock } from "lucide-react";
 import { TicketItem, TicketCategory } from "@/types/ticket.types";
 import { formatCurrency } from "@/lib/format-currency";
 import { useBookingStore } from "@/stores/booking.store";
@@ -29,26 +29,22 @@ export function TicketCard({ ticket, viewMode = "grid" }: TicketCardProps) {
     switch (ticket.category) {
       case "BUS":
         return {
-          label: "BUS",
-          badgeColor: "bg-blue-600 text-white",
+          label: "Bus",
           linkHref: `/bus/${ticket.id}`,
         };
       case "CINEMA":
         return {
-          label: "CINEMA",
-          badgeColor: "bg-purple-600 text-white",
+          label: "Cinema",
           linkHref: `/cinema/${ticket.id}`,
         };
       case "EVENT":
         return {
-          label: "EVENT",
-          badgeColor: "bg-amber-600 text-white",
+          label: "Event",
           linkHref: `/events/${ticket.id}`,
         };
       case "SPORTS":
         return {
-          label: "SPORTS",
-          badgeColor: "bg-emerald-600 text-white",
+          label: "Sports",
           linkHref: `/sports/${ticket.id}`,
         };
     }
@@ -58,52 +54,104 @@ export function TicketCard({ ticket, viewMode = "grid" }: TicketCardProps) {
   const cardImage = FIXED_CATEGORY_IMAGES[ticket.category] || FIXED_CATEGORY_IMAGES.BUS;
 
   // -------------------------------------------------------------
-  // LIST VIEW - Compact & Uncluttered
+  // LIST VIEW - Modern, Balanced & Cohesive Brand Style
   // -------------------------------------------------------------
   if (viewMode === "list") {
     return (
-      <div className="group relative flex flex-row items-stretch rounded-xl bg-white dark:bg-[#161922] border border-slate-200/80 dark:border-slate-800 hover:border-amber-500/40 shadow-xs hover:shadow-md transition-all duration-200 overflow-hidden w-full max-w-3xl">
-        {/* Left Side: Fixed Image Thumbnail */}
-        <div className="relative w-28 sm:w-36 h-24 shrink-0 overflow-hidden bg-slate-100 dark:bg-slate-800">
+      <div className="group relative flex flex-row items-stretch rounded-2xl bg-white dark:bg-[#161922] border border-slate-200/90 dark:border-slate-800/90 hover:border-amber-500/40 dark:hover:border-amber-500/30 hover:shadow-md transition-all duration-300 overflow-hidden w-full min-h-[130px]">
+        {/* Left Side: Fixed Image Thumbnail with 4:3 Proportion */}
+        <div className="relative w-32 sm:w-44 shrink-0 overflow-hidden bg-slate-100 dark:bg-slate-800">
           <img
             src={cardImage}
             alt={ticket.title}
-            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
             loading="lazy"
           />
-          <span className={`absolute top-1.5 left-1.5 text-[8px] font-black px-1.5 py-0.5 rounded uppercase tracking-wider shadow-xs ${meta.badgeColor}`}>
+          <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-black/25 pointer-events-none" />
+
+          {/* Frosted Category Badge */}
+          <span className="absolute top-2 left-2 inline-flex items-center gap-1.5 text-[8px] font-bold px-2 py-0.5 rounded-full bg-black/65 text-white backdrop-blur-md border border-white/20 uppercase tracking-wider shadow-xs">
+            <span className="relative flex h-1.5 w-1.5">
+              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-amber-400 opacity-75" />
+              <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-amber-500" />
+            </span>
             {meta.label}
+          </span>
+
+          {/* Bottom City Overlay */}
+          <span className="absolute bottom-2 left-2 text-[10px] font-semibold text-white/95 drop-shadow-md flex items-center gap-1 truncate max-w-[90%]">
+            <MapPin className="w-3 h-3 text-amber-400 shrink-0" />
+            <span className="truncate">{ticket.city || ticket.location}</span>
           </span>
         </div>
 
-        {/* Center: Essential Info */}
-        <div className="flex-1 p-2.5 flex flex-col justify-between min-w-0">
+        {/* Center & Right: Information & Actions */}
+        <div className="flex-1 p-3 sm:p-4 flex flex-col justify-between min-w-0">
           <div>
-            <Link
-              href={meta.linkHref}
-              className="block group-hover:text-amber-600 dark:group-hover:text-amber-400 transition-colors"
-            >
-              <h3 className="text-xs sm:text-sm font-bold text-foreground tracking-tight line-clamp-1">
-                {ticket.title}
-              </h3>
-            </Link>
-            <p className="text-[10px] text-muted-foreground truncate mt-0.5">
-              {ticket.organizer} • {ticket.city || ticket.location}
-            </p>
+            <div className="flex items-start justify-between gap-2">
+              <Link
+                href={meta.linkHref}
+                className="block group-hover:text-amber-600 dark:group-hover:text-amber-400 transition-colors"
+              >
+                <h3 className="text-xs sm:text-sm font-bold text-slate-900 dark:text-slate-100 tracking-tight line-clamp-1">
+                  {ticket.title}
+                </h3>
+              </Link>
+
+              {/* Wishlist Heart */}
+              <button
+                type="button"
+                onClick={() => toggleFavorite(ticket.id)}
+                aria-label={favorited ? "Remove from wishlist" : "Add to wishlist"}
+                className={`p-1.5 rounded-full transition-all cursor-pointer ${
+                  favorited
+                    ? "bg-rose-50 text-rose-500 dark:bg-rose-950/40"
+                    : "text-slate-400 hover:text-rose-500 hover:bg-slate-100 dark:hover:bg-slate-800"
+                }`}
+              >
+                <Heart className={`w-3.5 h-3.5 ${favorited ? "fill-current" : ""}`} />
+              </button>
+            </div>
+
+            <div className="flex flex-wrap items-center gap-2 text-[11px] text-slate-500 dark:text-slate-400 mt-1">
+              <span className="font-medium truncate">{ticket.organizer}</span>
+              {ticket.date && (
+                <>
+                  <span className="text-slate-300 dark:text-slate-700">•</span>
+                  <span className="inline-flex items-center gap-1 text-slate-400 dark:text-slate-500">
+                    <Calendar className="w-3 h-3 text-amber-500/80" />
+                    {ticket.date}
+                  </span>
+                </>
+              )}
+              {ticket.time && (
+                <>
+                  <span className="text-slate-300 dark:text-slate-700">•</span>
+                  <span className="inline-flex items-center gap-1 text-slate-400 dark:text-slate-500">
+                    <Clock className="w-3 h-3 text-amber-500/80" />
+                    {ticket.time}
+                  </span>
+                </>
+              )}
+            </div>
           </div>
 
-          <div className="flex items-center justify-between gap-2 pt-1 border-t border-slate-100 dark:border-slate-800">
+          <div className="flex items-center justify-between gap-2 pt-2.5 border-t border-dashed border-slate-200 dark:border-slate-800/80 mt-2">
             <div>
-              <span className="text-[8px] uppercase font-bold text-muted-foreground block leading-none">Starting</span>
-              <span className="text-xs sm:text-sm font-black text-foreground font-mono">{formatCurrency(ticket.price)}</span>
+              <span className="text-[8px] sm:text-[9px] uppercase font-bold text-slate-400 dark:text-slate-500 block leading-none tracking-wider">
+                From
+              </span>
+              <span className="text-xs sm:text-sm font-extrabold text-slate-900 dark:text-white font-mono mt-0.5 block">
+                {formatCurrency(ticket.price)}
+              </span>
             </div>
 
             <Link
               href={meta.linkHref}
-              className="px-2.5 py-1 rounded-lg bg-gradient-to-r from-amber-600 to-amber-500 hover:from-amber-700 hover:to-amber-600 text-white font-bold text-[10px] shadow-xs active:scale-95 transition-all flex items-center gap-1"
+              className="px-3.5 py-1.5 rounded-xl bg-amber-600 hover:bg-amber-500 active:bg-amber-700 text-white font-bold text-xs transition-all shadow-xs hover:shadow-amber-600/20 active:scale-95 flex items-center gap-1.5"
             >
               <span>Book</span>
-              <ArrowRight className="w-2.5 h-2.5" />
+              <ArrowRight className="w-3 h-3" />
             </Link>
           </div>
         </div>
@@ -112,76 +160,105 @@ export function TicketCard({ ticket, viewMode = "grid" }: TicketCardProps) {
   }
 
   // -------------------------------------------------------------
-  // GRID VIEW - Reduced Width (by >20px), Compact & Uncluttered
+  // GRID VIEW - Modern, Tall & Elegant Ticket Pass Design
+  // Enhanced height (+25-35px taller with 4:3 image ratio & info row)
   // -------------------------------------------------------------
   return (
-    <div className="group relative flex flex-col justify-between rounded-xl bg-white dark:bg-[#161922] border border-slate-200/80 dark:border-slate-800 hover:border-amber-500/40 shadow-xs hover:shadow-md transition-all duration-200 overflow-hidden w-full max-w-[240px] mx-auto">
-      {/* Top: Fixed Category Image */}
-      <div className="relative h-28 w-full overflow-hidden bg-slate-100 dark:bg-slate-800">
+    <div className="group relative flex flex-col justify-between rounded-2xl bg-white dark:bg-[#161922] border border-slate-200/90 dark:border-slate-800/90 hover:border-amber-500/50 dark:hover:border-amber-500/40 hover:shadow-xl hover:shadow-slate-200/50 dark:hover:shadow-black/50 transition-all duration-300 overflow-hidden w-full h-full">
+      {/* Top: 4:3 Ratio Image for +20px More Vertical Height */}
+      <div className="relative w-full aspect-[4/3] overflow-hidden bg-slate-100 dark:bg-slate-800 shrink-0">
         <img
           src={cardImage}
           alt={ticket.title}
-          className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+          className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
           loading="lazy"
         />
 
-        {/* Gradient for image depth */}
-        <div className="absolute inset-0 bg-gradient-to-t from-black/50 via-transparent to-black/20 pointer-events-none" />
+        {/* Soft Contrast Vignette */}
+        <div className="absolute inset-0 bg-gradient-to-t from-black/75 via-black/20 to-black/25 pointer-events-none" />
 
-        {/* Category Badge */}
-        <span className={`absolute top-2 left-2 text-[8px] font-black px-1.5 py-0.5 rounded uppercase tracking-wider shadow-xs ${meta.badgeColor}`}>
+        {/* Top-Left: Modern Glass Category Pill with Live Pulse Dot */}
+        <span className="absolute top-2 left-2 inline-flex items-center gap-1.5 text-[8px] sm:text-[9px] font-bold px-2.5 py-1 rounded-full bg-black/60 text-white backdrop-blur-md border border-white/20 uppercase tracking-wider shadow-xs">
+          <span className="relative flex h-1.5 w-1.5">
+            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-amber-400 opacity-75" />
+            <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-amber-500" />
+          </span>
           {meta.label}
         </span>
 
-        {/* Wishlist Heart Button */}
+        {/* Top-Right: Glass Wishlist Button */}
         <button
           type="button"
           onClick={() => toggleFavorite(ticket.id)}
           aria-label={favorited ? "Remove from wishlist" : "Add to wishlist"}
           title={favorited ? "Saved" : "Save"}
-          className={`absolute top-2 right-2 p-1 rounded-full backdrop-blur-md transition-all cursor-pointer ${
+          className={`absolute top-2 right-2 p-1.5 sm:p-2 rounded-full backdrop-blur-md transition-all cursor-pointer ${
             favorited
               ? "bg-rose-500 text-white shadow-xs"
-              : "bg-black/40 text-white hover:bg-black/60 hover:text-rose-400"
+              : "bg-black/40 text-white hover:bg-black/65 hover:text-rose-400"
           }`}
         >
           <Heart className={`w-3 h-3 ${favorited ? "fill-white" : ""}`} />
         </button>
+
+        {/* Bottom Image Overlay: Location Pin & Time Tag */}
+        <div className="absolute bottom-2 left-2.5 right-2.5 flex items-center justify-between text-white drop-shadow-sm pointer-events-none">
+          <span className="inline-flex items-center gap-1 text-[10px] sm:text-[11px] font-semibold truncate max-w-[70%]">
+            <MapPin className="w-3 h-3 text-amber-400 shrink-0" />
+            <span className="truncate">{ticket.city || ticket.location}</span>
+          </span>
+          {ticket.time && (
+            <span className="inline-flex items-center gap-0.5 text-[9px] sm:text-[10px] font-medium text-white/90 shrink-0 font-mono">
+              <Clock className="w-2.5 h-2.5 text-amber-400 shrink-0" />
+              <span>{ticket.time}</span>
+            </span>
+          )}
+        </div>
       </div>
 
-      {/* Card Content - Clean & Minimalist */}
-      <div className="p-2.5 space-y-1.5 flex-1 flex flex-col justify-between">
-        <div>
+      {/* Card Body - Balanced Spacing, Clean Typography & Elevated Information */}
+      <div className="p-3 sm:p-3.5 flex-1 flex flex-col justify-between gap-2.5">
+        <div className="min-w-0">
           <Link
             href={meta.linkHref}
             className="block group-hover:text-amber-600 dark:group-hover:text-amber-400 transition-colors"
           >
-            <h3 className="text-xs font-bold text-foreground tracking-tight line-clamp-2 leading-snug">
+            <h3 className="text-xs sm:text-sm font-bold text-slate-900 dark:text-slate-100 tracking-tight line-clamp-1 leading-snug">
               {ticket.title}
             </h3>
           </Link>
-          <p className="text-[10px] text-muted-foreground truncate mt-0.5">
-            {ticket.organizer} • {ticket.city || ticket.location}
-          </p>
+
+          {/* Organizer & Date Row */}
+          <div className="flex items-center justify-between gap-1 text-[10px] sm:text-[11px] text-slate-500 dark:text-slate-400 mt-1">
+            <span className="truncate max-w-[62%] font-medium">
+              {ticket.organizer}
+            </span>
+            {ticket.date && (
+              <span className="inline-flex items-center gap-1 text-slate-400 dark:text-slate-500 shrink-0 text-[10px] font-mono">
+                <Calendar className="w-2.5 h-2.5 text-amber-500/70 shrink-0" />
+                <span>{ticket.date.replace(/^\d{4}-/, "")}</span>
+              </span>
+            )}
+          </div>
         </div>
 
-        {/* Bottom Price & Single CTA Button */}
-        <div className="pt-2 border-t border-slate-100 dark:border-slate-800/80 flex items-center justify-between gap-1.5">
-          <div>
-            <span className="text-[8px] uppercase font-bold text-muted-foreground block leading-none">
-              Starting
+        {/* Bottom Bar: Dashed Divider, Bold ETB Price & Brand Book CTA */}
+        <div className="pt-2.5 border-t border-dashed border-slate-200 dark:border-slate-800 flex items-center justify-between gap-1.5">
+          <div className="min-w-0">
+            <span className="text-[8px] sm:text-[9px] uppercase font-bold text-slate-400 dark:text-slate-500 block leading-tight tracking-wider">
+              From
             </span>
-            <div className="text-xs sm:text-sm font-black text-foreground font-mono leading-tight mt-0.5">
+            <span className="text-xs sm:text-sm font-black text-slate-900 dark:text-white font-mono truncate block mt-0.5">
               {formatCurrency(ticket.price)}
-            </div>
+            </span>
           </div>
 
           <Link
             href={meta.linkHref}
-            className="px-2.5 py-1 rounded-lg bg-gradient-to-r from-amber-600 to-amber-500 hover:from-amber-700 hover:to-amber-600 text-white font-bold text-[10px] sm:text-[11px] shadow-xs active:scale-95 transition-all flex items-center gap-1 shrink-0"
+            className="px-3 py-1.5 rounded-xl bg-amber-600 hover:bg-amber-500 active:bg-amber-700 text-white font-bold text-xs transition-all shadow-xs hover:shadow-amber-600/25 active:scale-95 flex items-center gap-1 shrink-0"
           >
             <span>Book</span>
-            <ArrowRight className="w-2.5 h-2.5" />
+            <ArrowRight className="w-3 h-3 group-hover:translate-x-0.5 transition-transform" />
           </Link>
         </div>
       </div>

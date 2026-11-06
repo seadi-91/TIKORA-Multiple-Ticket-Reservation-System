@@ -28,27 +28,42 @@ import {
 import { useProviderStore } from "@/stores/provider.store";
 import { useAuthStore } from "@/stores/auth.store";
 import { useTheme } from "@/providers/theme-provider";
+import { TicketCategory } from "@/types/ticket.types";
 import { toast } from "sonner";
 
 interface ProviderHeaderProps {
   onToggleMobileMenu?: () => void;
 }
 
+const SECTORS: { id: TicketCategory; label: string; orgName: string; icon: any }[] = [
+  { id: "CINEMA", label: "Cinema Multiplex", orgName: "Century Cinema Addis", icon: Film },
+  { id: "BUS", label: "Intercity Bus Lines", orgName: "Selam Bus Lines S.C.", icon: Bus },
+  { id: "EVENT", label: "Live Events & Concerts", orgName: "Addis Live Events & Concerts", icon: Calendar },
+  { id: "SPORTS", label: "Stadium Sports Club", orgName: "St. George Stadium Club", icon: Trophy },
+];
+
 export function ProviderHeader({ onToggleMobileMenu }: ProviderHeaderProps) {
   const router = useRouter();
-  const { organization, notifications, markAllNotificationsAsRead, markNotificationAsRead } =
-    useProviderStore();
+  const {
+    organization,
+    notifications,
+    markAllNotificationsAsRead,
+    markNotificationAsRead,
+    setOrganizationCategory,
+  } = useProviderStore();
   const { logout } = useAuthStore();
   const { theme, setTheme } = useTheme();
 
   const [searchQuery, setSearchQuery] = useState("");
   const [showNotifications, setShowNotifications] = useState(false);
   const [showQuickCreate, setShowQuickCreate] = useState(false);
+  const [showSectorMenu, setShowSectorMenu] = useState(false);
   const [showProfileMenu, setShowProfileMenu] = useState(false);
   const [showThemeMenu, setShowThemeMenu] = useState(false);
 
   const notifRef = useRef<HTMLDivElement>(null);
   const quickRef = useRef<HTMLDivElement>(null);
+  const sectorRef = useRef<HTMLDivElement>(null);
   const profileRef = useRef<HTMLDivElement>(null);
   const themeRef = useRef<HTMLDivElement>(null);
 
@@ -62,6 +77,9 @@ export function ProviderHeader({ onToggleMobileMenu }: ProviderHeaderProps) {
       }
       if (quickRef.current && !quickRef.current.contains(e.target as Node)) {
         setShowQuickCreate(false);
+      }
+      if (sectorRef.current && !sectorRef.current.contains(e.target as Node)) {
+        setShowSectorMenu(false);
       }
       if (profileRef.current && !profileRef.current.contains(e.target as Node)) {
         setShowProfileMenu(false);
@@ -82,16 +100,131 @@ export function ProviderHeader({ onToggleMobileMenu }: ProviderHeaderProps) {
     }
   };
 
+  const getSectorIcon = (cat: TicketCategory) => {
+    switch (cat) {
+      case "CINEMA":
+        return <Film className="w-3.5 h-3.5 text-purple-600 shrink-0" />;
+      case "EVENT":
+        return <Calendar className="w-3.5 h-3.5 text-amber-600 shrink-0" />;
+      case "SPORTS":
+        return <Trophy className="w-3.5 h-3.5 text-emerald-600 shrink-0" />;
+      case "BUS":
+      default:
+        return <Bus className="w-3.5 h-3.5 text-blue-600 shrink-0" />;
+    }
+  };
+
+  // Strictly sector-isolated quick actions
+  const getSectorQuickActions = () => {
+    switch (organization.category) {
+      case "CINEMA":
+        return [
+          {
+            href: "/provider/cinema/showtimes",
+            label: "Schedule Movie Screening",
+            desc: "Hall showtimes & seat matrix",
+            icon: Film,
+            color: "text-purple-600 bg-purple-50 dark:bg-purple-950",
+          },
+          {
+            href: "/provider/cinema/movies",
+            label: "Movie Catalog",
+            desc: "Manage titles & posters",
+            icon: Film,
+            color: "text-indigo-600 bg-indigo-50 dark:bg-indigo-950",
+          },
+          {
+            href: "/provider/tickets/create",
+            label: "New Cinema Box Office Pass",
+            desc: "VIP laser or 3D hall ticket",
+            icon: Ticket,
+            color: "text-amber-600 bg-amber-50 dark:bg-amber-950",
+          },
+        ];
+      case "EVENT":
+        return [
+          {
+            href: "/provider/events/create",
+            label: "Publish New Live Event",
+            desc: "Concert or festival passes",
+            icon: Calendar,
+            color: "text-amber-600 bg-amber-50 dark:bg-amber-950",
+          },
+          {
+            href: "/provider/events",
+            label: "Festival Staging & Lineup",
+            desc: "Manage artists & stages",
+            icon: Calendar,
+            color: "text-orange-600 bg-orange-50 dark:bg-orange-950",
+          },
+          {
+            href: "/provider/tickets/create",
+            label: "New VIP / Festival Pass",
+            desc: "Table lounge & wristband pass",
+            icon: Ticket,
+            color: "text-amber-600 bg-amber-50 dark:bg-amber-950",
+          },
+        ];
+      case "SPORTS":
+        return [
+          {
+            href: "/provider/sports/create",
+            label: "Schedule Match Fixture",
+            desc: "Stadium tribune & gate passes",
+            icon: Trophy,
+            color: "text-emerald-600 bg-emerald-50 dark:bg-emerald-950",
+          },
+          {
+            href: "/provider/sports",
+            label: "All Stadium Derbies",
+            desc: "Match calendar & gates",
+            icon: Trophy,
+            color: "text-teal-600 bg-teal-50 dark:bg-teal-950",
+          },
+          {
+            href: "/provider/tickets/create",
+            label: "New Stadium Gate Ticket",
+            desc: "Grandstand VIP & bleachers pass",
+            icon: Ticket,
+            color: "text-emerald-600 bg-emerald-50 dark:bg-emerald-950",
+          },
+        ];
+      case "BUS":
+      default:
+        return [
+          {
+            href: "/provider/bus/routes",
+            label: "New Bus Route",
+            desc: "Add express schedule & fare",
+            icon: Bus,
+            color: "text-blue-600 bg-blue-50 dark:bg-blue-950",
+          },
+          {
+            href: "/provider/bus/schedules",
+            label: "New Fleet Schedule",
+            desc: "Coach departure assignment",
+            icon: Clock,
+            color: "text-sky-600 bg-sky-50 dark:bg-sky-950",
+          },
+          {
+            href: "/provider/tickets/create",
+            label: "New Intercity Bus Pass",
+            desc: "Highway seat reservation pass",
+            icon: Ticket,
+            color: "text-amber-600 bg-amber-50 dark:bg-amber-950",
+          },
+        ];
+    }
+  };
+
   return (
-    <header
-      className="h-16 border-b border-[#E2E8F0] dark:border-slate-800 bg-white dark:bg-[#161922] px-4 sm:px-6 flex items-center justify-between gap-4 shadow-xs w-full transition-colors"
-    >
+    <header className="h-16 border-b border-[#E2E8F0] dark:border-slate-800 bg-white dark:bg-[#161922] px-4 sm:px-6 flex items-center justify-between gap-4 shadow-xs w-full transition-colors">
       {/* Left: Mobile Menu Trigger & Search */}
       <div className="flex items-center gap-3 flex-1 max-w-lg">
         {onToggleMobileMenu && (
           <button
             onClick={onToggleMobileMenu}
-            className="lg:hidden p-2 rounded-xl border border-slate-200 dark:border-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors"
+            className="lg:hidden p-2 rounded-xl border border-slate-200 dark:border-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors cursor-pointer"
             aria-label="Open navigation menu"
           >
             <Menu className="w-4 h-4" />
@@ -99,10 +232,10 @@ export function ProviderHeader({ onToggleMobileMenu }: ProviderHeaderProps) {
         )}
 
         <form onSubmit={handleGlobalSearch} className="relative w-full max-w-sm hidden sm:block">
-          <Search className="w-3.5 h-3.5 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
+          <Search className="w-3.5 h-3.5 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" />
           <input
             type="text"
-            placeholder="Search bookings, routes, tickets..."
+            placeholder={`Search ${organization.category.toLowerCase()} bookings, tickets, listings...`}
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             className="w-full pl-9 pr-3 py-1.5 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-[#0F1117] text-xs text-[#0F172A] dark:text-white placeholder:text-slate-400 focus:outline-none focus:border-[#B45309] dark:focus:border-amber-400 focus:bg-white dark:focus:bg-[#161922] transition-all"
@@ -110,15 +243,81 @@ export function ProviderHeader({ onToggleMobileMenu }: ProviderHeaderProps) {
         </form>
       </div>
 
-      {/* Right: Quick Actions, Theme, Notifications & Profile */}
+      {/* Right: Sector Switcher, Quick Actions, Theme, Notifications & Profile */}
       <div className="flex items-center gap-2 sm:gap-3">
+        {/* Provider Sector Switcher (Allows testing all 4 sectors) */}
+        <div className="relative" ref={sectorRef}>
+          <button
+            type="button"
+            onClick={() => setShowSectorMenu(!showSectorMenu)}
+            className="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl border border-amber-500/30 bg-amber-500/10 hover:bg-amber-500/20 text-amber-800 dark:text-amber-300 text-xs font-bold transition-all cursor-pointer shadow-xs"
+            title="Switch Provider Sector"
+          >
+            {getSectorIcon(organization.category)}
+            <span className="uppercase text-[11px] font-black">{organization.category}</span>
+            <span className="text-[10px] text-muted-foreground font-normal hidden md:inline">
+              (Switch)
+            </span>
+            <ChevronDown className="w-3 h-3 text-amber-600" />
+          </button>
+
+          {showSectorMenu && (
+            <div className="absolute right-0 mt-2 w-64 rounded-2xl bg-white dark:bg-[#161922] border border-[#E2E8F0] dark:border-slate-800 shadow-xl p-2 z-50 space-y-1 animate-in fade-in-50 zoom-in-95">
+              <div className="px-2.5 py-1.5 border-b border-slate-100 dark:border-slate-800">
+                <span className="text-[10px] uppercase font-bold tracking-wider text-slate-400 block">
+                  Switch Provider Sector
+                </span>
+                <span className="text-[11px] text-slate-500 dark:text-slate-400 block">
+                  Isolated reports, analytics & catalog
+                </span>
+              </div>
+
+              {SECTORS.map((s) => {
+                const Icon = s.icon;
+                const isCurrent = organization.category === s.id;
+                return (
+                  <button
+                    key={s.id}
+                    type="button"
+                    onClick={() => {
+                      setOrganizationCategory(s.id);
+                      setShowSectorMenu(false);
+                      toast.success(
+                        `Provider sector switched to ${s.label} (${s.orgName}). All reports, analytics, and listings are now strictly ${s.id} isolated.`
+                      );
+                    }}
+                    className={`w-full flex items-center justify-between p-2 rounded-xl text-left transition-colors cursor-pointer ${
+                      isCurrent
+                        ? "bg-amber-500/10 border border-amber-500/30 text-amber-900 dark:text-amber-300 font-bold"
+                        : "hover:bg-slate-50 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-300"
+                    }`}
+                  >
+                    <div className="flex items-center gap-2.5">
+                      <div className="w-7 h-7 rounded-lg bg-slate-100 dark:bg-slate-800 flex items-center justify-center shrink-0">
+                        <Icon className="w-3.5 h-3.5 text-amber-600" />
+                      </div>
+                      <div>
+                        <span className="block text-xs font-bold leading-tight">{s.label}</span>
+                        <span className="text-[10px] text-muted-foreground block truncate max-w-[130px]">
+                          {s.orgName}
+                        </span>
+                      </div>
+                    </div>
+                    {isCurrent && <Check className="w-4 h-4 text-amber-600 shrink-0" />}
+                  </button>
+                );
+              })}
+            </div>
+          )}
+        </div>
+
         {/* Verification Status Pill */}
-        <div className="hidden md:flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-800/40 text-[11px] font-bold text-emerald-700 dark:text-emerald-300">
+        <div className="hidden lg:flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-800/40 text-[11px] font-bold text-emerald-700 dark:text-emerald-300">
           <ShieldCheck className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" />
           <span>Verified Merchant</span>
         </div>
 
-        {/* Quick Create Dropdown */}
+        {/* Quick Create Dropdown - Strictly Sector Isolated */}
         <div className="relative" ref={quickRef}>
           <button
             onClick={() => setShowQuickCreate(!showQuickCreate)}
@@ -130,72 +329,32 @@ export function ProviderHeader({ onToggleMobileMenu }: ProviderHeaderProps) {
           </button>
 
           {showQuickCreate && (
-            <div className="absolute right-0 mt-2 w-56 rounded-2xl bg-white dark:bg-[#161922] border border-[#E2E8F0] dark:border-slate-800 shadow-xl p-1.5 z-40 space-y-1 animate-in fade-in-50 zoom-in-95">
+            <div className="absolute right-0 mt-2 w-60 rounded-2xl bg-white dark:bg-[#161922] border border-[#E2E8F0] dark:border-slate-800 shadow-xl p-1.5 z-40 space-y-1 animate-in fade-in-50 zoom-in-95">
               <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400 px-2.5 py-1 block">
-                Quick Action Dispatch
+                {organization.category} Service Actions
               </span>
-              <Link
-                href="/provider/bus/routes"
-                onClick={() => setShowQuickCreate(false)}
-                className="flex items-center gap-2.5 px-2.5 py-2 rounded-xl text-xs font-semibold text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-800 hover:text-[#B45309] transition-colors"
-              >
-                <div className="w-7 h-7 rounded-lg bg-blue-50 dark:bg-blue-950 text-blue-600 flex items-center justify-center shrink-0">
-                  <Bus className="w-3.5 h-3.5" />
-                </div>
-                <div>
-                  <span className="block font-bold">New Bus Route</span>
-                  <span className="text-[10px] text-slate-400 font-normal">Add express schedule & fare</span>
-                </div>
-              </Link>
-              <Link
-                href="/provider/events/create"
-                onClick={() => setShowQuickCreate(false)}
-                className="flex items-center gap-2.5 px-2.5 py-2 rounded-xl text-xs font-semibold text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-800 hover:text-[#B45309] transition-colors"
-              >
-                <div className="w-7 h-7 rounded-lg bg-amber-50 dark:bg-amber-950 text-amber-600 flex items-center justify-center shrink-0">
-                  <Calendar className="w-3.5 h-3.5" />
-                </div>
-                <div>
-                  <span className="block font-bold">New Live Event</span>
-                  <span className="text-[10px] text-slate-400 font-normal">Concert or festival passes</span>
-                </div>
-              </Link>
-              <Link
-                href="/provider/sports/create"
-                onClick={() => setShowQuickCreate(false)}
-                className="flex items-center gap-2.5 px-2.5 py-2 rounded-xl text-xs font-semibold text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-800 hover:text-[#B45309] transition-colors"
-              >
-                <div className="w-7 h-7 rounded-lg bg-emerald-50 dark:bg-emerald-950 text-emerald-600 flex items-center justify-center shrink-0">
-                  <Trophy className="w-3.5 h-3.5" />
-                </div>
-                <div>
-                  <span className="block font-bold">New Match Fixture</span>
-                  <span className="text-[10px] text-slate-400 font-normal">Stadium tribune & gate passes</span>
-                </div>
-              </Link>
-              <Link
-                href="/provider/cinema/showtimes"
-                onClick={() => setShowQuickCreate(false)}
-                className="flex items-center gap-2.5 px-2.5 py-2 rounded-xl text-xs font-semibold text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-800 hover:text-[#B45309] transition-colors"
-              >
-                <div className="w-7 h-7 rounded-lg bg-purple-50 dark:bg-purple-950 text-purple-600 flex items-center justify-center shrink-0">
-                  <Film className="w-3.5 h-3.5" />
-                </div>
-                <div>
-                  <span className="block font-bold">Schedule Movie Screening</span>
-                  <span className="text-[10px] text-slate-400 font-normal">Hall showtimes & seat matrix</span>
-                </div>
-              </Link>
-              <div className="pt-1 border-t border-slate-100 dark:border-slate-800">
-                <Link
-                  href="/provider/tickets/create"
-                  onClick={() => setShowQuickCreate(false)}
-                  className="flex items-center gap-2 px-2.5 py-1.5 rounded-lg text-xs font-bold text-[#B45309] dark:text-amber-400 hover:bg-[#B45309]/10 transition-colors"
-                >
-                  <Ticket className="w-3.5 h-3.5" />
-                  <span>Custom Ticket Listing</span>
-                </Link>
-              </div>
+
+              {getSectorQuickActions().map((action, idx) => {
+                const Icon = action.icon;
+                return (
+                  <Link
+                    key={idx}
+                    href={action.href}
+                    onClick={() => setShowQuickCreate(false)}
+                    className="flex items-center gap-2.5 px-2.5 py-2 rounded-xl text-xs font-semibold text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-800 hover:text-[#B45309] transition-colors"
+                  >
+                    <div
+                      className={`w-7 h-7 rounded-lg flex items-center justify-center shrink-0 ${action.color}`}
+                    >
+                      <Icon className="w-3.5 h-3.5" />
+                    </div>
+                    <div>
+                      <span className="block font-bold">{action.label}</span>
+                      <span className="text-[10px] text-slate-400 font-normal">{action.desc}</span>
+                    </div>
+                  </Link>
+                );
+              })}
             </div>
           )}
         </div>
@@ -204,7 +363,7 @@ export function ProviderHeader({ onToggleMobileMenu }: ProviderHeaderProps) {
         <div className="relative" ref={themeRef}>
           <button
             onClick={() => setShowThemeMenu(!showThemeMenu)}
-            className="p-2 rounded-xl border border-slate-200 dark:border-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors"
+            className="p-2 rounded-xl border border-slate-200 dark:border-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors cursor-pointer"
             title="Theme Selection"
           >
             {theme === "dark" ? (
@@ -232,10 +391,11 @@ export function ProviderHeader({ onToggleMobileMenu }: ProviderHeaderProps) {
                       setTheme(m.id as "light" | "dark" | "system");
                       setShowThemeMenu(false);
                     }}
-                    className={`w-full flex items-center justify-between px-2.5 py-1.5 rounded-lg text-xs font-medium transition-colors ${isSelected
+                    className={`w-full flex items-center justify-between px-2.5 py-1.5 rounded-lg text-xs font-medium transition-colors cursor-pointer ${
+                      isSelected
                         ? "text-[#B45309] dark:text-amber-400 font-bold bg-[#B45309]/10"
                         : "text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800"
-                      }`}
+                    }`}
                   >
                     <div className="flex items-center gap-2">
                       <Icon className="w-3.5 h-3.5" />
@@ -253,7 +413,7 @@ export function ProviderHeader({ onToggleMobileMenu }: ProviderHeaderProps) {
         <div className="relative" ref={notifRef}>
           <button
             onClick={() => setShowNotifications(!showNotifications)}
-            className="p-2 rounded-xl border border-slate-200 dark:border-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors relative"
+            className="p-2 rounded-xl border border-slate-200 dark:border-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors relative cursor-pointer"
             title="Notifications"
           >
             <Bell className="w-4 h-4" />
@@ -293,10 +453,11 @@ export function ProviderHeader({ onToggleMobileMenu }: ProviderHeaderProps) {
                     <div
                       key={n.id}
                       onClick={() => markNotificationAsRead(n.id)}
-                      className={`p-2.5 rounded-xl border text-left cursor-pointer transition-colors ${n.isRead
+                      className={`p-2.5 rounded-xl border text-left cursor-pointer transition-colors ${
+                        n.isRead
                           ? "bg-transparent border-transparent hover:bg-slate-50 dark:hover:bg-slate-800/40"
                           : "bg-amber-50/60 dark:bg-amber-950/20 border-amber-200/80 dark:border-amber-900/40"
-                        }`}
+                      }`}
                     >
                       <div className="flex items-center justify-between gap-1 mb-0.5">
                         <span className="text-xs font-bold text-[#0F172A] dark:text-white truncate">
@@ -388,4 +549,3 @@ export function ProviderHeader({ onToggleMobileMenu }: ProviderHeaderProps) {
 }
 
 export default ProviderHeader;
-

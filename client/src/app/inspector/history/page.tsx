@@ -101,7 +101,7 @@ export default function VerificationHistoryPage() {
             Ticket Verification Audit Trail
           </h1>
           <p className="text-xs text-muted-foreground mt-0.5">
-            Digital timestamped record of tickets scanned by {profile.fullName} ({profile.inspectorId}).
+            Digital timestamped record of tickets scanned for <strong className="text-amber-600 dark:text-amber-400">{profile.organizationName}</strong> by {profile.fullName} ({profile.inspectorId}).
           </p>
         </div>
 
@@ -174,25 +174,16 @@ export default function VerificationHistoryPage() {
           </div>
         </div>
 
-        {/* Category Filters */}
-        <div className="flex flex-wrap items-center gap-2 pt-3 border-t border-slate-200/40 dark:border-slate-800/40">
-          <span className="text-[11px] font-semibold text-muted-foreground flex items-center gap-1">
-            <Filter className="w-3 h-3" /> Sector:
+        {/* Sector Indicator */}
+        <div className="flex items-center justify-between gap-2 pt-2.5 border-t border-slate-200/40 dark:border-slate-800/40 text-xs text-muted-foreground">
+          <div className="flex items-center gap-1.5">
+            <span className="font-semibold text-foreground">Active Provider:</span>
+            <span className="font-bold text-amber-600 dark:text-amber-400">{profile.organizationName}</span>
+            <span>({profile.category} Sector)</span>
+          </div>
+          <span className="text-[11px] font-mono">
+            {filteredHistory.length} total records
           </span>
-          {["ALL", "BUS", "EVENT", "SPORTS", "CINEMA"].map((cat) => (
-            <button
-              key={cat}
-              type="button"
-              onClick={() => setCategoryFilter(cat)}
-              className={`px-3 py-1 text-[11px] font-semibold rounded-lg transition-colors ${
-                categoryFilter === cat
-                  ? "bg-amber-500/20 text-amber-700 dark:text-amber-300 border border-amber-600/30 font-bold"
-                  : "bg-slate-100 dark:bg-slate-800/40 text-muted-foreground hover:bg-slate-200 dark:hover:bg-slate-800"
-              }`}
-            >
-              {cat === "ALL" ? "All Sectors" : cat}
-            </button>
-          ))}
         </div>
       </div>
 

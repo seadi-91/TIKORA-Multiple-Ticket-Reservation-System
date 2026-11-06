@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import Link from "next/link";
 import {
   Bus,
@@ -325,6 +325,10 @@ export default function ProviderBookingsPage() {
   const [paymentFilter, setPaymentFilter] = useState<string>("ALL");
   const [statusFilter, setStatusFilter] = useState<string>("ALL");
 
+  useEffect(() => {
+    setBookings(INITIAL_BOOKINGS.filter((b) => b.category === organization.category));
+  }, [organization.category]);
+
   const filteredBookings = bookings.filter((b) => {
     const matchesPayment = paymentFilter === "ALL" || b.paymentStatus === paymentFilter;
     const matchesStatus = statusFilter === "ALL" || b.bookingStatus === statusFilter;
@@ -632,33 +636,33 @@ export default function ProviderBookingsPage() {
           )}
         </div>
 
-        {/* Desktop View: Full Table */}
-        <div className="hidden sm:block overflow-x-auto">
-          <table className="w-full text-left border-collapse text-xs">
+        {/* Desktop View: Full Table - Spacious Layout */}
+        <div className="hidden sm:block overflow-x-auto scrollbar-thin">
+          <table className="w-full text-left border-collapse min-w-[1100px] text-xs sm:text-[13px]">
             <thead>
-              <tr className="bg-slate-50/60 dark:bg-slate-800/40 text-muted-foreground uppercase text-[10px] font-bold tracking-wider">
-                <th className="py-3.5 px-4">Reference</th>
-                <th className="py-3.5 px-4">Customer & Contact</th>
-                <th className="py-3.5 px-4">Service & Route</th>
-                <th className="py-3.5 px-4">Schedule Date</th>
-                <th className="py-3.5 px-4 text-center">Seats</th>
-                <th className="py-3.5 px-4 text-right">Amount (ETB)</th>
-                <th className="py-3.5 px-4 text-center">Payment</th>
-                <th className="py-3.5 px-4 text-center">Boarding</th>
-                <th className="py-3.5 px-5 text-right">Actions</th>
+              <tr className="bg-slate-50/80 dark:bg-slate-800/50 text-muted-foreground uppercase text-[10px] font-bold tracking-wider border-b border-slate-100 dark:border-slate-800">
+                <th className="py-4 px-5 min-w-[160px]">Reference</th>
+                <th className="py-4 px-5 min-w-[220px]">Customer & Contact</th>
+                <th className="py-4 px-5 min-w-[260px]">Service & Route</th>
+                <th className="py-4 px-4 min-w-[140px]">Schedule Date</th>
+                <th className="py-4 px-4 text-center min-w-[120px]">Seats</th>
+                <th className="py-4 px-4 text-right min-w-[130px]">Amount (ETB)</th>
+                <th className="py-4 px-4 text-center min-w-[120px]">Payment</th>
+                <th className="py-4 px-4 text-center min-w-[130px]">Boarding</th>
+                <th className="py-4 px-5 text-right min-w-[90px]">Actions</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100 dark:divide-slate-800/40">
               {filteredBookings.length === 0 ? (
                 <tr>
-                  <td colSpan={9} className="py-12 text-center text-muted-foreground">
+                  <td colSpan={9} className="py-16 text-center text-muted-foreground">
                     No bookings found matching your search criteria.
                   </td>
                 </tr>
               ) : (
                 filteredBookings.map((b) => (
                   <tr key={b.id} className="hover:bg-amber-500/[0.03] dark:hover:bg-amber-500/[0.06] transition-colors">
-                    <td className="py-3.5 px-4 font-mono font-bold text-amber-600 dark:text-amber-400">
+                    <td className="py-4 px-5 font-mono font-bold text-amber-600 dark:text-amber-400 whitespace-nowrap">
                       <Link
                         href={`/provider/bookings/${b.id}`}
                         className="hover:underline"
@@ -667,40 +671,40 @@ export default function ProviderBookingsPage() {
                       </Link>
                     </td>
 
-                    <td className="py-3.5 px-4">
+                    <td className="py-4 px-5">
                       <span className="font-semibold text-foreground block">
                         {b.customerName}
                       </span>
-                      <span className="text-[11px] text-muted-foreground block font-mono">
+                      <span className="text-[11px] text-muted-foreground block font-mono mt-0.5">
                         {b.customerPhone}
                       </span>
                     </td>
 
-                    <td className="py-3.5 px-4">
+                    <td className="py-4 px-5">
                       <div className="flex items-center gap-1.5 font-medium text-foreground">
                         {getCategoryIcon(b.category)}
                         <span className="line-clamp-1">{b.serviceTitle}</span>
                       </div>
                     </td>
 
-                    <td className="py-3.5 px-4 text-muted-foreground whitespace-nowrap">
+                    <td className="py-4 px-4 text-muted-foreground whitespace-nowrap">
                       <span className="font-medium text-foreground block">{b.travelDate}</span>
                       <span className="text-[11px] font-mono">{b.departureTime}</span>
                     </td>
 
-                    <td className="py-3.5 px-4 text-center font-mono">
-                      <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-lg bg-slate-100 dark:bg-slate-800 text-foreground text-[11px] font-medium">
+                    <td className="py-4 px-4 text-center font-mono whitespace-nowrap">
+                      <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-slate-100 dark:bg-slate-800 text-foreground text-xs font-semibold">
                         {b.seats.join(", ")}
                       </span>
                     </td>
 
-                    <td className="py-3.5 px-4 text-right font-mono font-bold text-foreground">
+                    <td className="py-4 px-4 text-right font-mono font-bold text-foreground whitespace-nowrap">
                       {formatCurrency(b.totalAmount)}
                     </td>
 
-                    <td className="py-3.5 px-4 text-center">
+                    <td className="py-4 px-4 text-center whitespace-nowrap">
                       <span
-                        className={`inline-flex items-center px-2 py-0.5 rounded-lg text-[10px] font-semibold border ${
+                        className={`inline-flex items-center px-2.5 py-0.5 rounded-lg text-[10px] font-semibold border ${
                           b.paymentStatus === "PAID"
                             ? "bg-emerald-500/10 text-emerald-600 border-emerald-500/20"
                             : b.paymentStatus === "REFUNDED"
@@ -712,7 +716,7 @@ export default function ProviderBookingsPage() {
                       </span>
                     </td>
 
-                    <td className="py-3.5 px-4 text-center">
+                    <td className="py-4 px-4 text-center whitespace-nowrap">
                       <span
                         className={`inline-flex items-center gap-1 px-2.5 py-0.5 rounded-lg text-[10px] font-semibold border ${
                           b.bookingStatus === "CHECKED_IN"

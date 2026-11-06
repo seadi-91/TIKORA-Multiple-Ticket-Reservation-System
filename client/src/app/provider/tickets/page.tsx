@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import Link from "next/link";
 import {
   Plus,
@@ -22,6 +22,10 @@ export default function ProviderTicketsPage() {
   const sectorTickets = allTickets.filter((t) => t.category === organization.category);
   const [tickets, setTickets] = useState(sectorTickets);
   const [search, setSearch] = useState("");
+
+  useEffect(() => {
+    setTickets(TicketService.getAllTickets().filter((t) => t.category === organization.category));
+  }, [organization.category]);
 
   const filtered = tickets.filter((t) => {
     if (
@@ -154,10 +158,10 @@ export default function ProviderTicketsPage() {
                   <td className="py-3.5 px-4 text-center">
                     <span
                       className={`text-[10px] font-bold px-2.5 py-0.5 rounded-full inline-block ${t.availableSeats > 10
-                          ? "bg-emerald-50 text-emerald-700 dark:bg-emerald-950/60 dark:text-emerald-300 border border-emerald-200/60"
-                          : t.availableSeats > 0
-                            ? "bg-amber-50 text-amber-700 dark:bg-amber-950/60 dark:text-amber-300 border border-amber-200/60"
-                            : "bg-rose-50 text-rose-700 dark:bg-rose-950/60 dark:text-rose-300 border border-rose-200/60"
+                        ? "bg-emerald-50 text-emerald-700 dark:bg-emerald-950/60 dark:text-emerald-300 border border-emerald-200/60"
+                        : t.availableSeats > 0
+                          ? "bg-amber-50 text-amber-700 dark:bg-amber-950/60 dark:text-amber-300 border border-amber-200/60"
+                          : "bg-rose-50 text-rose-700 dark:bg-rose-950/60 dark:text-rose-300 border border-rose-200/60"
                         }`}
                     >
                       {t.availableSeats > 10

@@ -65,12 +65,12 @@ export default function AdminReportsPage() {
         </div>
 
         <div className="flex items-center gap-2.5">
-          <div className="flex items-center gap-1 p-1 bg-muted/60 rounded-xl text-xs font-semibold">
+          <div className="flex items-center gap-1 p-0.5 bg-muted/60 rounded-md text-micro font-medium">
             {(["30D", "90D", "YTD"] as const).map((r) => (
               <button
                 key={r}
                 onClick={() => setDateRange(r)}
-                className={`px-3 py-1 rounded-lg transition-colors ${
+                className={`px-2 py-0.5 rounded-md transition-colors ${
                   dateRange === r ? "bg-card text-foreground shadow-xs font-bold" : "text-muted-foreground hover:text-foreground"
                 }`}
               >

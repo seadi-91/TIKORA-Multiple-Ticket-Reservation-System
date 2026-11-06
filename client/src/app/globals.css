@@ -59,6 +59,17 @@
   -webkit-tap-highlight-color: transparent;
 }
 
+.text-micro {
+  font-size: 9.5px !important;
+  line-height: 13px !important;
+  letter-spacing: 0.01em;
+}
+
+.text-nano {
+  font-size: 8px !important;
+  line-height: 10px !important;
+}
+
 html {
   height: 100%;
   min-height: 100%;

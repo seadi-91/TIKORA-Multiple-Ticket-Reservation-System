@@ -34,6 +34,7 @@ import {
   ExternalLink,
   ChevronRight,
   X,
+  Calendar,
 } from "lucide-react";
 import { useInspectorStore, VerificationResultType } from "@/stores/inspector.store";
 import { TicketCategory } from "@/types/ticket.types";
@@ -81,6 +82,73 @@ export default function InspectorDashboardPage() {
   // Selected Log for detail modal
   const [selectedLog, setSelectedLog] = useState<any | null>(null);
 
+  const getSectorMeta = () => {
+    switch (profile.category) {
+      case "CINEMA":
+        return {
+          title: "Cinema Ushering Command Center",
+          activeBadge: "Active Screening Post",
+          timeLabel: "Showtime:",
+          unitLabel: "Patrons Admitted",
+          unitType: "Screening Hall",
+          unitNoun: "Patron",
+          seatLabel: "Auditorium Seat",
+          demoValidCode: "TH-CNM-4419",
+          demoWrongCode: "TH-BUS-8829",
+          demoValidName: "Meron Worku (VIP Recliner E08)",
+          demoWrongLabel: "Test Wrong Pass (Bus Ticket)",
+          formatHint: "Format: TH-CNM-XXXX",
+        };
+      case "BUS":
+        return {
+          title: "Bus Fleet Boarding Command Center",
+          activeBadge: "Active Boarding Post",
+          timeLabel: "Departure:",
+          unitLabel: "Passengers Boarded",
+          unitType: "Express Coach",
+          unitNoun: "Passenger",
+          seatLabel: "Coach Seat",
+          demoValidCode: "TH-BUS-8829",
+          demoWrongCode: "TH-CNM-4419",
+          demoValidName: "Dawit Hailemariam (Seat 04A)",
+          demoWrongLabel: "Test Wrong Pass (Cinema Pass)",
+          formatHint: "Format: TH-BUS-XXXX",
+        };
+      case "EVENT":
+        return {
+          title: "Festival Gate Command Center",
+          activeBadge: "Active Turnstile Post",
+          timeLabel: "Starts:",
+          unitLabel: "Guests Admitted",
+          unitType: "Main Stage Pavilion",
+          unitNoun: "Guest",
+          seatLabel: "Wristband Tier / Table",
+          demoValidCode: "TH-EVT-1001",
+          demoWrongCode: "TH-BUS-8829",
+          demoValidName: "Natnael Shimelis (VIP Lounge)",
+          demoWrongLabel: "Test Wrong Pass (Bus Ticket)",
+          formatHint: "Format: TH-EVT-XXXX",
+        };
+      case "SPORTS":
+        return {
+          title: "Stadium Gate Command Center",
+          activeBadge: "Active Stadium Turnstile",
+          timeLabel: "Kickoff:",
+          unitLabel: "Fans Admitted",
+          unitType: "Tribune Stand",
+          unitNoun: "Fan",
+          seatLabel: "Tribune Seat",
+          demoValidCode: "TH-SPT-3001",
+          demoWrongCode: "TH-BUS-8829",
+          demoValidName: "Biniam Girma (West Tribune)",
+          demoWrongLabel: "Test Wrong Pass (Bus Ticket)",
+          formatHint: "Format: TH-SPT-XXXX",
+        };
+    }
+  };
+
+  const sector = getSectorMeta();
+
   const getCategoryIcon = (cat: TicketCategory) => {
     switch (cat) {
       case "BUS":
@@ -90,7 +158,7 @@ export default function InspectorDashboardPage() {
       case "SPORTS":
         return <Trophy className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" />;
       case "CINEMA":
-        return <Film className="w-3.5 h-3.5 text-sky-600 dark:text-sky-400" />;
+        return <Film className="w-3.5 h-3.5 text-amber-600 dark:text-amber-400" />;
     }
   };
 
@@ -114,7 +182,7 @@ export default function InspectorDashboardPage() {
         return (
           <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-purple-500/10 text-purple-600 dark:text-purple-400 ring-1 ring-inset ring-purple-500/20">
             <AlertTriangle className="w-3 h-3" />
-            WRONG GATE
+            WRONG VENUE
           </span>
         );
       default:
@@ -141,13 +209,13 @@ export default function InspectorDashboardPage() {
       setIsVerifying(false);
 
       if (outcome.result === "VALID") {
-        toast.success(`Ticket Verified: ${outcome.passengerName} (Seat: ${outcome.seatNumber || "General"})`);
+        toast.success(`Ticket Verified: ${outcome.passengerName} (${outcome.seatNumber || "General"})`);
       } else if (outcome.result === "ALREADY_USED") {
         toast.warning(`Duplicate Pass: Already verified previously.`);
       } else {
         toast.error(`Verification Alert: ${outcome.message}`);
       }
-    }, 400);
+    }, 350);
   };
 
   // Filtered live audit history
@@ -176,12 +244,12 @@ export default function InspectorDashboardPage() {
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 bg-white dark:bg-[#161922] p-4 sm:p-5 rounded-3xl border border-slate-200/80 dark:border-slate-800 shadow-xs">
         <div className="flex items-center gap-3">
           <div className="w-11 h-11 rounded-2xl bg-amber-500/10 text-amber-600 dark:text-amber-400 flex items-center justify-center font-bold text-sm shrink-0 border border-amber-500/20">
-            <ShieldCheck className="w-5 h-5" />
+            {profile.category === "CINEMA" ? <Film className="w-5 h-5" /> : <Bus className="w-5 h-5" />}
           </div>
           <div>
             <div className="flex items-center gap-2">
               <h1 className="text-base sm:text-lg font-black tracking-tight text-foreground">
-                Inspector Command Center
+                {sector.title}
               </h1>
               <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 text-[10px] font-bold ring-1 ring-emerald-500/20">
                 <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
@@ -189,11 +257,13 @@ export default function InspectorDashboardPage() {
               </span>
             </div>
             <p className="text-xs text-muted-foreground mt-0.5 flex items-center gap-2 flex-wrap">
+              <span className="font-bold text-amber-600 dark:text-amber-400">{profile.organizationName}</span>
+              <span>•</span>
               <span>{profile.fullName}</span>
               <span>•</span>
-              <span className="font-mono text-amber-600 dark:text-amber-400 font-semibold">{profile.inspectorId}</span>
+              <span className="font-mono text-slate-500">{profile.inspectorId}</span>
               <span>•</span>
-              <span>{profile.assignedStation} ({profile.terminalGate})</span>
+              <span>{profile.assignedStation}</span>
             </p>
           </div>
         </div>
@@ -203,7 +273,7 @@ export default function InspectorDashboardPage() {
           <button
             type="button"
             onClick={() => setShowManualModal(true)}
-            className="inline-flex items-center gap-2 px-3.5 py-2 rounded-xl border border-slate-200 dark:border-slate-800 hover:bg-slate-100 dark:hover:bg-slate-800 text-xs font-semibold text-foreground transition-all"
+            className="inline-flex items-center gap-2 px-3.5 py-2 rounded-xl border border-slate-200 dark:border-slate-800 hover:bg-slate-100 dark:hover:bg-slate-800 text-xs font-semibold text-foreground transition-all cursor-pointer"
           >
             <KeyRound className="w-3.5 h-3.5 text-slate-500" />
             <span>Manual Code Entry</span>
@@ -211,7 +281,7 @@ export default function InspectorDashboardPage() {
 
           <Link
             href="/inspector/scanner"
-            className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-gradient-to-r from-amber-600 to-amber-500 hover:from-amber-700 hover:to-amber-600 text-white text-xs font-bold shadow-md shadow-amber-600/25 hover:shadow-lg hover:shadow-amber-600/35 transition-all hover:-translate-y-0.5"
+            className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-amber-600 hover:bg-amber-700 text-white text-xs font-bold shadow-xs hover:shadow-md transition-all shrink-0"
           >
             <QrCode className="w-4 h-4" />
             <span>Scan Camera</span>
@@ -221,18 +291,16 @@ export default function InspectorDashboardPage() {
 
       {/* Active Duty Live Hero Banner */}
       {activeAssignment && (
-        <div className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-amber-500/10 via-amber-500/[0.04] to-card border border-amber-500/20 p-5 sm:p-7 shadow-xs">
-          <div className="absolute -right-16 -top-16 w-64 h-64 bg-amber-500/10 rounded-full blur-3xl pointer-events-none" />
-
+        <div className="relative overflow-hidden rounded-3xl bg-white dark:bg-[#161922] border border-amber-500/25 p-5 sm:p-7 shadow-xs">
           <div className="relative z-10 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-5">
             <div className="space-y-2 max-w-2xl">
               <div className="flex items-center gap-2 flex-wrap">
                 <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-500/15 text-emerald-700 dark:text-emerald-300 text-[11px] font-bold ring-1 ring-emerald-500/25">
                   <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
-                  Active Boarding Post
+                  {sector.activeBadge}
                 </span>
-                <span className="text-xs text-muted-foreground font-mono bg-muted/60 px-2 py-0.5 rounded-md">
-                  Station: {activeAssignment.venueOrTerminal}
+                <span className="text-xs text-muted-foreground font-mono bg-slate-100 dark:bg-slate-800 px-2 py-0.5 rounded-md">
+                  {activeAssignment.venueOrTerminal}
                 </span>
                 <span className="text-xs font-extrabold text-amber-600 dark:text-amber-400 bg-amber-500/10 px-2 py-0.5 rounded-md">
                   {activeAssignment.gate}
@@ -245,10 +313,12 @@ export default function InspectorDashboardPage() {
 
               <div className="text-xs text-muted-foreground flex items-center gap-3 flex-wrap">
                 <span className="font-medium text-foreground">
-                  Departure: <strong className="text-amber-600 dark:text-amber-400">{activeAssignment.scheduledTime}</strong>
+                  {sector.timeLabel} <strong className="text-amber-600 dark:text-amber-400">{activeAssignment.scheduledTime}</strong>
                 </span>
                 <span>•</span>
-                <span>Vehicle / Hall: <strong className="text-foreground">{activeAssignment.coachOrHall}</strong></span>
+                <span>
+                  {sector.unitType}: <strong className="text-foreground">{activeAssignment.coachOrHall}</strong>
+                </span>
                 {activeAssignment.driverOrLead && (
                   <>
                     <span>•</span>
@@ -261,21 +331,21 @@ export default function InspectorDashboardPage() {
             <div className="flex flex-col sm:items-end gap-3 shrink-0">
               <Link
                 href="/inspector/scanner"
-                className="inline-flex items-center justify-center gap-2.5 px-6 py-3 rounded-2xl bg-amber-600 hover:bg-amber-700 text-white text-sm font-bold shadow-lg shadow-amber-600/30 transition-all hover:scale-102"
+                className="inline-flex items-center justify-center gap-2 px-6 py-3 rounded-2xl bg-amber-600 hover:bg-amber-700 text-white text-xs font-bold shadow-xs hover:shadow-md transition-all"
               >
-                <QrCode className="w-5 h-5" />
-                <span>Launch Camera Viewfinder</span>
+                <QrCode className="w-4 h-4" />
+                <span>Launch Camera Scanner</span>
               </Link>
               <span className="text-[11px] text-muted-foreground text-center sm:text-right">
-                Ready for QR codes & paper passes
+                Ready for digital QR vouchers & paper passes
               </span>
             </div>
           </div>
 
-          {/* Boarding Progress Bar */}
-          <div className="mt-5 pt-4 border-t border-amber-500/15 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 text-xs">
+          {/* Progress Bar */}
+          <div className="mt-5 pt-4 border-t border-slate-100 dark:border-slate-800 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 text-xs">
             <div className="flex items-center gap-2 text-muted-foreground flex-wrap">
-              <span>Passes Boarded:</span>
+              <span>{sector.unitLabel}:</span>
               <span className="font-extrabold text-foreground font-mono">
                 {activeAssignment.scannedSeats} / {activeAssignment.totalSeats} seats
               </span>
@@ -287,9 +357,9 @@ export default function InspectorDashboardPage() {
               </span>
             </div>
 
-            <div className="w-full sm:w-64 bg-slate-200/80 dark:bg-slate-800 rounded-full h-3 overflow-hidden p-0.5">
+            <div className="w-full sm:w-64 bg-slate-100 dark:bg-slate-800 rounded-full h-3 overflow-hidden p-0.5">
               <div
-                className="bg-gradient-to-r from-amber-600 to-amber-500 h-full rounded-full transition-all duration-500 shadow-xs"
+                className="bg-amber-600 h-full rounded-full transition-all duration-500 shadow-xs"
                 style={{ width: `${Math.min(100, boardedPercentage)}%` }}
               />
             </div>
@@ -338,7 +408,7 @@ export default function InspectorDashboardPage() {
           </div>
           <div className="text-2xl sm:text-3xl font-black text-amber-600 dark:text-amber-400">{duplicateScans}</div>
           <div className="flex items-center gap-1.5 mt-1 text-[11px] text-muted-foreground">
-            <span>Re-used / Wrong gate</span>
+            <span>Re-used / Cross-sector</span>
           </div>
         </div>
 
@@ -363,14 +433,14 @@ export default function InspectorDashboardPage() {
           <div>
             <h3 className="text-sm font-bold text-foreground flex items-center gap-2">
               <KeyRound className="w-4 h-4 text-amber-600 dark:text-amber-400" />
-              <span>Instant Ticket Code Lookup & Check-In</span>
+              <span>Instant Pass Code Lookup & Validation</span>
             </h3>
             <p className="text-xs text-muted-foreground">
-              For passengers with cracked screens, dead phone batteries, or printed SMS booking reference.
+              For patrons with cracked screens, low phone battery, or printed booking reference codes.
             </p>
           </div>
           <span className="text-[11px] text-slate-400 font-mono">
-            Format: TH-BUS-XXXX / TH-EVT-XXXX
+            {sector.formatHint}
           </span>
         </div>
 
@@ -380,14 +450,14 @@ export default function InspectorDashboardPage() {
               type="text"
               value={manualCode}
               onChange={(e) => setManualCode(e.target.value)}
-              placeholder="e.g. TH-BUS-8829 or paste QR token..."
-              className="w-full px-4 py-2.5 text-xs rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-900/50 text-foreground font-mono focus:outline-none focus:ring-2 focus:ring-amber-500/30"
+              placeholder={`e.g. ${sector.demoValidCode} or paste QR token...`}
+              className="w-full px-4 py-2.5 text-xs rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-900/50 text-foreground font-mono focus:outline-none focus:ring-1 focus:ring-amber-500"
             />
             {manualCode && (
               <button
                 type="button"
                 onClick={() => setManualCode("")}
-                className="absolute right-3 top-2.5 text-slate-400 hover:text-slate-600"
+                className="absolute right-3 top-2.5 text-slate-400 hover:text-slate-600 cursor-pointer"
               >
                 <X className="w-4 h-4" />
               </button>
@@ -397,15 +467,24 @@ export default function InspectorDashboardPage() {
           <div className="flex items-center gap-2">
             <button
               type="button"
-              onClick={() => setManualCode("TH-BUS-8829")}
-              className="px-3 py-2.5 rounded-xl border border-slate-200 dark:border-slate-800 text-[11px] text-muted-foreground hover:bg-slate-100 dark:hover:bg-slate-800 font-mono"
+              onClick={() => setManualCode(sector.demoValidCode)}
+              className="px-3 py-2.5 rounded-xl border border-slate-200 dark:border-slate-800 text-[11px] text-muted-foreground hover:bg-slate-100 dark:hover:bg-slate-800 font-mono cursor-pointer"
+              title={sector.demoValidName}
             >
-              Demo Code
+              Valid Test Pass
+            </button>
+            <button
+              type="button"
+              onClick={() => setManualCode(sector.demoWrongCode)}
+              className="px-3 py-2.5 rounded-xl border border-purple-500/30 text-[11px] text-purple-700 dark:text-purple-300 hover:bg-purple-500/10 font-mono cursor-pointer"
+              title={sector.demoWrongLabel}
+            >
+              Wrong Sector
             </button>
             <button
               type="submit"
               disabled={isVerifying}
-              className="px-5 py-2.5 rounded-xl bg-amber-600 hover:bg-amber-700 text-white font-bold text-xs shadow-xs transition-colors disabled:opacity-60 flex items-center gap-1.5 shrink-0"
+              className="px-5 py-2.5 rounded-xl bg-amber-600 hover:bg-amber-700 text-white font-bold text-xs shadow-xs transition-colors disabled:opacity-60 flex items-center gap-1.5 shrink-0 cursor-pointer"
             >
               {isVerifying ? (
                 <>
@@ -443,13 +522,13 @@ export default function InspectorDashboardPage() {
                   <XCircle className="w-4 h-4 text-rose-600 dark:text-rose-400 shrink-0" />
                 )}
                 <span className="font-extrabold uppercase tracking-wider text-xs">
-                  {manualResult.result === "VALID" ? "TICKET VALID & ADMITTED" : manualResult.message}
+                  {manualResult.result === "VALID" ? "TICKET VALID & ACCESS APPROVED" : manualResult.message}
                 </span>
               </div>
               <button
                 type="button"
                 onClick={() => setManualResult(null)}
-                className="text-slate-400 hover:text-slate-600 text-[11px]"
+                className="text-slate-400 hover:text-slate-600 text-[11px] cursor-pointer"
               >
                 Dismiss
               </button>
@@ -457,17 +536,17 @@ export default function InspectorDashboardPage() {
 
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 pt-1 font-sans">
               <div>
-                <span className="text-[10px] text-muted-foreground block">Passenger Name</span>
+                <span className="text-[10px] text-muted-foreground block">{sector.unitNoun} Name</span>
                 <span className="font-bold text-foreground">{manualResult.passengerName}</span>
               </div>
               <div>
-                <span className="text-[10px] text-muted-foreground block">Seat Assignment</span>
+                <span className="text-[10px] text-muted-foreground block">{sector.seatLabel}</span>
                 <span className="font-mono font-bold text-foreground">
-                  {manualResult.seatNumber ? `Seat ${manualResult.seatNumber}` : "General Access"}
+                  {manualResult.seatNumber ? `${manualResult.seatNumber}` : "General Access"}
                 </span>
               </div>
               <div>
-                <span className="text-[10px] text-muted-foreground block">Route / Event</span>
+                <span className="text-[10px] text-muted-foreground block">Session Title</span>
                 <span className="font-semibold text-foreground truncate block">{manualResult.serviceTitle}</span>
               </div>
               <div>
@@ -487,10 +566,10 @@ export default function InspectorDashboardPage() {
             <div className="flex items-center justify-between">
               <div>
                 <h3 className="text-sm font-bold text-foreground">
-                  My Assigned Operational Sessions
+                  Assigned Operational Duty Sessions
                 </h3>
                 <p className="text-xs text-muted-foreground">
-                  Scheduled verification duty posts for today
+                  Official verification posts assigned by {profile.organizationName}
                 </p>
               </div>
               <Link
@@ -532,7 +611,7 @@ export default function InspectorDashboardPage() {
                           }`}
                         >
                           {asn.status === "ACTIVE_NOW"
-                            ? "Boarding Live"
+                            ? "Active Live"
                             : asn.status === "UPCOMING"
                             ? "Scheduled"
                             : "Finished"}
@@ -549,7 +628,7 @@ export default function InspectorDashboardPage() {
                         <span>•</span>
                         <span className="font-semibold text-foreground">{asn.gate}</span>
                         <span>•</span>
-                        <span>Departure: {asn.scheduledTime}</span>
+                        <span>Time: {asn.scheduledTime}</span>
                         <span>•</span>
                         <span>
                           Seats: <strong className="text-foreground">{asn.scannedSeats}/{asn.totalSeats}</strong>
@@ -569,7 +648,7 @@ export default function InspectorDashboardPage() {
                             setCurrentAssignment(asn.id);
                             toast.success(`Switched active terminal to: ${asn.title}`);
                           }}
-                          className="px-3 py-1.5 rounded-xl border border-slate-200 dark:border-slate-800 text-xs font-semibold hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors"
+                          className="px-3 py-1.5 rounded-xl border border-slate-200 dark:border-slate-800 text-xs font-semibold hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors cursor-pointer"
                         >
                           Set Active
                         </button>
@@ -595,10 +674,10 @@ export default function InspectorDashboardPage() {
               </div>
               <div>
                 <span className="font-bold text-foreground block">
-                  Station Dispatch & Security Hotline
+                  {profile.organizationName} Dispatch Hotline
                 </span>
                 <span className="text-[11px] text-muted-foreground">
-                  Call for passenger dispute resolution or gate re-routing
+                  Contact provider operations for patron disputes or gate re-routing
                 </span>
               </div>
             </div>
@@ -618,7 +697,7 @@ export default function InspectorDashboardPage() {
             <div className="flex items-center justify-between">
               <div>
                 <h3 className="text-sm font-bold text-foreground">Live Audit Stream</h3>
-                <p className="text-xs text-muted-foreground">Real-time gate scan feed</p>
+                <p className="text-xs text-muted-foreground">Real-time gate scan feed for {profile.organizationName}</p>
               </div>
               <Link
                 href="/inspector/history"
@@ -636,7 +715,7 @@ export default function InspectorDashboardPage() {
                   key={mode}
                   type="button"
                   onClick={() => setStatusFilter(mode)}
-                  className={`flex-1 py-1 text-[11px] font-bold rounded-lg transition-all ${
+                  className={`flex-1 py-1 text-[11px] font-bold rounded-lg transition-all cursor-pointer ${
                     statusFilter === mode
                       ? "bg-white dark:bg-slate-700 text-foreground shadow-xs"
                       : "text-muted-foreground hover:text-foreground"
@@ -654,7 +733,7 @@ export default function InspectorDashboardPage() {
                 type="text"
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                placeholder="Search passenger, seat, code..."
+                placeholder="Search patron, seat, code..."
                 className="w-full pl-8 pr-3 py-1.5 text-xs rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-900/40 text-foreground focus:outline-none focus:ring-1 focus:ring-amber-500/30"
               />
             </div>
@@ -683,7 +762,7 @@ export default function InspectorDashboardPage() {
                       <span className="truncate max-w-[140px]">{log.passengerName}</span>
                       {log.seatNumber && (
                         <span className="font-mono text-muted-foreground text-[10px] bg-muted/60 px-1.5 py-0.5 rounded">
-                          Seat {log.seatNumber}
+                          {log.seatNumber}
                         </span>
                       )}
                     </div>
@@ -705,135 +784,6 @@ export default function InspectorDashboardPage() {
           </div>
         </div>
       </div>
-
-      {/* Manual Check-in Modal */}
-      {showManualModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs">
-          <div className="bg-white dark:bg-[#161922] border border-slate-200 dark:border-slate-800 rounded-3xl p-6 max-w-md w-full shadow-2xl space-y-4">
-            <div className="flex items-center justify-between border-b border-slate-200 dark:border-slate-800 pb-3">
-              <div className="flex items-center gap-2">
-                <KeyRound className="w-4 h-4 text-amber-600" />
-                <h3 className="text-sm font-bold text-foreground">Manual Ticket Verification</h3>
-              </div>
-              <button
-                type="button"
-                onClick={() => setShowManualModal(false)}
-                className="p-1 rounded-lg text-slate-400 hover:text-slate-600"
-              >
-                <X className="w-4 h-4" />
-              </button>
-            </div>
-
-            <form onSubmit={handleManualVerify} className="space-y-3">
-              <div>
-                <label className="block text-xs font-semibold text-foreground mb-1">
-                  Ticket Reference or SMS Code
-                </label>
-                <input
-                  type="text"
-                  autoFocus
-                  required
-                  value={manualCode}
-                  onChange={(e) => setManualCode(e.target.value)}
-                  placeholder="e.g. TH-BUS-8829"
-                  className="w-full px-3.5 py-2.5 text-xs rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-900/50 text-foreground font-mono focus:outline-none focus:ring-2 focus:ring-amber-500/30"
-                />
-              </div>
-
-              <div className="flex justify-end gap-2 pt-2">
-                <button
-                  type="button"
-                  onClick={() => setShowManualModal(false)}
-                  className="px-4 py-2 text-xs font-semibold rounded-xl border border-slate-200 dark:border-slate-800 text-muted-foreground hover:bg-slate-100 dark:hover:bg-slate-800"
-                >
-                  Close
-                </button>
-                <button
-                  type="submit"
-                  disabled={isVerifying}
-                  className="px-5 py-2 text-xs font-bold rounded-xl bg-amber-600 hover:bg-amber-700 text-white shadow-xs"
-                >
-                  {isVerifying ? "Verifying..." : "Verify Code"}
-                </button>
-              </div>
-            </form>
-          </div>
-        </div>
-      )}
-
-      {/* Selected Log Detail Modal */}
-      {selectedLog && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs">
-          <div className="bg-white dark:bg-[#161922] border border-slate-200 dark:border-slate-800 rounded-3xl p-6 max-w-md w-full shadow-2xl space-y-4">
-            <div className="flex items-center justify-between border-b border-slate-200 dark:border-slate-800 pb-3">
-              <div className="flex items-center gap-2">
-                <ShieldCheck className="w-4 h-4 text-amber-600" />
-                <h3 className="text-sm font-bold text-foreground">Pass Verification Record</h3>
-              </div>
-              <button
-                type="button"
-                onClick={() => setSelectedLog(null)}
-                className="p-1 rounded-lg text-slate-400 hover:text-slate-600"
-              >
-                <X className="w-4 h-4" />
-              </button>
-            </div>
-
-            <div className="space-y-3 text-xs">
-              <div className="flex items-center justify-between p-3 rounded-2xl bg-slate-50 dark:bg-slate-800/40">
-                <span className="font-mono font-bold text-amber-600 dark:text-amber-400">
-                  {selectedLog.ticketReference}
-                </span>
-                {getResultBadge(selectedLog.result)}
-              </div>
-
-              <div className="space-y-2">
-                <div className="flex justify-between py-1 border-b border-slate-100 dark:border-slate-800">
-                  <span className="text-muted-foreground">Passenger:</span>
-                  <span className="font-bold text-foreground">{selectedLog.passengerName}</span>
-                </div>
-                {selectedLog.phone && (
-                  <div className="flex justify-between py-1 border-b border-slate-100 dark:border-slate-800">
-                    <span className="text-muted-foreground">Contact:</span>
-                    <span className="font-mono text-foreground">{selectedLog.phone}</span>
-                  </div>
-                )}
-                <div className="flex justify-between py-1 border-b border-slate-100 dark:border-slate-800">
-                  <span className="text-muted-foreground">Seat:</span>
-                  <span className="font-mono font-bold text-foreground">{selectedLog.seatNumber || "General"}</span>
-                </div>
-                <div className="flex justify-between py-1 border-b border-slate-100 dark:border-slate-800">
-                  <span className="text-muted-foreground">Service:</span>
-                  <span className="font-semibold text-foreground">{selectedLog.serviceTitle}</span>
-                </div>
-                <div className="flex justify-between py-1 border-b border-slate-100 dark:border-slate-800">
-                  <span className="text-muted-foreground">Verified At:</span>
-                  <span className="font-mono text-foreground">{selectedLog.verificationDate} {selectedLog.verificationTime}</span>
-                </div>
-                <div className="flex justify-between py-1 border-b border-slate-100 dark:border-slate-800">
-                  <span className="text-muted-foreground">Gate Location:</span>
-                  <span className="text-foreground">{selectedLog.location}</span>
-                </div>
-                {selectedLog.failureReason && (
-                  <div className="p-2.5 rounded-xl bg-rose-500/10 text-rose-700 dark:text-rose-300 text-[11px]">
-                    <strong>Failure Reason:</strong> {selectedLog.failureReason}
-                  </div>
-                )}
-              </div>
-            </div>
-
-            <div className="flex justify-end pt-2">
-              <button
-                type="button"
-                onClick={() => setSelectedLog(null)}
-                className="px-4 py-2 text-xs font-semibold rounded-xl bg-slate-100 dark:bg-slate-800 text-foreground hover:bg-slate-200 dark:hover:bg-slate-700"
-              >
-                Close Record
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
     </div>
   );
 }

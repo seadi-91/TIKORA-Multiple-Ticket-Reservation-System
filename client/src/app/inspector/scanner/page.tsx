@@ -6,6 +6,9 @@ import {
   AlertTriangle,
   ArrowRight,
   Bus,
+  Film,
+  Calendar,
+  Trophy,
   Camera,
   CameraOff,
   CheckCircle2,
@@ -46,7 +49,12 @@ export default function TicketScannerPage() {
   } = useInspectorStore();
 
   const activeAssignment =
-    assignments.find((a) => a.id === currentAssignmentId) || assignments[0];
+    assignments.find((a) => a.id === currentAssignmentId) || assignments[0] || {
+      title: "Active Duty Post",
+      gate: "Gate 1",
+      venueOrTerminal: "Terminal",
+      scheduledTime: "Now",
+    };
 
   const [cameraActive, setCameraActive] = useState(true);
   const [torchActive, setTorchActive] = useState(false);
@@ -56,9 +64,64 @@ export default function TicketScannerPage() {
   const [activeOutcome, setActiveOutcome] = useState<ReturnType<typeof verifyTicket> | null>(null);
   const [countdown, setCountdown] = useState<number | null>(null);
 
-  const videoRef = useRef<HTMLVideoElement>(null);
+  // Sector-tailored terminology
+  const getSectorMeta = () => {
+    switch (profile.category) {
+      case "CINEMA":
+        return {
+          icon: Film,
+          label: "Auditorium Usher Scanner",
+          unitLabel: "Patron",
+          seatLabel: "Auditorium Seat / Hall",
+          timePrefix: "Showtime:",
+          successTitle: "Admission Approved",
+          demoValid1: { code: "TH-CNM-4419", label: "VIP Recliner (Meron W.)" },
+          demoValid2: { code: "TH-CNM-4420", label: "VIP Recliner (Dawit T.)" },
+          demoWrong: { code: "TH-BUS-8829", label: "Wrong (Bus Ticket)" },
+        };
+      case "BUS":
+        return {
+          icon: Bus,
+          label: "Coach Boarding Scanner",
+          unitLabel: "Passenger",
+          seatLabel: "Coach Seat",
+          timePrefix: "Departs:",
+          successTitle: "Boarding Approved",
+          demoValid1: { code: "TH-BUS-8829", label: "Recliner 04A (Dawit H.)" },
+          demoValid2: { code: "TH-BUS-8830", label: "Aisle 04B (Tigist A.)" },
+          demoWrong: { code: "TH-CNM-4419", label: "Wrong (Cinema Pass)" },
+        };
+      case "EVENT":
+        return {
+          icon: Calendar,
+          label: "Festival Turnstile Scanner",
+          unitLabel: "Guest",
+          seatLabel: "Access Tier / Table",
+          timePrefix: "Starts:",
+          successTitle: "Entry Approved",
+          demoValid1: { code: "TH-EVT-1001", label: "VIP Lounge (Natnael S.)" },
+          demoValid2: { code: "TH-EVT-1002", label: "Regular Pass (Hanna D.)" },
+          demoWrong: { code: "TH-BUS-8829", label: "Wrong (Bus Ticket)" },
+        };
+      case "SPORTS":
+        return {
+          icon: Trophy,
+          label: "Stadium Turnstile Scanner",
+          unitLabel: "Fan",
+          seatLabel: "Tribune Stand / Gate",
+          timePrefix: "Kickoff:",
+          successTitle: "Turnstile Approved",
+          demoValid1: { code: "TH-SPT-3001", label: "West Tribune (Biniam G.)" },
+          demoValid2: { code: "TH-SPT-3002", label: "East Bleachers" },
+          demoWrong: { code: "TH-BUS-8829", label: "Wrong (Bus Ticket)" },
+        };
+    }
+  };
 
-  // Play synthetic audio chime using Web Audio API
+  const sector = getSectorMeta();
+  const SectorIcon = sector.icon;
+
+  // Play audio chime
   const playAudioBeep = (type: VerificationResultType) => {
     if (!scannerSoundEnabled) return;
     try {
@@ -73,7 +136,6 @@ export default function TicketScannerPage() {
       gain.connect(ctx.destination);
 
       if (type === "VALID") {
-        // High double success chime
         osc.frequency.setValueAtTime(880, ctx.currentTime);
         osc.frequency.setValueAtTime(1174.66, ctx.currentTime + 0.1);
         gain.gain.setValueAtTime(0.15, ctx.currentTime);
@@ -81,7 +143,6 @@ export default function TicketScannerPage() {
         osc.start(ctx.currentTime);
         osc.stop(ctx.currentTime + 0.25);
       } else {
-        // Low double buzz
         osc.type = "sawtooth";
         osc.frequency.setValueAtTime(220, ctx.currentTime);
         osc.frequency.setValueAtTime(180, ctx.currentTime + 0.12);
@@ -90,12 +151,10 @@ export default function TicketScannerPage() {
         osc.start(ctx.currentTime);
         osc.stop(ctx.currentTime + 0.3);
       }
-    } catch {
-      // Audio not permitted or supported
-    }
+    } catch {}
   };
 
-  // Execute verification logic
+  // Perform verification
   const handlePerformVerification = (codeToVerify: string) => {
     if (!codeToVerify.trim()) {
       toast.error("Please enter or scan a ticket reference code");
@@ -111,18 +170,17 @@ export default function TicketScannerPage() {
       playAudioBeep(outcome.result);
 
       if (outcome.result === "VALID") {
-        toast.success(`Access Approved: ${outcome.passengerName} (Seat ${outcome.seatNumber || "--"})`);
+        toast.success(`Access Approved: ${outcome.passengerName} (${outcome.seatNumber || "--"})`);
       } else if (outcome.result === "ALREADY_USED") {
         toast.warning("Duplicate Pass Detected! Already Scanned.");
       } else if (outcome.result === "WRONG_ASSIGNMENT") {
-        toast.info("Wrong Service / Venue for this pass.");
+        toast.info(outcome.message);
       } else {
         toast.error("Invalid Voucher Signature.");
       }
 
-      // Start auto-dismiss countdown (5s)
       setCountdown(5);
-    }, 400);
+    }, 350);
   };
 
   // Auto reset timer
@@ -152,28 +210,28 @@ export default function TicketScannerPage() {
   return (
     <div className="space-y-4 max-w-4xl mx-auto">
       {/* Top Assignment Bar */}
-      <div className="bg-card border border-slate-200/50 dark:border-slate-800/50 rounded-3xl p-4 sm:p-5 shadow-sm flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 text-xs">
-        <div className="flex items-center gap-2.5">
-          <div className="w-9 h-9 rounded-xl bg-amber-600/10 text-amber-600 flex items-center justify-center shrink-0 border border-amber-600/20">
-            <Bus className="w-4 h-4" />
+      <div className="bg-card border border-slate-200/60 dark:border-slate-800/60 rounded-3xl p-4 sm:p-5 shadow-xs flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 text-xs">
+        <div className="flex items-center gap-3">
+          <div className="w-10 h-10 rounded-2xl bg-amber-500/10 text-amber-600 dark:text-amber-400 flex items-center justify-center shrink-0 border border-amber-500/20">
+            <SectorIcon className="w-5 h-5" />
           </div>
           <div>
-            <div className="flex items-center gap-1.5 font-bold text-foreground">
-              <span>{activeAssignment.title}</span>
+            <div className="flex items-center gap-2 font-bold text-foreground">
+              <span className="text-sm">{activeAssignment.title}</span>
               <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
             </div>
             <span className="text-[11px] text-muted-foreground">
-              {activeAssignment.venueOrTerminal} • {activeAssignment.gate} • Departs {activeAssignment.scheduledTime}
+              {profile.organizationName} • {activeAssignment.gate} • {sector.timePrefix} {activeAssignment.scheduledTime}
             </span>
           </div>
         </div>
 
-        {/* Change Gate Session Selector */}
+        {/* Change Session Selector */}
         <div className="flex items-center gap-2">
           <select
             value={currentAssignmentId}
             onChange={(e) => setCurrentAssignment(e.target.value)}
-            className="px-3 py-1.5 text-xs rounded-xl border border-slate-200/60 dark:border-slate-800/60 bg-card text-foreground focus:outline-none focus:ring-2 focus:ring-amber-500/30"
+            className="px-3 py-1.5 text-xs rounded-xl border border-slate-200/60 dark:border-slate-800/60 bg-card text-foreground focus:outline-none focus:ring-1 focus:ring-amber-500 font-medium"
           >
             {assignments.map((a) => (
               <option key={a.id} value={a.id}>
@@ -188,8 +246,8 @@ export default function TicketScannerPage() {
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         {/* Viewfinder Column */}
         <div className="md:col-span-2 space-y-3">
-          <div className="relative aspect-4/3 sm:aspect-16/11 bg-slate-950 rounded-2xl overflow-hidden border border-border/70 shadow-lg flex flex-col items-center justify-center text-white select-none">
-            {/* Simulated Live Viewfinder Background */}
+          <div className="relative aspect-4/3 sm:aspect-16/11 bg-slate-950 rounded-3xl overflow-hidden border border-slate-800 shadow-xl flex flex-col items-center justify-center text-white select-none">
+            {/* Viewfinder Background */}
             <div className="absolute inset-0 bg-radial from-slate-900 via-slate-950 to-black opacity-90" />
 
             {/* Scanning Laser Line (Animated) */}
@@ -198,8 +256,7 @@ export default function TicketScannerPage() {
             )}
 
             {/* Target Reticle / Alignment Frame */}
-            <div className="relative z-10 w-56 h-56 sm:w-64 sm:h-64 border-2 border-white/20 rounded-2xl flex items-center justify-center">
-              {/* Corner brackets */}
+            <div className="relative z-10 w-52 h-52 sm:w-60 sm:h-60 border border-white/20 rounded-2xl flex items-center justify-center">
               <div className="absolute -top-1 -left-1 w-6 h-6 border-t-4 border-l-4 border-amber-500 rounded-tl-lg" />
               <div className="absolute -top-1 -right-1 w-6 h-6 border-t-4 border-r-4 border-amber-500 rounded-tr-lg" />
               <div className="absolute -bottom-1 -left-1 w-6 h-6 border-b-4 border-l-4 border-amber-500 rounded-bl-lg" />
@@ -207,140 +264,111 @@ export default function TicketScannerPage() {
 
               {cameraActive ? (
                 <div className="text-center p-4 space-y-1.5">
-                  <QrCode className="w-12 h-12 text-white/40 mx-auto" />
-                  <span className="text-xs font-semibold text-white/70 block">
-                    Align Ticket QR Code
+                  <QrCode className="w-10 h-10 text-white/40 mx-auto" />
+                  <span className="text-xs font-semibold text-white/80 block">
+                    Align {profile.category === "CINEMA" ? "Cinema" : profile.category === "BUS" ? "Boarding" : "Pass"} QR Code
                   </span>
                   <span className="text-[10px] text-white/50 block">
-                    Keep voucher within frame
+                    {profile.organizationName}
                   </span>
                 </div>
               ) : (
                 <div className="text-center p-4 space-y-1.5">
                   <CameraOff className="w-10 h-10 text-white/40 mx-auto" />
-                  <span className="text-xs font-semibold text-white/70 block">Camera Paused</span>
+                  <span className="text-xs font-semibold text-white/60 block">Camera Paused</span>
                 </div>
               )}
             </div>
 
-            {/* Viewfinder Top Controls */}
-            <div className="absolute top-3 inset-x-3 z-20 flex items-center justify-between text-xs">
-              <span className="px-2.5 py-1 rounded-full bg-black/60 backdrop-blur-md text-white/90 text-[11px] font-semibold border border-white/10 flex items-center gap-1.5">
+            {/* Top Toolbar Overlay */}
+            <div className="absolute top-3 inset-x-3 flex items-center justify-between z-20">
+              <div className="flex items-center gap-1.5 bg-black/60 backdrop-blur-md px-3 py-1 rounded-full text-[11px] font-bold text-white border border-white/10">
                 <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
-                Live Camera Feed
-              </span>
+                <span>{sector.label}</span>
+              </div>
 
-              <div className="flex items-center gap-1.5">
+              <div className="flex items-center gap-1 bg-black/60 backdrop-blur-md p-1 rounded-full border border-white/10">
                 <button
                   type="button"
                   onClick={() => setTorchActive(!torchActive)}
-                  className={`p-2 rounded-full backdrop-blur-md border transition-colors ${
-                    torchActive
-                      ? "bg-amber-500 text-black border-amber-400"
-                      : "bg-black/60 text-white/80 border-white/10 hover:text-white"
+                  className={`p-1.5 rounded-full transition-colors ${
+                    torchActive ? "bg-amber-500 text-black" : "text-white/80 hover:text-white"
                   }`}
-                  title="Flashlight"
+                  title="Toggle Flashlight"
                 >
-                  {torchActive ? (
-                    <Flashlight className="w-3.5 h-3.5" />
-                  ) : (
-                    <FlashlightOff className="w-3.5 h-3.5" />
-                  )}
+                  {torchActive ? <Flashlight className="w-3.5 h-3.5" /> : <FlashlightOff className="w-3.5 h-3.5" />}
                 </button>
-
-                <button
-                  type="button"
-                  onClick={() =>
-                    setCameraFacing(cameraFacing === "environment" ? "user" : "environment")
-                  }
-                  className="p-2 rounded-full bg-black/60 backdrop-blur-md text-white/80 border border-white/10 hover:text-white transition-colors"
-                  title="Flip camera"
-                >
-                  <SwitchCamera className="w-3.5 h-3.5" />
-                </button>
-
                 <button
                   type="button"
                   onClick={() => setScannerSound(!scannerSoundEnabled)}
-                  className="p-2 rounded-full bg-black/60 backdrop-blur-md text-white/80 border border-white/10 hover:text-white transition-colors"
-                  title="Audio Chime"
+                  className={`p-1.5 rounded-full transition-colors ${
+                    scannerSoundEnabled ? "text-white" : "text-white/40"
+                  }`}
+                  title="Toggle Sound"
                 >
-                  {scannerSoundEnabled ? (
-                    <Volume2 className="w-3.5 h-3.5" />
-                  ) : (
-                    <VolumeX className="w-3.5 h-3.5" />
-                  )}
+                  {scannerSoundEnabled ? <Volume2 className="w-3.5 h-3.5" /> : <VolumeX className="w-3.5 h-3.5" />}
                 </button>
               </div>
             </div>
-
-            {/* Viewfinder Bottom Toggle Button */}
-            <div className="absolute bottom-3 inset-x-3 z-20 flex items-center justify-center">
-              <button
-                type="button"
-                onClick={() => setCameraActive(!cameraActive)}
-                className="px-4 py-1.5 rounded-full bg-black/70 backdrop-blur-md text-white/90 text-xs font-semibold border border-white/10 hover:bg-black transition-colors"
-              >
-                {cameraActive ? "Pause Camera" : "Resume Camera"}
-              </button>
-            </div>
           </div>
 
-          {/* Quick Mock QR Scans (Field Simulator for demonstration) */}
-          <div className="bg-card border border-border/70 rounded-xl p-3 shadow-xs space-y-2">
-            <span className="text-[11px] font-bold uppercase tracking-wider text-muted-foreground block">
-              Quick QR Simulator Presets
-            </span>
+          {/* Quick Barcode Simulator for Testing */}
+          <div className="p-4 rounded-2xl bg-card border border-slate-200/60 dark:border-slate-800/60 shadow-xs space-y-2">
+            <div className="flex items-center justify-between text-xs">
+              <span className="font-bold text-foreground">One-Click Test Passes ({profile.category} Sector):</span>
+              <span className="text-[10px] text-muted-foreground">Click to simulate QR scan</span>
+            </div>
+
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
               <button
                 type="button"
                 disabled={isVerifying}
-                onClick={() => handlePerformVerification("TH-BUS-8829")}
-                className="p-2 rounded-lg border border-emerald-500/30 bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-700 dark:text-emerald-300 text-left transition-colors"
+                onClick={() => handlePerformVerification(sector.demoValid1.code)}
+                className="p-2 rounded-xl border border-emerald-500/30 bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-800 dark:text-emerald-300 text-left transition-colors cursor-pointer"
               >
-                <span className="font-bold text-[11px] block">Valid Pass</span>
-                <span className="font-mono text-[10px] text-muted-foreground">TH-BUS-8829</span>
+                <span className="font-bold text-[11px] block text-emerald-700 dark:text-emerald-300">Valid Pass 1</span>
+                <span className="font-mono text-[9px] text-muted-foreground truncate block">{sector.demoValid1.label}</span>
               </button>
 
               <button
                 type="button"
                 disabled={isVerifying}
-                onClick={() => handlePerformVerification("TH-BUS-8829")}
-                className="p-2 rounded-lg border border-amber-500/30 bg-amber-500/10 hover:bg-amber-500/20 text-amber-700 dark:text-amber-300 text-left transition-colors"
+                onClick={() => handlePerformVerification(sector.demoValid2.code)}
+                className="p-2 rounded-xl border border-emerald-500/30 bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-800 dark:text-emerald-300 text-left transition-colors cursor-pointer"
               >
-                <span className="font-bold text-[11px] block">Duplicate QR</span>
-                <span className="font-mono text-[10px] text-muted-foreground">Rescan 8829</span>
+                <span className="font-bold text-[11px] block text-emerald-700 dark:text-emerald-300">Valid Pass 2</span>
+                <span className="font-mono text-[9px] text-muted-foreground truncate block">{sector.demoValid2.label}</span>
               </button>
 
               <button
                 type="button"
                 disabled={isVerifying}
-                onClick={() => handlePerformVerification("TH-CNM-4419")}
-                className="p-2 rounded-lg border border-purple-500/30 bg-purple-500/10 hover:bg-purple-500/20 text-purple-700 dark:text-purple-300 text-left transition-colors"
+                onClick={() => handlePerformVerification(sector.demoWrong.code)}
+                className="p-2 rounded-xl border border-purple-500/30 bg-purple-500/10 hover:bg-purple-500/20 text-purple-800 dark:text-purple-300 text-left transition-colors cursor-pointer"
               >
-                <span className="font-bold text-[11px] block">Wrong Service</span>
-                <span className="font-mono text-[10px] text-muted-foreground">Cinema Pass</span>
+                <span className="font-bold text-[11px] block text-purple-700 dark:text-purple-300">Wrong Venue</span>
+                <span className="font-mono text-[9px] text-muted-foreground truncate block">{sector.demoWrong.label}</span>
               </button>
 
               <button
                 type="button"
                 disabled={isVerifying}
-                onClick={() => handlePerformVerification("FAKE-SIGNATURE-001")}
-                className="p-2 rounded-lg border border-rose-500/30 bg-rose-500/10 hover:bg-rose-500/20 text-rose-700 dark:text-rose-300 text-left transition-colors"
+                onClick={() => handlePerformVerification("FAKE-SIG-000")}
+                className="p-2 rounded-xl border border-rose-500/30 bg-rose-500/10 hover:bg-rose-500/20 text-rose-800 dark:text-rose-300 text-left transition-colors cursor-pointer"
               >
-                <span className="font-bold text-[11px] block">Invalid / Forged</span>
-                <span className="font-mono text-[10px] text-muted-foreground">Bad Key</span>
+                <span className="font-bold text-[11px] block text-rose-700 dark:text-rose-300">Invalid QR</span>
+                <span className="font-mono text-[9px] text-muted-foreground truncate block">Bad Key Signature</span>
               </button>
             </div>
           </div>
         </div>
 
-        {/* Right Column: Manual Entry & Verification Result Card */}
+        {/* Right Column: Manual Entry & Active Result Card */}
         <div className="space-y-4">
-          {/* Active Result Card (When a ticket is verified) */}
+          {/* Active Result Card */}
           {activeOutcome ? (
             <div
-              className={`rounded-xl border p-4 shadow-md space-y-3 animate-in fade-in zoom-in-95 duration-150 ${
+              className={`rounded-2xl border p-4 shadow-md space-y-3 transition-all ${
                 activeOutcome.result === "VALID"
                   ? "bg-emerald-500/10 border-emerald-500/40 text-foreground"
                   : activeOutcome.result === "ALREADY_USED"
@@ -352,31 +380,19 @@ export default function TicketScannerPage() {
             >
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2">
-                  {activeOutcome.result === "VALID" && (
-                    <CheckCircle2 className="w-5 h-5 text-emerald-600" />
-                  )}
-                  {activeOutcome.result === "ALREADY_USED" && (
-                    <AlertTriangle className="w-5 h-5 text-amber-600" />
-                  )}
-                  {activeOutcome.result === "WRONG_ASSIGNMENT" && (
-                    <ShieldAlert className="w-5 h-5 text-purple-600" />
-                  )}
-                  {activeOutcome.result === "INVALID" && (
-                    <XCircle className="w-5 h-5 text-rose-600" />
-                  )}
-                  {activeOutcome.result === "EXPIRED" && (
-                    <Clock className="w-5 h-5 text-amber-600" />
-                  )}
+                  {activeOutcome.result === "VALID" && <CheckCircle2 className="w-5 h-5 text-emerald-600" />}
+                  {activeOutcome.result === "ALREADY_USED" && <AlertTriangle className="w-5 h-5 text-amber-600" />}
+                  {activeOutcome.result === "WRONG_ASSIGNMENT" && <ShieldAlert className="w-5 h-5 text-purple-600" />}
+                  {activeOutcome.result === "INVALID" && <XCircle className="w-5 h-5 text-rose-600" />}
+                  {activeOutcome.result === "EXPIRED" && <Clock className="w-5 h-5 text-amber-600" />}
 
-                  <span className="font-bold text-xs uppercase tracking-wider">
+                  <span className="font-extrabold text-xs uppercase tracking-wider">
                     {activeOutcome.result === "VALID"
-                      ? "Boarding Approved"
+                      ? sector.successTitle
                       : activeOutcome.result === "ALREADY_USED"
                       ? "Duplicate Ticket Warning"
                       : activeOutcome.result === "WRONG_ASSIGNMENT"
-                      ? "Wrong Terminal / Service"
-                      : activeOutcome.result === "EXPIRED"
-                      ? "Expired Voucher"
+                      ? "Cross-Sector Pass Rejected"
                       : "Invalid Voucher"}
                   </span>
                 </div>
@@ -384,117 +400,81 @@ export default function TicketScannerPage() {
                 <button
                   type="button"
                   onClick={handleDismissResult}
-                  className="p-1 rounded hover:bg-black/10 text-muted-foreground hover:text-foreground"
+                  className="p-1 rounded-lg hover:bg-black/10 text-muted-foreground hover:text-foreground cursor-pointer"
                 >
                   <X className="w-4 h-4" />
                 </button>
               </div>
 
-              {/* Passenger & Ticket Breakdown */}
-              <div className="bg-card/90 rounded-lg p-3 text-xs space-y-2 border border-border/50">
+              {/* Breakdown */}
+              <div className="bg-card/90 rounded-xl p-3 text-xs space-y-2 border border-border/50">
                 <div className="flex justify-between items-center border-b border-border/40 pb-1.5">
-                  <span className="text-muted-foreground">Ticket Reference:</span>
+                  <span className="text-muted-foreground">Reference:</span>
                   <span className="font-mono font-bold text-amber-600 text-xs">
                     {activeOutcome.ticketReference}
                   </span>
                 </div>
 
                 <div className="flex justify-between items-center border-b border-border/40 pb-1.5">
-                  <span className="text-muted-foreground">Passenger:</span>
-                  <span className="font-bold text-foreground">
-                    {activeOutcome.passengerName}
-                  </span>
+                  <span className="text-muted-foreground">{sector.unitLabel}:</span>
+                  <span className="font-bold text-foreground">{activeOutcome.passengerName}</span>
                 </div>
 
                 {activeOutcome.seatNumber && (
                   <div className="flex justify-between items-center border-b border-border/40 pb-1.5">
-                    <span className="text-muted-foreground">Allocated Seat:</span>
-                    <span className="font-mono font-bold text-emerald-600">
-                      {activeOutcome.seatNumber}
-                    </span>
+                    <span className="text-muted-foreground">{sector.seatLabel}:</span>
+                    <span className="font-mono font-bold text-emerald-600">{activeOutcome.seatNumber}</span>
                   </div>
                 )}
 
                 <div className="flex justify-between items-center">
-                  <span className="text-muted-foreground">Verified At:</span>
-                  <span className="text-muted-foreground font-mono">
-                    {activeOutcome.verifiedAt}
-                  </span>
+                  <span className="text-muted-foreground">Time:</span>
+                  <span className="text-muted-foreground font-mono">{activeOutcome.verifiedAt}</span>
                 </div>
               </div>
 
-              <p className="text-[11px] leading-relaxed italic text-muted-foreground">
-                &quot;{activeOutcome.message}&quot;
-              </p>
+              <p className="text-[11px] leading-relaxed italic">{activeOutcome.message}</p>
 
-              <div className="pt-1">
-                <button
-                  type="button"
-                  onClick={handleDismissResult}
-                  className={`w-full py-2 rounded-lg text-xs font-semibold shadow-xs transition-colors ${
-                    activeOutcome.result === "VALID"
-                      ? "bg-emerald-600 hover:bg-emerald-700 text-white"
-                      : "bg-muted text-foreground hover:bg-muted/80"
-                  }`}
-                >
-                  {activeOutcome.result === "VALID" ? "Admit & Scan Next" : "Dismiss"}
-                  {countdown !== null && ` (${countdown}s)`}
-                </button>
-              </div>
+              {countdown !== null && (
+                <div className="text-[10px] text-muted-foreground text-center font-mono">
+                  Auto-dismiss in {countdown}s
+                </div>
+              )}
             </div>
           ) : (
-            /* Standby Status Card */
-            <div className="bg-card border border-slate-200/50 dark:border-slate-800/50 rounded-3xl p-6 shadow-sm text-center space-y-3">
-              <div className="w-12 h-12 rounded-2xl bg-amber-500/10 text-amber-600 mx-auto flex items-center justify-center border border-amber-600/20">
-                <QrCode className="w-6 h-6" />
-              </div>
-              <div>
-                <h3 className="text-sm font-bold text-foreground">Scanner Standby</h3>
-                <p className="text-xs text-muted-foreground mt-0.5 leading-relaxed">
-                  Point device camera at customer QR voucher or enter alphanumeric reference below.
-                </p>
-              </div>
+            <div className="bg-card border border-dashed border-slate-300 dark:border-slate-800 rounded-2xl p-6 text-center space-y-2">
+              <QrCode className="w-8 h-8 text-muted-foreground mx-auto" />
+              <p className="text-xs font-bold text-foreground">Waiting for Scan</p>
+              <p className="text-[11px] text-muted-foreground">
+                Scan via camera viewfinder or enter the code manually below.
+              </p>
             </div>
           )}
 
-          {/* Manual Reference Input Form */}
-          <div className="bg-card border border-slate-200/50 dark:border-slate-800/50 rounded-3xl p-6 shadow-sm space-y-3">
-            <div className="flex items-center gap-1.5 text-xs font-bold uppercase tracking-wider text-muted-foreground">
-              <Keyboard className="w-3.5 h-3.5" />
-              <span>Manual Ticket Entry</span>
-            </div>
+          {/* Manual Code Input Form */}
+          <div className="bg-card border border-slate-200/60 dark:border-slate-800/60 rounded-2xl p-4 shadow-xs space-y-3">
+            <h4 className="text-xs font-bold text-foreground flex items-center gap-1.5">
+              <Keyboard className="w-3.5 h-3.5 text-amber-600" />
+              <span>Manual Check-In</span>
+            </h4>
 
-            <form onSubmit={handleManualSubmit} className="space-y-3">
-              <div>
-                <input
-                  type="text"
-                  value={manualCode}
-                  onChange={(e) => setManualCode(e.target.value.toUpperCase())}
-                  placeholder="e.g. TH-BUS-8829"
-                  className="w-full px-3 py-2 text-xs font-mono rounded-lg border border-border/70 bg-background text-foreground uppercase tracking-wider"
-                />
-              </div>
+            <form onSubmit={handleManualSubmit} className="space-y-2">
+              <input
+                type="text"
+                value={manualCode}
+                onChange={(e) => setManualCode(e.target.value)}
+                placeholder="e.g. TH-CNM-4419 or TH-BUS-8829"
+                className="w-full px-3 py-2 text-xs rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-900/50 text-foreground font-mono focus:outline-none focus:ring-1 focus:ring-amber-500"
+              />
 
               <button
                 type="submit"
                 disabled={isVerifying || !manualCode.trim()}
-                className="w-full py-2 rounded-lg bg-amber-600 hover:bg-amber-700 text-white text-xs font-semibold shadow-xs transition-colors disabled:opacity-50"
+                className="w-full py-2 rounded-xl bg-amber-600 hover:bg-amber-700 text-white font-bold text-xs shadow-xs transition-colors disabled:opacity-50 cursor-pointer"
               >
-                {isVerifying ? "Verifying..." : "Verify Reference"}
+                {isVerifying ? "Verifying..." : "Validate Pass"}
               </button>
             </form>
-          </div>
-
-          {/* Inspector Field Instructions */}
-          <div className="bg-muted/30 border border-border/50 rounded-xl p-3 text-xs text-muted-foreground space-y-1">
-            <span className="font-semibold text-foreground text-[11px] block">
-              Gate Inspection Protocol:
-            </span>
-            <ul className="list-disc list-inside space-y-0.5 text-[11px]">
-              <li>Verify national ID matches boarding passenger name.</li>
-              <li>Inspect luggage baggage tag stubs before admitting.</li>
-              <li>Report duplicate barcodes immediately to station manager.</li>
-            </ul>
           </div>
         </div>
       </div>

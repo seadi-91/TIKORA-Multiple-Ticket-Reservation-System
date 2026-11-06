@@ -153,18 +153,18 @@ export default function AdminPaymentsPage() {
         </div>
 
         {/* Desktop View: Tabs */}
-        <div className="hidden sm:flex items-center gap-2 overflow-x-auto no-scrollbar pb-1 sm:pb-0">
+        <div className="hidden sm:flex items-center gap-1.5 overflow-x-auto no-scrollbar pb-1 sm:pb-0">
           <button
             onClick={() => setActiveTab("PENDING")}
-            className={`px-3.5 py-1.5 text-xs font-semibold rounded-xl transition-all shrink-0 flex items-center gap-2 ${
+            className={`px-2 py-0.5 text-micro font-medium rounded-md transition-all shrink-0 flex items-center gap-1 cursor-pointer ${
               activeTab === "PENDING"
-                ? "bg-amber-600 text-white shadow-sm"
+                ? "bg-amber-600 text-white shadow-xs font-semibold"
                 : "bg-slate-100 dark:bg-slate-800/60 hover:bg-slate-200 dark:hover:bg-slate-800 text-muted-foreground hover:text-foreground"
             }`}
           >
             <span>Pending Payouts Queue</span>
             <span
-              className={`px-1.5 py-0.2 rounded-full text-[10px] ${
+              className={`px-1.5 py-0.2 rounded-full text-nano font-bold ${
                 activeTab === "PENDING" ? "bg-white/20 text-white" : "bg-muted-foreground/15 text-muted-foreground"
               }`}
             >
@@ -174,15 +174,15 @@ export default function AdminPaymentsPage() {
 
           <button
             onClick={() => setActiveTab("HISTORY")}
-            className={`px-3.5 py-1.5 text-xs font-semibold rounded-xl transition-all shrink-0 flex items-center gap-2 ${
+            className={`px-2 py-0.5 text-micro font-medium rounded-md transition-all shrink-0 flex items-center gap-1 cursor-pointer ${
               activeTab === "HISTORY"
-                ? "bg-amber-600 text-white shadow-sm"
+                ? "bg-amber-600 text-white shadow-xs font-semibold"
                 : "bg-slate-100 dark:bg-slate-800/60 hover:bg-slate-200 dark:hover:bg-slate-800 text-muted-foreground hover:text-foreground"
             }`}
           >
             <span>Settlement History</span>
             <span
-              className={`px-1.5 py-0.2 rounded-full text-[10px] ${
+              className={`px-1.5 py-0.2 rounded-full text-nano font-bold ${
                 activeTab === "HISTORY" ? "bg-white/20 text-white" : "bg-muted-foreground/15 text-muted-foreground"
               }`}
             >
@@ -193,13 +193,13 @@ export default function AdminPaymentsPage() {
 
         {/* Search */}
         <div className="relative w-full sm:w-64">
-          <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground pointer-events-none" />
+          <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3 h-3 text-muted-foreground pointer-events-none" />
           <input
             type="text"
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            placeholder="Search provider or account..."
-            className="w-full h-9 pl-9 pr-3 text-xs rounded-xl bg-card border border-slate-200/60 dark:border-slate-800/60 placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-amber-500/30"
+            placeholder="Search provider, bank account..."
+            className="w-full h-7.5 pl-7.5 pr-2.5 text-micro rounded-md bg-card border border-slate-200/50 dark:border-slate-800/50 placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-amber-500/30 focus:border-amber-500 transition-all shadow-xs"
           />
         </div>
       </div>

@@ -569,6 +569,225 @@ export const getInitialRefundsForCategory = (cat: TicketCategory): ProviderRefun
   }
 };
 
+export const getInitialNotificationsForCategory = (cat: TicketCategory): ProviderNotification[] => {
+  switch (cat) {
+    case "CINEMA":
+      return [
+        {
+          id: "pnot-cnm-1",
+          title: "VIP Atmos Screening Booking",
+          message: "Customer 'Dawit Mengistu' booked 2 VIP Laser Atmos seats for Avatar 3D. Total: 900 ETB via Telebirr.",
+          type: "BOOKING",
+          createdAt: "10 mins ago",
+          isRead: false,
+          linkHref: "/provider/bookings",
+        },
+        {
+          id: "pnot-cnm-2",
+          title: "Hall 1 Low Seat Availability",
+          message: "Gladiator II 05:30 PM prime screening has only 6 seats remaining in Hall 1.",
+          type: "INVENTORY",
+          createdAt: "35 mins ago",
+          isRead: false,
+          linkHref: "/provider/inventory",
+        },
+        {
+          id: "pnot-cnm-3",
+          title: "Box Office Payout Deposited",
+          message: "98,000 ETB successfully deposited to Commercial Bank of Ethiopia Account (***29184).",
+          type: "PAYMENT",
+          createdAt: "2 hours ago",
+          isRead: true,
+          linkHref: "/provider/payments",
+        },
+        {
+          id: "pnot-cnm-4",
+          title: "Auditorium Usher Scan Activity",
+          message: "Inspector Biruk Girma checked in 84 moviegoers at Hall 1 VIP Gate Scanner.",
+          type: "INSPECTOR",
+          createdAt: "4 hours ago",
+          isRead: true,
+          linkHref: "/provider/staff",
+        },
+      ];
+    case "EVENT":
+      return [
+        {
+          id: "pnot-evt-1",
+          title: "VIP Lounge Table Confirmed",
+          message: "Customer 'Alazar Mengistu' booked VIP Table for Addis Jazz Festival. Total: 3,944 ETB via Telebirr.",
+          type: "BOOKING",
+          createdAt: "8 mins ago",
+          isRead: false,
+          linkHref: "/provider/bookings",
+        },
+        {
+          id: "pnot-evt-2",
+          title: "Early Bird Festival Passes Low",
+          message: "Less than 25 Early Bird passes remaining for Millennium Hall Afrobeat Night.",
+          type: "INVENTORY",
+          createdAt: "50 mins ago",
+          isRead: false,
+          linkHref: "/provider/inventory",
+        },
+        {
+          id: "pnot-evt-3",
+          title: "Festival Settlement Deposited",
+          message: "185,000 ETB successfully transferred to Commercial Bank of Ethiopia Account (***29184).",
+          type: "PAYMENT",
+          createdAt: "3 hours ago",
+          isRead: true,
+          linkHref: "/provider/payments",
+        },
+        {
+          id: "pnot-evt-4",
+          title: "Turnstile Gate Clearance Rate",
+          message: "Turnstile Scanner Ruth Mengistu cleared 340 attendees at VIP Red Carpet.",
+          type: "INSPECTOR",
+          createdAt: "5 hours ago",
+          isRead: true,
+          linkHref: "/provider/staff",
+        },
+      ];
+    case "SPORTS":
+      return [
+        {
+          id: "pnot-spt-1",
+          title: "Grandstand VIP Derby Passes",
+          message: "Customer 'Marta Solomon' booked 2 Covered Tribune tickets for Derby. Total: 1,600 ETB via CBE Birr.",
+          type: "BOOKING",
+          createdAt: "15 mins ago",
+          isRead: false,
+          linkHref: "/provider/bookings",
+        },
+        {
+          id: "pnot-spt-2",
+          title: "Gate 4 Grandstand Inventory Low",
+          message: "Covered VIP Tribune Gate 4 has only 18 tickets remaining for Matchday 14.",
+          type: "INVENTORY",
+          createdAt: "40 mins ago",
+          isRead: false,
+          linkHref: "/provider/inventory",
+        },
+        {
+          id: "pnot-spt-3",
+          title: "Derby Gate Payout Transferred",
+          message: "142,000 ETB deposited to Commercial Bank of Ethiopia Account (***29184).",
+          type: "PAYMENT",
+          createdAt: "2 hours ago",
+          isRead: true,
+          linkHref: "/provider/payments",
+        },
+        {
+          id: "pnot-spt-4",
+          title: "Stadium Turnstile Gate Scans",
+          message: "Turnstile Scanner Yohannes Wolde verified 420 passes at Stadium Gate 4.",
+          type: "INSPECTOR",
+          createdAt: "4 hours ago",
+          isRead: true,
+          linkHref: "/provider/staff",
+        },
+      ];
+    default:
+      return [
+        {
+          id: "pnot-1",
+          title: "New Group Booking Confirmed",
+          message: "Customer 'Abebe Bekele' booked 4 seats on Addis → Hawassa (06:00 AM). Total: 3,024 ETB via Telebirr.",
+          type: "BOOKING",
+          createdAt: "12 mins ago",
+          isRead: false,
+          linkHref: "/provider/bookings",
+        },
+        {
+          id: "pnot-2",
+          title: "Low Seat Inventory Alert",
+          message: "Addis → Bahir Dar Morning Express has only 4 seats remaining for Nov 15 departure.",
+          type: "INVENTORY",
+          createdAt: "45 mins ago",
+          isRead: false,
+          linkHref: "/provider/inventory",
+        },
+        {
+          id: "pnot-3",
+          title: "Weekly Payout Transferred",
+          message: "124,500 ETB successfully deposited to Commercial Bank of Ethiopia Account (***29184).",
+          type: "PAYMENT",
+          createdAt: "3 hours ago",
+          isRead: true,
+          linkHref: "/provider/payments",
+        },
+        {
+          id: "pnot-4",
+          title: "Gate Inspector Activity",
+          message: "Inspector Yared Tefera checked in 42 passengers at Autobus Tera Gate 3.",
+          type: "INSPECTOR",
+          createdAt: "5 hours ago",
+          isRead: true,
+          linkHref: "/provider/staff",
+        },
+      ];
+  }
+};
+
+export const getInitialStatsForCategory = (cat: TicketCategory) => {
+  switch (cat) {
+    case "CINEMA":
+      return {
+        totalRevenue: 435000,
+        grossSales: 457895,
+        platformCommission: 22895,
+        netPayout: 412100,
+        availableBalance: 98000,
+        totalBookings: 1250,
+        totalTicketsSold: 2600,
+        activeServices: 8,
+        pendingBookings: 12,
+        availableSeats: 320,
+      };
+    case "EVENT":
+      return {
+        totalRevenue: 680000,
+        grossSales: 715789,
+        platformCommission: 35789,
+        netPayout: 644211,
+        availableBalance: 185000,
+        totalBookings: 980,
+        totalTicketsSold: 3100,
+        activeServices: 4,
+        pendingBookings: 24,
+        availableSeats: 1200,
+      };
+    case "SPORTS":
+      return {
+        totalRevenue: 520000,
+        grossSales: 547368,
+        platformCommission: 27368,
+        netPayout: 492632,
+        availableBalance: 142000,
+        totalBookings: 1650,
+        totalTicketsSold: 4200,
+        activeServices: 6,
+        pendingBookings: 30,
+        availableSeats: 1800,
+      };
+    case "BUS":
+    default:
+      return {
+        totalRevenue: 482500,
+        grossSales: 507895,
+        platformCommission: 25395,
+        netPayout: 457100,
+        availableBalance: 124500,
+        totalBookings: 1428,
+        totalTicketsSold: 2850,
+        activeServices: 14,
+        pendingBookings: 18,
+        availableSeats: 640,
+      };
+  }
+};
+
 export const useProviderStore = create<ProviderStoreState>((set) => ({
   organization: {
     id: "org-selam-01",
@@ -597,18 +816,7 @@ export const useProviderStore = create<ProviderStoreState>((set) => ({
       accountNumber: "1000189429184",
       accountHolder: "Selam Bus Line S.C. Operational",
     },
-    stats: {
-      totalRevenue: 482500,
-      grossSales: 507895,
-      platformCommission: 25395,
-      netPayout: 457100,
-      availableBalance: 124500,
-      totalBookings: 1428,
-      totalTicketsSold: 2850,
-      activeServices: 14,
-      pendingBookings: 18,
-      availableSeats: 640,
-    },
+    stats: getInitialStatsForCategory(initialCat),
   },
 
   busRoutes: [
@@ -803,44 +1011,7 @@ export const useProviderStore = create<ProviderStoreState>((set) => ({
 
   refunds: getInitialRefundsForCategory(initialCat),
 
-  notifications: [
-    {
-      id: "pnot-1",
-      title: "New Group Booking Confirmed",
-      message: "Customer 'Abebe Bekele' booked 4 seats on Addis → Hawassa (06:00 AM). Total: 3,024 ETB via Telebirr.",
-      type: "BOOKING",
-      createdAt: "12 mins ago",
-      isRead: false,
-      linkHref: "/provider/bookings",
-    },
-    {
-      id: "pnot-2",
-      title: "Low Seat Inventory Alert",
-      message: "Addis → Bahir Dar Morning Express has only 4 seats remaining for Nov 15 departure.",
-      type: "INVENTORY",
-      createdAt: "45 mins ago",
-      isRead: false,
-      linkHref: "/provider/inventory",
-    },
-    {
-      id: "pnot-3",
-      title: "Weekly Payout Transferred",
-      message: "124,500 ETB successfully deposited to Commercial Bank of Ethiopia Account (***29184).",
-      type: "PAYMENT",
-      createdAt: "3 hours ago",
-      isRead: true,
-      linkHref: "/provider/payments",
-    },
-    {
-      id: "pnot-4",
-      title: "Gate Inspector Activity",
-      message: "Inspector Yared Tefera checked in 42 passengers at Autobus Tera Gate 3.",
-      type: "INSPECTOR",
-      createdAt: "5 hours ago",
-      isRead: true,
-      linkHref: "/provider/staff",
-    },
-  ],
+  notifications: getInitialNotificationsForCategory(initialCat),
 
   updateOrganization: (data) =>
     set((state) => ({
@@ -978,9 +1149,11 @@ export const useProviderStore = create<ProviderStoreState>((set) => ({
           name,
           legalName,
           description,
+          stats: getInitialStatsForCategory(category),
         },
         staffMembers: getInitialStaffForCategory(category),
         refunds: getInitialRefundsForCategory(category),
+        notifications: getInitialNotificationsForCategory(category),
       };
     });
   },

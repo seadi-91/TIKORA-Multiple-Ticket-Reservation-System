@@ -32,6 +32,8 @@
     "@types/express": "^5.0.6",
     "@types/morgan": "^1.9.10",
     "@types/node": "^26.6.6",
+    "@types/pg": "^8.23.1",
+    "prisma": "^8.0.0-rc.30",
     "tsx": "^4.23.15",
     "typescript": "^7.0.2"
   }

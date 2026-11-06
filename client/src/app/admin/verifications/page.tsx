@@ -91,7 +91,7 @@ export default function AdminVerificationsPage() {
       </div>
 
       {/* Desktop Status Filter Tabs */}
-      <div className="hidden sm:flex items-center gap-2 border-b border-slate-200/50 dark:border-slate-800/50 pb-3 overflow-x-auto no-scrollbar flex-nowrap">
+      <div className="hidden sm:flex items-center gap-1.5 border-b border-slate-200/50 dark:border-slate-800/50 pb-2 overflow-x-auto no-scrollbar flex-nowrap">
         {[
           { label: "All Documents", value: "ALL", count: allDocs.length },
           { label: "Pending Review", value: "PENDING", count: pendingCount },
@@ -101,15 +101,15 @@ export default function AdminVerificationsPage() {
           <button
             key={tab.value}
             onClick={() => setStatusFilter(tab.value)}
-            className={`px-3.5 py-1.5 text-xs font-semibold rounded-xl transition-all flex items-center gap-2 shrink-0 ${
+            className={`px-2 py-0.5 text-micro font-medium rounded-md transition-all flex items-center gap-1 shrink-0 cursor-pointer ${
               statusFilter === tab.value
-                ? "bg-amber-600 text-white shadow-sm"
+                ? "bg-amber-600 text-white shadow-xs font-semibold"
                 : "bg-slate-100 dark:bg-slate-800/60 hover:bg-slate-200 dark:hover:bg-slate-800 text-muted-foreground hover:text-foreground"
             }`}
           >
             <span>{tab.label}</span>
             <span
-              className={`px-1.5 py-0.2 rounded-full text-[10px] ${
+              className={`px-1.5 py-0.2 rounded-full text-nano font-bold ${
                 statusFilter === tab.value ? "bg-white/20 text-white" : "bg-muted-foreground/15 text-muted-foreground"
               }`}
             >
@@ -121,13 +121,13 @@ export default function AdminVerificationsPage() {
 
       {/* Search Input */}
       <div className="relative max-w-md">
-        <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground pointer-events-none" />
+        <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3 h-3 text-muted-foreground pointer-events-none" />
         <input
           type="text"
           value={searchQuery}
           onChange={(e) => setSearchQuery(e.target.value)}
           placeholder="Filter documents by title, company name, or TIN..."
-          className="w-full h-10 pl-9 pr-3 text-xs rounded-xl bg-card border border-slate-200/60 dark:border-slate-800/60 placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-amber-500/30 focus:border-amber-500 transition-all shadow-xs"
+          className="w-full h-7.5 pl-7.5 pr-2.5 text-micro rounded-md bg-card border border-slate-200/60 dark:border-slate-800/60 placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-amber-500/30 focus:border-amber-500 transition-all shadow-xs"
         />
       </div>
 
@@ -332,24 +332,24 @@ export default function AdminVerificationsPage() {
                           },
                           ...(doc.status !== "VERIFIED"
                             ? [
-                                {
-                                  label: "Approve Document",
-                                  icon: <CheckCircle2 className="w-3.5 h-3.5" />,
-                                  variant: "success" as const,
-                                  onClick: () => verifyDocument(doc.orgId, doc.id, "VERIFIED"),
-                                },
-                              ]
+                              {
+                                label: "Approve Document",
+                                icon: <CheckCircle2 className="w-3.5 h-3.5" />,
+                                variant: "success" as const,
+                                onClick: () => verifyDocument(doc.orgId, doc.id, "VERIFIED"),
+                              },
+                            ]
                             : []),
                           ...(doc.status !== "REJECTED"
                             ? [
-                                {
-                                  label: "Reject Document",
-                                  icon: <XCircle className="w-3.5 h-3.5" />,
-                                  variant: "danger" as const,
-                                  onClick: () =>
-                                    verifyDocument(doc.orgId, doc.id, "REJECTED", "Document mismatch or incomplete"),
-                                },
-                              ]
+                              {
+                                label: "Reject Document",
+                                icon: <XCircle className="w-3.5 h-3.5" />,
+                                variant: "danger" as const,
+                                onClick: () =>
+                                  verifyDocument(doc.orgId, doc.id, "REJECTED", "Document mismatch or incomplete"),
+                              },
+                            ]
                             : []),
                           {
                             label: "View Provider Profile",

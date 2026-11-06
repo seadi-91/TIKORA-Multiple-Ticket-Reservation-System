@@ -135,7 +135,7 @@ export default function AdminBookingsPage() {
       </div>
 
       {/* Desktop Filter Tabs */}
-      <div className="hidden sm:flex flex-wrap items-center gap-2 border-b border-slate-200/40 dark:border-slate-800/40 pb-3">
+      <div className="hidden sm:flex flex-wrap items-center gap-1.5 border-b border-slate-200/40 dark:border-slate-800/40 pb-2">
         {[
           { label: "All Bookings", value: "ALL" },
           { label: "Confirmed", value: "CONFIRMED" },
@@ -144,9 +144,9 @@ export default function AdminBookingsPage() {
           <button
             key={tab.value}
             onClick={() => setStatusFilter(tab.value)}
-            className={`px-3 py-1.5 text-xs font-bold rounded-xl transition-all ${
+            className={`px-2 py-0.5 text-micro font-medium rounded-md transition-all cursor-pointer ${
               statusFilter === tab.value
-                ? "bg-amber-600 text-white shadow-sm shadow-amber-600/25"
+                ? "bg-amber-600 text-white shadow-xs font-semibold"
                 : "bg-muted/40 hover:bg-muted text-muted-foreground hover:text-foreground"
             }`}
           >
@@ -156,23 +156,23 @@ export default function AdminBookingsPage() {
       </div>
 
       {/* Search & Category Filter Controls */}
-      <div className="flex flex-col sm:flex-row items-center gap-3">
+      <div className="flex flex-col sm:flex-row items-center gap-2">
         <div className="relative flex-1 w-full">
-          <Search className="absolute left-3.5 w-4 h-4 text-muted-foreground pointer-events-none" />
+          <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3 h-3 text-muted-foreground pointer-events-none" />
           <input
             type="text"
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             placeholder="Search reference code, passenger name, email, or provider..."
-            className="w-full h-10 pl-9 pr-3 text-xs rounded-xl bg-card border border-slate-200/50 dark:border-slate-800/50 placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-amber-500/30 focus:border-amber-500 transition-all shadow-xs"
+            className="w-full h-7.5 pl-7.5 pr-2.5 text-micro rounded-md bg-card border border-slate-200/50 dark:border-slate-800/50 placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-amber-500/30 focus:border-amber-500 transition-all shadow-xs"
           />
         </div>
 
-        <div className="flex items-center gap-2 w-full sm:w-auto">
+        <div className="flex items-center gap-1.5 w-full sm:w-auto">
           <select
             value={categoryFilter}
             onChange={(e) => setCategoryFilter(e.target.value)}
-            className="h-10 px-3 text-xs rounded-xl bg-card border border-slate-200/50 dark:border-slate-800/50 text-foreground focus:outline-none focus:ring-2 focus:ring-amber-500/30 font-medium"
+            className="h-7.5 px-2 text-micro rounded-md bg-card border border-slate-200/50 dark:border-slate-800/50 text-foreground focus:outline-none focus:ring-2 focus:ring-amber-500/30 font-semibold"
           >
             <option value="ALL">All Categories</option>
             <option value="BUS">Bus Transport</option>

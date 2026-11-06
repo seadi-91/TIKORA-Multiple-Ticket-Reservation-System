@@ -5,6 +5,8 @@ import Link from "next/link";
 import {
   Clock,
   Eye,
+  MapPin,
+  Phone,
   QrCode,
   Search,
   ShieldAlert,
@@ -47,35 +49,6 @@ export default function ProviderStaffPage() {
     if (confirm(`Are you sure you want to remove ${name} from your organization staff?`)) {
       deleteStaffMember(id);
       toast.success(`${name} has been removed from staff.`);
-    }
-  };
-
-  const getRoleBadge = (role: ProviderStaffMember["role"]) => {
-    switch (role) {
-      case "MANAGER":
-        return (
-          <span className="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-semibold bg-purple-500/10 text-purple-700 dark:text-purple-300 border border-purple-600/20">
-            Manager
-          </span>
-        );
-      case "DISPATCHER":
-        return (
-          <span className="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-semibold bg-blue-500/10 text-blue-700 dark:text-blue-300 border border-blue-600/20">
-            Dispatcher
-          </span>
-        );
-      case "INSPECTOR":
-        return (
-          <span className="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-semibold bg-amber-500/10 text-amber-700 dark:text-amber-300 border border-amber-600/20">
-            Gate Inspector
-          </span>
-        );
-      case "CASHIER":
-        return (
-          <span className="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-semibold bg-emerald-500/10 text-emerald-700 dark:text-emerald-300 border border-emerald-600/20">
-            Cashier
-          </span>
-        );
     }
   };
 
@@ -147,6 +120,26 @@ export default function ProviderStaffPage() {
         </div>
       </div>
 
+      {/* Sector Isolation Banner */}
+      <div className="p-4 rounded-2xl bg-amber-500/10 border border-amber-500/20 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 text-xs">
+        <div>
+          <p className="font-bold text-slate-900 dark:text-white flex items-center gap-1.5">
+            <ShieldAlert className="w-4 h-4 text-amber-600" />
+            <span>Inspector Sector Isolation: {organization.category}</span>
+          </p>
+          <p className="text-slate-500 dark:text-slate-400 mt-0.5">
+            Inspectors added by {organization.name} are strictly scoped to {organization.category} check-ins and will only see {organization.category.toLowerCase()}-related screening/boarding shifts and tickets.
+          </p>
+        </div>
+        <Link
+          href="/inspector"
+          className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl bg-amber-600 hover:bg-amber-700 text-white font-bold text-xs shrink-0 shadow-xs transition-colors"
+        >
+          <QrCode className="w-3.5 h-3.5" />
+          <span>Launch Inspector Console</span>
+        </Link>
+      </div>
+
       {/* Filter and Search Bar */}
       <div className="bg-card border border-slate-200/50 dark:border-slate-800/50 rounded-3xl p-5 shadow-sm space-y-3">
         <div className="flex flex-col sm:flex-row gap-3 items-stretch sm:items-center justify-between">
@@ -162,9 +155,9 @@ export default function ProviderStaffPage() {
                 key={tab.id}
                 type="button"
                 onClick={() => setRoleFilter(tab.id)}
-                className={`px-3.5 py-1.5 text-xs font-semibold rounded-xl transition-all shrink-0 ${
+                className={`px-2 py-0.5 text-micro font-medium rounded-md transition-all shrink-0 cursor-pointer ${
                   roleFilter === tab.id
-                    ? "bg-amber-600 text-white shadow-sm"
+                    ? "bg-amber-600 text-white shadow-xs font-semibold"
                     : "bg-slate-100 dark:bg-slate-800/60 text-muted-foreground hover:bg-slate-200 dark:hover:bg-slate-800 hover:text-foreground"
                 }`}
               >
@@ -174,104 +167,160 @@ export default function ProviderStaffPage() {
           </div>
 
           <div className="relative flex-1 sm:max-w-xs">
-            <Search className="w-3.5 h-3.5 absolute left-3.5 top-1/2 -translate-y-1/2 text-muted-foreground pointer-events-none" />
+            <Search className="w-3 h-3 absolute left-2.5 top-1/2 -translate-y-1/2 text-muted-foreground pointer-events-none" />
             <input
               type="text"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               placeholder="Search by name, station, phone..."
-              className="w-full pl-9 pr-3 py-2 text-xs rounded-xl border border-slate-200/60 dark:border-slate-800/60 bg-card text-foreground focus:outline-none focus:ring-2 focus:ring-amber-500/30"
+              className="w-full pl-7.5 pr-2.5 h-7.5 text-micro rounded-md border border-slate-200/60 dark:border-slate-800/60 bg-card text-foreground focus:outline-none focus:ring-2 focus:ring-amber-500/30"
             />
           </div>
         </div>
       </div>
 
       {/* Staff Table & Mobile Cards */}
-      <div className="bg-card border border-slate-200/50 dark:border-slate-800/40 rounded-2xl sm:rounded-3xl shadow-xs overflow-hidden">
-        {/* Desktop Table View */}
-        <div className="hidden md:block overflow-x-auto">
-          <table className="w-full text-left border-collapse text-xs">
+      <div className="bg-card border border-slate-200/60 dark:border-slate-800/60 rounded-2xl sm:rounded-3xl shadow-xs overflow-hidden">
+        {/* Table Sub-header */}
+        <div className="px-6 py-4.5 border-b border-slate-100 dark:border-slate-800/60 flex flex-col sm:flex-row sm:items-center justify-between gap-2 bg-slate-50/50 dark:bg-slate-800/20">
+          <div>
+            <h3 className="text-sm sm:text-base font-bold text-foreground">
+              Authorized Staff & Scanners
+            </h3>
+            <p className="text-xs text-muted-foreground mt-0.5">
+              Active verification personnel assigned to {organization.name}
+            </p>
+          </div>
+          <span className="text-xs font-semibold text-muted-foreground bg-slate-100 dark:bg-slate-800 px-3 py-1 rounded-xl self-start sm:self-auto font-mono">
+            {filteredStaff.length} Members
+          </span>
+        </div>
+
+        {/* Desktop Table View - Spacious Layout (Feta bale way, no squishing) */}
+        <div className="hidden md:block overflow-x-auto scrollbar-thin">
+          <table className="w-full text-left border-collapse min-w-[1080px]">
             <thead>
-              <tr className="bg-slate-50/60 dark:bg-slate-800/40 text-muted-foreground uppercase text-[10px] font-bold tracking-wider">
-                <th className="py-3.5 px-4">Staff Member</th>
-                <th className="py-3.5 px-4">Role</th>
-                <th className="py-3.5 px-4">Assigned Terminal / Gate</th>
-                <th className="py-3.5 px-4 text-center">Tickets Scanned</th>
-                <th className="py-3.5 px-4">Last Active</th>
-                <th className="py-3.5 px-4 text-center">Status</th>
-                <th className="py-3.5 px-5 text-right">Actions</th>
+              <tr className="bg-slate-50/80 dark:bg-slate-800/50 text-muted-foreground uppercase text-[10px] font-bold tracking-wider border-b border-slate-100 dark:border-slate-800">
+                <th className="py-4 px-6 min-w-[280px]">Staff Member</th>
+                <th className="py-4 px-6 min-w-[200px]">Phone Number</th>
+                <th className="py-4 px-6 min-w-[260px]">Assigned Terminal / Gate</th>
+                <th className="py-4 px-6 min-w-[150px] text-center">Tickets Scanned</th>
+                <th className="py-4 px-6 min-w-[150px]">Last Active</th>
+                <th className="py-4 px-6 min-w-[140px] text-center">Status</th>
+                <th className="py-4 px-6 min-w-[100px] text-right">Actions</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-slate-100 dark:divide-slate-800/40">
+            <tbody className="divide-y divide-slate-100 dark:divide-slate-800/40 text-xs sm:text-[13px]">
               {filteredStaff.length === 0 ? (
                 <tr>
-                  <td colSpan={7} className="py-12 text-center text-muted-foreground">
+                  <td colSpan={7} className="py-16 text-center text-muted-foreground">
                     No staff members found matching criteria.
                   </td>
                 </tr>
               ) : (
                 filteredStaff.map((member) => (
-                  <tr key={member.id} className="hover:bg-amber-500/[0.03] dark:hover:bg-amber-500/[0.06] transition-colors">
-                    <td className="py-3.5 px-4">
-                      <div className="flex items-center gap-2.5">
-                        <div className="w-8 h-8 rounded-xl bg-amber-600/10 text-amber-700 dark:text-amber-300 font-bold flex items-center justify-center text-[11px] border border-amber-600/20 shrink-0">
+                  <tr
+                    key={member.id}
+                    className="hover:bg-amber-500/[0.03] dark:hover:bg-amber-500/[0.06] transition-colors"
+                  >
+                    {/* Staff Member */}
+                    <td className="py-4.5 px-6">
+                      <div className="flex items-center gap-3.5">
+                        <div className="w-10 h-10 rounded-2xl bg-amber-600/10 text-amber-700 dark:text-amber-300 font-bold flex items-center justify-center text-xs border border-amber-600/20 shrink-0">
                           {member.fullName
                             .split(" ")
                             .map((n) => n[0])
                             .slice(0, 2)
                             .join("")}
                         </div>
-                        <div>
+                        <div className="min-w-0">
                           <Link
                             href={`/provider/staff/${member.id}`}
-                            className="font-semibold text-foreground hover:text-amber-600 transition-colors block"
+                            className="font-bold text-foreground hover:text-amber-600 transition-colors block text-sm leading-tight truncate"
                           >
                             {member.fullName}
                           </Link>
-                          <span className="text-[11px] text-muted-foreground block font-mono">
-                            {member.email} • {member.phone}
+                          <span className="text-xs text-muted-foreground block truncate mt-0.5">
+                            {member.email}
                           </span>
                         </div>
                       </div>
                     </td>
 
-                    <td className="py-3.5 px-4">{getRoleBadge(member.role)}</td>
-
-                    <td className="py-3.5 px-4 text-foreground font-medium">
-                      {member.assignedStation}
+                    {/* Phone Number */}
+                    <td className="py-4.5 px-6 whitespace-nowrap">
+                      <a
+                        href={`tel:${member.phone.replace(/\s+/g, "")}`}
+                        className="inline-flex items-center gap-2 font-mono text-xs sm:text-[13px] font-semibold text-foreground hover:text-amber-600 transition-colors"
+                      >
+                        <div className="w-7 h-7 rounded-lg bg-slate-100 dark:bg-slate-800 flex items-center justify-center text-muted-foreground shrink-0">
+                          <Phone className="w-3.5 h-3.5" />
+                        </div>
+                        <span>{member.phone}</span>
+                      </a>
                     </td>
 
-                    <td className="py-3.5 px-4 text-center font-mono font-bold text-amber-600 dark:text-amber-400">
-                      {member.scannedTicketsCount.toLocaleString()}
+                    {/* Assigned Terminal / Gate */}
+                    <td className="py-4.5 px-6">
+                      <div className="flex items-center gap-2 text-foreground font-medium">
+                        <MapPin className="w-3.5 h-3.5 text-amber-600 shrink-0" />
+                        <span className="leading-snug">{member.assignedStation}</span>
+                      </div>
                     </td>
 
-                    <td className="py-3.5 px-4 text-muted-foreground">{member.lastActive}</td>
+                    {/* Tickets Scanned */}
+                    <td className="py-4.5 px-6 text-center whitespace-nowrap">
+                      <span className="inline-flex items-center justify-center px-3 py-1 rounded-xl bg-amber-500/10 text-amber-700 dark:text-amber-300 font-mono font-bold text-xs sm:text-sm">
+                        {member.scannedTicketsCount.toLocaleString()}
+                      </span>
+                    </td>
 
-                    <td className="py-3.5 px-4 text-center">
+                    {/* Last Active */}
+                    <td className="py-4.5 px-6 text-muted-foreground whitespace-nowrap font-medium text-xs">
+                      <div className="flex items-center gap-1.5">
+                        <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 shrink-0" />
+                        <span>{member.lastActive}</span>
+                      </div>
+                    </td>
+
+                    {/* Status */}
+                    <td className="py-4.5 px-6 text-center whitespace-nowrap">
                       <span
-                        className={`inline-flex items-center gap-1 px-2.5 py-0.5 rounded-lg text-[10px] font-semibold border ${member.status === "ACTIVE"
+                        className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[11px] font-bold border ${
+                          member.status === "ACTIVE"
                             ? "bg-emerald-500/10 text-emerald-600 border-emerald-500/20"
                             : member.status === "INVITED"
-                              ? "bg-blue-500/10 text-blue-600 border-blue-500/20"
-                              : "bg-rose-500/10 text-rose-600 border-rose-500/20"
-                          }`}
+                            ? "bg-blue-500/10 text-blue-600 border-blue-500/20"
+                            : "bg-rose-500/10 text-rose-600 border-rose-500/20"
+                        }`}
                       >
                         <span
-                          className={`w-1.5 h-1.5 rounded-full ${member.status === "ACTIVE"
+                          className={`w-1.5 h-1.5 rounded-full ${
+                            member.status === "ACTIVE"
                               ? "bg-emerald-600"
                               : member.status === "INVITED"
-                                ? "bg-blue-600"
-                                : "bg-rose-600"
-                            }`}
+                              ? "bg-blue-600"
+                              : "bg-rose-600"
+                          }`}
                         />
                         {member.status}
                       </span>
                     </td>
 
-                    <td className="py-3.5 px-5 text-right">
+                    {/* Actions */}
+                    <td className="py-4.5 px-6 text-right whitespace-nowrap">
                       <div className="flex items-center justify-end">
                         <ActionDropdown
                           items={[
+                            ...(member.role === "INSPECTOR"
+                              ? [
+                                  {
+                                    label: "Open Inspector Scanner",
+                                    icon: <QrCode className="w-3.5 h-3.5" />,
+                                    href: "/inspector",
+                                  },
+                                ]
+                              : []),
                             {
                               label: "View Profile & Logs",
                               icon: <Eye className="w-3.5 h-3.5" />,
@@ -304,21 +353,21 @@ export default function ProviderStaffPage() {
           </table>
         </div>
 
-        {/* Mobile View: High-End Staff Member Cards */}
-        <div className="block md:hidden p-3 space-y-2.5">
+        {/* Mobile View: High-End Spacious Staff Member Cards */}
+        <div className="block md:hidden p-3.5 sm:p-4 space-y-3">
           {filteredStaff.length === 0 ? (
-            <div className="py-8 text-center text-muted-foreground text-xs">
+            <div className="py-10 text-center text-muted-foreground text-xs">
               No staff members found matching criteria.
             </div>
           ) : (
             filteredStaff.map((member) => (
               <div
                 key={member.id}
-                className="p-3.5 rounded-xl bg-slate-50/70 dark:bg-slate-800/30 border border-slate-200/40 dark:border-slate-800/40 space-y-2.5"
+                className="p-4 rounded-2xl bg-slate-50/70 dark:bg-slate-800/30 border border-slate-200/50 dark:border-slate-800/50 space-y-3"
               >
-                <div className="flex items-start justify-between gap-2">
-                  <div className="flex items-center gap-2.5">
-                    <div className="w-9 h-9 rounded-xl bg-amber-600/10 text-amber-700 dark:text-amber-300 font-bold flex items-center justify-center text-xs border border-amber-600/20 shrink-0">
+                <div className="flex items-start justify-between gap-2.5">
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 rounded-xl bg-amber-600/10 text-amber-700 dark:text-amber-300 font-bold flex items-center justify-center text-xs border border-amber-600/20 shrink-0">
                       {member.fullName
                         .split(" ")
                         .map((n) => n[0])
@@ -328,16 +377,27 @@ export default function ProviderStaffPage() {
                     <div>
                       <Link
                         href={`/provider/staff/${member.id}`}
-                        className="font-bold text-xs text-foreground hover:text-amber-600 transition-colors block leading-tight"
+                        className="font-bold text-sm text-foreground hover:text-amber-600 transition-colors block leading-tight"
                       >
                         {member.fullName}
                       </Link>
-                      <div className="mt-1">{getRoleBadge(member.role)}</div>
+                      <span className="text-xs text-muted-foreground block truncate mt-0.5">
+                        {member.email}
+                      </span>
                     </div>
                   </div>
 
                   <ActionDropdown
                     items={[
+                      ...(member.role === "INSPECTOR"
+                        ? [
+                            {
+                              label: "Open Scanner",
+                              icon: <QrCode className="w-3.5 h-3.5" />,
+                              href: "/inspector",
+                            },
+                          ]
+                        : []),
                       {
                         label: "View Profile",
                         icon: <Eye className="w-3.5 h-3.5" />,
@@ -359,26 +419,46 @@ export default function ProviderStaffPage() {
                   />
                 </div>
 
-                <div className="grid grid-cols-2 gap-2 text-[11px] text-slate-500 dark:text-slate-400 pt-1 border-t border-slate-200/30 dark:border-slate-800/30">
-                  <div>
-                    <span className="block text-[9px] uppercase font-bold text-slate-400">Station</span>
-                    <span className="font-medium text-foreground">{member.assignedStation}</span>
+                {/* Phone & Station Section */}
+                <div className="grid grid-cols-1 gap-2 p-3 rounded-xl bg-white dark:bg-slate-800/50 border border-slate-200/40 dark:border-slate-800/40 text-xs">
+                  <div className="flex items-center justify-between">
+                    <span className="text-slate-400 font-medium">Phone:</span>
+                    <a
+                      href={`tel:${member.phone.replace(/\s+/g, "")}`}
+                      className="font-mono font-bold text-foreground hover:text-amber-600 transition-colors inline-flex items-center gap-1.5"
+                    >
+                      <Phone className="w-3 h-3 text-amber-600" />
+                      <span>{member.phone}</span>
+                    </a>
                   </div>
-                  <div>
-                    <span className="block text-[9px] uppercase font-bold text-slate-400">Scanned</span>
-                    <span className="font-mono font-bold text-amber-600 dark:text-amber-400">{member.scannedTicketsCount}</span>
+                  <div className="flex items-center justify-between pt-1 border-t border-slate-100 dark:border-slate-800">
+                    <span className="text-slate-400 font-medium">Station:</span>
+                    <span className="font-semibold text-foreground text-right truncate max-w-[200px]">
+                      {member.assignedStation}
+                    </span>
                   </div>
                 </div>
 
-                <div className="flex items-center justify-between pt-2 border-t border-slate-200/40 dark:border-slate-800/40 text-[11px]">
-                  <span className="text-muted-foreground truncate">{member.email}</span>
+                {/* Stats & Status Footer */}
+                <div className="flex items-center justify-between pt-1 text-xs">
+                  <span className="text-muted-foreground font-medium">
+                    Scans:{" "}
+                    <strong className="text-amber-600 dark:text-amber-400 font-mono">
+                      {member.scannedTicketsCount}
+                    </strong>
+                  </span>
                   <span
-                    className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[9px] font-bold ${
+                    className={`inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-bold ${
                       member.status === "ACTIVE"
-                        ? "bg-emerald-500/10 text-emerald-600"
+                        ? "bg-emerald-500/10 text-emerald-600 border border-emerald-500/20"
                         : "bg-slate-200/60 text-slate-600 dark:bg-slate-700/60 dark:text-slate-300"
                     }`}
                   >
+                    <span
+                      className={`w-1 h-1 rounded-full ${
+                        member.status === "ACTIVE" ? "bg-emerald-600" : "bg-slate-500"
+                      }`}
+                    />
                     {member.status}
                   </span>
                 </div>

@@ -64,8 +64,6 @@ export default function HomePage() {
       description: "Express luxury coaches to Hawassa, Bahir Dar, Gondar & Dire Dawa with real-time seat matrices.",
       icon: Bus,
       badge: "Popular Across Ethiopia",
-      color: "from-blue-600 via-indigo-600 to-sky-500",
-      bgLight: "bg-blue-50/70 dark:bg-blue-950/20 border-blue-200/80 dark:border-blue-900/40",
       link: "/bus",
       actionText: "Search Bus Routes",
     },
@@ -75,8 +73,6 @@ export default function HomePage() {
       description: "Century Mall, Edna Mall & Gast Cinema with 4K laser projection and couple loungers.",
       icon: Film,
       badge: "Now Showing & Coming Soon",
-      color: "from-purple-600 via-fuchsia-600 to-violet-500",
-      bgLight: "bg-purple-50/70 dark:bg-purple-950/20 border-purple-200/80 dark:border-purple-900/40",
       link: "/cinema",
       actionText: "View Showtimes",
     },
@@ -86,8 +82,6 @@ export default function HomePage() {
       description: "Addis Jazz festivals, Ethiopian cultural holidays, tech conventions & standup comedy.",
       icon: Calendar,
       badge: "VIP & Regular Passes",
-      color: "from-amber-600 via-orange-600 to-amber-500",
-      bgLight: "bg-amber-50/70 dark:bg-amber-950/20 border-amber-200/80 dark:border-amber-900/40",
       link: "/events",
       actionText: "Explore Events",
     },
@@ -97,8 +91,6 @@ export default function HomePage() {
       description: "Ethiopian Premier League clashes, Sheger Derby (St. George vs Coffee SC) and national finals.",
       icon: Trophy,
       badge: "Matchday Tribune Passes",
-      color: "from-emerald-600 via-teal-600 to-emerald-500",
-      bgLight: "bg-emerald-50/70 dark:bg-emerald-950/20 border-emerald-200/80 dark:border-emerald-900/40",
       link: "/sports",
       actionText: "Browse Fixtures",
     },
@@ -265,43 +257,41 @@ export default function HomePage() {
           </Link>
         </div>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-5">
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-2.5 sm:gap-4">
           {categoryCards.map((card) => {
             const Icon = card.icon;
             return (
               <div
                 key={card.id}
-                className={`rounded-3xl p-5 border transition-all duration-300 hover:-translate-y-1 hover:shadow-xl flex flex-col justify-between ${card.bgLight}`}
+                className="rounded-2xl p-3 sm:p-4 bg-white dark:bg-[#161922] border border-slate-200/90 dark:border-slate-800 hover:border-amber-500/40 dark:hover:border-amber-500/30 hover:shadow-md transition-all duration-300 flex flex-col justify-between"
               >
-                <div className="space-y-3">
-                  <div className="flex items-center justify-between gap-2">
-                    <div
-                      className={`w-10 h-10 rounded-2xl bg-gradient-to-tr ${card.color} text-white flex items-center justify-center shadow-md shrink-0`}
-                    >
-                      <Icon className="w-5 h-5" />
+                <div className="space-y-2">
+                  <div className="flex items-center justify-between gap-1.5">
+                    <div className="w-8 h-8 sm:w-9 sm:h-9 rounded-xl bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/20 flex items-center justify-center shrink-0">
+                      <Icon className="w-4 h-4 sm:w-4.5 sm:h-4.5" />
                     </div>
-                    <span className="text-[10px] font-bold px-2.5 py-0.5 rounded-full bg-white/90 dark:bg-black/50 text-foreground border border-slate-200/60 dark:border-slate-800">
+                    <span className="text-[8px] sm:text-[9px] font-semibold px-2 py-0.5 rounded-full bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 border border-slate-200/60 dark:border-slate-700/60 truncate max-w-[120px]">
                       {card.badge}
                     </span>
                   </div>
 
                   <div>
-                    <h3 className="text-base font-black text-foreground">
+                    <h3 className="text-xs sm:text-sm font-bold text-slate-900 dark:text-white line-clamp-1">
                       {card.title}
                     </h3>
-                    <p className="text-xs text-muted-foreground mt-1 leading-relaxed">
+                    <p className="text-[10px] sm:text-xs text-slate-500 dark:text-slate-400 mt-0.5 leading-snug line-clamp-2">
                       {card.description}
                     </p>
                   </div>
                 </div>
 
-                <div className="pt-4 border-t border-slate-200/60 dark:border-slate-800/60 mt-4">
+                <div className="pt-2.5 border-t border-slate-100 dark:border-slate-800/80 mt-3">
                   <Link
                     href={card.link}
-                    className="inline-flex items-center gap-1.5 text-xs font-bold text-amber-600 dark:text-amber-400 hover:text-amber-700 group"
+                    className="inline-flex items-center gap-1 text-[11px] sm:text-xs font-semibold text-amber-600 dark:text-amber-400 hover:text-amber-700 group"
                   >
                     <span>{card.actionText}</span>
-                    <ArrowRight className="w-3.5 h-3.5 group-hover:translate-x-1 transition-transform shrink-0" />
+                    <ArrowRight className="w-3 h-3 group-hover:translate-x-0.5 transition-transform shrink-0" />
                   </Link>
                 </div>
               </div>

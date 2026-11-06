@@ -36,9 +36,48 @@ export default function InspectorAssignedServicesPage() {
       case "SPORTS":
         return <Trophy className="w-4 h-4 text-emerald-600" />;
       case "CINEMA":
-        return <Film className="w-4 h-4 text-sky-600" />;
+        return <Film className="w-4 h-4 text-amber-600" />;
     }
   };
+
+  const getPageHeading = () => {
+    switch (profile.category) {
+      case "CINEMA":
+        return {
+          title: "Authorized Movie Showtimes & Screenings",
+          desc: `Active screening schedules managed by ${profile.organizationName}. Ushers verify admissions exclusively for these authorized theater auditoriums.`,
+          unitLabel: "Patrons Admitted",
+          actionLabel: "Launch Usher Scanner",
+          unitType: "Screening Hall",
+        };
+      case "BUS":
+        return {
+          title: "Scheduled Bus Trips & Fleet Operations",
+          desc: `Active passenger transport departures managed by ${profile.organizationName}. Inspectors verify boarding exclusively for these authorized coach routes.`,
+          unitLabel: "Passengers Boarded",
+          actionLabel: "Launch Boarding Scanner",
+          unitType: "Express Coach",
+        };
+      case "EVENT":
+        return {
+          title: "Concert Stages & Festival Sessions",
+          desc: `Active festival stages managed by ${profile.organizationName}. Staff verify entry wristbands for these events.`,
+          unitLabel: "Guests Admitted",
+          actionLabel: "Launch Turnstile Scanner",
+          unitType: "Festival Pavilion",
+        };
+      case "SPORTS":
+        return {
+          title: "Matchday Stadium Fixtures",
+          desc: `Active sporting fixtures managed by ${profile.organizationName}. Inspectors verify tribune passes for these matches.`,
+          unitLabel: "Fans Admitted",
+          actionLabel: "Launch Tribune Scanner",
+          unitType: "Stadium Stand",
+        };
+    }
+  };
+
+  const headingInfo = getPageHeading();
 
   const handleLaunchScan = (asn: InspectorAssignment) => {
     setCurrentAssignment(asn.id);
@@ -51,17 +90,23 @@ export default function InspectorAssignedServicesPage() {
       {/* Top Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 border-b border-slate-200/50 dark:border-slate-800/50 pb-5">
         <div>
+          <div className="flex items-center gap-2 mb-1">
+            <span className="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full bg-amber-500/10 text-amber-700 dark:text-amber-300 border border-amber-500/20">
+              {profile.organizationName}
+            </span>
+            <span className="text-xs text-slate-500">Provider-Restricted Duty</span>
+          </div>
           <h1 className="text-xl font-bold tracking-tight text-foreground">
-            My Assigned Services & Fleet Operations
+            {headingInfo.title}
           </h1>
           <p className="text-xs text-muted-foreground mt-0.5">
-            Authorized services managed by {profile.organizationName}. You can only verify tickets for these assigned operations.
+            {headingInfo.desc}
           </p>
         </div>
 
         <Link
           href="/inspector/scanner"
-          className="inline-flex items-center gap-1.5 px-4 py-2 text-xs font-semibold rounded-xl bg-amber-600 hover:bg-amber-700 text-white shadow-sm transition-colors"
+          className="inline-flex items-center gap-1.5 px-4 py-2 text-xs font-semibold rounded-xl bg-amber-600 hover:bg-amber-700 text-white shadow-sm transition-colors shrink-0"
         >
           <QrCode className="w-3.5 h-3.5" /> Open Scanner
         </Link>
@@ -75,7 +120,7 @@ export default function InspectorAssignedServicesPage() {
           return (
             <div
               key={asn.id}
-              className="bg-card border border-slate-200/50 dark:border-slate-800/50 rounded-3xl p-6 shadow-sm flex flex-col justify-between space-y-4 hover:shadow-md transition-all"
+              className="bg-card border border-slate-200/70 dark:border-slate-800/70 rounded-3xl p-5 shadow-xs flex flex-col justify-between space-y-4 hover:shadow-md transition-all"
             >
               <div className="space-y-3">
                 <div className="flex items-center justify-between gap-2">
@@ -93,7 +138,7 @@ export default function InspectorAssignedServicesPage() {
                     }`}
                   >
                     {asn.status === "ACTIVE_NOW"
-                      ? "Boarding Now"
+                      ? "Admitting Now"
                       : asn.status === "UPCOMING"
                       ? "Upcoming"
                       : "Completed"}
@@ -102,7 +147,7 @@ export default function InspectorAssignedServicesPage() {
 
                 <div>
                   <h3 className="text-sm font-bold text-foreground line-clamp-1">{asn.title}</h3>
-                  <span className="text-[11px] text-amber-600 font-semibold block mt-0.5">
+                  <span className="text-[11px] text-amber-600 dark:text-amber-400 font-semibold block mt-0.5">
                     {profile.organizationName}
                   </span>
                 </div>
@@ -121,7 +166,11 @@ export default function InspectorAssignedServicesPage() {
                     </span>
                   </div>
                   <div className="flex items-center gap-1.5">
-                    <Bus className="w-3.5 h-3.5 text-muted-foreground shrink-0" />
+                    {profile.category === "CINEMA" ? (
+                      <Film className="w-3.5 h-3.5 text-muted-foreground shrink-0" />
+                    ) : (
+                      <Bus className="w-3.5 h-3.5 text-muted-foreground shrink-0" />
+                    )}
                     <span className="truncate">{asn.coachOrHall}</span>
                   </div>
                 </div>
@@ -129,7 +178,7 @@ export default function InspectorAssignedServicesPage() {
                 {/* Progress bar */}
                 <div>
                   <div className="flex items-center justify-between text-[11px] mb-1.5">
-                    <span className="text-muted-foreground">Boarded / Scanned:</span>
+                    <span className="text-muted-foreground">{headingInfo.unitLabel}:</span>
                     <span className="font-mono font-bold text-foreground">
                       {asn.scannedSeats} / {asn.totalSeats} seats
                     </span>
@@ -148,7 +197,7 @@ export default function InspectorAssignedServicesPage() {
                 <button
                   type="button"
                   onClick={() => setSelectedService(asn)}
-                  className="text-[11px] font-semibold text-muted-foreground hover:text-foreground hover:underline"
+                  className="text-[11px] font-semibold text-muted-foreground hover:text-foreground hover:underline cursor-pointer"
                 >
                   View Details
                 </button>
@@ -156,9 +205,10 @@ export default function InspectorAssignedServicesPage() {
                 <button
                   type="button"
                   onClick={() => handleLaunchScan(asn)}
-                  className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl bg-amber-600 hover:bg-amber-700 text-white font-semibold text-xs shadow-xs transition-colors"
+                  className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl bg-amber-600 hover:bg-amber-700 text-white font-semibold text-xs shadow-xs transition-colors cursor-pointer"
                 >
-                  <QrCode className="w-3.5 h-3.5" /> Scan Post
+                  <QrCode className="w-3 h-3" />
+                  <span>{headingInfo.actionLabel}</span>
                 </button>
               </div>
             </div>
@@ -166,16 +216,14 @@ export default function InspectorAssignedServicesPage() {
         })}
       </div>
 
-      {/* Service Detail Modal */}
+      {/* Detail Modal */}
       {selectedService && (
-        <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-center justify-center p-4">
-          <div className="bg-card border border-slate-200/50 dark:border-slate-800/50 rounded-3xl shadow-2xl max-w-lg w-full p-6 space-y-4 animate-in fade-in zoom-in-95 duration-150">
-            <div className="flex items-center justify-between border-b border-slate-200/40 dark:border-slate-800/40 pb-3">
-              <div>
-                <h3 className="text-sm font-bold text-foreground">{selectedService.title}</h3>
-                <span className="text-xs text-muted-foreground font-mono">
-                  {selectedService.id} • {selectedService.gate}
-                </span>
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs">
+          <div className="bg-card border border-border/80 rounded-3xl p-6 max-w-lg w-full space-y-4 shadow-2xl">
+            <div className="flex items-center justify-between border-b border-border/50 pb-3">
+              <div className="flex items-center gap-2">
+                <ShieldCheck className="w-4 h-4 text-amber-600" />
+                <h3 className="font-bold text-sm text-foreground">Service Specification</h3>
               </div>
               <button
                 type="button"
@@ -187,66 +235,78 @@ export default function InspectorAssignedServicesPage() {
             </div>
 
             <div className="space-y-3 text-xs">
-              <div className="grid grid-cols-2 gap-3 bg-slate-50/70 dark:bg-slate-800/30 p-3.5 rounded-2xl border border-slate-200/40 dark:border-slate-800/40">
+              <div>
+                <span className="text-[10px] uppercase font-bold text-muted-foreground block">
+                  Service Title
+                </span>
+                <p className="text-sm font-bold text-foreground mt-0.5">{selectedService.title}</p>
+              </div>
+
+              <div className="grid grid-cols-2 gap-3 bg-muted/40 p-3 rounded-2xl">
                 <div>
-                  <span className="text-muted-foreground text-[11px] block">Terminal & Gate:</span>
-                  <span className="font-semibold text-foreground block">
-                    {selectedService.venueOrTerminal}
-                  </span>
-                  <span className="text-[11px] text-amber-600 font-bold">
-                    {selectedService.gate}
-                  </span>
+                  <span className="text-[10px] text-muted-foreground block">Venue / Terminal</span>
+                  <p className="font-semibold text-foreground mt-0.5">{selectedService.venueOrTerminal}</p>
                 </div>
                 <div>
-                  <span className="text-muted-foreground text-[11px] block">Departure Time:</span>
-                  <span className="font-semibold text-foreground block">
-                    {selectedService.scheduledDate}
-                  </span>
-                  <span className="text-[11px] text-muted-foreground">
-                    {selectedService.scheduledTime}
-                  </span>
+                  <span className="text-[10px] text-muted-foreground block">Gate / Entrance</span>
+                  <p className="font-semibold text-foreground mt-0.5">{selectedService.gate}</p>
+                </div>
+                <div>
+                  <span className="text-[10px] text-muted-foreground block">Scheduled Departure/Show</span>
+                  <p className="font-semibold text-foreground mt-0.5">
+                    {selectedService.scheduledDate} at {selectedService.scheduledTime}
+                  </p>
+                </div>
+                <div>
+                  <span className="text-[10px] text-muted-foreground block">{headingInfo.unitType}</span>
+                  <p className="font-semibold text-foreground mt-0.5">{selectedService.coachOrHall}</p>
                 </div>
               </div>
 
               {selectedService.driverOrLead && (
-                <div className="bg-slate-50/70 dark:bg-slate-800/30 p-3.5 rounded-2xl border border-slate-200/40 dark:border-slate-800/40 flex items-center justify-between">
+                <div className="p-3 bg-muted/40 rounded-2xl flex items-center justify-between">
                   <div>
-                    <span className="text-[11px] text-muted-foreground block">Lead Driver:</span>
-                    <span className="font-semibold text-foreground">
-                      {selectedService.driverOrLead}
-                    </span>
+                    <span className="text-[10px] text-muted-foreground block">Station Lead / Officer</span>
+                    <p className="font-semibold text-foreground">{selectedService.driverOrLead}</p>
                   </div>
-                  <div className="flex items-center gap-1.5 text-amber-600 font-mono font-medium">
-                    <Phone className="w-3.5 h-3.5" />
-                    <span>{selectedService.driverPhone}</span>
-                  </div>
+                  {selectedService.driverPhone && (
+                    <a
+                      href={`tel:${selectedService.driverPhone}`}
+                      className="inline-flex items-center gap-1 text-[11px] font-bold text-amber-600 hover:underline"
+                    >
+                      <Phone className="w-3 h-3" /> Call
+                    </a>
+                  )}
                 </div>
               )}
 
-              <div className="p-3.5 rounded-2xl bg-amber-500/10 border border-amber-600/20 text-amber-800 dark:text-amber-200">
-                <span className="font-bold block mb-0.5">Inspection Instructions:</span>
-                <p className="leading-relaxed">{selectedService.specialInstructions}</p>
+              <div className="p-3 rounded-2xl bg-amber-500/10 border border-amber-500/20">
+                <span className="text-[10px] font-bold uppercase text-amber-800 dark:text-amber-300 block mb-1">
+                  Provider Management Instructions
+                </span>
+                <p className="text-muted-foreground leading-relaxed">
+                  {selectedService.specialInstructions}
+                </p>
               </div>
             </div>
 
-            <div className="flex items-center justify-end gap-2 pt-2 border-t border-slate-200/40 dark:border-slate-800/40">
+            <div className="pt-2 flex justify-end gap-2">
               <button
                 type="button"
                 onClick={() => setSelectedService(null)}
-                className="px-4 py-2 text-xs font-semibold rounded-xl bg-muted hover:bg-muted/80 text-foreground"
+                className="px-4 py-2 rounded-xl border border-border text-xs font-semibold hover:bg-muted"
               >
                 Close
               </button>
               <button
                 type="button"
                 onClick={() => {
-                  const s = selectedService;
+                  handleLaunchScan(selectedService);
                   setSelectedService(null);
-                  handleLaunchScan(s);
                 }}
-                className="px-4 py-2 text-xs font-semibold rounded-xl bg-amber-600 hover:bg-amber-700 text-white"
+                className="px-4 py-2 rounded-xl bg-amber-600 hover:bg-amber-700 text-white text-xs font-semibold shadow-xs"
               >
-                Start Scanning Gate
+                Launch Scanner for This Service
               </button>
             </div>
           </div>
@@ -255,4 +315,3 @@ export default function InspectorAssignedServicesPage() {
     </div>
   );
 }
-

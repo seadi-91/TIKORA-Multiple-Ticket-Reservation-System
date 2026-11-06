@@ -99,7 +99,7 @@ export default function AdminAuditLogsPage() {
       </div>
 
       {/* Desktop Filter Tabs */}
-      <div className="hidden sm:flex items-center gap-2 border-b border-slate-200/50 dark:border-slate-800/50 pb-3 overflow-x-auto no-scrollbar flex-nowrap">
+      <div className="hidden sm:flex items-center gap-1.5 border-b border-slate-200/50 dark:border-slate-800/50 pb-2 overflow-x-auto no-scrollbar flex-nowrap">
         {[
           { label: "All Audit Events", value: "ALL", count: auditLogs.length },
           {
@@ -121,15 +121,15 @@ export default function AdminAuditLogsPage() {
           <button
             key={tab.value}
             onClick={() => setSeverityFilter(tab.value)}
-            className={`px-3.5 py-1.5 text-xs font-semibold rounded-xl transition-all flex items-center gap-2 shrink-0 ${
+            className={`px-2 py-0.5 text-micro font-medium rounded-md transition-all flex items-center gap-1 shrink-0 cursor-pointer ${
               severityFilter === tab.value
-                ? "bg-amber-600 text-white shadow-sm"
+                ? "bg-amber-600 text-white shadow-xs font-semibold"
                 : "bg-slate-100 dark:bg-slate-800/60 hover:bg-slate-200 dark:hover:bg-slate-800 text-muted-foreground hover:text-foreground"
             }`}
           >
             <span>{tab.label}</span>
             <span
-              className={`px-1.5 py-0.2 rounded-full text-[10px] ${
+              className={`px-1.5 py-0.2 rounded-full text-nano font-bold ${
                 severityFilter === tab.value ? "bg-white/20 text-white" : "bg-muted-foreground/15 text-muted-foreground"
               }`}
             >
