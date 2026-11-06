@@ -1,0 +1,740 @@
+
+// use prisma-8
+
+// ==========================================
+// 1. AUTHENTICATION AND USER MANAGEMENT
+// ==========================================
+
+model User {
+  id              Int       @id @default(autoincrement())
+  firstName       String
+  lastName        String
+  email           String    @unique
+  phone           String?   @unique
+  username        String?   @unique
+  password        String
+  profileImage    String?
+  isEmailVerified Boolean   @default(false)
+  isPhoneVerified Boolean   @default(false)
+  isActive        Boolean   @default(true)
+  createdAt       DateTime  @default(now()) @onCreate(now())
+  updatedAt       temporal.UpdatedAt
+
+  userRoles       UserRole[]
+  providerMembers ProviderMember[]
+  refreshTokens   RefreshToken[]
+  passwordResets  PasswordReset[]
+  bookings        Booking[]
+  notifications   Notification[]
+  reviews         Review[]
+  supportTickets  SupportTicket[]
+  auditLogs       AuditLog[]
+}
+
+model Role {
+  id              Int       @id @default(autoincrement())
+  name            String    @unique
+  description     String?
+  createdAt       DateTime  @default(now()) @onCreate(now())
+
+  userRoles       UserRole[]
+  rolePermissions RolePermission[]
+}
+
+model Permission {
+  id              Int       @id @default(autoincrement())
+  name            String    @unique
+  description     String?
+  resource        String
+  action          String
+  createdAt       DateTime  @default(now()) @onCreate(now())
+
+  rolePermissions RolePermission[]
+}
+
+model UserRole {
+  userId Int
+  roleId Int
+
+  user User @relation(fields: [userId], references: [id])
+  role Role @relation(fields: [roleId], references: [id])
+
+  @@id([userId, roleId])
+}
+
+model RolePermission {
+  roleId       Int
+  permissionId Int
+
+  role       Role       @relation(fields: [roleId], references: [id])
+  permission Permission @relation(fields: [permissionId], references: [id])
+
+  @@id([roleId, permissionId])
+}
+
+model RefreshToken {
+  id        Int      @id @default(autoincrement())
+  tokenHash String   @unique
+  userId    Int
+  expiresAt DateTime
+  revokedAt DateTime?
+  createdAt DateTime @default(now()) @onCreate(now())
+
+  user User @relation(fields: [userId], references: [id])
+}
+
+model PasswordReset {
+  id        Int      @id @default(autoincrement())
+  userId    Int
+  otpHash   String
+  expiresAt DateTime
+  usedAt    DateTime?
+  createdAt DateTime @default(now()) @onCreate(now())
+
+  user User @relation(fields: [userId], references: [id])
+}
+
+// ==========================================
+// 2. PROVIDER AND ORGANIZATION MANAGEMENT
+// ==========================================
+
+model Provider {
+  id             Int      @id @default(autoincrement())
+  name           String
+  slug           String   @unique
+  description    String?
+  email          String
+  phone          String
+  logo           String?
+  address        String?
+  city           String?
+  country        String   @default("Ethiopia")
+  providerType   String
+  tinNumber      String?
+  licenseNumber  String?
+  verificationStatus String @default("PENDING")
+  isActive       Boolean  @default(true)
+  createdAt      DateTime @default(now()) @onCreate(now())
+  updatedAt      temporal.UpdatedAt
+
+  members        ProviderMember[]
+  documents      ProviderDocument[]
+  offerings      TicketOffering[]
+  buses          Bus[]
+  routes         BusRoute[]
+  venues         EventVenue[]
+  events         Event[]
+  cinemas        Cinema[]
+  stadiums       Stadium[]
+  bookings       Booking[]
+  payouts        ProviderPayout[]
+}
+
+model ProviderMember {
+  id         Int      @id @default(autoincrement())
+  providerId Int
+  userId     Int
+  position   String?
+  status     String   @default("ACTIVE")
+  joinedAt   DateTime @default(now()) @onCreate(now())
+
+  provider Provider @relation(fields: [providerId], references: [id])
+  user     User     @relation(fields: [userId], references: [id])
+
+  @@unique([providerId, userId])
+}
+
+model ProviderDocument {
+  id         Int      @id @default(autoincrement())
+  providerId Int
+  documentType String
+  fileUrl    String
+  status     String   @default("PENDING")
+  reviewedAt DateTime?
+  createdAt  DateTime @default(now()) @onCreate(now())
+
+  provider Provider @relation(fields: [providerId], references: [id])
+}
+
+// ==========================================
+// 3. TICKET CATEGORIES AND COMMON INVENTORY
+// ==========================================
+
+model TicketCategory {
+  id          Int      @id @default(autoincrement())
+  name        String   @unique
+  slug        String   @unique
+  description String?
+  icon        String?
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now()) @onCreate(now())
+
+  offerings TicketOffering[]
+}
+
+model TicketOffering {
+  id          Int      @id @default(autoincrement())
+  providerId  Int
+  categoryId  Int
+  title       String
+  description String?
+  image       String?
+  status      String   @default("DRAFT")
+  startDate   DateTime?
+  endDate     DateTime?
+  createdAt   DateTime @default(now()) @onCreate(now())
+  updatedAt   temporal.UpdatedAt
+
+  provider  Provider       @relation(fields: [providerId], references: [id])
+  category  TicketCategory @relation(fields: [categoryId], references: [id])
+  prices    TicketPrice[]
+  inventory TicketInventory[]
+  bookingItems BookingItem[]
+  busTrip   BusTrip?
+  event     Event?
+  match     Match?
+  screening Screening?
+  reviews   Review[]
+
+  @@index([providerId, status])
+  @@index([categoryId, status])
+}
+
+model TicketPrice {
+  id          Int      @id @default(autoincrement())
+  offeringId  Int
+  name        String
+  description String?
+  price       Float
+  currency    String   @default("ETB")
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now()) @onCreate(now())
+
+  offering TicketOffering @relation(fields: [offeringId], references: [id])
+}
+
+model TicketInventory {
+  id             Int      @id @default(autoincrement())
+  offeringId     Int
+  totalQuantity  Int
+  availableQuantity Int
+  reservedQuantity Int    @default(0)
+  soldQuantity   Int      @default(0)
+  updatedAt      temporal.UpdatedAt
+
+  offering TicketOffering @relation(fields: [offeringId], references: [id])
+
+  @@unique([offeringId])
+}
+
+// ==========================================
+// 4. BUS RESERVATION MANAGEMENT
+// ==========================================
+
+model Bus {
+  id             Int      @id @default(autoincrement())
+  providerId     Int
+  plateNumber    String   @unique
+  busName        String?
+  busType        String
+  manufacturer   String?
+  model          String?
+  totalSeats     Int
+  isActive       Boolean  @default(true)
+  createdAt      DateTime @default(now()) @onCreate(now())
+
+  provider Provider  @relation(fields: [providerId], references: [id])
+  seats    BusSeat[]
+  trips    BusTrip[]
+}
+
+model BusSeat {
+  id         Int      @id @default(autoincrement())
+  busId      Int
+  seatNumber String
+  seatType   String   @default("STANDARD")
+  isActive   Boolean  @default(true)
+
+  bus Bus @relation(fields: [busId], references: [id])
+  reservations SeatReservation[]
+
+  @@unique([busId, seatNumber])
+}
+
+model BusRoute {
+  id             Int      @id @default(autoincrement())
+  providerId     Int
+  routeName      String?
+  origin         String
+  destination    String
+  estimatedDuration Int?
+  distanceKm     Float?
+  isActive       Boolean  @default(true)
+  createdAt      DateTime @default(now()) @onCreate(now())
+
+  provider Provider @relation(fields: [providerId], references: [id])
+  stops    RouteStop[]
+  trips    BusTrip[]
+}
+
+model BusStop {
+  id        Int      @id @default(autoincrement())
+  name      String
+  city      String
+  address   String?
+  latitude  Float?
+  longitude Float?
+
+  routeStops RouteStop[]
+}
+
+model RouteStop {
+  id         Int      @id @default(autoincrement())
+  routeId    Int
+  stopId     Int
+  stopOrder  Int
+  arrivalOffset Int?
+  departureOffset Int?
+
+  route BusRoute @relation(fields: [routeId], references: [id])
+  stop  BusStop  @relation(fields: [stopId], references: [id])
+
+  @@unique([routeId, stopOrder])
+  @@unique([routeId, stopId])
+}
+
+model BusTrip {
+  id          Int      @id @default(autoincrement())
+  offeringId  Int      @unique
+  busId       Int
+  routeId     Int
+  departureAt DateTime
+  arrivalAt   DateTime?
+  status      String   @default("SCHEDULED")
+  createdAt   DateTime @default(now()) @onCreate(now())
+
+  offering TicketOffering @relation(fields: [offeringId], references: [id])
+  bus      Bus            @relation(fields: [busId], references: [id])
+  route    BusRoute       @relation(fields: [routeId], references: [id])
+}
+
+// ==========================================
+// 5. EVENT AND CONCERT MANAGEMENT
+// ==========================================
+
+model EventVenue {
+  id          Int      @id @default(autoincrement())
+  providerId  Int
+  name        String
+  address     String
+  city        String
+  capacity    Int?
+  description String?
+  createdAt   DateTime @default(now()) @onCreate(now())
+
+  provider Provider @relation(fields: [providerId], references: [id])
+  events   Event[]
+}
+
+model Event {
+  id          Int      @id @default(autoincrement())
+  offeringId  Int      @unique
+  providerId  Int
+  venueId     Int
+  eventType   String
+  organizer   String?
+  createdAt   DateTime @default(now()) @onCreate(now())
+
+  offering TicketOffering @relation(fields: [offeringId], references: [id])
+  provider Provider       @relation(fields: [providerId], references: [id])
+  venue    EventVenue     @relation(fields: [venueId], references: [id])
+  sessions EventSession[]
+  ticketTypes EventTicketType[]
+}
+
+model EventSession {
+  id        Int      @id @default(autoincrement())
+  eventId   Int
+  startTime DateTime
+  endTime   DateTime?
+  status    String   @default("SCHEDULED")
+
+  event Event @relation(fields: [eventId], references: [id])
+}
+
+model EventTicketType {
+  id          Int      @id @default(autoincrement())
+  eventId     Int
+  name        String
+  description String?
+  price       Float
+  quantity    Int
+  available   Int
+  currency    String   @default("ETB")
+
+  event Event @relation(fields: [eventId], references: [id])
+}
+
+// ==========================================
+// 6. SPORTS TICKET MANAGEMENT
+// ==========================================
+
+model Sport {
+  id          Int      @id @default(autoincrement())
+  name        String   @unique
+  description String?
+
+  competitions Competition[]
+}
+
+model Team {
+  id          Int      @id @default(autoincrement())
+  name        String
+  shortName   String?
+  logo        String?
+  city        String?
+
+  homeMatches Match[] @relation("HomeTeam")
+  awayMatches Match[] @relation("AwayTeam")
+}
+
+model Competition {
+  id          Int      @id @default(autoincrement())
+  sportId     Int
+  name        String
+  season      String?
+  description String?
+
+  sport Sport  @relation(fields: [sportId], references: [id])
+  matches Match[]
+}
+
+model Stadium {
+  id          Int      @id @default(autoincrement())
+  providerId  Int
+  name        String
+  address     String
+  city        String
+  capacity    Int?
+
+  provider Provider        @relation(fields: [providerId], references: [id])
+  sections StadiumSection[]
+  matches  Match[]
+}
+
+model StadiumSection {
+  id          Int      @id @default(autoincrement())
+  stadiumId   Int
+  name        String
+  capacity    Int
+  sectionType String?
+
+  stadium Stadium @relation(fields: [stadiumId], references: [id])
+}
+
+model Match {
+  id            Int      @id @default(autoincrement())
+  offeringId    Int      @unique
+  competitionId Int
+  stadiumId     Int
+  homeTeamId    Int
+  awayTeamId    Int
+  matchDate     DateTime
+  status        String   @default("SCHEDULED")
+
+  offering    TicketOffering @relation(fields: [offeringId], references: [id])
+  competition Competition   @relation(fields: [competitionId], references: [id])
+  stadium     Stadium       @relation(fields: [stadiumId], references: [id])
+  homeTeam    Team          @relation("HomeTeam", fields: [homeTeamId], references: [id])
+  awayTeam    Team          @relation("AwayTeam", fields: [awayTeamId], references: [id])
+}
+
+// ==========================================
+// 7. CINEMA MANAGEMENT
+// ==========================================
+
+model Movie {
+  id          Int      @id @default(autoincrement())
+  title       String
+  description String?
+  genre       String?
+  duration    Int
+  language    String?
+  poster      String?
+  releaseDate DateTime?
+  screenings  Screening[]
+}
+
+model Cinema {
+  id          Int      @id @default(autoincrement())
+  providerId  Int
+  name        String
+  address     String
+  city        String
+
+  provider Provider     @relation(fields: [providerId], references: [id])
+  halls    CinemaHall[]
+}
+
+model CinemaHall {
+  id        Int      @id @default(autoincrement())
+  cinemaId  Int
+  name      String
+  capacity  Int
+
+  cinema Cinema       @relation(fields: [cinemaId], references: [id])
+  seats  CinemaSeat[]
+  screenings Screening[]
+}
+
+model CinemaSeat {
+  id          Int      @id @default(autoincrement())
+  hallId      Int
+  seatNumber  String
+  seatType    String   @default("STANDARD")
+  isActive    Boolean  @default(true)
+
+  hall CinemaHall @relation(fields: [hallId], references: [id])
+  reservations SeatReservation[]
+
+  @@unique([hallId, seatNumber])
+}
+
+model Screening {
+  id          Int      @id @default(autoincrement())
+  offeringId  Int      @unique
+  movieId     Int
+  hallId      Int
+  startTime   DateTime
+  endTime     DateTime?
+  status      String   @default("SCHEDULED")
+
+  offering TicketOffering @relation(fields: [offeringId], references: [id])
+  movie    Movie          @relation(fields: [movieId], references: [id])
+  hall     CinemaHall     @relation(fields: [hallId], references: [id])
+}
+
+// ==========================================
+// 8. BOOKING AND RESERVATION MANAGEMENT
+// ==========================================
+
+model Booking {
+  id             Int      @id @default(autoincrement())
+  bookingNumber  String   @unique
+  userId         Int
+  providerId     Int?
+  subtotal       Float
+  discount       Float    @default(0)
+  serviceFee     Float    @default(0)
+  totalAmount    Float
+  currency       String   @default("ETB")
+  status         String   @default("PENDING")
+  expiresAt      DateTime?
+  confirmedAt    DateTime?
+  createdAt      DateTime @default(now()) @onCreate(now())
+  updatedAt      temporal.UpdatedAt
+
+  user        User       @relation(fields: [userId], references: [id])
+  provider    Provider?  @relation(fields: [providerId], references: [id])
+  items       BookingItem[]
+  payments    Payment[]
+  refunds     Refund[]
+}
+
+model BookingItem {
+  id          Int      @id @default(autoincrement())
+  bookingId   Int
+  offeringId  Int
+  quantity    Int
+  unitPrice   Float
+  totalPrice  Float
+  createdAt   DateTime @default(now()) @onCreate(now())
+
+  booking  Booking        @relation(fields: [bookingId], references: [id])
+  offering TicketOffering @relation(fields: [offeringId], references: [id])
+  passengers Passenger[]
+  tickets   Ticket[]
+  reservations SeatReservation[]
+}
+
+model Passenger {
+  id            Int      @id @default(autoincrement())
+  bookingItemId Int
+  fullName      String
+  email         String?
+  phone         String?
+  identityNumber String?
+  createdAt     DateTime @default(now()) @onCreate(now())
+
+  bookingItem BookingItem @relation(fields: [bookingItemId], references: [id])
+}
+
+model SeatReservation {
+  id            Int      @id @default(autoincrement())
+  bookingItemId Int
+  busSeatId     Int?
+  cinemaSeatId  Int?
+  status        String   @default("HELD")
+  expiresAt     DateTime?
+  createdAt     DateTime @default(now()) @onCreate(now())
+
+  bookingItem BookingItem @relation(fields: [bookingItemId], references: [id])
+  busSeat     BusSeat?    @relation(fields: [busSeatId], references: [id])
+  cinemaSeat  CinemaSeat? @relation(fields: [cinemaSeatId], references: [id])
+
+  @@index([busSeatId, status])
+  @@index([cinemaSeatId, status])
+}
+
+// ==========================================
+// 9. PAYMENT AND REFUND MANAGEMENT
+// ==========================================
+
+model Payment {
+  id                Int      @id @default(autoincrement())
+  bookingId         Int
+  transactionNumber String   @unique
+  paymentMethod     String
+  paymentProvider   String?
+  amount            Float
+  currency          String   @default("ETB")
+  status            String   @default("PENDING")
+  externalReference String?
+  paidAt            DateTime?
+  createdAt         DateTime @default(now()) @onCreate(now())
+
+  booking Booking @relation(fields: [bookingId], references: [id])
+  refunds Refund[]
+}
+
+model Refund {
+  id          Int      @id @default(autoincrement())
+  bookingId   Int
+  paymentId   Int
+  amount      Float
+  reason      String?
+  status      String   @default("REQUESTED")
+  processedAt DateTime?
+  createdAt   DateTime @default(now()) @onCreate(now())
+
+  booking Booking @relation(fields: [bookingId], references: [id])
+  payment Payment @relation(fields: [paymentId], references: [id])
+}
+
+// ==========================================
+// 10. ELECTRONIC TICKETS AND VALIDATION
+// ==========================================
+
+model Ticket {
+  id            Int      @id @default(autoincrement())
+  bookingItemId Int
+  ticketNumber  String   @unique
+  qrCode        String   @unique
+  status        String   @default("ACTIVE")
+  issuedAt      DateTime @default(now()) @onCreate(now())
+  usedAt        DateTime?
+  expiresAt     DateTime?
+
+  bookingItem BookingItem @relation(fields: [bookingItemId], references: [id])
+  validations TicketValidation[]
+}
+
+model TicketValidation {
+  id          Int      @id @default(autoincrement())
+  ticketId    Int
+  inspectorId Int
+  validationStatus String
+  location    String?
+  validatedAt DateTime @default(now()) @onCreate(now())
+
+  ticket Ticket @relation(fields: [ticketId], references: [id])
+}
+
+// ==========================================
+// 11. NOTIFICATIONS AND CUSTOMER ENGAGEMENT
+// ==========================================
+
+model Notification {
+  id        Int      @id @default(autoincrement())
+  userId    Int
+  title     String
+  message   String
+  type      String
+  isRead    Boolean  @default(false)
+  createdAt DateTime @default(now()) @onCreate(now())
+
+  user User @relation(fields: [userId], references: [id])
+}
+
+model Review {
+  id          Int      @id @default(autoincrement())
+  userId      Int
+  offeringId  Int
+  rating      Int
+  comment     String?
+  createdAt   DateTime @default(now()) @onCreate(now())
+
+  user     User           @relation(fields: [userId], references: [id])
+  offering TicketOffering @relation(fields: [offeringId], references: [id])
+
+  @@unique([userId, offeringId])
+}
+
+model SupportTicket {
+  id          Int      @id @default(autoincrement())
+  userId      Int
+  subject     String
+  description String
+  priority    String   @default("NORMAL")
+  status      String   @default("OPEN")
+  createdAt   DateTime @default(now()) @onCreate(now())
+  updatedAt   temporal.UpdatedAt
+
+  user User @relation(fields: [userId], references: [id])
+}
+
+// ==========================================
+// 12. ADMINISTRATION AND BUSINESS MANAGEMENT
+// ==========================================
+
+model AuditLog {
+  id         Int      @id @default(autoincrement())
+  userId     Int?
+  action     String
+  entityType String
+  entityId   String?
+  details    String?
+  ipAddress  String?
+  createdAt  DateTime @default(now()) @onCreate(now())
+
+  user User? @relation(fields: [userId], references: [id])
+}
+
+model PromoCode {
+  id            Int      @id @default(autoincrement())
+  code          String   @unique
+  description   String?
+  discountType  String
+  discountValue Float
+  maxDiscount   Float?
+  usageLimit    Int?
+  usedCount     Int      @default(0)
+  startsAt      DateTime?
+  expiresAt     DateTime?
+  isActive      Boolean  @default(true)
+  createdAt     DateTime @default(now()) @onCreate(now())
+}
+
+model ProviderPayout {
+  id              Int      @id @default(autoincrement())
+  providerId      Int
+  payoutReference String   @unique
+  amount          Float
+  currency        String   @default("ETB")
+  status          String   @default("PENDING")
+  paymentMethod   String?
+  paidAt          DateTime?
+  createdAt       DateTime @default(now()) @onCreate(now())
+
+  provider Provider @relation(fields: [providerId], references: [id])
+}
