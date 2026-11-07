@@ -25,31 +25,57 @@ import { BookingSummary } from "@/components/booking/booking-summary";
 import { PaymentMethodSelector } from "@/components/payment/payment-method";
 import { BookingConfirmation } from "@/components/booking/booking-confirmation";
 import { useBookingStore } from "@/stores/booking.store";
+import { useAuthStore } from "@/stores/auth.store";
 import { formatCurrency } from "@/lib/format-currency";
 import { formatDate } from "@/lib/format-date";
 import { BookingRecord } from "@/types/booking.types";
 
 export default function SportDetailPage({ params }: { params: Promise<{ sportId: string }> }) {
   const resolvedParams = use(params);
-  const match = SportsService.getMatchById(resolvedParams.sportId) || SportsService.getAllMatches()[0];
+  const { user } = useAuthStore();
+  const match = SportsService.getMatchById(resolvedParams.sportId);
 
   const { addBooking } = useBookingStore();
 
-  const tiers = match.tiers || [
+  const tiers = match?.tiers || (match ? [
     { id: "bleachers", name: "Katanga Bleachers", price: match.price, available: 12000, perks: ["General Admission Stand"] },
     { id: "covered", name: "Covered Enclosure", price: match.price * 2.5, available: 3000, perks: ["Roof Cover", "Numbered Seat"] },
     { id: "vip", name: "VIP President's Tribune", price: match.price * 7.5, available: 200, perks: ["VIP Lounge", "Armchair"] },
-  ];
+  ] : []);
 
   const [selectedTier, setSelectedTier] = useState(tiers[0]);
   const [quantity, setQuantity] = useState(2);
   const [step, setStep] = useState<1 | 2 | 3>(1);
 
-  const [customerName, setCustomerName] = useState("Abebe Bekele");
-  const [customerPhone, setCustomerPhone] = useState("+251 91 123 4567");
-  const [customerEmail, setCustomerEmail] = useState("abebe.customer@tikora.et");
+  const [customerName, setCustomerName] = useState(user?.name || "");
+  const [customerPhone, setCustomerPhone] = useState(user?.phone || "");
+  const [customerEmail, setCustomerEmail] = useState(user?.email || "");
   const [paymentMethod, setPaymentMethod] = useState("TELEBIRR");
   const [confirmedBooking, setConfirmedBooking] = useState<BookingRecord | null>(null);
+
+  if (!match) {
+    return (
+      <div className="min-h-screen flex flex-col bg-[#F8FAFC] dark:bg-[#0F1117] text-[#0F172A] dark:text-[#F8FAFC]">
+        <Header />
+        <main className="flex-1 max-w-md mx-auto px-4 py-16 text-center space-y-4">
+          <div className="p-10 rounded-3xl bg-white dark:bg-[#161922] border border-dashed border-slate-200 dark:border-slate-800 space-y-3">
+            <Trophy className="w-10 h-10 text-muted-foreground/40 mx-auto" />
+            <h2 className="text-base font-bold text-foreground">Match Fixture Not Found</h2>
+            <p className="text-xs text-muted-foreground">
+              The requested sports match or stadium fixture could not be found.
+            </p>
+            <Link
+              href="/sports"
+              className="inline-block px-5 py-2.5 rounded-xl bg-amber-600 hover:bg-amber-700 text-white text-xs font-bold transition-all shadow-xs"
+            >
+              Browse Sports Fixtures
+            </Link>
+          </div>
+        </main>
+        <Footer />
+      </div>
+    );
+  }
 
   const pricing = BookingService.calculatePricing(selectedTier.price, quantity);
 

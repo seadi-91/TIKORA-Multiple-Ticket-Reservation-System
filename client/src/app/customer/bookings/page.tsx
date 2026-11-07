@@ -32,50 +32,55 @@ export default function CustomerBookingsPage() {
       subtitle="Manage all your active reservations, digital passes, past trips, and receipts."
       breadcrumbs={[{ label: "Customer Dashboard", href: "/customer" }, { label: "My Bookings" }]}
     >
-      <div className="space-y-6">
+      <div className="space-y-4">
         {/* Search & Tabs Controls */}
-        <div className="rounded-3xl bg-white dark:bg-[#161922] border border-[#E2E8F0] dark:border-slate-800 p-4 sm:p-5 shadow-xs space-y-4">
-          <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3">
+        <div className="rounded-2xl bg-white dark:bg-[#161922] border border-slate-200/80 dark:border-slate-800 p-2.5 sm:p-3 shadow-2xs">
+          <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-2.5">
             {/* Status Tabs */}
-            <div className="flex items-center gap-1.5 overflow-x-auto pb-1 sm:pb-0 scrollbar-none">
+            <div className="inline-flex items-center gap-0.5 bg-slate-100 dark:bg-slate-800/60 p-0.5 rounded-lg overflow-x-auto scrollbar-none">
               {[
-                { id: "ALL", label: `All (${bookings.length})` },
+                { id: "ALL", label: "All", count: bookings.length },
                 {
                   id: "CONFIRMED",
-                  label: `Upcoming / Active (${bookings.filter((b) => b.bookingStatus === "CONFIRMED").length})`,
+                  label: "Upcoming",
+                  count: bookings.filter((b) => b.bookingStatus === "CONFIRMED").length,
                 },
                 {
                   id: "COMPLETED",
-                  label: `Completed (${bookings.filter((b) => b.bookingStatus === "COMPLETED").length})`,
+                  label: "Completed",
+                  count: bookings.filter((b) => b.bookingStatus === "COMPLETED").length,
                 },
                 {
                   id: "CANCELLED",
-                  label: `Cancelled (${bookings.filter((b) => b.bookingStatus === "CANCELLED").length})`,
+                  label: "Cancelled",
+                  count: bookings.filter((b) => b.bookingStatus === "CANCELLED").length,
                 },
               ].map((tab) => (
                 <button
                   key={tab.id}
+                  type="button"
                   onClick={() => setActiveTab(tab.id as any)}
-                  className={`px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all shrink-0 cursor-pointer ${
+                  className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[11px] font-medium transition-all shrink-0 whitespace-nowrap cursor-pointer ${
                     activeTab === tab.id
-                      ? "bg-[#F59E0B] text-white shadow-xs"
-                      : "bg-gray-100 text-[#64748B] hover:text-[#0F172A] dark:bg-[#0C0E14] dark:text-amber-300"
+                      ? "bg-white dark:bg-slate-700 text-foreground shadow-2xs font-semibold"
+                      : "text-muted-foreground hover:text-foreground"
                   }`}
                 >
-                  {tab.label}
+                  <span>{tab.label}</span>
+                  <span className="text-[10px] font-mono opacity-75">({tab.count})</span>
                 </button>
               ))}
             </div>
 
             {/* Keyword Search */}
-            <div className="relative w-full sm:w-64">
-              <Search className="w-4 h-4 text-[#64748B] absolute left-3 top-1/2 -translate-y-1/2" />
+            <div className="relative w-full sm:w-56">
+              <Search className="w-3.5 h-3.5 text-muted-foreground absolute left-3 top-1/2 -translate-y-1/2" />
               <input
                 type="text"
                 placeholder="Search reference or event..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full pl-9 pr-3 py-1.5 rounded-xl border border-[#E2E8F0] dark:border-slate-800 bg-[#F8FAFC] dark:bg-[#0C0E14] text-[#0F172A] dark:text-white text-xs focus:outline-none focus:border-[#F59E0B]"
+                className="w-full pl-8 pr-3 py-1.5 rounded-lg border border-slate-200/80 dark:border-slate-800 bg-slate-50 dark:bg-slate-900/50 text-foreground text-xs focus:outline-none focus:ring-1 focus:ring-amber-500/30"
               />
             </div>
           </div>

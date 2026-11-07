@@ -222,11 +222,10 @@ export default function CustomerSettingsPage() {
                 <button
                   key={m.id}
                   onClick={() => setTheme(m.id as any)}
-                  className={`p-4 rounded-2xl border text-left transition-all cursor-pointer ${
-                    isSelected
+                  className={`p-4 rounded-2xl border text-left transition-all cursor-pointer ${isSelected
                       ? "border-[#F59E0B] bg-[#FFFBEB] dark:bg-amber-950/60 ring-1 ring-[#F59E0B]"
                       : "border-[#E2E8F0] dark:border-slate-800 bg-[#F8FAFC] dark:bg-[#0C0E14]"
-                  }`}
+                    }`}
                 >
                   <Icon className="w-5 h-5 text-[#F59E0B] mb-2" />
                   <h4 className="text-xs font-bold text-[#0F172A] dark:text-white">{m.label}</h4>

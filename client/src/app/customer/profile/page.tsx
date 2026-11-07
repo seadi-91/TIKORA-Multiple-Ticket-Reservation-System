@@ -4,14 +4,16 @@ import React, { useState } from "react";
 import { User, Phone, Mail, MapPin, Calendar, ShieldCheck, CheckCircle2, Award } from "lucide-react";
 import { PageContainer } from "@/components/layout/page-container";
 import { FormUpload } from "@/components/forms/form-upload";
+import { useAuthStore } from "@/stores/auth.store";
 
 export default function CustomerProfilePage() {
-  const [fullName, setFullName] = useState("Abebe Bekele");
-  const [email, setEmail] = useState("abebe.customer@tikora.et");
-  const [phone, setPhone] = useState("+251 91 123 4567");
-  const [city, setCity] = useState("Addis Ababa");
+  const { user } = useAuthStore();
+  const [fullName, setFullName] = useState(user?.name || "");
+  const [email, setEmail] = useState(user?.email || "");
+  const [phone, setPhone] = useState(user?.phone || "");
+  const [city, setCity] = useState("");
   const [gender, setGender] = useState("MALE");
-  const [dob, setDob] = useState("1994-05-18");
+  const [dob, setDob] = useState("");
   const [savedSuccess, setSavedSuccess] = useState(false);
 
   const handleSave = (e: React.FormEvent) => {

@@ -24,7 +24,7 @@ import { toast } from "sonner";
 import { ActionDropdown } from "@/components/ui/action-dropdown";
 
 export default function AdminCommissionsPage() {
-  const { categories, organizations, settings, updateSettings, updateCategoryCommission } =
+  const { categories, organizations, bookings, settings, updateSettings, updateCategoryCommission } =
     useAdminStore();
 
   const [defaultRate, setDefaultRate] = useState(settings.defaultCommissionRate);
@@ -48,42 +48,18 @@ export default function AdminCommissionsPage() {
     }
   };
 
-  // Recent commission transactions mock split
-  const sampleTransactions = [
-    {
-      id: "tx-1",
-      bookingRef: "TK-BUS-9901",
-      provider: "Selam Bus Line SC",
-      category: "BUS",
-      gross: 1300,
-      rate: 5.0,
-      platformFee: 65,
-      providerNet: 1235,
-      date: "2026-11-02 14:22",
-    },
-    {
-      id: "tx-2",
-      bookingRef: "TK-CIN-4421",
-      provider: "Century Cinema Addis",
-      category: "CINEMA",
-      gross: 250,
-      rate: 5.0,
-      platformFee: 12.5,
-      providerNet: 237.5,
-      date: "2026-11-02 16:05",
-    },
-    {
-      id: "tx-3",
-      bookingRef: "TK-SPT-1102",
-      provider: "Ethiopian Premier League (EFF)",
-      category: "SPORTS",
-      gross: 600,
-      rate: 4.5,
-      platformFee: 27,
-      providerNet: 573,
-      date: "2026-11-01 19:12",
-    },
-  ];
+  // Live commission transactions split from confirmed platform bookings
+  const commissionTransactions = bookings.map((b) => ({
+    id: `tx-${b.id}`,
+    bookingRef: b.reference,
+    provider: b.providerName,
+    category: b.category,
+    gross: b.totalAmount,
+    rate: b.totalAmount > 0 ? Number(((b.platformFee / b.totalAmount) * 100).toFixed(1)) : 5.0,
+    platformFee: b.platformFee,
+    providerNet: b.totalAmount - b.platformFee,
+    date: b.bookingDate,
+  }));
 
   return (
     <div className="space-y-6">
@@ -203,50 +179,58 @@ export default function AdminCommissionsPage() {
 
         {/* Mobile View: Commission Split Cards */}
         <div className="block sm:hidden space-y-3">
-          {sampleTransactions.map((tx) => (
-            <div
-              key={tx.id}
-              className="p-3.5 rounded-2xl bg-muted/20 border border-slate-200/50 dark:border-slate-800/50 space-y-3"
-            >
-              <div className="flex items-center justify-between gap-2">
-                <div>
-                  <span className="font-mono font-bold text-xs text-amber-600 dark:text-amber-400">
-                    {tx.bookingRef}
-                  </span>
-                  <p className="font-semibold text-xs text-foreground mt-0.5">{tx.provider}</p>
-                </div>
-                <span className="px-2 py-0.5 rounded-lg text-[10px] font-semibold bg-muted text-foreground">
-                  {tx.category}
-                </span>
-              </div>
-
-              <div className="grid grid-cols-3 gap-2 p-2 rounded-xl bg-card border border-slate-200/40 dark:border-slate-800/40 text-center">
-                <div>
-                  <span className="text-[9px] uppercase font-bold text-muted-foreground block">Gross Fare</span>
-                  <span className="text-xs font-black text-foreground font-mono mt-0.5 block truncate">
-                    {tx.gross} ETB
-                  </span>
-                </div>
-                <div className="border-x border-slate-200/40 dark:border-slate-800/40">
-                  <span className="text-[9px] uppercase font-bold text-muted-foreground block">TIKORA Fee</span>
-                  <span className="text-xs font-black text-emerald-600 dark:text-emerald-400 font-mono mt-0.5 block">
-                    +{tx.platformFee} ETB
-                  </span>
-                </div>
-                <div>
-                  <span className="text-[9px] uppercase font-bold text-muted-foreground block">Provider Net</span>
-                  <span className="text-xs font-black text-foreground font-mono mt-0.5 block truncate">
-                    {tx.providerNet} ETB
-                  </span>
-                </div>
-              </div>
-
-              <div className="flex items-center justify-between text-[10px] font-mono text-muted-foreground pt-1 border-t border-slate-200/30 dark:border-slate-800/30">
-                <span>{tx.date}</span>
-                <span className="font-bold text-amber-600 dark:text-amber-400">{tx.rate}% Rate</span>
-              </div>
+          {commissionTransactions.length === 0 ? (
+            <div className="py-12 px-4 text-center text-xs text-muted-foreground bg-muted/20 rounded-2xl border border-slate-200/50 dark:border-slate-800/50 p-6">
+              <Percent className="w-8 h-8 mx-auto mb-2 text-muted-foreground/40" />
+              <p className="font-semibold text-foreground">No commission transactions yet</p>
+              <p className="text-[11px] mt-0.5">Platform commission splits will appear here once bookings are confirmed.</p>
             </div>
-          ))}
+          ) : (
+            commissionTransactions.map((tx) => (
+              <div
+                key={tx.id}
+                className="p-3.5 rounded-2xl bg-muted/20 border border-slate-200/50 dark:border-slate-800/50 space-y-3"
+              >
+                <div className="flex items-center justify-between gap-2">
+                  <div>
+                    <span className="font-mono font-bold text-xs text-amber-600 dark:text-amber-400">
+                      {tx.bookingRef}
+                    </span>
+                    <p className="font-semibold text-xs text-foreground mt-0.5">{tx.provider}</p>
+                  </div>
+                  <span className="px-2 py-0.5 rounded-lg text-[10px] font-semibold bg-muted text-foreground">
+                    {tx.category}
+                  </span>
+                </div>
+
+                <div className="grid grid-cols-3 gap-2 p-2 rounded-xl bg-card border border-slate-200/40 dark:border-slate-800/40 text-center">
+                  <div>
+                    <span className="text-[9px] uppercase font-bold text-muted-foreground block">Gross Fare</span>
+                    <span className="text-xs font-black text-foreground font-mono mt-0.5 block truncate">
+                      {tx.gross} ETB
+                    </span>
+                  </div>
+                  <div className="border-x border-slate-200/40 dark:border-slate-800/40">
+                    <span className="text-[9px] uppercase font-bold text-muted-foreground block">TIKORA Fee</span>
+                    <span className="text-xs font-black text-emerald-600 dark:text-emerald-400 font-mono mt-0.5 block">
+                      +{tx.platformFee} ETB
+                    </span>
+                  </div>
+                  <div>
+                    <span className="text-[9px] uppercase font-bold text-muted-foreground block">Provider Net</span>
+                    <span className="text-xs font-black text-foreground font-mono mt-0.5 block truncate">
+                      {tx.providerNet} ETB
+                    </span>
+                  </div>
+                </div>
+
+                <div className="flex items-center justify-between text-[10px] font-mono text-muted-foreground pt-1 border-t border-slate-200/30 dark:border-slate-800/30">
+                  <span>{tx.date}</span>
+                  <span className="font-bold text-amber-600 dark:text-amber-400">{tx.rate}% Rate</span>
+                </div>
+              </div>
+            ))
+          )}
         </div>
 
         {/* Desktop View: Table */}
@@ -266,52 +250,62 @@ export default function AdminCommissionsPage() {
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100 dark:divide-slate-800/40">
-              {sampleTransactions.map((tx) => (
-                <tr key={tx.id} className="hover:bg-amber-500/[0.03] dark:hover:bg-amber-500/[0.06] transition-colors">
-                  <td className="px-6 py-3.5 font-mono font-bold text-amber-600 dark:text-amber-400 whitespace-nowrap">
-                    {tx.bookingRef}
-                  </td>
-                  <td className="px-4 py-3.5 font-semibold text-foreground whitespace-nowrap">{tx.provider}</td>
-                  <td className="px-4 py-3.5 whitespace-nowrap">
-                    <span className="px-2 py-0.5 rounded-lg text-[10px] font-medium bg-muted text-foreground">
-                      {tx.category}
-                    </span>
-                  </td>
-                  <td className="px-4 py-3.5 font-semibold text-foreground whitespace-nowrap">{tx.gross} ETB</td>
-                  <td className="px-4 py-3.5 font-bold text-amber-600 dark:text-amber-400 whitespace-nowrap">{tx.rate}%</td>
-                  <td className="px-4 py-3.5 font-bold text-emerald-600 dark:text-emerald-400 whitespace-nowrap">
-                    +{tx.platformFee} ETB
-                  </td>
-                  <td className="px-4 py-3.5 font-bold text-foreground whitespace-nowrap">{tx.providerNet} ETB</td>
-                  <td className="px-4 py-3.5 font-mono text-muted-foreground whitespace-nowrap">{tx.date}</td>
-                  <td className="px-6 py-3.5 text-right whitespace-nowrap w-12">
-                    <div className="flex items-center justify-end">
-                      <ActionDropdown
-                        items={[
-                          {
-                            label: "Inspect Booking",
-                            icon: <Eye className="w-3.5 h-3.5" />,
-                            href: `/admin/bookings`,
-                          },
-                          {
-                            label: "Provider Account",
-                            icon: <Building2 className="w-3.5 h-3.5" />,
-                            href: `/admin/providers?q=${encodeURIComponent(tx.provider)}`,
-                          },
-                          {
-                            label: "Copy Reference",
-                            icon: <Copy className="w-3.5 h-3.5" />,
-                            onClick: () => {
-                              navigator.clipboard.writeText(tx.bookingRef);
-                              toast.success("Booking reference copied");
-                            },
-                          },
-                        ]}
-                      />
-                    </div>
+              {commissionTransactions.length === 0 ? (
+                <tr>
+                  <td colSpan={9} className="px-6 py-12 text-center text-xs text-muted-foreground">
+                    <Percent className="w-8 h-8 mx-auto mb-2 text-muted-foreground/40" />
+                    <p className="font-semibold text-foreground">No commission transactions yet</p>
+                    <p className="text-[11px] mt-0.5">Platform commission splits will appear here once bookings are confirmed.</p>
                   </td>
                 </tr>
-              ))}
+              ) : (
+                commissionTransactions.map((tx) => (
+                  <tr key={tx.id} className="hover:bg-amber-500/[0.03] dark:hover:bg-amber-500/[0.06] transition-colors">
+                    <td className="px-6 py-3.5 font-mono font-bold text-amber-600 dark:text-amber-400 whitespace-nowrap">
+                      {tx.bookingRef}
+                    </td>
+                    <td className="px-4 py-3.5 font-semibold text-foreground whitespace-nowrap">{tx.provider}</td>
+                    <td className="px-4 py-3.5 whitespace-nowrap">
+                      <span className="px-2 py-0.5 rounded-lg text-[10px] font-medium bg-muted text-foreground">
+                        {tx.category}
+                      </span>
+                    </td>
+                    <td className="px-4 py-3.5 font-semibold text-foreground whitespace-nowrap">{tx.gross} ETB</td>
+                    <td className="px-4 py-3.5 font-bold text-amber-600 dark:text-amber-400 whitespace-nowrap">{tx.rate}%</td>
+                    <td className="px-4 py-3.5 font-bold text-emerald-600 dark:text-emerald-400 whitespace-nowrap">
+                      +{tx.platformFee} ETB
+                    </td>
+                    <td className="px-4 py-3.5 font-bold text-foreground whitespace-nowrap">{tx.providerNet} ETB</td>
+                    <td className="px-4 py-3.5 font-mono text-muted-foreground whitespace-nowrap">{tx.date}</td>
+                    <td className="px-6 py-3.5 text-right whitespace-nowrap w-12">
+                      <div className="flex items-center justify-end">
+                        <ActionDropdown
+                          items={[
+                            {
+                              label: "Inspect Booking",
+                              icon: <Eye className="w-3.5 h-3.5" />,
+                              href: `/admin/bookings`,
+                            },
+                            {
+                              label: "Provider Account",
+                              icon: <Building2 className="w-3.5 h-3.5" />,
+                              href: `/admin/providers?q=${encodeURIComponent(tx.provider)}`,
+                            },
+                            {
+                              label: "Copy Reference",
+                              icon: <Copy className="w-3.5 h-3.5" />,
+                              onClick: () => {
+                                navigator.clipboard.writeText(tx.bookingRef);
+                                toast.success("Booking reference copied");
+                              },
+                            },
+                          ]}
+                        />
+                      </div>
+                    </td>
+                  </tr>
+                ))
+              )}
             </tbody>
           </table>
         </div>

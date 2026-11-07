@@ -231,135 +231,153 @@ export default function ProviderBusHubPage() {
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100 dark:divide-slate-800/50 text-xs">
-              {busSchedules.map((sch) => (
-                <tr
-                  key={sch.id}
-                  className="hover:bg-slate-50/70 dark:hover:bg-slate-800/30 transition-colors"
-                >
-                  <td className="py-3 px-4 font-bold text-[#0F172A] dark:text-white">
-                    {sch.routeTitle}
-                  </td>
-                  <td className="py-3 px-4">
-                    <span className="font-semibold text-slate-700 dark:text-slate-300">
-                      {sch.departureTime}
-                    </span>
-                    <span className="text-[10px] text-slate-400 block">{sch.departureDate}</span>
-                  </td>
-                  <td className="py-3 px-4">
-                    <span className="font-mono text-xs font-bold text-slate-800 dark:text-slate-200">
-                      {sch.busPlateNumber}
-                    </span>
-                    <span className="text-[10px] text-slate-400 block">{sch.busType}</span>
-                  </td>
-                  <td className="py-3 px-4">
-                    <span className="text-slate-700 dark:text-slate-300 font-medium">
-                      {sch.driverName}
-                    </span>
-                    <span className="text-[10px] text-slate-400 block">{sch.driverPhone}</span>
-                  </td>
-                  <td className="py-3 px-4">
-                    <span className="font-bold text-[#B45309] dark:text-amber-400">
-                      {sch.availableSeats}
-                    </span>
-                    <span className="text-slate-400"> / {sch.totalSeats} seats</span>
-                  </td>
-                  <td className="py-3 px-4">
-                    <span
-                      className={`text-[10px] font-bold px-2.5 py-0.5 rounded-full inline-block ${
-                        sch.status === "BOARDING"
-                          ? "bg-amber-500/10 text-amber-700 dark:text-amber-400"
-                          : sch.status === "SCHEDULED"
-                          ? "bg-emerald-500/10 text-emerald-700 dark:text-emerald-400"
-                          : "bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-400"
-                      }`}
-                    >
-                      {sch.status}
-                    </span>
-                  </td>
-                  <td className="py-3 px-4 text-right">
-                    <ActionDropdown
-                      items={[
-                        {
-                          label: "View Schedule",
-                          icon: <Eye className="w-3.5 h-3.5" />,
-                          href: `/provider/bus/schedules`,
-                        },
-                        {
-                          label: "Copy Plate Number",
-                          icon: <Copy className="w-3.5 h-3.5" />,
-                          onClick: () => handleCopy(sch.busPlateNumber, "Plate number"),
-                        },
-                      ]}
-                    />
+              {busSchedules.length === 0 ? (
+                <tr>
+                  <td colSpan={7} className="py-12 px-4 text-center text-xs text-muted-foreground">
+                    <Bus className="w-8 h-8 mx-auto mb-2 text-muted-foreground/40" />
+                    <p className="font-semibold text-foreground">No departures scheduled today</p>
+                    <p className="text-[11px] mt-0.5">Click &quot;New Schedule&quot; above to schedule coach trips.</p>
                   </td>
                 </tr>
-              ))}
+              ) : (
+                busSchedules.map((sch) => (
+                  <tr
+                    key={sch.id}
+                    className="hover:bg-slate-50/70 dark:hover:bg-slate-800/30 transition-colors"
+                  >
+                    <td className="py-3 px-4 font-bold text-[#0F172A] dark:text-white">
+                      {sch.routeTitle}
+                    </td>
+                    <td className="py-3 px-4">
+                      <span className="font-semibold text-slate-700 dark:text-slate-300">
+                        {sch.departureTime}
+                      </span>
+                      <span className="text-[10px] text-slate-400 block">{sch.departureDate}</span>
+                    </td>
+                    <td className="py-3 px-4">
+                      <span className="font-mono text-xs font-bold text-slate-800 dark:text-slate-200">
+                        {sch.busPlateNumber}
+                      </span>
+                      <span className="text-[10px] text-slate-400 block">{sch.busType}</span>
+                    </td>
+                    <td className="py-3 px-4">
+                      <span className="text-slate-700 dark:text-slate-300 font-medium">
+                        {sch.driverName}
+                      </span>
+                      <span className="text-[10px] text-slate-400 block">{sch.driverPhone}</span>
+                    </td>
+                    <td className="py-3 px-4">
+                      <span className="font-bold text-[#B45309] dark:text-amber-400">
+                        {sch.availableSeats}
+                      </span>
+                      <span className="text-slate-400"> / {sch.totalSeats} seats</span>
+                    </td>
+                    <td className="py-3 px-4">
+                      <span
+                        className={`text-[10px] font-bold px-2.5 py-0.5 rounded-full inline-block ${
+                          sch.status === "BOARDING"
+                            ? "bg-amber-500/10 text-amber-700 dark:text-amber-400"
+                            : sch.status === "SCHEDULED"
+                            ? "bg-emerald-500/10 text-emerald-700 dark:text-emerald-400"
+                            : "bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-400"
+                        }`}
+                      >
+                        {sch.status}
+                      </span>
+                    </td>
+                    <td className="py-3 px-4 text-right">
+                      <ActionDropdown
+                        items={[
+                          {
+                            label: "View Schedule",
+                            icon: <Eye className="w-3.5 h-3.5" />,
+                            href: `/provider/bus/schedules`,
+                          },
+                          {
+                            label: "Copy Plate Number",
+                            icon: <Copy className="w-3.5 h-3.5" />,
+                            onClick: () => handleCopy(sch.busPlateNumber, "Plate number"),
+                          },
+                        ]}
+                      />
+                    </td>
+                  </tr>
+                ))
+              )}
             </tbody>
           </table>
         </div>
 
         {/* Mobile View: High-End Trip Cards */}
         <div className="block md:hidden p-3 space-y-2.5">
-          {busSchedules.map((sch) => (
-            <div
-              key={sch.id}
-              className="p-3.5 rounded-xl bg-slate-50/70 dark:bg-slate-800/30 border border-slate-200/40 dark:border-slate-800/40 space-y-2.5"
-            >
-              <div className="flex items-center justify-between gap-2">
-                <span className="font-bold text-xs text-[#0F172A] dark:text-white">
-                  {sch.routeTitle}
-                </span>
-                <span
-                  className={`text-[9px] font-bold px-2 py-0.5 rounded-full ${
-                    sch.status === "BOARDING"
-                      ? "bg-amber-500/10 text-amber-700 dark:text-amber-400"
-                      : sch.status === "SCHEDULED"
-                      ? "bg-emerald-500/10 text-emerald-700 dark:text-emerald-400"
-                      : "bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-400"
-                  }`}
-                >
-                  {sch.status}
-                </span>
-              </div>
-
-              <div className="grid grid-cols-2 gap-2 text-[11px] text-slate-500 dark:text-slate-400">
-                <div>
-                  <span className="block text-[9px] uppercase font-bold text-slate-400">Departure</span>
-                  <span className="font-semibold text-slate-700 dark:text-slate-200">{sch.departureTime}</span>
-                </div>
-                <div>
-                  <span className="block text-[9px] uppercase font-bold text-slate-400">Coach / Plate</span>
-                  <span className="font-mono font-bold text-slate-700 dark:text-slate-200">{sch.busPlateNumber}</span>
-                </div>
-                <div>
-                  <span className="block text-[9px] uppercase font-bold text-slate-400">Driver</span>
-                  <span>{sch.driverName}</span>
-                </div>
-                <div>
-                  <span className="block text-[9px] uppercase font-bold text-slate-400">Seats Available</span>
-                  <span className="font-bold text-[#B45309] dark:text-amber-400">{sch.availableSeats}</span>
-                  <span className="text-[10px]"> / {sch.totalSeats}</span>
-                </div>
-              </div>
-
-              <div className="flex items-center justify-end pt-2 border-t border-slate-200/40 dark:border-slate-800/40">
-                <ActionDropdown
-                  items={[
-                    {
-                      label: "View Schedule",
-                      icon: <Eye className="w-3.5 h-3.5" />,
-                      href: `/provider/bus/schedules`,
-                    },
-                    {
-                      label: "Copy Plate Number",
-                      icon: <Copy className="w-3.5 h-3.5" />,
-                      onClick: () => handleCopy(sch.busPlateNumber, "Plate number"),
-                    },
-                  ]}
-                />
-              </div>
+          {busSchedules.length === 0 ? (
+            <div className="py-10 text-center text-xs text-muted-foreground">
+              <Bus className="w-8 h-8 mx-auto mb-2 text-muted-foreground/40" />
+              <p className="font-semibold text-foreground">No departures scheduled</p>
+              <p className="text-[11px] mt-0.5">Click &quot;New Schedule&quot; to assign departures.</p>
             </div>
-          ))}
+          ) : (
+            busSchedules.map((sch) => (
+              <div
+                key={sch.id}
+                className="p-3.5 rounded-xl bg-slate-50/70 dark:bg-slate-800/30 border border-slate-200/40 dark:border-slate-800/40 space-y-2.5"
+              >
+                <div className="flex items-center justify-between gap-2">
+                  <span className="font-bold text-xs text-[#0F172A] dark:text-white">
+                    {sch.routeTitle}
+                  </span>
+                  <span
+                    className={`text-[9px] font-bold px-2 py-0.5 rounded-full ${
+                      sch.status === "BOARDING"
+                        ? "bg-amber-500/10 text-amber-700 dark:text-amber-400"
+                        : sch.status === "SCHEDULED"
+                        ? "bg-emerald-500/10 text-emerald-700 dark:text-emerald-400"
+                        : "bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-400"
+                    }`}
+                  >
+                    {sch.status}
+                  </span>
+                </div>
+
+                <div className="grid grid-cols-2 gap-2 text-[11px] text-slate-500 dark:text-slate-400">
+                  <div>
+                    <span className="block text-[9px] uppercase font-bold text-slate-400">Departure</span>
+                    <span className="font-semibold text-slate-700 dark:text-slate-200">{sch.departureTime}</span>
+                  </div>
+                  <div>
+                    <span className="block text-[9px] uppercase font-bold text-slate-400">Coach / Plate</span>
+                    <span className="font-mono font-bold text-slate-700 dark:text-slate-200">{sch.busPlateNumber}</span>
+                  </div>
+                  <div>
+                    <span className="block text-[9px] uppercase font-bold text-slate-400">Driver</span>
+                    <span>{sch.driverName}</span>
+                  </div>
+                  <div>
+                    <span className="block text-[9px] uppercase font-bold text-slate-400">Seats Available</span>
+                    <span className="font-bold text-[#B45309] dark:text-amber-400">{sch.availableSeats}</span>
+                    <span className="text-[10px]"> / {sch.totalSeats}</span>
+                  </div>
+                </div>
+
+                <div className="flex items-center justify-end pt-2 border-t border-slate-200/40 dark:border-slate-800/40">
+                  <ActionDropdown
+                    items={[
+                      {
+                        label: "View Schedule",
+                        icon: <Eye className="w-3.5 h-3.5" />,
+                        href: `/provider/bus/schedules`,
+                      },
+                      {
+                        label: "Copy Plate Number",
+                        icon: <Copy className="w-3.5 h-3.5" />,
+                        onClick: () => handleCopy(sch.busPlateNumber, "Plate number"),
+                      },
+                    ]}
+                  />
+                </div>
+              </div>
+            ))
+          )}
         </div>
       </div>
     </div>

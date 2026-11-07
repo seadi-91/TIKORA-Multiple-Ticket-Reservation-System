@@ -30,60 +30,14 @@ import {
 
 export type PayoutTransaction = SettlementReceiptData;
 
-export const INITIAL_TRANSACTIONS: PayoutTransaction[] = [
-  {
-    id: "tx-1",
-    reference: "POT-2026-1102",
-    date: "2026-11-01 16:30",
-    bankName: "Commercial Bank of Ethiopia (CBE)",
-    accountNumber: "1000189429184",
-    amount: 150000,
-    fee: 0,
-    netPayout: 150000,
-    status: "COMPLETED",
-    grossSales: 157895,
-    commission: 7895,
-    transactionRef: "CBE-FT2630591823",
-    period: "Oct 25, 2026 - Oct 31, 2026",
-  },
-  {
-    id: "tx-2",
-    reference: "POT-2026-1025",
-    date: "2026-10-25 11:15",
-    bankName: "Commercial Bank of Ethiopia (CBE)",
-    accountNumber: "1000189429184",
-    amount: 182600,
-    fee: 0,
-    netPayout: 182600,
-    status: "COMPLETED",
-    grossSales: 192210,
-    commission: 9610,
-    transactionRef: "CBE-FT2629881109",
-    period: "Oct 18, 2026 - Oct 24, 2026",
-  },
-  {
-    id: "tx-3",
-    reference: "POT-2026-1018",
-    date: "2026-10-18 09:40",
-    bankName: "Commercial Bank of Ethiopia (CBE)",
-    accountNumber: "1000189429184",
-    amount: 124500,
-    fee: 0,
-    netPayout: 124500,
-    status: "COMPLETED",
-    grossSales: 131050,
-    commission: 6550,
-    transactionRef: "CBE-FT2629124401",
-    period: "Oct 11, 2026 - Oct 17, 2026",
-  },
-];
+export const INITIAL_TRANSACTIONS: PayoutTransaction[] = [];
 
 export default function ProviderPaymentsPage() {
   const { organization, requestPayout } = useProviderStore();
   const [transactions, setTransactions] = useState<PayoutTransaction[]>(INITIAL_TRANSACTIONS);
   const [showPayoutModal, setShowPayoutModal] = useState(false);
   const [selectedReceiptTx, setSelectedReceiptTx] = useState<PayoutTransaction | null>(null);
-  const [payoutAmount, setPayoutAmount] = useState<number>(50000);
+  const [payoutAmount, setPayoutAmount] = useState<number>(0);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const availableBalance = organization.stats.availableBalance;

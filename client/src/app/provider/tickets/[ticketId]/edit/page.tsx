@@ -18,10 +18,10 @@ import { toast } from "sonner";
 export default function EditTicketPage() {
   const params = useParams();
   const router = useRouter();
-  const ticketId = (params?.ticketId as string) || "bus-1";
+  const ticketId = (params?.ticketId as string) || "";
 
   const allTickets = TicketService.getAllTickets();
-  const ticket = allTickets.find((t) => t.id === ticketId) || allTickets[0];
+  const ticket = allTickets.find((t) => t.id === ticketId);
 
   const [formData, setFormData] = useState({
     title: ticket?.title || "",
@@ -35,12 +35,7 @@ export default function EditTicketPage() {
     availableSeats: ticket?.availableSeats || 8,
     status: ticket?.status || "AVAILABLE",
     badge: ticket?.badge || "Direct Express",
-    amenities: ticket?.amenities || [
-      "Free High-Speed Wi-Fi",
-      "USB Charging Ports",
-      "Dual AC System",
-      "Reclining Leather Seats",
-    ],
+    amenities: ticket?.amenities || [],
   });
 
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -66,12 +61,26 @@ export default function EditTicketPage() {
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     setIsSubmitting(true);
+    TicketService.updateTicket(ticketId, {
+      title: formData.title,
+      description: formData.description,
+      city: formData.city,
+      location: formData.location,
+      date: formData.date,
+      time: formData.time,
+      price: Number(formData.price),
+      totalSeats: Number(formData.totalSeats),
+      availableSeats: Number(formData.availableSeats),
+      status: formData.status as any,
+      badge: formData.badge,
+      amenities: formData.amenities,
+    });
 
     setTimeout(() => {
       setIsSubmitting(false);
       toast.success("Ticket listing updated successfully!");
       router.push(`/provider/tickets/${ticketId}`);
-    }, 600);
+    }, 400);
   };
 
   return (

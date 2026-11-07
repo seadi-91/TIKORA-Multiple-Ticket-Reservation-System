@@ -16,9 +16,11 @@ import {
 } from "lucide-react";
 import { CinemaService } from "@/services/cinema.service";
 import { formatCurrency } from "@/lib/format-currency";
+import { useProviderStore } from "@/stores/provider.store";
 
 export default function ProviderCinemaPage() {
   const movies = CinemaService.getAllMovies();
+  const { movieShowtimes } = useProviderStore();
 
   return (
     <div className="space-y-6">
@@ -72,7 +74,7 @@ export default function ProviderCinemaPage() {
         <div className="p-4 rounded-2xl bg-white dark:bg-[#161922] border border-[#E2E8F0] dark:border-slate-800 shadow-2xs space-y-1">
           <span className="text-[10px] uppercase font-bold text-slate-400">Laser Halls & Screens</span>
           <div className="text-xs sm:text-sm font-bold text-[#0F172A] dark:text-white">
-            4 Screens
+            {movies.length > 0 ? "4 Screens" : "0 Screens"}
           </div>
           <span className="text-[10px] text-slate-400 font-medium">IMAX 4K + Dolby Atmos</span>
         </div>
@@ -80,9 +82,9 @@ export default function ProviderCinemaPage() {
         <div className="p-4 rounded-2xl bg-white dark:bg-[#161922] border border-[#E2E8F0] dark:border-slate-800 shadow-2xs space-y-1">
           <span className="text-[10px] uppercase font-bold text-slate-400">Daily Showtimes</span>
           <div className="text-xs sm:text-sm font-bold text-[#0F172A] dark:text-white">
-            12 Screenings
+            {movieShowtimes.length} Screenings
           </div>
-          <span className="text-[10px] text-slate-400 font-medium">Morning, Matinee, Evening</span>
+          <span className="text-[10px] text-slate-400 font-medium">Scheduled runs</span>
         </div>
 
         <div className="p-4 rounded-2xl bg-white dark:bg-[#161922] border border-[#E2E8F0] dark:border-slate-800 shadow-2xs space-y-1">
@@ -112,7 +114,16 @@ export default function ProviderCinemaPage() {
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
-          {movies.map((m) => (
+          {movies.length === 0 ? (
+            <div className="col-span-full py-16 px-4 text-center text-xs text-muted-foreground">
+              <Film className="w-8 h-8 mx-auto mb-2 text-muted-foreground/40" />
+              <p className="font-semibold text-foreground text-sm">No cinema features scheduled</p>
+              <p className="text-[11px] mt-1 max-w-sm mx-auto text-muted-foreground">
+                No movie premieres are currently active in your theater catalog. Click &quot;Schedule Showtime&quot; to list a screening.
+              </p>
+            </div>
+          ) : (
+            movies.map((m) => (
             <div
               key={m.id}
               className="p-5 rounded-2xl bg-slate-50 dark:bg-slate-800/40 border border-slate-200/80 dark:border-slate-800 space-y-3 flex flex-col justify-between"
@@ -163,7 +174,8 @@ export default function ProviderCinemaPage() {
                 </Link>
               </div>
             </div>
-          ))}
+          ))
+        )}
         </div>
       </div>
     </div>

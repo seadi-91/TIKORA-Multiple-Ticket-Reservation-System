@@ -19,69 +19,86 @@ import {
 } from "lucide-react";
 import { formatCurrency } from "@/lib/format-currency";
 import { toast } from "sonner";
+import { INITIAL_BOOKINGS } from "../page";
 
 export default function BookingDetailPage() {
   const params = useParams();
-  const bookingId = (params?.bookingId as string) || "BKG-8829";
+  const bookingId = (params?.bookingId as string) || "";
 
   const [bookingStatus, setBookingStatus] = useState<"CONFIRMED" | "CHECKED_IN" | "CANCELLED">(
     "CHECKED_IN"
   );
   const [isRefunding, setIsRefunding] = useState(false);
 
-  // Booking details
-  const booking = {
-    id: bookingId,
-    reference: `TH-BUS-${bookingId.replace(/[^0-9]/g, "") || "8829"}`,
-    bookedAt: "2026-11-10 14:22 EAT",
-    customer: {
-      name: "Dawit Hailemariam",
-      phone: "+251 91 182 9182",
-      email: "dawit.h@gmail.com",
-      city: "Addis Ababa",
-      verified: true,
-      totalOrdersWithProvider: 4,
-    },
-    service: {
-      title: "Addis Ababa to Hawassa Luxury Express",
-      category: "BUS",
-      terminal: "Autobus Tera Gate 3",
-      destination: "Hawassa Piazza Main Terminal",
-      date: "Nov 15, 2026",
-      time: "06:00 AM",
-      vehicle: "Scania VIP Luxury Coach (Plate AA-3-48129)",
-      driverName: "Kassahun Girma",
-      driverPhone: "+251 91 144 8822",
-    },
-    passengers: [
-      {
-        seat: "04A",
-        name: "Dawit Hailemariam",
-        phone: "+251 91 182 9182",
-        gender: "Male",
-        idDoc: "National ID: 0948192841",
-        checkedIn: true,
-      },
-      {
-        seat: "04B",
-        name: "Tigist Alemu",
-        phone: "+251 92 344 8811",
-        gender: "Female",
-        idDoc: "National ID: 0918274619",
-        checkedIn: true,
-      },
-    ],
-    financials: {
-      unitPrice: 650,
-      quantity: 2,
-      grossTotal: 1300,
-      platformCommission: 65, // 5%
-      netEarnings: 1235,
-      paymentMethod: "Telebirr Express Checkout",
-      transactionId: "TB-98218491823",
-      paidAt: "2026-11-10 14:24 EAT",
-    },
-  };
+  const foundBooking = INITIAL_BOOKINGS.find(
+    (b) => b.id === bookingId || b.reference.toLowerCase() === bookingId.toLowerCase()
+  );
+
+  const booking = foundBooking
+    ? {
+        id: foundBooking.id,
+        reference: foundBooking.reference,
+        bookedAt: foundBooking.createdAt,
+        customer: {
+          name: foundBooking.customerName,
+          phone: foundBooking.customerPhone,
+          email: foundBooking.customerEmail,
+          city: "Addis Ababa",
+          verified: true,
+          totalOrdersWithProvider: 1,
+        },
+        service: {
+          title: foundBooking.serviceTitle,
+          category: foundBooking.category,
+          terminal: "Main Station",
+          destination: "Destination Terminal",
+          date: foundBooking.travelDate,
+          time: foundBooking.departureTime,
+          vehicle: "Standard Transport",
+          driverName: "Assigned Driver",
+          driverPhone: "+251 90 000 0000",
+        },
+        passengers: foundBooking.seats.map((seat) => ({
+          seat,
+          name: foundBooking.customerName,
+          phone: foundBooking.customerPhone,
+          gender: "Not specified",
+          idDoc: "National ID",
+          checkedIn: foundBooking.bookingStatus === "CHECKED_IN",
+        })),
+        financials: {
+          unitPrice:
+            foundBooking.seats.length > 0
+              ? Math.round(foundBooking.totalAmount / foundBooking.seats.length)
+              : foundBooking.totalAmount,
+          quantity: foundBooking.seats.length || 1,
+          grossTotal: foundBooking.totalAmount,
+          platformCommission: Math.round(foundBooking.totalAmount * 0.05),
+          netEarnings: Math.round(foundBooking.totalAmount * 0.95),
+          paymentMethod: foundBooking.paymentMethod,
+          transactionId: `TX-${foundBooking.reference}`,
+          paidAt: foundBooking.createdAt,
+        },
+      }
+    : null;
+
+  if (!booking) {
+    return (
+      <div className="p-8 text-center bg-card rounded-2xl border border-slate-200/50 dark:border-slate-800/50 max-w-md mx-auto my-12 space-y-3">
+        <Ticket className="w-10 h-10 text-muted-foreground/40 mx-auto" />
+        <p className="font-bold text-foreground text-sm">Booking record not found</p>
+        <p className="text-muted-foreground text-xs">
+          No passenger booking record matches identifier &quot;{bookingId}&quot;.
+        </p>
+        <Link
+          href="/provider/bookings"
+          className="inline-flex mt-2 px-4 py-2 text-xs font-semibold rounded-xl bg-amber-600 text-white"
+        >
+          Back to Bookings
+        </Link>
+      </div>
+    );
+  }
 
   const handleToggleBoarding = () => {
     const nextStatus = bookingStatus === "CHECKED_IN" ? "CONFIRMED" : "CHECKED_IN";

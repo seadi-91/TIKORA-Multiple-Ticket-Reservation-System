@@ -325,8 +325,14 @@ export default function InventoryManagementPage() {
             <tbody className="divide-y divide-slate-100 dark:divide-slate-800/40">
               {filteredInventory.length === 0 ? (
                 <tr>
-                  <td colSpan={9} className="py-8 text-center text-muted-foreground">
-                    No matching inventory records found.
+                  <td colSpan={9} className="py-16 text-center text-xs text-muted-foreground">
+                    <div className="w-12 h-12 rounded-2xl bg-amber-500/10 text-amber-600 flex items-center justify-center mx-auto mb-3">
+                      <Ticket className="w-6 h-6" />
+                    </div>
+                    <p className="font-bold text-foreground text-sm">No inventory records available</p>
+                    <p className="text-[11px] mt-1 max-w-sm mx-auto text-muted-foreground">
+                      No tickets or seat allocations found for {organization.name}. Create a ticket listing to populate your seat inventory matrix.
+                    </p>
                   </td>
                 </tr>
               ) : (

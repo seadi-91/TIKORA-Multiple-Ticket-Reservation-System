@@ -54,28 +54,34 @@ export default function InspectorNotificationsPage() {
       </div>
 
       {/* Filter Tabs */}
-      <div className="flex items-center gap-2">
+      <div className="inline-flex items-center gap-1 bg-slate-100 dark:bg-slate-800/60 p-1 rounded-xl">
         <button
           type="button"
           onClick={() => setFilter("ALL")}
-          className={`px-3.5 py-1.5 text-xs font-semibold rounded-xl transition-all ${
+          className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-[11px] font-semibold transition-all cursor-pointer ${
             filter === "ALL"
-              ? "bg-amber-600 text-white shadow-sm"
-              : "bg-slate-100 dark:bg-slate-800/60 text-muted-foreground hover:bg-slate-200 dark:hover:bg-slate-800"
+              ? "bg-white dark:bg-slate-700 text-foreground shadow-2xs font-bold"
+              : "text-muted-foreground hover:text-foreground"
           }`}
         >
-          All Alerts ({notifications.length})
+          <span>All</span>
+          <span className="text-[10px] px-1.5 py-0.2 rounded-full font-mono bg-slate-200/60 dark:bg-slate-600/60">
+            {notifications.length}
+          </span>
         </button>
         <button
           type="button"
           onClick={() => setFilter("UNREAD")}
-          className={`px-3.5 py-1.5 text-xs font-semibold rounded-xl transition-all ${
+          className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-[11px] font-semibold transition-all cursor-pointer ${
             filter === "UNREAD"
-              ? "bg-amber-600 text-white shadow-sm"
-              : "bg-slate-100 dark:bg-slate-800/60 text-muted-foreground hover:bg-slate-200 dark:hover:bg-slate-800"
+              ? "bg-white dark:bg-slate-700 text-foreground shadow-2xs font-bold"
+              : "text-muted-foreground hover:text-foreground"
           }`}
         >
-          Unread Only ({notifications.filter((n) => !n.isRead).length})
+          <span>Unread</span>
+          <span className="text-[10px] px-1.5 py-0.2 rounded-full font-mono bg-slate-200/60 dark:bg-slate-600/60">
+            {notifications.filter((n) => !n.isRead).length}
+          </span>
         </button>
       </div>
 

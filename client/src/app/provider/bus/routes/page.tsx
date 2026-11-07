@@ -13,6 +13,7 @@ import {
   ArrowLeft,
   X,
   Bus,
+  Route,
 } from "lucide-react";
 import { useProviderStore, BusRouteItem } from "@/stores/provider.store";
 import { formatCurrency } from "@/lib/format-currency";
@@ -146,7 +147,16 @@ export default function BusRoutesPage() {
 
       {/* Routes Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-        {filteredRoutes.map((rt) => (
+        {filteredRoutes.length === 0 ? (
+          <div className="col-span-full py-16 px-4 text-center text-xs text-muted-foreground bg-white dark:bg-[#161922] rounded-3xl border border-[#E2E8F0] dark:border-slate-800">
+            <Route className="w-8 h-8 mx-auto mb-2 text-muted-foreground/40" />
+            <p className="font-semibold text-foreground text-sm">No bus routes found</p>
+            <p className="text-[11px] mt-1 max-w-sm mx-auto text-muted-foreground">
+              No highway routes match your search or no routes have been added yet. Click &quot;Add New Route&quot; to define your bus corridors.
+            </p>
+          </div>
+        ) : (
+          filteredRoutes.map((rt) => (
           <div
             key={rt.id}
             className="rounded-3xl bg-white dark:bg-[#161922] border border-[#E2E8F0] dark:border-slate-800 p-5 shadow-2xs flex flex-col justify-between gap-4"
@@ -227,7 +237,8 @@ export default function BusRoutesPage() {
               </div>
             </div>
           </div>
-        ))}
+        ))
+      )}
       </div>
 
       {/* Add / Edit Route Modal */}

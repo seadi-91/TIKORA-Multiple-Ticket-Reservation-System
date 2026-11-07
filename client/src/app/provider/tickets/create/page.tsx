@@ -18,6 +18,7 @@ import {
   Trash2,
 } from "lucide-react";
 import { TicketCategory } from "@/types/ticket.types";
+import { TicketService, FIXED_CATEGORY_IMAGES } from "@/services/ticket.service";
 import { useProviderStore } from "@/stores/provider.store";
 import { toast } from "sonner";
 
@@ -41,13 +42,14 @@ export default function CreateTicketPage() {
     description: "",
     city: "Addis Ababa",
     location:
-      category === "BUS"
+      organization.address ||
+      (category === "BUS"
         ? "Autobus Tera Gate 3, Addis Ababa"
         : category === "CINEMA"
-        ? "Century Cinema Megaplex, Addis Ababa"
+        ? `${organization.name}, Addis Ababa`
         : category === "EVENT"
         ? "Millennium Hall Main Auditorium"
-        : "Addis Ababa Stadium",
+        : "Addis Ababa Stadium"),
     date: "2026-11-20",
     time:
       category === "BUS"
@@ -145,11 +147,39 @@ export default function CreateTicketPage() {
     }
 
     setIsSubmitting(true);
+    TicketService.addTicket({
+      id: `${category.toLowerCase()}-${Date.now()}`,
+      title: formData.title,
+      category,
+      organizer: organization.name,
+      organizerVerified: organization.verified,
+      location: formData.location,
+      city: formData.city,
+      date: formData.date,
+      time: formData.time,
+      price: Number(formData.basePrice),
+      currency: "ETB",
+      availableSeats: Number(formData.totalCapacity),
+      totalSeats: Number(formData.totalCapacity),
+      status: "AVAILABLE",
+      badge: formData.badge,
+      imageUrl: FIXED_CATEGORY_IMAGES[category],
+      description: formData.description,
+      amenities,
+      tiers: tiers.map((t) => ({
+        id: t.id,
+        name: t.name,
+        price: t.price,
+        available: t.capacity,
+        perks: [t.description],
+      })),
+    });
+
     setTimeout(() => {
       setIsSubmitting(false);
       toast.success("Ticket listing published successfully!");
       router.push("/provider/tickets");
-    }, 600);
+    }, 400);
   };
 
   return (

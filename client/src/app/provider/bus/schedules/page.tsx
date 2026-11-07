@@ -122,7 +122,18 @@ export default function BusSchedulesPage() {
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100 dark:divide-slate-800/40 text-xs">
-              {filteredSchedules.map((sch) => (
+              {filteredSchedules.length === 0 ? (
+                <tr>
+                  <td colSpan={7} className="py-16 px-4 text-center text-xs text-muted-foreground">
+                    <Calendar className="w-8 h-8 mx-auto mb-2 text-muted-foreground/40" />
+                    <p className="font-semibold text-foreground text-sm">No trip schedules found</p>
+                    <p className="text-[11px] mt-1 max-w-sm mx-auto text-muted-foreground">
+                      No coach departures match your search or no schedules have been created yet. Click &quot;Add Schedule&quot; above to assign trips.
+                    </p>
+                  </td>
+                </tr>
+              ) : (
+                filteredSchedules.map((sch) => (
                 <tr key={sch.id} className="hover:bg-amber-500/[0.03] dark:hover:bg-amber-500/[0.06] transition-colors">
                   <td className="py-3.5 px-4 font-bold text-foreground">
                     {sch.routeTitle}
@@ -205,7 +216,8 @@ export default function BusSchedulesPage() {
                     </div>
                   </td>
                 </tr>
-              ))}
+              ))
+            )}
             </tbody>
           </table>
         </div>

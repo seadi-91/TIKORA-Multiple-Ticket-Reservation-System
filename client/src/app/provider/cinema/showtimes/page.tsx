@@ -19,21 +19,21 @@ import { formatCurrency } from "@/lib/format-currency";
 import { ActionDropdown } from "@/components/ui/action-dropdown";
 
 export default function CinemaShowtimesPage() {
-  const { movieShowtimes, addMovieShowtime, updateMovieShowtime } = useProviderStore();
+  const { movieShowtimes, addMovieShowtime, updateMovieShowtime, organization } = useProviderStore();
 
   const [search, setSearch] = useState("");
   const [modalOpen, setModalOpen] = useState(false);
 
   const [formData, setFormData] = useState({
-    movieTitle: "Gladiator II: Ethiopian Premiere",
-    genre: "Historical Action / Drama",
-    duration: "2h 28m",
+    movieTitle: "",
+    genre: "Action / Adventure",
+    duration: "2h 00m",
     rating: "PG-13",
-    hallName: "Hall 1 (Century Cinema Megaplex)",
+    hallName: `Hall 1 (${organization.name})`,
     screenFormat: "4K Laser Dolby Atmos",
-    date: "2026-11-15",
-    time: "08:15 PM",
-    price: 320,
+    date: "2026-11-20",
+    time: "07:30 PM",
+    price: 300,
     vipPrice: 450,
     totalSeats: 120,
     bookedSeats: 0,
@@ -116,7 +116,18 @@ export default function CinemaShowtimesPage() {
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100 dark:divide-slate-800/40 text-xs">
-              {filtered.map((s) => (
+              {filtered.length === 0 ? (
+                <tr>
+                  <td colSpan={7} className="py-16 px-4 text-center text-xs text-muted-foreground">
+                    <Clock className="w-8 h-8 mx-auto mb-2 text-muted-foreground/40" />
+                    <p className="font-semibold text-foreground text-sm">No showtimes scheduled</p>
+                    <p className="text-[11px] mt-1 max-w-sm mx-auto text-muted-foreground">
+                      No showtimes match your search or none have been assigned yet. Click &quot;Add Showtime&quot; above to schedule movie screenings.
+                    </p>
+                  </td>
+                </tr>
+              ) : (
+                filtered.map((s) => (
                 <tr key={s.id} className="hover:bg-amber-500/[0.03] dark:hover:bg-amber-500/[0.06] transition-colors">
                   <td className="py-3.5 px-4 font-bold text-foreground">
                     {s.movieTitle}
@@ -193,7 +204,8 @@ export default function CinemaShowtimesPage() {
                     </div>
                   </td>
                 </tr>
-              ))}
+              ))
+            )}
             </tbody>
           </table>
         </div>

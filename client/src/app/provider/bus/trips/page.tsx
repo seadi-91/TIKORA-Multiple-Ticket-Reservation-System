@@ -44,14 +44,14 @@ export default function BusTripsPage() {
         </div>
 
         {/* Filter Pills */}
-        <div className="flex flex-wrap gap-1.5 p-1 bg-slate-100 dark:bg-slate-800 rounded-2xl">
+        <div className="flex flex-wrap gap-0.5 p-0.5 bg-slate-100 dark:bg-slate-800 rounded-lg">
           {["ALL", "SCHEDULED", "BOARDING", "ON_TRIP", "DELAYED"].map((tab) => (
             <button
               key={tab}
               onClick={() => setFilter(tab)}
-              className={`px-3 py-1 rounded-xl text-xs font-bold transition-all cursor-pointer ${
+              className={`px-2 py-0.5 rounded-md text-[11px] font-medium transition-all cursor-pointer whitespace-nowrap ${
                 filter === tab
-                  ? "bg-white dark:bg-[#161922] text-[#B45309] dark:text-amber-400 shadow-2xs"
+                  ? "bg-white dark:bg-[#161922] text-[#B45309] dark:text-amber-400 shadow-2xs font-semibold"
                   : "text-slate-500 dark:text-slate-400 hover:text-[#0F172A]"
               }`}
             >
@@ -63,7 +63,16 @@ export default function BusTripsPage() {
 
       {/* Trips Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
-        {filtered.map((trip) => {
+        {filtered.length === 0 ? (
+          <div className="col-span-full py-16 px-4 text-center text-xs text-muted-foreground bg-white dark:bg-[#161922] rounded-3xl border border-[#E2E8F0] dark:border-slate-800">
+            <Bus className="w-8 h-8 mx-auto mb-2 text-muted-foreground/40" />
+            <p className="font-semibold text-foreground text-sm">No active coach trips</p>
+            <p className="text-[11px] mt-1 max-w-sm mx-auto text-muted-foreground">
+              No live trips matching &quot;{filter === "ALL" ? "All Trips" : filter}&quot;. Active coach radar updates once departures begin boarding.
+            </p>
+          </div>
+        ) : (
+          filtered.map((trip) => {
           const bookedSeats = trip.totalSeats - trip.availableSeats;
           const pct = Math.round((bookedSeats / trip.totalSeats) * 100);
 
@@ -140,7 +149,8 @@ export default function BusTripsPage() {
               </div>
             </div>
           );
-        })}
+        })
+      )}
       </div>
     </div>
   );

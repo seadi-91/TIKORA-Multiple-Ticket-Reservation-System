@@ -20,7 +20,8 @@ import {
 import { useAdminStore } from "@/stores/admin.store";
 
 export default function AdminCategoriesPage() {
-  const { categories, updateCategoryCommission, toggleCategoryActive } = useAdminStore();
+  const { categories, organizations, bookings, updateCategoryCommission, toggleCategoryActive } =
+    useAdminStore();
 
   const [editingId, setEditingId] = useState<string | null>(null);
   const [rateInput, setRateInput] = useState<number>(5.0);
@@ -110,12 +111,16 @@ export default function AdminCategoriesPage() {
             <div className="pt-4 border-t border-slate-200/40 dark:border-slate-800/40 grid grid-cols-3 gap-3 text-xs">
               <div>
                 <p className="text-[10px] text-muted-foreground uppercase font-semibold">Providers</p>
-                <p className="font-bold text-sm text-foreground mt-0.5">{cat.totalProviders}</p>
+                <p className="font-bold text-sm text-foreground mt-0.5">
+                  {organizations.filter((o) => o.category === cat.category).length}
+                </p>
               </div>
 
               <div>
                 <p className="text-[10px] text-muted-foreground uppercase font-semibold">Bookings</p>
-                <p className="font-bold text-sm text-foreground mt-0.5">{cat.totalBookings.toLocaleString()}</p>
+                <p className="font-bold text-sm text-foreground mt-0.5">
+                  {bookings.filter((b) => b.category === cat.category).length.toLocaleString()}
+                </p>
               </div>
 
               <div>

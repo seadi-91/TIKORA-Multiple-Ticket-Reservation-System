@@ -120,37 +120,40 @@ export default function AdminBookingsPage() {
 
       {/* Mobile Filter Dropdown */}
       <div className="block sm:hidden">
-        <label className="text-[11px] font-bold text-muted-foreground uppercase tracking-wider block mb-1.5">
+        <label className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider block mb-1">
           Booking Status Filter
         </label>
         <select
           value={statusFilter}
           onChange={(e) => setStatusFilter(e.target.value)}
-          className="w-full h-10 px-3 text-xs rounded-xl bg-card border border-slate-200/60 dark:border-slate-800/60 text-foreground font-semibold focus:outline-none focus:ring-2 focus:ring-amber-500/30 shadow-xs"
+          className="w-full h-8 px-2.5 text-[11px] rounded-lg bg-card border border-slate-200/60 dark:border-slate-800/60 text-foreground font-medium focus:outline-none focus:ring-1 focus:ring-amber-500/30 shadow-2xs"
         >
-          <option value="ALL">All Bookings ({bookings.length})</option>
+          <option value="ALL">All ({bookings.length})</option>
           <option value="CONFIRMED">Confirmed ({bookings.filter((b) => b.bookingStatus === "CONFIRMED").length})</option>
           <option value="CANCELLED">Cancelled ({bookings.filter((b) => b.bookingStatus === "CANCELLED").length})</option>
         </select>
       </div>
 
       {/* Desktop Filter Tabs */}
-      <div className="hidden sm:flex flex-wrap items-center gap-1.5 border-b border-slate-200/40 dark:border-slate-800/40 pb-2">
+      <div className="hidden sm:flex flex-wrap items-center gap-1 border-b border-slate-200/40 dark:border-slate-800/40 pb-1.5">
         {[
-          { label: "All Bookings", value: "ALL" },
-          { label: "Confirmed", value: "CONFIRMED" },
-          { label: "Cancelled", value: "CANCELLED" },
+          { label: "All", value: "ALL", count: bookings.length },
+          { label: "Confirmed", value: "CONFIRMED", count: bookings.filter((b) => b.bookingStatus === "CONFIRMED").length },
+          { label: "Cancelled", value: "CANCELLED", count: bookings.filter((b) => b.bookingStatus === "CANCELLED").length },
         ].map((tab) => (
           <button
             key={tab.value}
             onClick={() => setStatusFilter(tab.value)}
-            className={`px-2 py-0.5 text-micro font-medium rounded-md transition-all cursor-pointer ${
+            className={`inline-flex items-center gap-1 px-2 py-0.5 text-[10px] font-medium rounded-md transition-all cursor-pointer whitespace-nowrap ${
               statusFilter === tab.value
-                ? "bg-amber-600 text-white shadow-xs font-semibold"
+                ? "bg-amber-600 text-white shadow-2xs font-semibold"
                 : "bg-muted/40 hover:bg-muted text-muted-foreground hover:text-foreground"
             }`}
           >
-            {tab.label}
+            <span>{tab.label}</span>
+            <span className="text-[9px] font-mono opacity-75">
+              ({tab.count})
+            </span>
           </button>
         ))}
       </div>

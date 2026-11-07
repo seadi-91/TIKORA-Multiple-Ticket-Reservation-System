@@ -1,6 +1,6 @@
 "use client";
 
-import React from "react";
+import React, { useState, useEffect } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
@@ -27,13 +27,22 @@ export function CustomerSidebar() {
   const pathname = usePathname();
   const { bookings, favorites, notifications } = useBookingStore();
   const { user, logout } = useAuthStore();
-  const displayName = user?.name || "Abebe Bekele";
-  const userInitials = displayName
-    .split(" ")
-    .map((n) => n[0])
-    .join("")
-    .substring(0, 2)
-    .toUpperCase();
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  const displayName = mounted && user?.name ? user.name : "Customer";
+  const userInitials = mounted && user?.name
+    ? user.name
+        .split(" ")
+        .map((n) => n[0])
+        .filter(Boolean)
+        .join("")
+        .substring(0, 2)
+        .toUpperCase()
+    : "CU";
 
   const unreadNotifs = notifications.filter((n) => !n.isRead).length;
   const activeBookings = bookings.filter((b) => b.bookingStatus === "CONFIRMED").length;
@@ -97,11 +106,17 @@ export function CustomerSidebar() {
     >
       {/* Customer Profile Widget - Refined & Spacious */}
       <div className="flex items-center gap-3 p-3 rounded-2xl bg-slate-50 dark:bg-slate-800/40 border border-slate-200/80 dark:border-slate-800">
-        <div className="w-10 h-10 rounded-xl bg-gradient-to-tr from-amber-600 to-amber-500 text-white flex items-center justify-center font-bold text-xs shadow-xs shrink-0">
+        <div
+          suppressHydrationWarning
+          className="w-10 h-10 rounded-xl bg-gradient-to-tr from-amber-600 to-amber-500 text-white flex items-center justify-center font-bold text-xs shadow-xs shrink-0"
+        >
           {userInitials}
         </div>
         <div className="flex-1 min-w-0">
-          <h4 className="text-xs font-bold text-[#0F172A] dark:text-white truncate">
+          <h4
+            suppressHydrationWarning
+            className="text-xs font-bold text-[#0F172A] dark:text-white truncate"
+          >
             {displayName}
           </h4>
           <span className="text-[10px] text-emerald-600 dark:text-emerald-400 font-semibold flex items-center gap-1 mt-0.5">
@@ -121,11 +136,10 @@ export function CustomerSidebar() {
             <Link
               key={item.href}
               href={item.href}
-              className={`flex items-center justify-between px-3.5 py-2.5 rounded-2xl text-xs font-semibold transition-all gap-3 ${
-                isActive
-                  ? "bg-amber-600 text-white shadow-xs font-bold"
-                  : "text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100/80 dark:hover:bg-slate-800/60"
-              }`}
+              className={`flex items-center justify-between px-3.5 py-2.5 rounded-2xl text-xs font-semibold transition-all gap-3 ${isActive
+                ? "bg-amber-600 text-white shadow-xs font-bold"
+                : "text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100/80 dark:hover:bg-slate-800/60"
+                }`}
             >
               <div className="flex items-center gap-2.5 min-w-0">
                 <Icon className={`w-4 h-4 shrink-0 ${isActive ? "text-white" : "text-slate-400 dark:text-slate-500"}`} />
@@ -134,11 +148,10 @@ export function CustomerSidebar() {
 
               {item.badge ? (
                 <span
-                  className={`text-[10px] px-2 py-0.5 rounded-full font-bold shrink-0 ${
-                    isActive
-                      ? "bg-white/20 text-white"
-                      : "bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-slate-700"
-                  }`}
+                  className={`text-[10px] px-2 py-0.5 rounded-full font-bold shrink-0 ${isActive
+                    ? "bg-white/20 text-white"
+                    : "bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-slate-700"
+                    }`}
                 >
                   {item.badge}
                 </span>

@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useMemo } from "react";
 import Link from "next/link";
 import {
   TrendingUp,
@@ -30,42 +30,159 @@ import { DashboardBarChart } from "@/components/charts/bar-chart";
 import { DashboardPieChart } from "@/components/charts/pie-chart";
 
 export default function AdminDashboardPage() {
-  const { stats, organizations, auditLogs, approveOrganization } = useAdminStore();
+  const {
+    organizations,
+    auditLogs,
+    bookings,
+    categories,
+    users,
+    inspectors,
+    refunds,
+    approveOrganization,
+  } = useAdminStore();
 
   const [revenueRange, setRevenueRange] = useState<"6M" | "30D" | "7D">("6M");
 
-  const pendingOrgs = organizations.filter((o) => o.status === "PENDING");
-  const approvedOrgs = organizations.filter((o) => o.status === "APPROVED");
+  const pendingOrgs = useMemo(
+    () => organizations.filter((o) => o.status === "PENDING"),
+    [organizations]
+  );
+  const approvedOrgs = useMemo(
+    () => organizations.filter((o) => o.status === "APPROVED"),
+    [organizations]
+  );
 
-  // Chart data
-  const revenueHistory = [
-    { name: "Jun", value: 540000 },
-    { name: "Jul", value: 680000 },
-    { name: "Aug", value: 720000 },
-    { name: "Sep", value: 890000 },
-    { name: "Oct", value: 980000 },
-    { name: "Nov", value: 1040200 },
-  ];
+  // Dynamic calculations from actual store data
+  const totalGMV = useMemo(() => {
+    return bookings.reduce((sum, b) => sum + (Number(b.totalAmount) || 0), 0);
+  }, [bookings]);
 
-  const categoryRevenue = [
-    { name: "Bus Transport", value: 2450000, secondaryValue: 122500 },
-    { name: "Cinema & Film", value: 920000, secondaryValue: 46000 },
-    { name: "Concerts/Events", value: 840000, secondaryValue: 50400 },
-    { name: "Sports Fixtures", value: 640200, secondaryValue: 28810 },
-  ];
+  const platformRevenue = useMemo(() => {
+    return bookings.reduce((sum, b) => sum + (Number(b.platformFee) || 0), 0);
+  }, [bookings]);
 
-  const categoryPieData = [
-    { name: "Bus Transport", value: 50.5, color: "#B45309" },
-    { name: "Cinema", value: 19.0, color: "#D97706" },
-    { name: "Concerts/Events", value: 17.3, color: "#F59E0B" },
-    { name: "Sports", value: 13.2, color: "#FBBF24" },
-  ];
+  const totalBookingsCount = bookings.length;
+  const activeProvidersCount = approvedOrgs.length;
+  const pendingOrgsCount = pendingOrgs.length;
+  const totalUsersCount = users.length;
+  const activeInspectorsCount = useMemo(
+    () => inspectors.filter((i) => i.status === "ACTIVE").length,
+    [inspectors]
+  );
+  const refundsRequestedCount = useMemo(
+    () => refunds.filter((r) => r.status === "PENDING").length,
+    [refunds]
+  );
+
+  const averageMargin = totalGMV > 0 ? ((platformRevenue / totalGMV) * 100).toFixed(1) : "0.0";
+  const activeCategoriesCount = useMemo(
+    () => categories.filter((c) => c.isActive).length,
+    [categories]
+  );
+
+  // Dynamic Chart Data: Revenue Trajectory derived from real bookings
+  const revenueHistory = useMemo(() => {
+    const monthNames = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+    const now = new Date();
+
+    if (revenueRange === "7D") {
+      const days: { name: string; value: number }[] = [];
+      for (let i = 6; i >= 0; i--) {
+        const d = new Date(now);
+        d.setDate(d.getDate() - i);
+        const dateStr = d.toISOString().split("T")[0];
+        const dayLabel = d.toLocaleDateString("en-US", { weekday: "short" });
+        const dayVal = bookings
+          .filter((b) => b.bookingDate && b.bookingDate.startsWith(dateStr))
+          .reduce((sum, b) => sum + (Number(b.totalAmount) || 0), 0);
+        days.push({ name: dayLabel, value: dayVal });
+      }
+      return days;
+    }
+
+    if (revenueRange === "30D") {
+      const points: { name: string; value: number }[] = [];
+      for (let i = 4; i >= 0; i--) {
+        const d = new Date(now);
+        d.setDate(d.getDate() - i * 6);
+        const label = `${d.getDate()} ${monthNames[d.getMonth()]}`;
+        const start = new Date(now.getTime() - (i + 1) * 6 * 24 * 60 * 60 * 1000);
+        const end = new Date(now.getTime() - i * 6 * 24 * 60 * 60 * 1000);
+        const val = bookings
+          .filter((b) => {
+            if (!b.bookingDate) return false;
+            const bDate = new Date(b.bookingDate);
+            return bDate >= start && bDate <= end;
+          })
+          .reduce((sum, b) => sum + (Number(b.totalAmount) || 0), 0);
+        points.push({ name: label, value: val });
+      }
+      return points;
+    }
+
+    // Default: 6 Months
+    const months: { name: string; value: number }[] = [];
+    for (let i = 5; i >= 0; i--) {
+      const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
+      const monthLabel = monthNames[d.getMonth()];
+      const yearMonth = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`;
+      const monthVal = bookings
+        .filter((b) => b.bookingDate && b.bookingDate.startsWith(yearMonth))
+        .reduce((sum, b) => sum + (Number(b.totalAmount) || 0), 0);
+      months.push({ name: monthLabel, value: monthVal });
+    }
+    return months;
+  }, [bookings, revenueRange]);
+
+  // Dynamic Sector Revenue & Retained Commission breakdown
+  const categoryRevenue = useMemo(() => {
+    const categoryConfigs = [
+      { key: "BUS", name: "Bus Transport" },
+      { key: "CINEMA", name: "Cinema & Film" },
+      { key: "EVENT", name: "Concerts/Events" },
+      { key: "SPORTS", name: "Sports Fixtures" },
+    ];
+
+    return categoryConfigs.map((cfg) => {
+      const catBookings = bookings.filter((b) => b.category === cfg.key);
+      const value = catBookings.reduce((sum, b) => sum + (Number(b.totalAmount) || 0), 0);
+      const secondaryValue = catBookings.reduce((sum, b) => sum + (Number(b.platformFee) || 0), 0);
+
+      return {
+        name: cfg.name,
+        value,
+        secondaryValue,
+      };
+    });
+  }, [bookings]);
+
+  // Dynamic Category Volume Share
+  const categoryPieData = useMemo(() => {
+    const categoryConfigs = [
+      { key: "BUS", name: "Bus Transport", color: "#B45309" },
+      { key: "CINEMA", name: "Cinema", color: "#D97706" },
+      { key: "EVENT", name: "Concerts/Events", color: "#F59E0B" },
+      { key: "SPORTS", name: "Sports", color: "#FBBF24" },
+    ];
+
+    return categoryConfigs.map((cfg) => {
+      const catTotal = bookings
+        .filter((b) => b.category === cfg.key)
+        .reduce((sum, b) => sum + (Number(b.totalAmount) || 0), 0);
+      const percentage = totalGMV > 0 ? Number(((catTotal / totalGMV) * 100).toFixed(1)) : 0;
+
+      return {
+        name: cfg.name,
+        value: percentage,
+        color: cfg.color,
+      };
+    });
+  }, [bookings, totalGMV]);
 
   return (
     <div className="space-y-6">
-      {/* Top Welcome & System Status Bar (Soft Modern Hero) */}
+      {/* Top Welcome & System Status Bar */}
       <div className="relative overflow-hidden rounded-2xl sm:rounded-3xl bg-gradient-to-br from-amber-500/10 via-amber-500/[0.04] to-card border border-amber-500/15 p-4 sm:p-5 shadow-xs">
-        {/* Soft background ambient glow */}
         <div className="absolute -right-16 -top-16 w-48 h-48 bg-amber-500/10 rounded-full blur-3xl pointer-events-none" />
         <div className="absolute right-32 -bottom-16 w-36 h-36 bg-amber-600/5 rounded-full blur-2xl pointer-events-none" />
 
@@ -102,7 +219,7 @@ export default function AdminDashboardPage() {
               className="px-3.5 py-2 text-xs font-bold rounded-xl bg-amber-600 hover:bg-amber-700 text-white transition-all shadow-xs shadow-amber-600/20 flex items-center gap-1.5"
             >
               <ShieldCheck className="w-3.5 h-3.5 text-white" />
-              <span>Verification Queue ({pendingOrgs.length})</span>
+              <span>Verification Queue ({pendingOrgsCount})</span>
             </Link>
           </div>
         </div>
@@ -119,14 +236,10 @@ export default function AdminDashboardPage() {
             </div>
           </div>
           <p className="text-sm sm:text-base lg:text-lg font-bold tracking-tight text-foreground truncate">
-            {stats.totalGMV.toLocaleString()} <span className="text-[10px] font-semibold text-muted-foreground">ETB</span>
+            {totalGMV.toLocaleString()} <span className="text-[10px] font-semibold text-muted-foreground">ETB</span>
           </p>
           <div className="flex items-center gap-1 mt-1 text-[10px]">
-            <span className="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded-full bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 font-bold text-[9px]">
-              <ArrowUpRight className="w-2.5 h-2.5" />
-              +14.2%
-            </span>
-            <span className="text-muted-foreground text-[9px] truncate">vs last month</span>
+            <span className="text-muted-foreground text-[10px] truncate">Cumulative transaction volume</span>
           </div>
         </div>
 
@@ -139,14 +252,10 @@ export default function AdminDashboardPage() {
             </div>
           </div>
           <p className="text-sm sm:text-base lg:text-lg font-bold tracking-tight text-foreground truncate">
-            {stats.platformRevenue.toLocaleString()} <span className="text-[10px] font-semibold text-muted-foreground">ETB</span>
+            {platformRevenue.toLocaleString()} <span className="text-[10px] font-semibold text-muted-foreground">ETB</span>
           </p>
           <div className="flex items-center gap-1 mt-1 text-[10px]">
-            <span className="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded-full bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 font-bold text-[9px]">
-              <ArrowUpRight className="w-2.5 h-2.5" />
-              +11.8%
-            </span>
-            <span className="text-muted-foreground text-[9px] truncate">~5% margin</span>
+            <span className="text-muted-foreground text-[10px] truncate">{averageMargin}% platform take rate</span>
           </div>
         </div>
 
@@ -159,14 +268,10 @@ export default function AdminDashboardPage() {
             </div>
           </div>
           <p className="text-sm sm:text-base lg:text-lg font-bold tracking-tight text-foreground truncate">
-            {stats.totalBookings.toLocaleString()}
+            {totalBookingsCount.toLocaleString()}
           </p>
           <div className="flex items-center gap-1 mt-1 text-[10px]">
-            <span className="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded-full bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 font-bold text-[9px]">
-              <ArrowUpRight className="w-2.5 h-2.5" />
-              +8.5%
-            </span>
-            <span className="text-muted-foreground text-[9px] truncate">4 sectors</span>
+            <span className="text-muted-foreground text-[10px] truncate">{activeCategoriesCount} active sectors</span>
           </div>
         </div>
 
@@ -179,12 +284,12 @@ export default function AdminDashboardPage() {
             </div>
           </div>
           <p className="text-sm sm:text-base lg:text-lg font-bold tracking-tight text-foreground truncate">
-            {stats.activeProviders}
+            {activeProvidersCount}
           </p>
           <div className="flex items-center gap-1 mt-1 text-[10px]">
             <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-full bg-amber-500/10 text-amber-700 dark:text-amber-300 font-bold text-[9px]">
               <Clock className="w-2.5 h-2.5" />
-              {pendingOrgs.length} pending
+              {pendingOrgsCount} pending
             </span>
           </div>
         </div>
@@ -198,7 +303,7 @@ export default function AdminDashboardPage() {
             </div>
           </div>
           <p className="text-sm sm:text-base lg:text-lg font-bold tracking-tight text-foreground truncate">
-            {pendingOrgs.length}
+            {pendingOrgsCount}
           </p>
           <p className="text-[10px] text-muted-foreground mt-1 truncate">Partner applications</p>
         </div>
@@ -212,9 +317,9 @@ export default function AdminDashboardPage() {
             </div>
           </div>
           <p className="text-sm sm:text-base lg:text-lg font-bold tracking-tight text-foreground truncate">
-            {stats.totalUsers.toLocaleString()}
+            {totalUsersCount.toLocaleString()}
           </p>
-          <p className="text-[10px] text-muted-foreground mt-1 truncate">Consumers & operators</p>
+          <p className="text-[10px] text-muted-foreground mt-1 truncate">Registered accounts</p>
         </div>
 
         {/* Field Inspectors */}
@@ -226,7 +331,7 @@ export default function AdminDashboardPage() {
             </div>
           </div>
           <p className="text-sm sm:text-base lg:text-lg font-bold tracking-tight text-foreground truncate">
-            {stats.activeInspectors}
+            {activeInspectorsCount}
           </p>
           <p className="text-[10px] text-muted-foreground mt-1 truncate">Active terminal staff</p>
         </div>
@@ -240,20 +345,20 @@ export default function AdminDashboardPage() {
             </div>
           </div>
           <p className="text-sm sm:text-base lg:text-lg font-bold tracking-tight text-foreground truncate">
-            {stats.refundsRequested}
+            {refundsRequestedCount}
           </p>
-          <p className="text-[10px] text-muted-foreground mt-1 truncate">Customer disputes</p>
+          <p className="text-[10px] text-muted-foreground mt-1 truncate">Pending claims</p>
         </div>
       </div>
 
-      {/* Analytics Charts Grid (Clean, Elevated, Minimalist) */}
+      {/* Analytics Charts Grid */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* GMV Trajectory Line Chart */}
         <div className="lg:col-span-2 p-5 sm:p-6 rounded-3xl bg-card border border-slate-200/50 dark:border-slate-800/50 shadow-sm space-y-4">
           <div className="flex items-center justify-between">
             <div>
               <h3 className="font-bold text-sm text-foreground">Platform GMV Velocity</h3>
-              <p className="text-xs text-muted-foreground">Monthly gross transaction value across all categories</p>
+              <p className="text-xs text-muted-foreground">Gross transaction value across all categories</p>
             </div>
             <div className="flex items-center gap-1 p-1 bg-muted/50 rounded-xl text-xs font-semibold">
               <button
@@ -272,6 +377,14 @@ export default function AdminDashboardPage() {
               >
                 30D
               </button>
+              <button
+                onClick={() => setRevenueRange("7D")}
+                className={`px-3 py-1 rounded-lg transition-all ${
+                  revenueRange === "7D" ? "bg-card text-foreground shadow-xs font-bold" : "text-muted-foreground hover:text-foreground"
+                }`}
+              >
+                7D
+              </button>
             </div>
           </div>
 
@@ -285,19 +398,29 @@ export default function AdminDashboardPage() {
             <p className="text-xs text-muted-foreground">Percentage split of total platform reservations</p>
           </div>
 
-          <div className="my-auto py-2">
-            <DashboardPieChart data={categoryPieData} height={190} innerRadius={50} outerRadius={75} />
-          </div>
-
-          <div className="grid grid-cols-2 gap-2 text-xs pt-3">
-            {categoryPieData.map((c) => (
-              <div key={c.name} className="flex items-center gap-2 p-1.5 rounded-lg bg-muted/30">
-                <span className="w-2.5 h-2.5 rounded-full shrink-0 shadow-xs" style={{ backgroundColor: c.color }} />
-                <span className="text-muted-foreground truncate text-[11px]">{c.name}</span>
-                <span className="font-bold text-foreground ml-auto text-[11px]">{c.value}%</span>
+          {totalGMV > 0 ? (
+            <>
+              <div className="my-auto py-2">
+                <DashboardPieChart data={categoryPieData} height={190} innerRadius={50} outerRadius={75} />
               </div>
-            ))}
-          </div>
+
+              <div className="grid grid-cols-2 gap-2 text-xs pt-3">
+                {categoryPieData.map((c) => (
+                  <div key={c.name} className="flex items-center gap-2 p-1.5 rounded-lg bg-muted/30">
+                    <span className="w-2.5 h-2.5 rounded-full shrink-0 shadow-xs" style={{ backgroundColor: c.color }} />
+                    <span className="text-muted-foreground truncate text-[11px]">{c.name}</span>
+                    <span className="font-bold text-foreground ml-auto text-[11px]">{c.value}%</span>
+                  </div>
+                ))}
+              </div>
+            </>
+          ) : (
+            <div className="my-auto py-10 text-center text-muted-foreground space-y-2">
+              <Layers className="w-8 h-8 mx-auto opacity-30 text-amber-500" />
+              <p className="text-xs font-semibold text-foreground">No reservations yet</p>
+              <p className="text-[11px] text-muted-foreground">Volume share will calculate once reservations occur.</p>
+            </div>
+          )}
         </div>
       </div>
 
@@ -319,16 +442,24 @@ export default function AdminDashboardPage() {
           </Link>
         </div>
 
-        <DashboardBarChart
-          data={categoryRevenue}
-          color="#B45309"
-          secondaryColor="#F59E0B"
-          valuePrefix="ETB "
-          height={240}
-        />
+        {totalGMV > 0 ? (
+          <DashboardBarChart
+            data={categoryRevenue}
+            color="#B45309"
+            secondaryColor="#F59E0B"
+            valuePrefix="ETB "
+            height={240}
+          />
+        ) : (
+          <div className="py-12 text-center text-muted-foreground space-y-2">
+            <Ticket className="w-8 h-8 mx-auto opacity-30 text-amber-500" />
+            <p className="text-xs font-semibold text-foreground">No sector revenue recorded</p>
+            <p className="text-[11px] text-muted-foreground">Sector GMV and platform commission will be tracked here in real-time.</p>
+          </div>
+        )}
       </div>
 
-      {/* Two Column Grid: Pending Verification Queue & Audit Logs (Clean list rows, no harsh borders) */}
+      {/* Two Column Grid: Pending Verification Queue & Audit Logs */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Pending Provider Approvals Queue */}
         <div className="p-5 sm:p-6 rounded-3xl bg-card border border-slate-200/50 dark:border-slate-800/50 shadow-sm space-y-4 flex flex-col">
@@ -415,24 +546,32 @@ export default function AdminDashboardPage() {
           </div>
 
           <div className="space-y-2.5 flex-1 overflow-y-auto max-h-[360px] pr-1 scrollbar-thin">
-            {auditLogs.slice(0, 5).map((log) => (
-              <div
-                key={log.id}
-                className="p-3.5 rounded-2xl bg-slate-50/70 dark:bg-slate-800/30 hover:bg-muted/40 transition-all text-xs space-y-1.5"
-              >
-                <div className="flex items-center justify-between gap-2">
-                  <span className="font-bold text-foreground truncate">{log.action.replace(/_/g, " ")}</span>
-                  <span className="text-[10px] text-muted-foreground font-mono shrink-0 bg-muted/60 px-1.5 py-0.5 rounded-md">
-                    {log.timestamp}
-                  </span>
+            {auditLogs.length > 0 ? (
+              auditLogs.slice(0, 5).map((log) => (
+                <div
+                  key={log.id}
+                  className="p-3.5 rounded-2xl bg-slate-50/70 dark:bg-slate-800/30 hover:bg-muted/40 transition-all text-xs space-y-1.5"
+                >
+                  <div className="flex items-center justify-between gap-2">
+                    <span className="font-bold text-foreground truncate">{log.action.replace(/_/g, " ")}</span>
+                    <span className="text-[10px] text-muted-foreground font-mono shrink-0 bg-muted/60 px-1.5 py-0.5 rounded-md">
+                      {log.timestamp}
+                    </span>
+                  </div>
+                  <p className="text-[11px] text-muted-foreground leading-relaxed">{log.details}</p>
+                  <div className="flex items-center justify-between pt-1 text-[10px] text-muted-foreground">
+                    <span>Actor: <strong className="text-foreground">{log.actorName}</strong></span>
+                    <span className="font-mono text-[10px]">{log.ipAddress}</span>
+                  </div>
                 </div>
-                <p className="text-[11px] text-muted-foreground leading-relaxed">{log.details}</p>
-                <div className="flex items-center justify-between pt-1 text-[10px] text-muted-foreground">
-                  <span>Actor: <strong className="text-foreground">{log.actorName}</strong></span>
-                  <span className="font-mono text-[10px]">{log.ipAddress}</span>
-                </div>
+              ))
+            ) : (
+              <div className="py-10 text-center text-muted-foreground space-y-1.5">
+                <ShieldCheck className="w-9 h-9 text-muted-foreground/30 mx-auto" />
+                <p className="text-xs font-bold text-foreground">No security audit events recorded</p>
+                <p className="text-[11px] text-muted-foreground">System authorization and policy events will appear here in real-time.</p>
               </div>
-            ))}
+            )}
           </div>
         </div>
       </div>

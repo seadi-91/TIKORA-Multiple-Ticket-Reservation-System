@@ -24,11 +24,39 @@ export default function FullscreenTicketPassPage({ params }: { params: Promise<{
   const { bookings } = useBookingStore();
 
   const booking =
-    bookings.find((b) => b.id === resolvedParams.ticketId) || bookings[0];
+    bookings.find((b) => b.id === resolvedParams.ticketId);
 
   const handlePrint = () => {
     window.print();
   };
+
+  if (!booking) {
+    return (
+      <PageContainer
+        title="Digital Boarding Pass"
+        subtitle="Pass verification"
+        breadcrumbs={[
+          { label: "Customer Dashboard", href: "/customer" },
+          { label: "Ticket Wallet", href: "/customer/tickets" },
+          { label: "Not Found" },
+        ]}
+      >
+        <div className="p-12 text-center rounded-3xl bg-white dark:bg-[#161922] border border-dashed border-slate-200 dark:border-slate-800 space-y-3 max-w-md mx-auto">
+          <QrCode className="w-10 h-10 text-muted-foreground/40 mx-auto" />
+          <h3 className="text-base font-bold text-foreground">Digital Pass Not Found</h3>
+          <p className="text-xs text-muted-foreground">
+            The requested boarding pass could not be retrieved. Please check your active reservations.
+          </p>
+          <Link
+            href="/customer/tickets"
+            className="inline-block px-5 py-2.5 rounded-xl bg-amber-600 hover:bg-amber-700 text-white text-xs font-bold transition-all shadow-xs"
+          >
+            Return to Ticket Wallet
+          </Link>
+        </div>
+      </PageContainer>
+    );
+  }
 
   return (
     <PageContainer

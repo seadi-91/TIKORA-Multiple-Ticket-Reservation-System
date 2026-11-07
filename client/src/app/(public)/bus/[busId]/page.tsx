@@ -27,6 +27,7 @@ import { BookingSummary } from "@/components/booking/booking-summary";
 import { PaymentMethodSelector } from "@/components/payment/payment-method";
 import { BookingConfirmation } from "@/components/booking/booking-confirmation";
 import { useBookingStore } from "@/stores/booking.store";
+import { useAuthStore } from "@/stores/auth.store";
 import { formatCurrency } from "@/lib/format-currency";
 import { formatDate } from "@/lib/format-date";
 import { SeatInfo, BookingRecord } from "@/types/booking.types";
@@ -34,7 +35,8 @@ import { SeatInfo, BookingRecord } from "@/types/booking.types";
 export default function BusDetailPage({ params }: { params: Promise<{ busId: string }> }) {
   const resolvedParams = use(params);
   const router = useRouter();
-  const bus = BusService.getBusById(resolvedParams.busId) || BusService.getAllBuses()[0];
+  const { user } = useAuthStore();
+  const bus = BusService.getBusById(resolvedParams.busId);
 
   const { addBooking } = useBookingStore();
 
@@ -42,11 +44,35 @@ export default function BusDetailPage({ params }: { params: Promise<{ busId: str
   const [selectedSeatIds, setSelectedSeatIds] = useState<string[]>(["4A"]);
   const [step, setStep] = useState<1 | 2 | 3>(1); // 1: Seats & Info, 2: Payment, 3: Confirmation
 
-  const [passengerName, setPassengerName] = useState("Abebe Bekele");
-  const [passengerPhone, setPassengerPhone] = useState("+251 91 123 4567");
-  const [passengerEmail, setPassengerEmail] = useState("abebe.customer@tikora.et");
+  const [passengerName, setPassengerName] = useState(user?.name || "");
+  const [passengerPhone, setPassengerPhone] = useState(user?.phone || "");
+  const [passengerEmail, setPassengerEmail] = useState(user?.email || "");
   const [paymentMethod, setPaymentMethod] = useState("TELEBIRR");
   const [confirmedBooking, setConfirmedBooking] = useState<BookingRecord | null>(null);
+
+  if (!bus) {
+    return (
+      <div className="min-h-screen flex flex-col bg-[#F8FAFC] dark:bg-[#0F1117] text-[#0F172A] dark:text-[#F8FAFC]">
+        <Header />
+        <main className="flex-1 max-w-md mx-auto px-4 py-16 text-center space-y-4">
+          <div className="p-10 rounded-3xl bg-white dark:bg-[#161922] border border-dashed border-slate-200 dark:border-slate-800 space-y-3">
+            <Bus className="w-10 h-10 text-muted-foreground/40 mx-auto" />
+            <h2 className="text-base font-bold text-foreground">Bus Route Not Found</h2>
+            <p className="text-xs text-muted-foreground">
+              The requested coach departure could not be found or has already departed.
+            </p>
+            <Link
+              href="/bus"
+              className="inline-block px-5 py-2.5 rounded-xl bg-amber-600 hover:bg-amber-700 text-white text-xs font-bold transition-all shadow-xs"
+            >
+              Browse Bus Routes
+            </Link>
+          </div>
+        </main>
+        <Footer />
+      </div>
+    );
+  }
 
   const toggleSeat = (seatId: string) => {
     const seat = seats.find((s) => s.id === seatId);

@@ -66,26 +66,30 @@ export default function CustomerNotificationsPage() {
     >
       <div className="space-y-6">
         {/* Filter Pills */}
-        <div className="flex items-center gap-2">
+        <div className="inline-flex items-center gap-0.5 bg-slate-100 dark:bg-slate-800/60 p-0.5 rounded-lg">
           <button
+            type="button"
             onClick={() => setFilterTab("ALL")}
-            className={`px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer ${
+            className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[11px] font-medium transition-all cursor-pointer whitespace-nowrap ${
               filterTab === "ALL"
-                ? "bg-[#F59E0B] text-white shadow-xs"
-                : "bg-white dark:bg-[#161922] border border-[#E2E8F0] dark:border-slate-800 text-[#64748B] dark:text-amber-300"
+                ? "bg-white dark:bg-slate-700 text-foreground shadow-2xs font-semibold"
+                : "text-muted-foreground hover:text-foreground"
             }`}
           >
-            All Notifications ({notifications.length})
+            <span>All</span>
+            <span className="text-[10px] font-mono opacity-75">({notifications.length})</span>
           </button>
           <button
+            type="button"
             onClick={() => setFilterTab("UNREAD")}
-            className={`px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer ${
+            className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[11px] font-medium transition-all cursor-pointer whitespace-nowrap ${
               filterTab === "UNREAD"
-                ? "bg-[#F59E0B] text-white shadow-xs"
-                : "bg-white dark:bg-[#161922] border border-[#E2E8F0] dark:border-slate-800 text-[#64748B] dark:text-amber-300"
+                ? "bg-white dark:bg-slate-700 text-foreground shadow-2xs font-semibold"
+                : "text-muted-foreground hover:text-foreground"
             }`}
           >
-            Unread ({unreadCount})
+            <span>Unread</span>
+            <span className="text-[10px] font-mono opacity-75">({unreadCount})</span>
           </button>
         </div>
 
@@ -101,11 +105,10 @@ export default function CustomerNotificationsPage() {
             {filtered.map((n) => (
               <div
                 key={n.id}
-                className={`p-4 sm:p-5 rounded-2xl border transition-all flex items-start justify-between gap-4 ${
-                  !n.isRead
-                    ? "bg-white dark:bg-[#161922] border-emerald-300 dark:border-slate-700 shadow-xs"
-                    : "bg-[#F8FAFC] dark:bg-[#0C0E14] border-[#E2E8F0] dark:border-slate-800/20 opacity-80"
-                }`}
+                className={`p-4 sm:p-5 rounded-2xl border transition-all flex items-start justify-between gap-4 ${!n.isRead
+                  ? "bg-white dark:bg-[#161922] border-emerald-300 dark:border-slate-700 shadow-xs"
+                  : "bg-[#F8FAFC] dark:bg-[#0C0E14] border-[#E2E8F0] dark:border-slate-800/20 opacity-80"
+                  }`}
               >
                 <div className="flex items-start gap-3 flex-1">
                   <div className="w-9 h-9 rounded-xl bg-gray-100 dark:bg-amber-950/60 flex items-center justify-center shrink-0 mt-0.5">

@@ -333,21 +333,35 @@ export default function HomePage() {
           </div>
 
           {/* Compact Ticket Grid */}
-          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3">
-            {filteredTickets.slice(0, 8).map((ticket) => (
-              <TicketCard key={ticket.id} ticket={ticket} />
-            ))}
-          </div>
+          {filteredTickets.length === 0 ? (
+            <div className="py-12 text-center rounded-2xl bg-slate-50 dark:bg-slate-900/40 border border-dashed border-slate-200 dark:border-slate-800 p-8 space-y-3">
+              <Ticket className="w-10 h-10 text-muted-foreground/40 mx-auto" />
+              <div className="space-y-1">
+                <h3 className="text-sm font-bold text-foreground">No passes currently published</h3>
+                <p className="text-xs text-muted-foreground max-w-sm mx-auto">
+                  Tickets for intercity buses, cinema premieres, live concerts, and soccer derbies will appear here once listed by verified Ethiopian partners.
+                </p>
+              </div>
+            </div>
+          ) : (
+            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3">
+              {filteredTickets.slice(0, 8).map((ticket) => (
+                <TicketCard key={ticket.id} ticket={ticket} />
+              ))}
+            </div>
+          )}
 
-          <div className="text-center pt-4">
-            <Link
-              href="/search"
-              className="inline-flex items-center gap-2 px-6 py-3 rounded-2xl bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-foreground text-xs font-bold transition-all shadow-xs"
-            >
-              <span>View All {allTickets.length} Passes</span>
-              <ArrowRight className="w-4 h-4" />
-            </Link>
-          </div>
+          {allTickets.length > 0 && (
+            <div className="text-center pt-4">
+              <Link
+                href="/search"
+                className="inline-flex items-center gap-2 px-6 py-3 rounded-2xl bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-foreground text-xs font-bold transition-all shadow-xs"
+              >
+                <span>View All {allTickets.length} Passes</span>
+                <ArrowRight className="w-4 h-4" />
+              </Link>
+            </div>
+          )}
         </div>
       </section>
 

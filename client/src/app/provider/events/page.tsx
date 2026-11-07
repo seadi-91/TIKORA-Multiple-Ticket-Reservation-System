@@ -80,7 +80,16 @@ export default function ProviderEventsPage() {
 
       {/* Events Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
-        {filtered.map((evt) => (
+        {filtered.length === 0 ? (
+          <div className="col-span-full py-16 px-4 text-center text-xs text-muted-foreground bg-white dark:bg-[#161922] rounded-3xl border border-[#E2E8F0] dark:border-slate-800">
+            <Calendar className="w-8 h-8 mx-auto mb-2 text-muted-foreground/40" />
+            <p className="font-semibold text-foreground text-sm">No live events scheduled</p>
+            <p className="text-[11px] mt-1 max-w-sm mx-auto text-muted-foreground">
+              No concert passes or festivals match your search or none have been published. Click &quot;Publish New Event&quot; to list a live event.
+            </p>
+          </div>
+        ) : (
+          filtered.map((evt) => (
           <div
             key={evt.id}
             className="rounded-3xl bg-white dark:bg-[#161922] border border-[#E2E8F0] dark:border-slate-800 p-5 shadow-2xs flex flex-col justify-between gap-4"
@@ -170,7 +179,8 @@ export default function ProviderEventsPage() {
               </div>
             </div>
           </div>
-        ))}
+        ))
+      )}
       </div>
     </div>
   );

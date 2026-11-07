@@ -26,21 +26,24 @@ export default function ProviderPaymentReceiptPage({
   // Search transaction by id or reference
   const tx = INITIAL_TRANSACTIONS.find(
     (t) => t.id === paymentId || t.reference.toLowerCase() === paymentId.toLowerCase()
-  ) || {
-    id: paymentId,
-    reference: paymentId.startsWith("POT-") ? paymentId : `POT-2026-${paymentId}`,
-    date: "2026-11-01 16:30",
-    bankName: organization.payoutAccount.bankName || "Commercial Bank of Ethiopia (CBE)",
-    accountNumber: organization.payoutAccount.accountNumber || "1000189429184",
-    amount: 150000,
-    fee: 0,
-    netPayout: 150000,
-    status: "COMPLETED" as const,
-    grossSales: 157895,
-    commission: 7895,
-    transactionRef: "CBE-FT2630591823",
-    period: "Oct 25, 2026 - Oct 31, 2026",
-  };
+  );
+
+  if (!tx) {
+    return (
+      <div className="p-8 text-center bg-card rounded-2xl border border-slate-200/50 dark:border-slate-800/50 max-w-md mx-auto my-12 space-y-3">
+        <p className="font-bold text-foreground text-sm">Settlement receipt not found</p>
+        <p className="text-muted-foreground text-xs">
+          No payout transaction record matches reference &quot;{paymentId}&quot;.
+        </p>
+        <button
+          onClick={() => router.push("/provider/payments")}
+          className="mt-2 px-4 py-2 text-xs font-semibold rounded-xl bg-amber-600 text-white cursor-pointer"
+        >
+          Return to Disbursements
+        </button>
+      </div>
+    );
+  }
 
   return (
     <SettlementReceiptCard

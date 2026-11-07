@@ -26,30 +26,56 @@ import { BookingSummary } from "@/components/booking/booking-summary";
 import { PaymentMethodSelector } from "@/components/payment/payment-method";
 import { BookingConfirmation } from "@/components/booking/booking-confirmation";
 import { useBookingStore } from "@/stores/booking.store";
+import { useAuthStore } from "@/stores/auth.store";
 import { formatCurrency } from "@/lib/format-currency";
 import { formatDate } from "@/lib/format-date";
 import { BookingRecord } from "@/types/booking.types";
 
 export default function EventDetailPage({ params }: { params: Promise<{ eventId: string }> }) {
   const resolvedParams = use(params);
-  const event = EventService.getEventById(resolvedParams.eventId) || EventService.getAllEvents()[0];
+  const { user } = useAuthStore();
+  const event = EventService.getEventById(resolvedParams.eventId);
 
   const { addBooking } = useBookingStore();
 
-  const tiers = event.tiers || [
+  const tiers = event?.tiers || (event ? [
     { id: "reg", name: "Regular Admission", price: event.price, available: 500, perks: ["General Entry", "Food Village Access"] },
     { id: "vip", name: "VIP Pass", price: event.price * 2, available: 100, perks: ["Priority Front Zone", "VIP Bar", "Fast Gate"] },
-  ];
+  ] : []);
 
   const [selectedTier, setSelectedTier] = useState(tiers[0]);
   const [quantity, setQuantity] = useState(1);
   const [step, setStep] = useState<1 | 2 | 3>(1);
 
-  const [customerName, setCustomerName] = useState("Abebe Bekele");
-  const [customerPhone, setCustomerPhone] = useState("+251 91 123 4567");
-  const [customerEmail, setCustomerEmail] = useState("abebe.customer@tikora.et");
+  const [customerName, setCustomerName] = useState(user?.name || "");
+  const [customerPhone, setCustomerPhone] = useState(user?.phone || "");
+  const [customerEmail, setCustomerEmail] = useState(user?.email || "");
   const [paymentMethod, setPaymentMethod] = useState("TELEBIRR");
   const [confirmedBooking, setConfirmedBooking] = useState<BookingRecord | null>(null);
+
+  if (!event) {
+    return (
+      <div className="min-h-screen flex flex-col bg-[#F8FAFC] dark:bg-[#0F1117] text-[#0F172A] dark:text-[#F8FAFC]">
+        <Header />
+        <main className="flex-1 max-w-md mx-auto px-4 py-16 text-center space-y-4">
+          <div className="p-10 rounded-3xl bg-white dark:bg-[#161922] border border-dashed border-slate-200 dark:border-slate-800 space-y-3">
+            <Calendar className="w-10 h-10 text-muted-foreground/40 mx-auto" />
+            <h2 className="text-base font-bold text-foreground">Event Not Found</h2>
+            <p className="text-xs text-muted-foreground">
+              The requested concert, festival, or event could not be found.
+            </p>
+            <Link
+              href="/events"
+              className="inline-block px-5 py-2.5 rounded-xl bg-amber-600 hover:bg-amber-700 text-white text-xs font-bold transition-all shadow-xs"
+            >
+              Browse Upcoming Events
+            </Link>
+          </div>
+        </main>
+        <Footer />
+      </div>
+    );
+  }
 
   const pricing = BookingService.calculatePricing(selectedTier.price, quantity);
 

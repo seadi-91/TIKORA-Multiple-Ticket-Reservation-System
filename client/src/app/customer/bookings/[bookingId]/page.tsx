@@ -29,11 +29,39 @@ export default function BookingDetailPage({ params }: { params: Promise<{ bookin
   const { bookings } = useBookingStore();
 
   const booking =
-    bookings.find((b) => b.id === resolvedParams.bookingId) || bookings[0];
+    bookings.find((b) => b.id === resolvedParams.bookingId);
 
   const handlePrint = () => {
     window.print();
   };
+
+  if (!booking) {
+    return (
+      <PageContainer
+        title="Booking Record"
+        subtitle="Reservation lookup"
+        breadcrumbs={[
+          { label: "Customer Dashboard", href: "/customer" },
+          { label: "My Bookings", href: "/customer/bookings" },
+          { label: "Not Found" },
+        ]}
+      >
+        <div className="p-12 text-center rounded-3xl bg-white dark:bg-[#161922] border border-dashed border-slate-200 dark:border-slate-800 space-y-3 max-w-md mx-auto">
+          <Ticket className="w-10 h-10 text-muted-foreground/40 mx-auto" />
+          <h3 className="text-base font-bold text-foreground">Booking Not Found</h3>
+          <p className="text-xs text-muted-foreground">
+            The requested booking reservation does not exist or has been removed.
+          </p>
+          <Link
+            href="/customer/bookings"
+            className="inline-block px-5 py-2.5 rounded-xl bg-amber-600 hover:bg-amber-700 text-white text-xs font-bold transition-all shadow-xs"
+          >
+            Return to My Bookings
+          </Link>
+        </div>
+      </PageContainer>
+    );
+  }
 
   return (
     <PageContainer

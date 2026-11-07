@@ -145,7 +145,7 @@ export default function AdminPaymentsPage() {
           <select
             value={activeTab}
             onChange={(e) => setActiveTab(e.target.value as "PENDING" | "HISTORY")}
-            className="w-full h-10 px-3 text-xs rounded-xl bg-card border border-slate-200/60 dark:border-slate-800/60 text-foreground font-semibold focus:outline-none focus:ring-2 focus:ring-amber-500/30 shadow-xs"
+            className="w-full h-8 px-2.5 text-[11px] rounded-lg bg-card border border-slate-200/60 dark:border-slate-800/60 text-foreground font-medium focus:outline-none focus:ring-1 focus:ring-amber-500/30 shadow-2xs"
           >
             <option value="PENDING">Pending Payouts Queue ({pendingPayouts.length})</option>
             <option value="HISTORY">Settlement History ({processedPayouts.length})</option>

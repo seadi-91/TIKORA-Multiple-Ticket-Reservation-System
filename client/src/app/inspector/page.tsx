@@ -93,10 +93,6 @@ export default function InspectorDashboardPage() {
           unitType: "Screening Hall",
           unitNoun: "Patron",
           seatLabel: "Auditorium Seat",
-          demoValidCode: "TH-CNM-4419",
-          demoWrongCode: "TH-BUS-8829",
-          demoValidName: "Meron Worku (VIP Recliner E08)",
-          demoWrongLabel: "Test Wrong Pass (Bus Ticket)",
           formatHint: "Format: TH-CNM-XXXX",
         };
       case "BUS":
@@ -108,10 +104,6 @@ export default function InspectorDashboardPage() {
           unitType: "Express Coach",
           unitNoun: "Passenger",
           seatLabel: "Coach Seat",
-          demoValidCode: "TH-BUS-8829",
-          demoWrongCode: "TH-CNM-4419",
-          demoValidName: "Dawit Hailemariam (Seat 04A)",
-          demoWrongLabel: "Test Wrong Pass (Cinema Pass)",
           formatHint: "Format: TH-BUS-XXXX",
         };
       case "EVENT":
@@ -123,10 +115,6 @@ export default function InspectorDashboardPage() {
           unitType: "Main Stage Pavilion",
           unitNoun: "Guest",
           seatLabel: "Wristband Tier / Table",
-          demoValidCode: "TH-EVT-1001",
-          demoWrongCode: "TH-BUS-8829",
-          demoValidName: "Natnael Shimelis (VIP Lounge)",
-          demoWrongLabel: "Test Wrong Pass (Bus Ticket)",
           formatHint: "Format: TH-EVT-XXXX",
         };
       case "SPORTS":
@@ -138,10 +126,6 @@ export default function InspectorDashboardPage() {
           unitType: "Tribune Stand",
           unitNoun: "Fan",
           seatLabel: "Tribune Seat",
-          demoValidCode: "TH-SPT-3001",
-          demoWrongCode: "TH-BUS-8829",
-          demoValidName: "Biniam Girma (West Tribune)",
-          demoWrongLabel: "Test Wrong Pass (Bus Ticket)",
           formatHint: "Format: TH-SPT-XXXX",
         };
     }
@@ -290,7 +274,7 @@ export default function InspectorDashboardPage() {
       </div>
 
       {/* Active Duty Live Hero Banner */}
-      {activeAssignment && (
+      {activeAssignment ? (
         <div className="relative overflow-hidden rounded-3xl bg-white dark:bg-[#161922] border border-amber-500/25 p-5 sm:p-7 shadow-xs">
           <div className="relative z-10 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-5">
             <div className="space-y-2 max-w-2xl">
@@ -363,6 +347,16 @@ export default function InspectorDashboardPage() {
                 style={{ width: `${Math.min(100, boardedPercentage)}%` }}
               />
             </div>
+          </div>
+        </div>
+      ) : (
+        <div className="p-8 sm:p-10 rounded-3xl bg-white dark:bg-[#161922] border border-dashed border-slate-200 dark:border-slate-800 text-center space-y-3">
+          <Layers className="w-10 h-10 text-muted-foreground/40 mx-auto" />
+          <div className="space-y-1">
+            <h3 className="text-sm font-bold text-foreground">No Active Gate Assignment</h3>
+            <p className="text-xs text-muted-foreground max-w-sm mx-auto">
+              You do not have an active duty shift assigned for today yet. Use manual code check-in or scan camera for general ticket verification.
+            </p>
           </div>
         </div>
       )}
@@ -450,7 +444,7 @@ export default function InspectorDashboardPage() {
               type="text"
               value={manualCode}
               onChange={(e) => setManualCode(e.target.value)}
-              placeholder={`e.g. ${sector.demoValidCode} or paste QR token...`}
+              placeholder="Enter ticket code (e.g. TH-BUS-8829 or scan QR token)..."
               className="w-full px-4 py-2.5 text-xs rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-900/50 text-foreground font-mono focus:outline-none focus:ring-1 focus:ring-amber-500"
             />
             {manualCode && (
@@ -464,41 +458,23 @@ export default function InspectorDashboardPage() {
             )}
           </div>
 
-          <div className="flex items-center gap-2">
-            <button
-              type="button"
-              onClick={() => setManualCode(sector.demoValidCode)}
-              className="px-3 py-2.5 rounded-xl border border-slate-200 dark:border-slate-800 text-[11px] text-muted-foreground hover:bg-slate-100 dark:hover:bg-slate-800 font-mono cursor-pointer"
-              title={sector.demoValidName}
-            >
-              Valid Test Pass
-            </button>
-            <button
-              type="button"
-              onClick={() => setManualCode(sector.demoWrongCode)}
-              className="px-3 py-2.5 rounded-xl border border-purple-500/30 text-[11px] text-purple-700 dark:text-purple-300 hover:bg-purple-500/10 font-mono cursor-pointer"
-              title={sector.demoWrongLabel}
-            >
-              Wrong Sector
-            </button>
-            <button
-              type="submit"
-              disabled={isVerifying}
-              className="px-5 py-2.5 rounded-xl bg-amber-600 hover:bg-amber-700 text-white font-bold text-xs shadow-xs transition-colors disabled:opacity-60 flex items-center gap-1.5 shrink-0 cursor-pointer"
-            >
-              {isVerifying ? (
-                <>
-                  <RefreshCw className="w-3.5 h-3.5 animate-spin" />
-                  <span>Checking...</span>
-                </>
-              ) : (
-                <>
-                  <Check className="w-3.5 h-3.5" />
-                  <span>Verify Ticket</span>
-                </>
-              )}
-            </button>
-          </div>
+          <button
+            type="submit"
+            disabled={isVerifying || !manualCode.trim()}
+            className="px-5 py-2.5 rounded-xl bg-amber-600 hover:bg-amber-700 text-white font-bold text-xs shadow-xs transition-colors disabled:opacity-60 flex items-center justify-center gap-1.5 shrink-0 cursor-pointer"
+          >
+            {isVerifying ? (
+              <>
+                <RefreshCw className="w-3.5 h-3.5 animate-spin" />
+                <span>Checking...</span>
+              </>
+            ) : (
+              <>
+                <Check className="w-3.5 h-3.5" />
+                <span>Verify Ticket</span>
+              </>
+            )}
+          </button>
         </form>
 
         {/* Live Outcome Banner */}
@@ -709,19 +685,19 @@ export default function InspectorDashboardPage() {
             </div>
 
             {/* Filter Pills */}
-            <div className="flex items-center gap-1.5 bg-slate-100 dark:bg-slate-800/60 p-1 rounded-xl">
+            <div className="flex items-center gap-1 bg-slate-100 dark:bg-slate-800/60 p-0.5 rounded-lg">
               {(["ALL", "VALID", "ALERTS"] as const).map((mode) => (
                 <button
                   key={mode}
                   type="button"
                   onClick={() => setStatusFilter(mode)}
-                  className={`flex-1 py-1 text-[11px] font-bold rounded-lg transition-all cursor-pointer ${
+                  className={`flex-1 py-0.5 px-2 text-[10px] font-semibold rounded-md transition-all cursor-pointer ${
                     statusFilter === mode
-                      ? "bg-white dark:bg-slate-700 text-foreground shadow-xs"
+                      ? "bg-white dark:bg-slate-700 text-foreground shadow-2xs font-bold"
                       : "text-muted-foreground hover:text-foreground"
                   }`}
                 >
-                  {mode === "ALL" ? "All Logs" : mode === "VALID" ? "Valid" : "Alerts"}
+                  {mode === "ALL" ? "All" : mode === "VALID" ? "Valid" : "Alerts"}
                 </button>
               ))}
             </div>

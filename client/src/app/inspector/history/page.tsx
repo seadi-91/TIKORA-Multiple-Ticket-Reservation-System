@@ -135,41 +135,44 @@ export default function VerificationHistoryPage() {
       </div>
 
       {/* Filter and Search Bar */}
-      <div className="bg-card border border-slate-200/50 dark:border-slate-800/50 rounded-3xl p-5 shadow-sm space-y-3">
-        <div className="flex flex-col sm:flex-row gap-3 items-stretch sm:items-center justify-between">
+      <div className="bg-card border border-slate-200/50 dark:border-slate-800/50 rounded-2xl p-3 sm:p-3.5 shadow-xs space-y-3">
+        <div className="flex flex-col sm:flex-row gap-2.5 items-stretch sm:items-center justify-between">
           {/* Status Tabs */}
-          <div className="flex items-center gap-1.5 overflow-x-auto no-scrollbar flex-nowrap pb-1 sm:pb-0">
+          <div className="inline-flex items-center gap-1 bg-slate-100 dark:bg-slate-800/60 p-1 rounded-xl overflow-x-auto no-scrollbar flex-nowrap">
             {[
-              { id: "ALL", label: `All Scans (${verificationHistory.length})` },
-              { id: "VALID", label: "Valid" },
-              { id: "ALREADY_USED", label: "Duplicates" },
-              { id: "WRONG_ASSIGNMENT", label: "Wrong Gate" },
-              { id: "INVALID", label: "Invalid Signature" },
+              { id: "ALL", label: "All", count: verificationHistory.length },
+              { id: "VALID", label: "Valid", count: verificationHistory.filter((v) => v.result === "VALID").length },
+              { id: "ALREADY_USED", label: "Duplicates", count: verificationHistory.filter((v) => v.result === "ALREADY_USED").length },
+              { id: "WRONG_ASSIGNMENT", label: "Wrong Gate", count: verificationHistory.filter((v) => v.result === "WRONG_ASSIGNMENT").length },
+              { id: "INVALID", label: "Invalid", count: verificationHistory.filter((v) => v.result === "INVALID").length },
             ].map((tab) => (
               <button
                 key={tab.id}
                 type="button"
                 onClick={() => setStatusFilter(tab.id)}
-                className={`px-3.5 py-1.5 text-xs font-semibold rounded-xl transition-all shrink-0 ${
+                className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-[11px] font-semibold transition-all shrink-0 cursor-pointer ${
                   statusFilter === tab.id
-                    ? "bg-amber-600 text-white shadow-sm"
-                    : "bg-slate-100 dark:bg-slate-800/60 text-muted-foreground hover:bg-slate-200 dark:hover:bg-slate-800 hover:text-foreground"
+                    ? "bg-white dark:bg-slate-700 text-foreground shadow-2xs font-bold"
+                    : "text-muted-foreground hover:text-foreground"
                 }`}
               >
-                {tab.label}
+                <span>{tab.label}</span>
+                <span className="text-[10px] px-1.5 py-0.2 rounded-full font-mono bg-slate-200/60 dark:bg-slate-600/60">
+                  {tab.count}
+                </span>
               </button>
             ))}
           </div>
 
           {/* Search Bar */}
           <div className="relative flex-1 sm:max-w-xs">
-            <Search className="w-3.5 h-3.5 absolute left-3.5 top-1/2 -translate-y-1/2 text-muted-foreground pointer-events-none" />
+            <Search className="w-3.5 h-3.5 absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground pointer-events-none" />
             <input
               type="text"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               placeholder="Search reference, passenger, or service..."
-              className="w-full pl-9 pr-3 py-2 text-xs rounded-xl border border-slate-200/60 dark:border-slate-800/60 bg-card text-foreground focus:outline-none focus:ring-2 focus:ring-amber-500/30"
+              className="w-full pl-8 pr-3 py-1.5 text-xs rounded-xl border border-slate-200/60 dark:border-slate-800/60 bg-card text-foreground focus:outline-none focus:ring-1 focus:ring-amber-500/30"
             />
           </div>
         </div>

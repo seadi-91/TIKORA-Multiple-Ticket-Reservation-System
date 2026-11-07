@@ -99,49 +99,7 @@ export default function AdminUserDetailPage({ params }: PageProps) {
       (user.phone && b.customerPhone === user.phone)
   );
 
-  // If user has recorded totalBookings but bookings table only has a few, create rich fallback records so all tabs display complete data
-  const userBookings: AdminBooking[] = rawUserBookings.length > 0
-    ? rawUserBookings
-    : (user.totalBookings && user.totalBookings > 0)
-    ? [
-        {
-          id: `bk-${user.id}-1`,
-          reference: `TK-BUS-${user.id.slice(-4).toUpperCase()}`,
-          customerName: user.name,
-          customerEmail: user.email,
-          customerPhone: user.phone,
-          providerName: "Selam Bus Line SC",
-          serviceTitle: "Addis Ababa to Hawassa Luxury Express",
-          category: "BUS",
-          quantity: 2,
-          seatNumbers: ["14A", "14B"],
-          totalAmount: 1300,
-          platformFee: 65,
-          paymentMethod: user.preferredPayment || "TELEBIRR",
-          paymentStatus: "PAID",
-          bookingStatus: "CONFIRMED",
-          bookingDate: user.lastLogin || user.createdAt,
-        },
-        {
-          id: `bk-${user.id}-2`,
-          reference: `TK-CIN-${user.id.slice(-4).toUpperCase()}`,
-          customerName: user.name,
-          customerEmail: user.email,
-          customerPhone: user.phone,
-          providerName: "Century Cinema Addis",
-          serviceTitle: "Dune: Part Two (IMAX 3D Experience)",
-          category: "CINEMA",
-          quantity: 2,
-          seatNumbers: ["VIP-G4", "VIP-G5"],
-          totalAmount: 500,
-          platformFee: 25,
-          paymentMethod: user.preferredPayment || "TELEBIRR",
-          paymentStatus: "PAID",
-          bookingStatus: "COMPLETED",
-          bookingDate: "2026-10-25 18:40",
-        },
-      ]
-    : [];
+  const userBookings: AdminBooking[] = rawUserBookings;
 
   const filteredBookings = userBookings.filter((b) => {
     const matchesQuery =

@@ -36,7 +36,7 @@ export default function CustomerDashboardOverview() {
   const { bookings, favorites, payments } = useBookingStore();
   const { user } = useAuthStore();
 
-  const customerName = user?.name || "Abebe Bekele";
+  const customerName = user?.name || "Customer";
 
   // Filter confirmed vs past
   const confirmedBookings = bookings.filter((b) => b.bookingStatus === "CONFIRMED");
@@ -327,15 +327,15 @@ export default function CustomerDashboardOverview() {
           </div>
 
           <div className="flex items-center gap-2">
-            <div className="flex items-center gap-1 bg-slate-100 dark:bg-slate-800/60 p-1 rounded-xl">
+            <div className="flex items-center gap-1 bg-slate-100 dark:bg-slate-800/60 p-0.5 rounded-lg">
               {(["ALL", "UPCOMING", "PAST"] as const).map((tab) => (
                 <button
                   key={tab}
                   type="button"
                   onClick={() => setBookingFilter(tab)}
-                  className={`px-3 py-1 text-[11px] font-bold rounded-lg transition-all ${
+                  className={`px-2.5 py-0.5 text-[10px] font-semibold rounded-md transition-all cursor-pointer ${
                     bookingFilter === tab
-                      ? "bg-white dark:bg-slate-700 text-foreground shadow-xs"
+                      ? "bg-white dark:bg-slate-700 text-foreground shadow-2xs font-bold"
                       : "text-muted-foreground hover:text-foreground"
                   }`}
                 >
@@ -356,8 +356,21 @@ export default function CustomerDashboardOverview() {
 
         <div className="space-y-3">
           {filteredBookings.length === 0 ? (
-            <div className="text-center py-8 text-xs text-muted-foreground">
-              No bookings found in this filter category.
+            <div className="text-center py-12 rounded-2xl bg-slate-50 dark:bg-slate-900/40 border border-dashed border-slate-200 dark:border-slate-800 p-6 space-y-3">
+              <Ticket className="w-8 h-8 text-muted-foreground/40 mx-auto" />
+              <div className="space-y-1">
+                <p className="font-bold text-foreground text-xs">No reservations found</p>
+                <p className="text-[11px] text-muted-foreground max-w-xs mx-auto">
+                  You haven&apos;t booked any tickets yet. Explore buses, cinema releases, concerts, and matchdays.
+                </p>
+              </div>
+              <Link
+                href="/search"
+                className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-amber-600 hover:bg-amber-700 text-white text-xs font-bold transition-all shadow-xs"
+              >
+                <Compass className="w-3.5 h-3.5" />
+                <span>Explore Tickets</span>
+              </Link>
             </div>
           ) : (
             filteredBookings.slice(0, 4).map((b) => (

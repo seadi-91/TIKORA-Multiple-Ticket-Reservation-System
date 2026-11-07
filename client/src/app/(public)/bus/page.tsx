@@ -7,6 +7,7 @@ import {
   Calendar,
   Search,
   ArrowLeftRight,
+  Bus,
 } from "lucide-react";
 import { Header } from "@/components/layout/header";
 import { Footer } from "@/components/layout/footer";
@@ -138,11 +139,10 @@ export default function BusLandingPage() {
               <button
                 key={op}
                 onClick={() => setSelectedOperator(op)}
-                className={`px-2.5 py-1 rounded-lg text-[10px] font-bold tracking-wide transition-all shrink-0 cursor-pointer ${
-                  selectedOperator === op
+                className={`px-2.5 py-1 rounded-lg text-[10px] font-bold tracking-wide transition-all shrink-0 cursor-pointer ${selectedOperator === op
                     ? "bg-slate-900 dark:bg-white text-white dark:text-slate-950 shadow-xs"
                     : "bg-white dark:bg-[#161922] border border-slate-200 dark:border-slate-800 text-slate-600 dark:text-slate-300 hover:text-slate-900"
-                }`}
+                  }`}
               >
                 {op === "ALL" ? "All Fleets" : op.split(" ")[0]}
               </button>
@@ -155,11 +155,23 @@ export default function BusLandingPage() {
         </div>
 
         {/* Direct Compact Ticket Grid */}
-        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3 pt-1">
-          {filteredBuses.map((bus) => (
-            <TicketCard key={bus.id} ticket={bus} />
-          ))}
-        </div>
+        {filteredBuses.length === 0 ? (
+          <div className="py-12 text-center rounded-2xl bg-white dark:bg-[#161922] border border-dashed border-slate-200 dark:border-slate-800 p-8 space-y-3">
+            <Bus className="w-10 h-10 text-muted-foreground/40 mx-auto" />
+            <div className="space-y-1">
+              <h3 className="text-sm font-bold text-foreground">No bus departures found</h3>
+              <p className="text-xs text-muted-foreground max-w-sm mx-auto">
+                No active coach routes match your selected operator. Try switching to &quot;All Fleets&quot; or searching another Ethiopian destination.
+              </p>
+            </div>
+          </div>
+        ) : (
+          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3 pt-1">
+            {filteredBuses.map((bus) => (
+              <TicketCard key={bus.id} ticket={bus} />
+            ))}
+          </div>
+        )}
       </main>
 
       <Footer />

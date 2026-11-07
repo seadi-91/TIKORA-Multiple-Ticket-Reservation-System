@@ -28,67 +28,27 @@ import { toast } from "sonner";
 
 export default function ProviderTicketDetailPage() {
   const params = useParams();
-  const ticketId = (params?.ticketId as string) || "bus-1";
+  const ticketId = (params?.ticketId as string) || "";
 
-  // Find ticket or fallback to bus-1
+  // Find ticket from service
   const allTickets = TicketService.getAllTickets();
-  const ticket = allTickets.find((t) => t.id === ticketId) || allTickets[0];
+  const ticket = allTickets.find((t) => t.id === ticketId);
 
-  const [isActive, setIsActive] = useState(ticket?.status !== "SOLD_OUT");
+  const [isActive, setIsActive] = useState(ticket ? ticket.status !== "SOLD_OUT" : false);
 
-  // Simulated passenger / attendee manifest
-  const [manifest, setManifest] = useState([
-    {
-      id: "MAN-01",
-      name: "Dawit Hailemariam",
-      seat: "04A",
-      phone: "+251 91 182 9182",
-      bookingRef: "TH-BUS-8829",
-      status: "CHECKED_IN",
-      paid: true,
-      time: "05:40 AM",
-    },
-    {
-      id: "MAN-02",
-      name: "Tigist Alemu",
-      seat: "04B",
-      phone: "+251 92 344 8811",
-      bookingRef: "TH-BUS-8830",
-      status: "CHECKED_IN",
-      paid: true,
-      time: "05:45 AM",
-    },
-    {
-      id: "MAN-03",
-      name: "Yared Tesfaye",
-      seat: "05A",
-      phone: "+251 93 512 0099",
-      bookingRef: "TH-BUS-8835",
-      status: "PENDING_BOARDING",
-      paid: true,
-      time: "05:52 AM",
-    },
-    {
-      id: "MAN-04",
-      name: "Bethlehem Assefa",
-      seat: "05B",
-      phone: "+251 91 766 2211",
-      bookingRef: "TH-BUS-8841",
-      status: "PENDING_BOARDING",
-      paid: true,
-      time: "05:58 AM",
-    },
-    {
-      id: "MAN-05",
-      name: "Samuel Kebede",
-      seat: "06A",
-      phone: "+251 94 881 7733",
-      bookingRef: "TH-BUS-8849",
-      status: "CHECKED_IN",
-      paid: true,
-      time: "06:01 AM",
-    },
-  ]);
+  // Live passenger / attendee manifest
+  const [manifest, setManifest] = useState<
+    Array<{
+      id: string;
+      name: string;
+      seat: string;
+      phone: string;
+      bookingRef: string;
+      status: string;
+      paid: boolean;
+      time: string;
+    }>
+  >([]);
 
   if (!ticket) {
     return (
@@ -398,7 +358,16 @@ export default function ProviderTicketDetailPage() {
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-border/40">
-                  {manifest.map((item) => (
+                  {manifest.length === 0 ? (
+                    <tr>
+                      <td colSpan={6} className="py-12 px-3 text-center text-muted-foreground text-xs">
+                        <Users className="w-8 h-8 mx-auto mb-2 text-muted-foreground/40" />
+                        <p className="font-semibold text-foreground">No passengers checked in yet</p>
+                        <p className="text-[11px] mt-0.5">Passenger boarding records will appear as tickets are scanned.</p>
+                      </td>
+                    </tr>
+                  ) : (
+                    manifest.map((item) => (
                     <tr key={item.id} className="hover:bg-muted/20 transition-colors">
                       <td className="py-3 px-3 font-mono font-bold text-amber-600">
                         {item.seat}
@@ -435,7 +404,8 @@ export default function ProviderTicketDetailPage() {
                         </button>
                       </td>
                     </tr>
-                  ))}
+                  ))
+                )}
                 </tbody>
               </table>
             </div>

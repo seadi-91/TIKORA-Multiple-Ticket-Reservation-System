@@ -75,9 +75,6 @@ export default function TicketScannerPage() {
           seatLabel: "Auditorium Seat / Hall",
           timePrefix: "Showtime:",
           successTitle: "Admission Approved",
-          demoValid1: { code: "TH-CNM-4419", label: "VIP Recliner (Meron W.)" },
-          demoValid2: { code: "TH-CNM-4420", label: "VIP Recliner (Dawit T.)" },
-          demoWrong: { code: "TH-BUS-8829", label: "Wrong (Bus Ticket)" },
         };
       case "BUS":
         return {
@@ -87,9 +84,6 @@ export default function TicketScannerPage() {
           seatLabel: "Coach Seat",
           timePrefix: "Departs:",
           successTitle: "Boarding Approved",
-          demoValid1: { code: "TH-BUS-8829", label: "Recliner 04A (Dawit H.)" },
-          demoValid2: { code: "TH-BUS-8830", label: "Aisle 04B (Tigist A.)" },
-          demoWrong: { code: "TH-CNM-4419", label: "Wrong (Cinema Pass)" },
         };
       case "EVENT":
         return {
@@ -99,9 +93,6 @@ export default function TicketScannerPage() {
           seatLabel: "Access Tier / Table",
           timePrefix: "Starts:",
           successTitle: "Entry Approved",
-          demoValid1: { code: "TH-EVT-1001", label: "VIP Lounge (Natnael S.)" },
-          demoValid2: { code: "TH-EVT-1002", label: "Regular Pass (Hanna D.)" },
-          demoWrong: { code: "TH-BUS-8829", label: "Wrong (Bus Ticket)" },
         };
       case "SPORTS":
         return {
@@ -111,9 +102,6 @@ export default function TicketScannerPage() {
           seatLabel: "Tribune Stand / Gate",
           timePrefix: "Kickoff:",
           successTitle: "Turnstile Approved",
-          demoValid1: { code: "TH-SPT-3001", label: "West Tribune (Biniam G.)" },
-          demoValid2: { code: "TH-SPT-3002", label: "East Bleachers" },
-          demoWrong: { code: "TH-BUS-8829", label: "Wrong (Bus Ticket)" },
         };
     }
   };
@@ -231,13 +219,18 @@ export default function TicketScannerPage() {
           <select
             value={currentAssignmentId}
             onChange={(e) => setCurrentAssignment(e.target.value)}
+            disabled={assignments.length === 0}
             className="px-3 py-1.5 text-xs rounded-xl border border-slate-200/60 dark:border-slate-800/60 bg-card text-foreground focus:outline-none focus:ring-1 focus:ring-amber-500 font-medium"
           >
-            {assignments.map((a) => (
-              <option key={a.id} value={a.id}>
-                {a.gate} - {a.title.slice(0, 24)}...
-              </option>
-            ))}
+            {assignments.length === 0 ? (
+              <option value="">No Active Duty Shift</option>
+            ) : (
+              assignments.map((a) => (
+                <option key={a.id} value={a.id}>
+                  {a.gate} - {a.title.slice(0, 24)}...
+                </option>
+              ))
+            )}
           </select>
         </div>
       </div>
@@ -312,54 +305,16 @@ export default function TicketScannerPage() {
             </div>
           </div>
 
-          {/* Quick Barcode Simulator for Testing */}
-          <div className="p-4 rounded-2xl bg-card border border-slate-200/60 dark:border-slate-800/60 shadow-xs space-y-2">
-            <div className="flex items-center justify-between text-xs">
-              <span className="font-bold text-foreground">One-Click Test Passes ({profile.category} Sector):</span>
-              <span className="text-[10px] text-muted-foreground">Click to simulate QR scan</span>
+          {/* Live Scanner Operational Status */}
+          <div className="p-4 rounded-2xl bg-card border border-slate-200/60 dark:border-slate-800/60 shadow-xs flex items-center justify-between text-xs">
+            <div className="flex items-center gap-2">
+              <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+              <span className="font-semibold text-foreground">Camera Engine Online</span>
+              <span className="text-muted-foreground">• Ready for QR & Code-128 scans</span>
             </div>
-
-            <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
-              <button
-                type="button"
-                disabled={isVerifying}
-                onClick={() => handlePerformVerification(sector.demoValid1.code)}
-                className="p-2 rounded-xl border border-emerald-500/30 bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-800 dark:text-emerald-300 text-left transition-colors cursor-pointer"
-              >
-                <span className="font-bold text-[11px] block text-emerald-700 dark:text-emerald-300">Valid Pass 1</span>
-                <span className="font-mono text-[9px] text-muted-foreground truncate block">{sector.demoValid1.label}</span>
-              </button>
-
-              <button
-                type="button"
-                disabled={isVerifying}
-                onClick={() => handlePerformVerification(sector.demoValid2.code)}
-                className="p-2 rounded-xl border border-emerald-500/30 bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-800 dark:text-emerald-300 text-left transition-colors cursor-pointer"
-              >
-                <span className="font-bold text-[11px] block text-emerald-700 dark:text-emerald-300">Valid Pass 2</span>
-                <span className="font-mono text-[9px] text-muted-foreground truncate block">{sector.demoValid2.label}</span>
-              </button>
-
-              <button
-                type="button"
-                disabled={isVerifying}
-                onClick={() => handlePerformVerification(sector.demoWrong.code)}
-                className="p-2 rounded-xl border border-purple-500/30 bg-purple-500/10 hover:bg-purple-500/20 text-purple-800 dark:text-purple-300 text-left transition-colors cursor-pointer"
-              >
-                <span className="font-bold text-[11px] block text-purple-700 dark:text-purple-300">Wrong Venue</span>
-                <span className="font-mono text-[9px] text-muted-foreground truncate block">{sector.demoWrong.label}</span>
-              </button>
-
-              <button
-                type="button"
-                disabled={isVerifying}
-                onClick={() => handlePerformVerification("FAKE-SIG-000")}
-                className="p-2 rounded-xl border border-rose-500/30 bg-rose-500/10 hover:bg-rose-500/20 text-rose-800 dark:text-rose-300 text-left transition-colors cursor-pointer"
-              >
-                <span className="font-bold text-[11px] block text-rose-700 dark:text-rose-300">Invalid QR</span>
-                <span className="font-mono text-[9px] text-muted-foreground truncate block">Bad Key Signature</span>
-              </button>
-            </div>
+            <span className="text-[10px] font-mono text-muted-foreground">
+              {profile.organizationName}
+            </span>
           </div>
         </div>
 

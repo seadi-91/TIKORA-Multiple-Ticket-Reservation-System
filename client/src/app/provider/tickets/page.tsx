@@ -9,6 +9,7 @@ import {
   Edit,
   Trash2,
   Boxes,
+  Ticket,
 } from "lucide-react";
 import { TicketService } from "@/services/ticket.service";
 import { formatCurrency } from "@/lib/format-currency";
@@ -127,85 +128,100 @@ export default function ProviderTicketsPage() {
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100 dark:divide-slate-800/40 text-xs">
-              {filtered.map((t) => (
-                <tr key={t.id} className="hover:bg-amber-500/[0.03] dark:hover:bg-amber-500/[0.06] transition-colors">
-                  <td className="py-3.5 px-4">
-                    <span className="font-bold text-foreground block line-clamp-1">
-                      {t.title}
-                    </span>
-                    <span className="text-[10px] text-muted-foreground block">{t.location}</span>
-                  </td>
-                  <td className="py-3.5 px-4">
-                    <span className="text-[10px] font-bold px-2 py-0.5 rounded-full border border-slate-200/60 dark:border-slate-700/60 bg-slate-100 dark:bg-slate-800 text-foreground">
-                      {t.category}
-                    </span>
-                  </td>
-                  <td className="py-3.5 px-4">
-                    <span className="font-semibold text-foreground block">
-                      {t.date}
-                    </span>
-                    <span className="text-[10px] text-muted-foreground">{t.time}</span>
-                  </td>
-                  <td className="py-3.5 px-4 font-bold text-amber-600 dark:text-amber-400">
-                    {formatCurrency(t.price)}
-                  </td>
-                  <td className="py-3.5 px-4">
-                    <span className="font-bold text-emerald-600 dark:text-emerald-400">
-                      {t.availableSeats}
-                    </span>
-                    <span className="text-muted-foreground"> / {t.totalSeats} seats</span>
-                  </td>
-                  <td className="py-3.5 px-4 text-center">
-                    <span
-                      className={`text-[10px] font-bold px-2.5 py-0.5 rounded-full inline-block ${t.availableSeats > 10
-                        ? "bg-emerald-50 text-emerald-700 dark:bg-emerald-950/60 dark:text-emerald-300 border border-emerald-200/60"
-                        : t.availableSeats > 0
-                          ? "bg-amber-50 text-amber-700 dark:bg-amber-950/60 dark:text-amber-300 border border-amber-200/60"
-                          : "bg-rose-50 text-rose-700 dark:bg-rose-950/60 dark:text-rose-300 border border-rose-200/60"
-                        }`}
-                    >
-                      {t.availableSeats > 10
-                        ? "Available"
-                        : t.availableSeats > 0
-                          ? "Low Stock"
-                          : "Sold Out"}
-                    </span>
-                  </td>
-                  <td className="py-3.5 px-5 text-right">
-                    <div className="flex items-center justify-end">
-                      <ActionDropdown
-                        items={[
-                          {
-                            label: "View Ticket Details",
-                            icon: <Eye className="w-3.5 h-3.5" />,
-                            href: `/provider/tickets/${t.id}`,
-                          },
-                          {
-                            label: "Edit Ticket / Pricing",
-                            icon: <Edit className="w-3.5 h-3.5" />,
-                            href: `/provider/tickets/${t.id}/edit`,
-                          },
-                          {
-                            label: "Manage Inventory",
-                            icon: <Boxes className="w-3.5 h-3.5" />,
-                            href: `/provider/inventory`,
-                          },
-                          {
-                            label: "Delete Ticket Listing",
-                            icon: <Trash2 className="w-3.5 h-3.5" />,
-                            variant: "danger",
-                            onClick: () => {
-                              if (confirm(`Delete ticket listing "${t.title}"?`)) {
-                                setTickets(tickets.filter((item) => item.id !== t.id));
-                              }
-                            },
-                          },
-                        ]}
-                      />
+              {filtered.length === 0 ? (
+                <tr>
+                  <td colSpan={7} className="py-16 px-4 text-center text-xs text-muted-foreground">
+                    <div className="w-12 h-12 rounded-2xl bg-amber-500/10 text-amber-600 flex items-center justify-center mx-auto mb-3">
+                      <Ticket className="w-6 h-6" />
                     </div>
+                    <p className="font-bold text-foreground text-sm">No ticket listings available</p>
+                    <p className="text-[11px] mt-1 max-w-sm mx-auto text-muted-foreground">
+                      No tickets match your filter or no listings have been published yet. Click &quot;Create New Ticket&quot; to publish your first pass.
+                    </p>
                   </td>
                 </tr>
-              ))}
+              ) : (
+                filtered.map((t) => (
+                  <tr key={t.id} className="hover:bg-amber-500/[0.03] dark:hover:bg-amber-500/[0.06] transition-colors">
+                    <td className="py-3.5 px-4">
+                      <span className="font-bold text-foreground block line-clamp-1">
+                        {t.title}
+                      </span>
+                      <span className="text-[10px] text-muted-foreground block">{t.location}</span>
+                    </td>
+                    <td className="py-3.5 px-4">
+                      <span className="text-[10px] font-bold px-2 py-0.5 rounded-full border border-slate-200/60 dark:border-slate-700/60 bg-slate-100 dark:bg-slate-800 text-foreground">
+                        {t.category}
+                      </span>
+                    </td>
+                    <td className="py-3.5 px-4">
+                      <span className="font-semibold text-foreground block">
+                        {t.date}
+                      </span>
+                      <span className="text-[10px] text-muted-foreground">{t.time}</span>
+                    </td>
+                    <td className="py-3.5 px-4 font-bold text-amber-600 dark:text-amber-400">
+                      {formatCurrency(t.price)}
+                    </td>
+                    <td className="py-3.5 px-4">
+                      <span className="font-bold text-emerald-600 dark:text-emerald-400">
+                        {t.availableSeats}
+                      </span>
+                      <span className="text-muted-foreground"> / {t.totalSeats} seats</span>
+                    </td>
+                    <td className="py-3.5 px-4 text-center">
+                      <span
+                        className={`text-[10px] font-bold px-2.5 py-0.5 rounded-full inline-block ${t.availableSeats > 10
+                          ? "bg-emerald-50 text-emerald-700 dark:bg-emerald-950/60 dark:text-emerald-300 border border-emerald-200/60"
+                          : t.availableSeats > 0
+                            ? "bg-amber-50 text-amber-700 dark:bg-amber-950/60 dark:text-amber-300 border border-amber-200/60"
+                            : "bg-rose-50 text-rose-700 dark:bg-rose-950/60 dark:text-rose-300 border border-rose-200/60"
+                          }`}
+                      >
+                        {t.availableSeats > 10
+                          ? "Available"
+                          : t.availableSeats > 0
+                            ? "Low Stock"
+                            : "Sold Out"}
+                      </span>
+                    </td>
+                    <td className="py-3.5 px-5 text-right">
+                      <div className="flex items-center justify-end">
+                        <ActionDropdown
+                          items={[
+                            {
+                              label: "View Ticket Details",
+                              icon: <Eye className="w-3.5 h-3.5" />,
+                              href: `/provider/tickets/${t.id}`,
+                            },
+                            {
+                              label: "Edit Ticket / Pricing",
+                              icon: <Edit className="w-3.5 h-3.5" />,
+                              href: `/provider/tickets/${t.id}/edit`,
+                            },
+                            {
+                              label: "Manage Inventory",
+                              icon: <Boxes className="w-3.5 h-3.5" />,
+                              href: `/provider/inventory`,
+                            },
+                            {
+                              label: "Delete Ticket Listing",
+                              icon: <Trash2 className="w-3.5 h-3.5" />,
+                              variant: "danger",
+                              onClick: () => {
+                                if (confirm(`Delete ticket listing "${t.title}"?`)) {
+                                  TicketService.deleteTicket(t.id);
+                                  setTickets(TicketService.getAllTickets().filter((item) => item.category === organization.category));
+                                }
+                              },
+                            },
+                          ]}
+                        />
+                      </div>
+                    </td>
+                  </tr>
+                ))
+              )}
             </tbody>
           </table>
         </div>

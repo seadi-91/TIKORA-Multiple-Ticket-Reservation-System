@@ -23,8 +23,9 @@ import { DashboardLineChart } from "@/components/charts/line-chart";
 import { DashboardBarChart } from "@/components/charts/bar-chart";
 import { DashboardPieChart } from "@/components/charts/pie-chart";
 import { formatCurrency } from "@/lib/format-currency";
-import { useProviderStore } from "@/stores/provider.store";
-import { TicketCategory } from "@/types/ticket.types";
+import { useProviderStore, ProviderOrganization } from "@/stores/provider.store";
+import { TicketCategory, TicketItem } from "@/types/ticket.types";
+import { TicketService } from "@/services/ticket.service";
 import { toast } from "sonner";
 
 interface SectorReportConfig {
@@ -67,65 +68,103 @@ interface SectorReportConfig {
   }[];
 }
 
-const getSectorAnalyticsConfig = (category: TicketCategory, orgName: string): SectorReportConfig => {
+const getSectorAnalyticsConfig = (
+  organization: ProviderOrganization,
+  tickets: TicketItem[]
+): SectorReportConfig => {
+  const category = organization.category;
+  const orgName = organization.name;
+
+  const totalCapacity = tickets.reduce((acc, t) => acc + t.totalSeats, 0);
+  const totalAvailable = tickets.reduce((acc, t) => acc + t.availableSeats, 0);
+  const totalSold = totalCapacity - totalAvailable;
+  const avgPrice =
+    tickets.length > 0 ? Math.round(tickets.reduce((acc, t) => acc + t.price, 0) / tickets.length) : 0;
+  const occupancyPct = totalCapacity > 0 ? Math.round((totalSold / totalCapacity) * 100) : 0;
+
+  const ledgerRows = tickets.map((t) => {
+    const sold = t.totalSeats - t.availableSeats;
+    const gross = sold * t.price;
+    const net = Math.round(gross * 0.95);
+    const occ = t.totalSeats > 0 ? `${Math.round((sold / t.totalSeats) * 100)}%` : "0%";
+
+    return {
+      segmentTitle: t.title,
+      subLabel: `${t.location} • ${t.date} ${t.time}`,
+      sessionsOrTrips: 1,
+      ticketsSold: sold,
+      occupancyRate: occ,
+      grossSales: gross,
+      netPayout: net,
+    };
+  });
+
+  const revenueTrajectory =
+    organization.stats.totalRevenue > 0
+      ? [
+          { name: "Week 1", value: Math.round(organization.stats.totalRevenue * 0.15) },
+          { name: "Week 2", value: Math.round(organization.stats.totalRevenue * 0.25) },
+          { name: "Week 3", value: Math.round(organization.stats.totalRevenue * 0.25) },
+          { name: "Week 4", value: Math.round(organization.stats.totalRevenue * 0.35) },
+        ]
+      : [
+          { name: "Week 1", value: 0 },
+          { name: "Week 2", value: 0 },
+          { name: "Week 3", value: 0 },
+          { name: "Week 4", value: 0 },
+        ];
+
+  const topBarData = tickets.slice(0, 5).map((t) => ({
+    name: t.title.length > 20 ? `${t.title.slice(0, 18)}...` : t.title,
+    value: (t.totalSeats - t.availableSeats) * t.price,
+  }));
+
+  const colors = ["#6366F1", "#818CF8", "#A5B4FC", "#C7D2FE"];
+  const distributionData = tickets.slice(0, 4).map((t, idx) => ({
+    name: t.title.length > 20 ? `${t.title.slice(0, 18)}...` : t.title,
+    value: (t.totalSeats - t.availableSeats) * t.price || 0,
+    color: colors[idx % colors.length],
+  }));
+
   switch (category) {
     case "CINEMA":
       return {
         sectorBadge: "CINEMA BOX OFFICE ANALYTICS",
         reportTitle: "Multiplex Screening & Box Office Performance",
-        reportSubtitle: `Granular hall occupancy, 4K Laser Dolby Atmos revenue velocity, matinee vs evening sales, and concession ticketing for ${orgName}.`,
+        reportSubtitle: `Granular hall occupancy, revenue velocity, and concession ticketing for ${orgName}.`,
         unitLabel: "Showtimes",
         kpis: [
           {
             label: "Average Ticket Value",
-            value: "340 ETB",
-            sub: "+8.4% vs last period",
-            isPositive: true,
+            value: `${avgPrice} ETB`,
+            sub: tickets.length > 0 ? "Standard premiere rate" : "No active movies",
+            isPositive: tickets.length > 0,
           },
           {
             label: "Screening Hall Occupancy",
-            value: "78.6%",
-            sub: "+5.2% seat load factor",
-            isPositive: true,
+            value: `${occupancyPct}%`,
+            sub: `${totalSold} seats booked`,
+            isPositive: occupancyPct > 50,
           },
           {
-            label: "VIP Laser Atmos Share",
-            value: "54.2%",
-            sub: "High-yield hall tier",
+            label: "Active Premieres",
+            value: `${tickets.length}`,
+            sub: "Now showing",
           },
           {
-            label: "Projection Reliability",
-            value: "99.8%",
-            sub: "0 screening disruptions",
-            isPositive: true,
+            label: "Tickets Verified",
+            value: `${organization.stats.totalTicketsSold}`,
+            sub: "Redeemed at hall gate",
+            isPositive: organization.stats.totalTicketsSold > 0,
           },
         ],
-        revenueTrajectory: [
-          { name: "Oct 15", value: 38000 },
-          { name: "Oct 20", value: 49000 },
-          { name: "Oct 25", value: 58000 },
-          { name: "Oct 30", value: 69000 },
-          { name: "Nov 05", value: 81000 },
-          { name: "Nov 10", value: 92000 },
-          { name: "Nov 15", value: 104500 },
-        ],
+        revenueTrajectory,
         distributionTitle: "Box Office by Screening Format",
-        distributionSubtitle: "VIP Atmos vs 3D Digital vs 2D standard",
-        distributionData: [
-          { name: "4K Laser Dolby Atmos (Hall 1)", value: 235000, color: "#6366F1" },
-          { name: "RealD 3D Surround (Hall 2)", value: 128000, color: "#818CF8" },
-          { name: "Standard 2D Digital (Hall 3)", value: 54000, color: "#A5B4FC" },
-          { name: "Afternoon Matinee Discount", value: 38000, color: "#C7D2FE" },
-        ],
+        distributionSubtitle: "Distribution across active movie features",
+        distributionData,
         topBarTitle: "Top Box Office Movie Screenings",
         topBarSubtitle: "Ranked by gross ticket sales and hall occupancy",
-        topBarData: [
-          { name: "Avatar: Fire & Ash 3D", value: 182000 },
-          { name: "Dune: Part Two Atmos", value: 135000 },
-          { name: "Gladiator II 4K Laser", value: 98000 },
-          { name: "Habesha Romance Comedy", value: 76000 },
-          { name: "Mufasa: The Lion King", value: 64000 },
-        ],
+        topBarData,
         tableTitle: "Cinema Screening & Box Office Ledger",
         tableSubtitle: `Live box office performance and digital hall manifest for ${orgName}`,
         tableHeaders: {
@@ -137,112 +176,47 @@ const getSectorAnalyticsConfig = (category: TicketCategory, orgName: string): Se
           col6: "Gross Box Office",
           col7: "Net Provider Payout",
         },
-        ledgerRows: [
-          {
-            segmentTitle: "Avatar: Fire & Ash 3D Laser",
-            subLabel: "Hall 1 (Century Megaplex) • 04:30 PM & 08:30 PM",
-            sessionsOrTrips: 28,
-            ticketsSold: 1240,
-            occupancyRate: "92%",
-            grossSales: 182000,
-            netPayout: 172900,
-          },
-          {
-            segmentTitle: "Dune: Part Two Dolby Atmos",
-            subLabel: "Hall 1 (Century Megaplex) • 07:00 PM Prime",
-            sessionsOrTrips: 24,
-            ticketsSold: 980,
-            occupancyRate: "86%",
-            grossSales: 135000,
-            netPayout: 128250,
-          },
-          {
-            segmentTitle: "Gladiator II: Ethiopian Premiere",
-            subLabel: "Hall 2 (VIP Recliner) • 05:30 PM & 09:00 PM",
-            sessionsOrTrips: 20,
-            ticketsSold: 740,
-            occupancyRate: "81%",
-            grossSales: 98000,
-            netPayout: 93100,
-          },
-          {
-            segmentTitle: "Habesha Romance Comedy",
-            subLabel: "Hall 3 (Standard 2D) • 02:00 PM Matinee",
-            sessionsOrTrips: 18,
-            ticketsSold: 560,
-            occupancyRate: "74%",
-            grossSales: 76000,
-            netPayout: 72200,
-          },
-          {
-            segmentTitle: "Mufasa: The Lion King",
-            subLabel: "Hall 2 (RealD 3D Family) • 03:00 PM & 06:00 PM",
-            sessionsOrTrips: 16,
-            ticketsSold: 490,
-            occupancyRate: "70%",
-            grossSales: 64000,
-            netPayout: 60800,
-          },
-        ],
+        ledgerRows,
       };
 
     case "EVENT":
       return {
         sectorBadge: "LIVE EVENTS & CONCERTS ANALYTICS",
         reportTitle: "Concert & Festival Ticket Sales Performance",
-        reportSubtitle: `Festival pass velocity, VIP lounge conversions, turnstile check-in throughput, and attendee volume trends for ${orgName}.`,
+        reportSubtitle: `Festival pass velocity, VIP conversions, turnstile check-ins, and attendee volume trends for ${orgName}.`,
         unitLabel: "Events",
         kpis: [
           {
             label: "Average Pass Order",
-            value: "1,450 ETB",
-            sub: "+15.8% vs last period",
-            isPositive: true,
+            value: `${avgPrice} ETB`,
+            sub: tickets.length > 0 ? "Average ticket tier" : "No live events",
+            isPositive: tickets.length > 0,
           },
           {
             label: "Venue Turnstile Fill",
-            value: "92.4%",
-            sub: "Millennium Hall Capacity",
-            isPositive: true,
+            value: `${occupancyPct}%`,
+            sub: `${totalSold} passes sold`,
+            isPositive: occupancyPct > 50,
           },
           {
-            label: "VIP Table Conversion",
-            value: "48.0%",
-            sub: "High-margin premium tiers",
+            label: "Active Listings",
+            value: `${tickets.length}`,
+            sub: "Festivals & concerts",
           },
           {
-            label: "Gate Check-in Speed",
-            value: "88 scans/min",
-            sub: "Fast turnstile flow",
-            isPositive: true,
+            label: "Gate Scans Verified",
+            value: `${organization.stats.totalTicketsSold}`,
+            sub: "Checked-in at turnstiles",
+            isPositive: organization.stats.totalTicketsSold > 0,
           },
         ],
-        revenueTrajectory: [
-          { name: "Oct 15", value: 52000 },
-          { name: "Oct 20", value: 74000 },
-          { name: "Oct 25", value: 98000 },
-          { name: "Oct 30", value: 125000 },
-          { name: "Nov 05", value: 168000 },
-          { name: "Nov 10", value: 215000 },
-          { name: "Nov 15", value: 248000 },
-        ],
+        revenueTrajectory,
         distributionTitle: "Revenue by Festival Pass Tier",
-        distributionSubtitle: "VIP Lounges vs General Standing vs Early Bird",
-        distributionData: [
-          { name: "VIP Tables & Lounges", value: 345000, color: "#D97706" },
-          { name: "General Admission Standing", value: 245000, color: "#B45309" },
-          { name: "Early Bird Discount Passes", value: 85000, color: "#F59E0B" },
-          { name: "Backstage & Artist Access", value: 40789, color: "#FCD34D" },
-        ],
+        distributionSubtitle: "Distribution across event listings",
+        distributionData,
         topBarTitle: "Top Performing Festivals & Concerts",
         topBarSubtitle: "Ranked by gross ticket volume and gate attendance",
-        topBarData: [
-          { name: "Addis Jazz & Blues Fest", value: 240000 },
-          { name: "Afrobeat Live Millennium", value: 195000 },
-          { name: "New Year Eve Grand Gala", value: 160000 },
-          { name: "Tech & Startup Expo", value: 85000 },
-          { name: "Addis Standup Showcase", value: 35789 },
-        ],
+        topBarData,
         tableTitle: "Concert & Festival Event Ledger",
         tableSubtitle: `Turnstile gate manifests and revenue reconciliation for ${orgName}`,
         tableHeaders: {
@@ -254,112 +228,47 @@ const getSectorAnalyticsConfig = (category: TicketCategory, orgName: string): Se
           col6: "Gross Pass Sales",
           col7: "Net Provider Payout",
         },
-        ledgerRows: [
-          {
-            segmentTitle: "Addis International Jazz & Heritage Festival",
-            subLabel: "Ghion Hotel Open Gardens • Main Amphitheatre Stage",
-            sessionsOrTrips: 1,
-            ticketsSold: 1850,
-            occupancyRate: "98%",
-            grossSales: 240000,
-            netPayout: 228000,
-          },
-          {
-            segmentTitle: "Afrobeat Live Festival - Millennium Hall",
-            subLabel: "Millennium Hall Main Arena • Turnstiles A, B, C",
-            sessionsOrTrips: 1,
-            ticketsSold: 1420,
-            occupancyRate: "94%",
-            grossSales: 195000,
-            netPayout: 185250,
-          },
-          {
-            segmentTitle: "Ethiopian New Year Eve Music Night",
-            subLabel: "Sheraton Addis Gaslight Pavilion • VIP Tables",
-            sessionsOrTrips: 1,
-            ticketsSold: 980,
-            occupancyRate: "90%",
-            grossSales: 160000,
-            netPayout: 152000,
-          },
-          {
-            segmentTitle: "Tech & Startup Innovation Gala",
-            subLabel: "Skylight Hotel Grand Ballroom • Corporate Passes",
-            sessionsOrTrips: 1,
-            ticketsSold: 650,
-            occupancyRate: "82%",
-            grossSales: 85000,
-            netPayout: 80750,
-          },
-          {
-            segmentTitle: "Addis Standup Comedy Showcase",
-            subLabel: "National Theatre Main Auditorium",
-            sessionsOrTrips: 2,
-            ticketsSold: 420,
-            occupancyRate: "88%",
-            grossSales: 35789,
-            netPayout: 34000,
-          },
-        ],
+        ledgerRows,
       };
 
     case "SPORTS":
       return {
         sectorBadge: "STADIUM SPORTS & DERBY ANALYTICS",
         reportTitle: "Stadium Matchday & Turnstile Performance",
-        reportSubtitle: `Electronic turnstile gate throughput, covered grandstand vs bleachers sales, season member share, and derby gate receipts for ${orgName}.`,
+        reportSubtitle: `Electronic turnstile gate throughput, grandstand sales, and derby gate receipts for ${orgName}.`,
         unitLabel: "Fixtures",
         kpis: [
           {
             label: "Average Match Ticket",
-            value: "380 ETB",
-            sub: "+10.2% vs league average",
-            isPositive: true,
+            value: `${avgPrice} ETB`,
+            sub: tickets.length > 0 ? "Tribune average fare" : "No matches scheduled",
+            isPositive: tickets.length > 0,
           },
           {
             label: "Stadium Tribune Occupancy",
-            value: "86.5%",
-            sub: "Addis Ababa Stadium",
-            isPositive: true,
+            value: `${occupancyPct}%`,
+            sub: `${totalSold} tickets booked`,
+            isPositive: occupancyPct > 50,
           },
           {
-            label: "Covered VIP Tribune Share",
-            value: "46.2%",
-            sub: "High-demand covered seating",
+            label: "Scheduled Fixtures",
+            value: `${tickets.length}`,
+            sub: "Active tournaments",
           },
           {
-            label: "Gate Turnstile Clearance",
-            value: "98.6%",
-            sub: "Zero entry bottlenecks",
-            isPositive: true,
+            label: "Turnstile Entries",
+            value: `${organization.stats.totalTicketsSold}`,
+            sub: "Turnstile scans verified",
+            isPositive: organization.stats.totalTicketsSold > 0,
           },
         ],
-        revenueTrajectory: [
-          { name: "Oct 15", value: 45000 },
-          { name: "Oct 20", value: 68000 },
-          { name: "Oct 25", value: 89000 },
-          { name: "Oct 30", value: 112000 },
-          { name: "Nov 05", value: 145000 },
-          { name: "Nov 10", value: 182000 },
-          { name: "Nov 15", value: 215000 },
-        ],
+        revenueTrajectory,
         distributionTitle: "Revenue by Stadium Tribune Zone",
-        distributionSubtitle: "Covered VIP vs West Bleachers vs East Gate",
-        distributionData: [
-          { name: "Covered VIP Grandstand", value: 265000, color: "#10B981" },
-          { name: "West Bleachers General Gate", value: 165000, color: "#059669" },
-          { name: "East Gate General Tribune", value: 82000, color: "#34D399" },
-          { name: "Pitchside Corporate Boxes", value: 35368, color: "#6EE7B7" },
-        ],
+        distributionSubtitle: "Distribution across stadium fixtures",
+        distributionData,
         topBarTitle: "Top Performing Derby Fixtures",
         topBarSubtitle: "Ranked by gross gate receipts and stadium attendance",
-        topBarData: [
-          { name: "St. George vs Coffee Derby", value: 290000 },
-          { name: "Fasil Kenema League Match", value: 165000 },
-          { name: "National Basketball Finals", value: 120000 },
-          { name: "Addis City Cup Semifinal", value: 95000 },
-          { name: "Bahir Dar City Matchday", value: 77368 },
-        ],
+        topBarData,
         tableTitle: "Stadium Fixture & Turnstile Gate Ledger",
         tableSubtitle: `Official turnstile attendance and gate receipts for ${orgName}`,
         tableHeaders: {
@@ -371,53 +280,7 @@ const getSectorAnalyticsConfig = (category: TicketCategory, orgName: string): Se
           col6: "Gross Gate Sales",
           col7: "Net Provider Payout",
         },
-        ledgerRows: [
-          {
-            segmentTitle: "St. George SC vs Ethiopian Coffee SC (Derby)",
-            subLabel: "Addis Ababa Stadium • Gates 1, 2, 3, 4 (Full Capacity)",
-            sessionsOrTrips: 1,
-            ticketsSold: 2850,
-            occupancyRate: "96%",
-            grossSales: 290000,
-            netPayout: 275500,
-          },
-          {
-            segmentTitle: "Fasil Kenema FC Premier League Clash",
-            subLabel: "Addis Ababa Stadium • Gates 2 & 4",
-            sessionsOrTrips: 1,
-            ticketsSold: 1720,
-            occupancyRate: "88%",
-            grossSales: 165000,
-            netPayout: 156750,
-          },
-          {
-            segmentTitle: "National Basketball League Finals: Game 5",
-            subLabel: "Arat Kilo Sports Complex • Court-Side & Bleachers",
-            sessionsOrTrips: 1,
-            ticketsSold: 980,
-            occupancyRate: "92%",
-            grossSales: 120000,
-            netPayout: 114000,
-          },
-          {
-            segmentTitle: "Addis Ababa City Cup Semifinal",
-            subLabel: "Abebe Bikila Stadium • West Tribune",
-            sessionsOrTrips: 1,
-            ticketsSold: 850,
-            occupancyRate: "80%",
-            grossSales: 95000,
-            netPayout: 90250,
-          },
-          {
-            segmentTitle: "Bahir Dar City League Fixture",
-            subLabel: "Addis Ababa Stadium • Covered Grandstand",
-            sessionsOrTrips: 1,
-            ticketsSold: 710,
-            occupancyRate: "76%",
-            grossSales: 77368,
-            netPayout: 73500,
-          },
-        ],
+        ledgerRows,
       };
 
     case "BUS":
@@ -430,54 +293,35 @@ const getSectorAnalyticsConfig = (category: TicketCategory, orgName: string): Se
         kpis: [
           {
             label: "Average Passenger Fare",
-            value: "780 ETB",
-            sub: "+12.4% vs last period",
-            isPositive: true,
+            value: `${avgPrice} ETB`,
+            sub: tickets.length > 0 ? "Corridor route average" : "No active bus routes",
+            isPositive: tickets.length > 0,
           },
           {
             label: "Fleet Seat Load Factor",
-            value: "84.2%",
-            sub: "+4.8% corridor load",
-            isPositive: true,
+            value: `${occupancyPct}%`,
+            sub: `${totalSold} passenger seats booked`,
+            isPositive: occupancyPct > 50,
           },
           {
-            label: "Repeat Passenger Rate",
-            value: "68.5%",
-            sub: "2+ bookings per user",
+            label: "Active Departures",
+            value: `${tickets.length}`,
+            sub: "Licensed routes",
           },
           {
-            label: "On-Time Highway Dispatch",
-            value: "97.4%",
-            sub: "On scheduled departure",
-            isPositive: true,
+            label: "Boarding Passes Scanned",
+            value: `${organization.stats.totalTicketsSold}`,
+            sub: "Boarding verified",
+            isPositive: organization.stats.totalTicketsSold > 0,
           },
         ],
-        revenueTrajectory: [
-          { name: "Oct 15", value: 42000 },
-          { name: "Oct 20", value: 58000 },
-          { name: "Oct 25", value: 65000 },
-          { name: "Oct 30", value: 72000 },
-          { name: "Nov 05", value: 89000 },
-          { name: "Nov 10", value: 98000 },
-          { name: "Nov 15", value: 112000 },
-        ],
+        revenueTrajectory,
         distributionTitle: "Revenue by Coach Fleet Class",
-        distributionSubtitle: "Scania VIP vs Yutong High-Deck vs Minibus",
-        distributionData: [
-          { name: "Scania VIP Luxury Coach (48 Seats)", value: 295000, color: "#B45309" },
-          { name: "Yutong High-Deck Express (44 Seats)", value: 142000, color: "#D97706" },
-          { name: "Mercedes Benz Turismo (50 Seats)", value: 52000, color: "#F59E0B" },
-          { name: "Regional Shuttle Express", value: 18895, color: "#FCD34D" },
-        ],
+        distributionSubtitle: "Distribution across scheduled departures",
+        distributionData,
         topBarTitle: "Top Performing Route Corridors",
         topBarSubtitle: "Ranked by gross passenger sales volume and seat fill rate",
-        topBarData: [
-          { name: "AA - Hawassa", value: 165000 },
-          { name: "AA - Bahir Dar", value: 128000 },
-          { name: "AA - Gondar", value: 85000 },
-          { name: "AA - Jimma", value: 62000 },
-          { name: "AA - Dire Dawa", value: 42500 },
-        ],
+        topBarData,
         tableTitle: "Intercity Route & Corridor Ledger",
         tableSubtitle: `Operational highway metrics and passenger volume reconciliation for ${orgName}`,
         tableHeaders: {
@@ -489,53 +333,7 @@ const getSectorAnalyticsConfig = (category: TicketCategory, orgName: string): Se
           col6: "Gross Ticket Sales",
           col7: "Net Provider Payout",
         },
-        ledgerRows: [
-          {
-            segmentTitle: "Addis Ababa → Hawassa Express",
-            subLabel: "Autobus Tera Gate 3 • Scania VIP Luxury Coach",
-            sessionsOrTrips: 42,
-            ticketsSold: 1890,
-            occupancyRate: "88%",
-            grossSales: 165000,
-            netPayout: 156750,
-          },
-          {
-            segmentTitle: "Addis Ababa → Bahir Dar Lake Cruiser",
-            subLabel: "Lamberet Terminal Gate 1 • Yutong High-Deck VIP",
-            sessionsOrTrips: 28,
-            ticketsSold: 1120,
-            occupancyRate: "82%",
-            grossSales: 128000,
-            netPayout: 121600,
-          },
-          {
-            segmentTitle: "Addis Ababa → Gondar Express",
-            subLabel: "Lamberet Terminal Gate 2 • Scania King Long Coach",
-            sessionsOrTrips: 18,
-            ticketsSold: 680,
-            occupancyRate: "76%",
-            grossSales: 85000,
-            netPayout: 80750,
-          },
-          {
-            segmentTitle: "Addis Ababa → Jimma Express",
-            subLabel: "Autobus Tera Gate 7 • Yutong Comfort Class",
-            sessionsOrTrips: 16,
-            ticketsSold: 540,
-            occupancyRate: "79%",
-            grossSales: 62000,
-            netPayout: 58900,
-          },
-          {
-            segmentTitle: "Addis Ababa → Dire Dawa Express",
-            subLabel: "Kality Cross-Country Gate 4 • Mercedes Benz Turismo",
-            sessionsOrTrips: 12,
-            ticketsSold: 420,
-            occupancyRate: "72%",
-            grossSales: 42500,
-            netPayout: 40375,
-          },
-        ],
+        ledgerRows,
       };
   }
 };
@@ -544,11 +342,11 @@ export default function ProviderReportsPage() {
   const { organization } = useProviderStore();
   const [period, setPeriod] = useState<"7D" | "30D" | "QUARTER" | "YTD">("30D");
 
-  // Dynamic config strictly locked to the provider's active category
-  const config = getSectorAnalyticsConfig(organization.category, organization.name);
+  const tickets = TicketService.getAllTickets().filter((t) => t.category === organization.category);
+  const config = getSectorAnalyticsConfig(organization, tickets);
 
   const handleExportPDF = () => {
-    toast.success(`${organization.category} Performance BI Report PDF generated and downloaded.`);
+    toast.success(`${organization.category} Performance BI Report PDF generated.`);
   };
 
   const handleExportCSV = () => {
@@ -740,38 +538,48 @@ export default function ProviderReportsPage() {
               </tr>
             </thead>
             <tbody className="divide-y divide-border/40">
-              {config.ledgerRows.map((row, idx) => (
-                <tr key={idx} className="hover:bg-muted/20 transition-colors">
-                  <td className="py-4 px-5 font-semibold text-foreground">
-                    <span className="block text-sm">{row.segmentTitle}</span>
-                    <span className="text-[11px] font-normal text-muted-foreground mt-0.5 block">
-                      {row.subLabel}
-                    </span>
-                  </td>
-                  <td className="py-4 px-4 whitespace-nowrap">
-                    <span className="inline-flex items-center px-2.5 py-0.5 rounded-lg text-[10px] font-semibold bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-slate-700">
-                      {organization.category}
-                    </span>
-                  </td>
-                  <td className="py-4 px-4 text-center font-mono text-muted-foreground">
-                    {row.sessionsOrTrips}
-                  </td>
-                  <td className="py-4 px-4 text-center font-mono font-medium text-foreground">
-                    {row.ticketsSold.toLocaleString()}
-                  </td>
-                  <td className="py-4 px-4 text-center font-mono font-bold text-emerald-600 dark:text-emerald-400">
-                    <span className="px-2 py-0.5 rounded-md bg-emerald-500/10">
-                      {row.occupancyRate}
-                    </span>
-                  </td>
-                  <td className="py-4 px-4 text-right font-mono font-medium text-foreground whitespace-nowrap">
-                    {formatCurrency(row.grossSales)}
-                  </td>
-                  <td className="py-4 px-5 text-right font-mono font-bold text-amber-600 dark:text-amber-400 whitespace-nowrap">
-                    {formatCurrency(row.netPayout)}
+              {config.ledgerRows.length === 0 ? (
+                <tr>
+                  <td colSpan={7} className="py-16 px-5 text-center text-xs text-muted-foreground">
+                    <FileText className="w-8 h-8 mx-auto mb-2 text-muted-foreground/40" />
+                    <p className="font-semibold text-foreground text-sm">No {organization.category.toLowerCase()} ledger entries recorded</p>
+                    <p className="text-[11px] mt-1 text-muted-foreground">Entries and performance analytics will appear here once ticket sales commence.</p>
                   </td>
                 </tr>
-              ))}
+              ) : (
+                config.ledgerRows.map((row, idx) => (
+                  <tr key={idx} className="hover:bg-muted/20 transition-colors">
+                    <td className="py-4 px-5 font-semibold text-foreground">
+                      <span className="block text-sm">{row.segmentTitle}</span>
+                      <span className="text-[11px] font-normal text-muted-foreground mt-0.5 block">
+                        {row.subLabel}
+                      </span>
+                    </td>
+                    <td className="py-4 px-4 whitespace-nowrap">
+                      <span className="inline-flex items-center px-2.5 py-0.5 rounded-lg text-[10px] font-semibold bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-slate-700">
+                        {organization.category}
+                      </span>
+                    </td>
+                    <td className="py-4 px-4 text-center font-mono text-muted-foreground">
+                      {row.sessionsOrTrips}
+                    </td>
+                    <td className="py-4 px-4 text-center font-mono font-medium text-foreground">
+                      {row.ticketsSold.toLocaleString()}
+                    </td>
+                    <td className="py-4 px-4 text-center font-mono font-bold text-emerald-600 dark:text-emerald-400">
+                      <span className="px-2 py-0.5 rounded-md bg-emerald-500/10">
+                        {row.occupancyRate}
+                      </span>
+                    </td>
+                    <td className="py-4 px-4 text-right font-mono font-medium text-foreground whitespace-nowrap">
+                      {formatCurrency(row.grossSales)}
+                    </td>
+                    <td className="py-4 px-5 text-right font-mono font-bold text-amber-600 dark:text-amber-400 whitespace-nowrap">
+                      {formatCurrency(row.netPayout)}
+                    </td>
+                  </tr>
+                ))
+              )}
             </tbody>
           </table>
         </div>

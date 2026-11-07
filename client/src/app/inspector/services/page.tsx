@@ -113,8 +113,19 @@ export default function InspectorAssignedServicesPage() {
       </div>
 
       {/* Services Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
-        {assignments.map((asn) => {
+      {assignments.length === 0 ? (
+        <div className="p-12 text-center rounded-3xl bg-card border border-dashed border-slate-200/80 dark:border-slate-800/80 space-y-3">
+          <Calendar className="w-10 h-10 text-muted-foreground/40 mx-auto" />
+          <div className="space-y-1">
+            <h3 className="text-sm font-bold text-foreground">No authorized services assigned</h3>
+            <p className="text-xs text-muted-foreground max-w-sm mx-auto">
+              There are currently no active transport corridors, screening halls, or turnstile events authorized for your scanner badge.
+            </p>
+          </div>
+        </div>
+      ) : (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+          {assignments.map((asn) => {
           const occupancy = Math.round((asn.scannedSeats / asn.totalSeats) * 100);
 
           return (
@@ -214,7 +225,8 @@ export default function InspectorAssignedServicesPage() {
             </div>
           );
         })}
-      </div>
+        </div>
+      )}
 
       {/* Detail Modal */}
       {selectedService && (

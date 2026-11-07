@@ -16,8 +16,10 @@ import {
 } from "lucide-react";
 import { CinemaService } from "@/services/cinema.service";
 import { ActionDropdown } from "@/components/ui/action-dropdown";
+import { useProviderStore } from "@/stores/provider.store";
 
 export default function ProviderMoviesCatalogPage() {
+  const { organization } = useProviderStore();
   const initialMovies = CinemaService.getAllMovies();
   const [moviesList, setMoviesList] = useState(initialMovies);
   const [search, setSearch] = useState("");
@@ -44,9 +46,9 @@ export default function ProviderMoviesCatalogPage() {
       id: `mov-${Date.now()}`,
       title: formData.title,
       category: "CINEMA",
-      organizer: "Century Cinema Megaplex",
-      location: "Century Mall, Gurd Shola",
-      city: "Addis Ababa",
+      organizer: organization.name,
+      location: organization.address || "Cinema Hall 1",
+      city: organization.city || "Addis Ababa",
       date: "2026-11-15",
       time: "02:30 PM",
       price: 280,
@@ -139,7 +141,18 @@ export default function ProviderMoviesCatalogPage() {
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100 dark:divide-slate-800/40 text-xs">
-              {filtered.map((m) => (
+              {filtered.length === 0 ? (
+                <tr>
+                  <td colSpan={6} className="py-16 px-4 text-center text-xs text-muted-foreground">
+                    <Film className="w-8 h-8 mx-auto mb-2 text-muted-foreground/40" />
+                    <p className="font-semibold text-foreground text-sm">No movies in catalog</p>
+                    <p className="text-[11px] mt-1 max-w-sm mx-auto text-muted-foreground">
+                      No movies match your search or no titles have been added. Click &quot;Add Movie Feature&quot; to register a film premiere.
+                    </p>
+                  </td>
+                </tr>
+              ) : (
+                filtered.map((m) => (
                 <tr key={m.id} className="hover:bg-amber-500/[0.03] dark:hover:bg-amber-500/[0.06] transition-colors">
                   <td className="py-3.5 px-4 font-bold text-foreground">
                     {m.title}
@@ -189,7 +202,8 @@ export default function ProviderMoviesCatalogPage() {
                     </div>
                   </td>
                 </tr>
-              ))}
+              ))
+            )}
             </tbody>
           </table>
         </div>
