@@ -14,6 +14,13 @@ model User {
   username        String?   @unique
   password        String
   profileImage    String?
+  gender          String?
+  dateOfBirth     DateTime?
+  city            String?
+  address         String?
+  nationalId      String?
+  loyaltyPoints   Int       @default(0)
+  preferredLanguage String? @default("EN")
   isEmailVerified Boolean   @default(false)
   isPhoneVerified Boolean   @default(false)
   isActive        Boolean   @default(true)
@@ -110,6 +117,16 @@ model Provider {
   city           String?
   country        String   @default("Ethiopia")
   providerType   String
+  legalName          String?
+  registrationNumber String?
+  website            String?
+  contactPersonName  String?
+  contactPersonPhone String?
+  contactPersonEmail String?
+  bankName           String?
+  accountNumber      String?
+  accountHolder      String?
+  commissionRate     Float    @default(5.0)
   tinNumber      String?
   licenseNumber  String?
   verificationStatus String @default("PENDING")
@@ -161,29 +178,40 @@ model ProviderDocument {
 // ==========================================
 
 model TicketCategory {
-  id          Int      @id @default(autoincrement())
-  name        String   @unique
-  slug        String   @unique
-  description String?
-  icon        String?
-  isActive    Boolean  @default(true)
-  createdAt   DateTime @default(now()) @onCreate(now())
+  id             Int      @id @default(autoincrement())
+  name           String   @unique
+  slug           String   @unique
+  description    String?
+  icon           String?
+  commissionRate Float    @default(5.0)
+  isActive       Boolean  @default(true)
+  createdAt      DateTime @default(now()) @onCreate(now())
 
   offerings TicketOffering[]
 }
 
 model TicketOffering {
-  id          Int      @id @default(autoincrement())
-  providerId  Int
-  categoryId  Int
-  title       String
-  description String?
-  image       String?
-  status      String   @default("DRAFT")
-  startDate   DateTime?
-  endDate     DateTime?
-  createdAt   DateTime @default(now()) @onCreate(now())
-  updatedAt   temporal.UpdatedAt
+  id             Int      @id @default(autoincrement())
+  providerId     Int
+  categoryId     Int
+  title          String
+  description    String?
+  image          String?
+  location       String?
+  city           String?
+  badge          String?
+  rating         Float?   @default(5.0)
+  reviewCount    Int      @default(0)
+  amenities      String?
+  duration       String?
+  performer      String?
+  gateTime       String?
+  ageRestriction String?
+  status         String   @default("DRAFT")
+  startDate      DateTime?
+  endDate        DateTime?
+  createdAt      DateTime @default(now()) @onCreate(now())
+  updatedAt      temporal.UpdatedAt
 
   provider  Provider       @relation(fields: [providerId], references: [id])
   category  TicketCategory @relation(fields: [categoryId], references: [id])
@@ -267,6 +295,8 @@ model BusRoute {
   routeName      String?
   origin         String
   destination    String
+  boardingStation String?
+  dropoffStation  String?
   estimatedDuration Int?
   distanceKm     Float?
   isActive       Boolean  @default(true)
@@ -308,6 +338,8 @@ model BusTrip {
   offeringId  Int      @unique
   busId       Int
   routeId     Int
+  driverName  String?
+  driverPhone String?
   departureAt DateTime
   arrivalAt   DateTime?
   status      String   @default("SCHEDULED")
@@ -337,13 +369,16 @@ model EventVenue {
 }
 
 model Event {
-  id          Int      @id @default(autoincrement())
-  offeringId  Int      @unique
-  providerId  Int
-  venueId     Int
-  eventType   String
-  organizer   String?
-  createdAt   DateTime @default(now()) @onCreate(now())
+  id             Int      @id @default(autoincrement())
+  offeringId     Int      @unique
+  providerId     Int
+  venueId        Int
+  eventType      String
+  organizer      String?
+  performer      String?
+  ageRestriction String?
+  gateOpenTime   String?
+  createdAt      DateTime @default(now()) @onCreate(now())
 
   offering TicketOffering @relation(fields: [offeringId], references: [id])
   provider Provider       @relation(fields: [providerId], references: [id])
@@ -439,6 +474,8 @@ model Match {
   stadiumId     Int
   homeTeamId    Int
   awayTeamId    Int
+  round         String?
+  gateOpenTime  String?
   matchDate     DateTime
   status        String   @default("SCHEDULED")
 
@@ -461,6 +498,8 @@ model Movie {
   duration    Int
   language    String?
   poster      String?
+  rating      String?
+  director    String?
   releaseDate DateTime?
   screenings  Screening[]
 }
@@ -501,13 +540,14 @@ model CinemaSeat {
 }
 
 model Screening {
-  id          Int      @id @default(autoincrement())
-  offeringId  Int      @unique
-  movieId     Int
-  hallId      Int
-  startTime   DateTime
-  endTime     DateTime?
-  status      String   @default("SCHEDULED")
+  id           Int      @id @default(autoincrement())
+  offeringId   Int      @unique
+  movieId      Int
+  hallId       Int
+  screenFormat String?
+  startTime    DateTime
+  endTime      DateTime?
+  status       String   @default("SCHEDULED")
 
   offering TicketOffering @relation(fields: [offeringId], references: [id])
   movie    Movie          @relation(fields: [movieId], references: [id])
@@ -523,6 +563,15 @@ model Booking {
   bookingNumber  String   @unique
   userId         Int
   providerId     Int?
+  customerName   String?
+  customerEmail  String?
+  customerPhone  String?
+  selectedSeats  String?
+  selectedTier   String?
+  qrCodeData     String?
+  paymentMethod  String?
+  paymentStatus  String   @default("PENDING")
+  notes          String?
   subtotal       Float
   discount       Float    @default(0)
   serviceFee     Float    @default(0)
@@ -563,6 +612,8 @@ model Passenger {
   fullName      String
   email         String?
   phone         String?
+  gender        String?
+  seatNumber    String?
   identityNumber String?
   createdAt     DateTime @default(now()) @onCreate(now())
 
@@ -599,6 +650,7 @@ model Payment {
   amount            Float
   currency          String   @default("ETB")
   status            String   @default("PENDING")
+  receiptNumber     String?
   externalReference String?
   paidAt            DateTime?
   createdAt         DateTime @default(now()) @onCreate(now())
@@ -630,6 +682,9 @@ model Ticket {
   bookingItemId Int
   ticketNumber  String   @unique
   qrCode        String   @unique
+  seatNumber    String?
+  holderName    String?
+  securityHash  String?
   status        String   @default("ACTIVE")
   issuedAt      DateTime @default(now()) @onCreate(now())
   usedAt        DateTime?
@@ -640,12 +695,16 @@ model Ticket {
 }
 
 model TicketValidation {
-  id          Int      @id @default(autoincrement())
-  ticketId    Int
-  inspectorId Int
+  id               Int      @id @default(autoincrement())
+  ticketId         Int
+  inspectorId      Int
   validationStatus String
-  location    String?
-  validatedAt DateTime @default(now()) @onCreate(now())
+  failureReason    String?
+  location         String?
+  gate             String?
+  notes            String?
+  deviceInfo       String?
+  validatedAt      DateTime @default(now()) @onCreate(now())
 
   ticket Ticket @relation(fields: [ticketId], references: [id])
 }
@@ -655,13 +714,15 @@ model TicketValidation {
 // ==========================================
 
 model Notification {
-  id        Int      @id @default(autoincrement())
-  userId    Int
-  title     String
-  message   String
-  type      String
-  isRead    Boolean  @default(false)
-  createdAt DateTime @default(now()) @onCreate(now())
+  id          Int      @id @default(autoincrement())
+  userId      Int
+  title       String
+  message     String
+  type        String
+  link        String?
+  referenceId String?
+  isRead      Boolean  @default(false)
+  createdAt   DateTime @default(now()) @onCreate(now())
 
   user User @relation(fields: [userId], references: [id])
 }
@@ -681,14 +742,17 @@ model Review {
 }
 
 model SupportTicket {
-  id          Int      @id @default(autoincrement())
-  userId      Int
-  subject     String
-  description String
-  priority    String   @default("NORMAL")
-  status      String   @default("OPEN")
-  createdAt   DateTime @default(now()) @onCreate(now())
-  updatedAt   temporal.UpdatedAt
+  id              Int      @id @default(autoincrement())
+  userId          Int
+  ticketNumber    String?
+  category        String?
+  subject         String
+  description     String
+  resolutionNotes String?
+  priority        String   @default("NORMAL")
+  status          String   @default("OPEN")
+  createdAt       DateTime @default(now()) @onCreate(now())
+  updatedAt       temporal.UpdatedAt
 
   user User @relation(fields: [userId], references: [id])
 }
@@ -700,11 +764,15 @@ model SupportTicket {
 model AuditLog {
   id         Int      @id @default(autoincrement())
   userId     Int?
+  actorName  String?
+  actorRole  String?
+  target     String?
   action     String
   entityType String
   entityId   String?
   details    String?
   ipAddress  String?
+  severity   String?  @default("INFO")
   createdAt  DateTime @default(now()) @onCreate(now())
 
   user User? @relation(fields: [userId], references: [id])
@@ -730,9 +798,15 @@ model ProviderPayout {
   providerId      Int
   payoutReference String   @unique
   amount          Float
+  fee             Float    @default(0)
+  netAmount       Float?
   currency        String   @default("ETB")
   status          String   @default("PENDING")
   paymentMethod   String?
+  bankName        String?
+  accountNumber   String?
+  accountName     String?
+  notes           String?
   paidAt          DateTime?
   createdAt       DateTime @default(now()) @onCreate(now())
 

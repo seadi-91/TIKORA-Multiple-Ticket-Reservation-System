@@ -6,16 +6,23 @@ import {
   ResetPasswordData,
   VerifyOtpData,
   AuthResponse,
+  AuthUser,
 } from "@/types/auth.types";
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000/api";
+export const API_BASE_URL =
+  process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000/api";
 
 export const authService = {
+  getOAuthUrl(provider: "google" | "github", intent: "login" | "register" = "login"): string {
+    return `${API_BASE_URL}/auth/${provider}?intent=${intent}`;
+  },
+
   async login(credentials: LoginCredentials): Promise<AuthResponse> {
     const res = await fetch(`${API_BASE_URL}/auth/login`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(credentials),
+      credentials: "include",
     });
 
     if (!res.ok) {
@@ -31,6 +38,7 @@ export const authService = {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(data),
+      credentials: "include",
     });
 
     if (!res.ok) {
@@ -41,11 +49,14 @@ export const authService = {
     return res.json();
   },
 
-  async registerOrganization(data: OrganizationRegisterData): Promise<{ message: string; requiresApproval: boolean }> {
+  async registerOrganization(
+    data: OrganizationRegisterData
+  ): Promise<{ message: string; requiresApproval: boolean; user?: AuthUser; token?: string }> {
     const res = await fetch(`${API_BASE_URL}/auth/register/organization`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(data),
+      credentials: "include",
     });
 
     if (!res.ok) {
@@ -54,6 +65,44 @@ export const authService = {
     }
 
     return res.json();
+  },
+
+  async getMe(token?: string): Promise<{ user: AuthUser }> {
+    let resolvedToken = token;
+    if (!resolvedToken && typeof window !== "undefined") {
+      resolvedToken = localStorage.getItem("tikora_auth_token") || undefined;
+    }
+
+    const headers: Record<string, string> = {
+      "Content-Type": "application/json",
+    };
+    if (resolvedToken) {
+      headers["Authorization"] = `Bearer ${resolvedToken}`;
+    }
+
+    const res = await fetch(`${API_BASE_URL}/auth/me`, {
+      method: "GET",
+      headers,
+      credentials: "include",
+    });
+
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({}));
+      throw new Error(err.message || "Session expired or unauthorized. Please log in.");
+    }
+
+    return res.json();
+  },
+
+  async logout(): Promise<void> {
+    try {
+      await fetch(`${API_BASE_URL}/auth/logout`, {
+        method: "POST",
+        credentials: "include",
+      });
+    } catch {
+      // Ignored
+    }
   },
 
   async forgotPassword(data: ForgotPasswordData): Promise<{ message: string }> {
@@ -103,4 +152,3 @@ export const authService = {
 };
 
 export default authService;
-

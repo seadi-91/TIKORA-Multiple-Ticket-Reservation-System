@@ -84,7 +84,9 @@ export default function VerifyOtpPage() {
   };
 
   return (
-    <div className="rounded-3xl bg-white dark:bg-[#161922] border border-[#E2E8F0] dark:border-slate-800 p-6 sm:p-8 shadow-xl shadow-black/5 space-y-6">
+    <div className="rounded-3xl backdrop-blur-2xl bg-white/90 dark:bg-[#161922]/85 border border-slate-200/90 dark:border-white/10 p-6 sm:p-8 shadow-[0_20px_50px_rgba(0,0,0,0.06)] dark:shadow-[0_25px_60px_-15px_rgba(0,0,0,0.7),inset_0_1px_1px_rgba(255,255,255,0.15)] space-y-6 relative overflow-hidden">
+      {/* Specular sheen line */}
+      <div className="absolute -inset-x-20 top-0 h-px bg-gradient-to-r from-transparent via-amber-400/40 to-transparent pointer-events-none" />
       {/* Header */}
       <div>
         <Link
@@ -157,7 +159,7 @@ export default function VerifyOtpPage() {
         <button
           type="submit"
           disabled={loading || otp.join("").length < 6}
-          className="w-full flex items-center justify-center gap-2 rounded-xl bg-[#B45309] hover:bg-[#92400E] px-5 py-3.5 text-sm font-bold text-white shadow-xs active:scale-[0.99] focus:outline-none disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 cursor-pointer"
+          className="w-full flex items-center justify-center gap-2 rounded-xl bg-slate-900 hover:bg-black text-white dark:bg-white dark:text-slate-950 dark:hover:bg-slate-100 px-5 py-3 text-sm font-bold shadow-sm active:scale-[0.99] focus:outline-none disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 cursor-pointer"
         >
           {loading ? (
             <span className="inline-block w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />

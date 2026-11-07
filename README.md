@@ -177,3 +177,54 @@ client/src/
    npx tsc --noEmit
    npm run build
    ```
+
+
+
+```
+###npm install cloudinary multer---Upload and store images and videos in cloud storage.  and Receive uploaded files from the frontend in your backend.
+
+###npm install -D @types/multer
+Provides TypeScript type definitions for Multer.
+
+###npx tsc --noEmit
+Checks your TypeScript code for errors without generating JavaScript files
+
+###npx prisma contract emit
+Generates Prisma contract-related output based on your Prisma contract configuration.
+
+###npm install -D @types/passport-github2
+Installs TypeScript type definitions for the GitHub Passport strategy.
+
+###npm install passport-github2
+Allows users to authenticate using their GitHub accounts.
+
+###npm install -D @types/jsonwebtoken
+Provides TypeScript type definitions for the jsonwebtoken package
+
+###npm install jsonwebtoken bcryptjs dotenv
+
+jsonwebtoken	Creates and verifies authentication tokens.
+bcryptjs	Hashes passwords securely.
+dotenv	Loads environment variables from .env files.
+
+###npm install -D @types/passport @types/passport-google-oauth20 @types/express-session
+
+@types/passport	Passport type definitions.
+@types/passport-google-oauth20	Google OAuth type definitions.
+@types/express-session	Express session type definitions.
+
+###npm install passport passport-google-oauth20 express-session
+
+passport	Authentication middleware.
+passport-google-oauth20	Google account authentication.
+express-session	Manages user sessions.
+
+###npx prisma db update
+this command to update your database based on schema changes.
+
+###npx prisma migrate dev --name init
+This creates a migration and applies it to your development database.
+
+###npx prisma db update --dry-run
+The purpose of a dry run is to preview changes without applying them.
+```

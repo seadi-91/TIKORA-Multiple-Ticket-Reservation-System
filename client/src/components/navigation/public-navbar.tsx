@@ -26,6 +26,7 @@ import {
   Menu,
   X,
   LogIn,
+  UserPlus,
   Building2,
   ShieldCheck,
   Sparkles,
@@ -52,11 +53,13 @@ export function PublicNavbar({ onSearchClick }: PublicNavbarProps) {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [themeDropdownOpen, setThemeDropdownOpen] = useState(false);
   const [userDropdownOpen, setUserDropdownOpen] = useState(false);
+  const [authDropdownOpen, setAuthDropdownOpen] = useState(false);
   const [isScrolled, setIsScrolled] = useState(false);
   const [mounted, setMounted] = useState(false);
 
   const themeDropdownRef = useRef<HTMLDivElement>(null);
   const userDropdownRef = useRef<HTMLDivElement>(null);
+  const authDropdownRef = useRef<HTMLDivElement>(null);
 
   const unreadNotifsCount = notifications ? notifications.filter((n) => !n.isRead).length : 0;
   const activeBookingsCount = bookings ? bookings.filter((b) => b.bookingStatus === "CONFIRMED").length : 0;
@@ -64,6 +67,12 @@ export function PublicNavbar({ onSearchClick }: PublicNavbarProps) {
   useEffect(() => {
     setMounted(true);
   }, []);
+
+  useEffect(() => {
+    setAuthDropdownOpen(false);
+    setUserDropdownOpen(false);
+    setThemeDropdownOpen(false);
+  }, [pathname]);
 
   useEffect(() => {
     if (mobileMenuOpen) {
@@ -92,6 +101,9 @@ export function PublicNavbar({ onSearchClick }: PublicNavbarProps) {
       }
       if (userDropdownRef.current && !userDropdownRef.current.contains(event.target as Node)) {
         setUserDropdownOpen(false);
+      }
+      if (authDropdownRef.current && !authDropdownRef.current.contains(event.target as Node)) {
+        setAuthDropdownOpen(false);
       }
     }
     document.addEventListener("mousedown", handleClickOutside);
@@ -361,12 +373,59 @@ export function PublicNavbar({ onSearchClick }: PublicNavbarProps) {
               )}
             </div>
           ) : (
-            <Link
-              href="/login"
-              className="hidden sm:inline-flex px-2.5 py-1.5 sm:px-3 sm:py-1.5 rounded-lg bg-[#B45309] hover:bg-[#92400E] text-white text-xs font-bold transition-all shadow-xs active:scale-95 touch-manipulation"
-            >
-              Sign In
-            </Link>
+            <div className="relative" ref={authDropdownRef}>
+              <button
+                type="button"
+                onClick={() => setAuthDropdownOpen(!authDropdownOpen)}
+                className="hidden sm:inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-slate-900 hover:bg-black text-white dark:bg-white dark:text-slate-950 dark:hover:bg-slate-100 text-xs font-bold transition-all shadow-xs active:scale-95 cursor-pointer touch-manipulation"
+                aria-haspopup="true"
+                aria-expanded={authDropdownOpen}
+              >
+                <span>Sign In</span>
+                <ChevronDown className={`w-3.5 h-3.5 transition-transform duration-200 ${authDropdownOpen ? "rotate-180" : ""}`} />
+              </button>
+
+              {authDropdownOpen && (
+                <div className="absolute right-0 mt-2 w-56 rounded-2xl border border-slate-200/90 dark:border-white/10 bg-white/95 dark:bg-[#161922]/95 p-1.5 shadow-xl shadow-slate-900/10 dark:shadow-[0_20px_40px_rgba(0,0,0,0.6)] backdrop-blur-2xl z-50 space-y-0.5 animate-in fade-in zoom-in-95 duration-150">
+                  <div className="px-2.5 py-1.5 border-b border-slate-100 dark:border-white/5 mb-1">
+                    <span className="block text-[10px] uppercase font-bold tracking-wider text-slate-400">
+                      Account Access
+                    </span>
+                    <p className="text-[11px] text-slate-500 dark:text-slate-400 font-normal">
+                      Sign in or create a new account
+                    </p>
+                  </div>
+
+                  <Link
+                    href="/login"
+                    onClick={() => setAuthDropdownOpen(false)}
+                    className="flex items-center gap-2.5 px-2.5 py-2 rounded-xl text-xs font-semibold text-slate-800 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-white/10 transition-colors"
+                  >
+                    <div className="w-7 h-7 rounded-lg bg-slate-100 dark:bg-white/10 flex items-center justify-center text-slate-700 dark:text-slate-200 shrink-0">
+                      <LogIn className="w-3.5 h-3.5" />
+                    </div>
+                    <div>
+                      <span className="block font-bold">Sign In</span>
+                      <span className="block text-[10px] text-slate-400 font-normal">Existing customer or provider</span>
+                    </div>
+                  </Link>
+
+                  <Link
+                    href="/register"
+                    onClick={() => setAuthDropdownOpen(false)}
+                    className="flex items-center gap-2.5 px-2.5 py-2 rounded-xl text-xs font-semibold text-slate-800 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-white/10 transition-colors"
+                  >
+                    <div className="w-7 h-7 rounded-lg bg-amber-500/10 dark:bg-amber-500/20 text-amber-600 dark:text-amber-400 flex items-center justify-center shrink-0">
+                      <UserPlus className="w-3.5 h-3.5" />
+                    </div>
+                    <div>
+                      <span className="block font-bold text-slate-900 dark:text-white">Create Account</span>
+                      <span className="block text-[10px] text-slate-400 font-normal">New customer or provider</span>
+                    </div>
+                  </Link>
+                </div>
+              )}
+            </div>
           )}
         </div>
       </div>

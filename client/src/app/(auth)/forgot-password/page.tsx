@@ -39,7 +39,9 @@ export default function ForgotPasswordPage() {
   };
 
   return (
-    <div className="rounded-3xl bg-white dark:bg-[#161922] border border-[#E2E8F0] dark:border-slate-800 p-6 sm:p-8 shadow-xl shadow-black/5 space-y-6">
+    <div className="rounded-3xl backdrop-blur-2xl bg-white/90 dark:bg-[#161922]/85 border border-slate-200/90 dark:border-white/10 p-6 sm:p-8 shadow-[0_20px_50px_rgba(0,0,0,0.06)] dark:shadow-[0_25px_60px_-15px_rgba(0,0,0,0.7),inset_0_1px_1px_rgba(255,255,255,0.15)] space-y-6 relative overflow-hidden">
+      {/* Specular sheen line */}
+      <div className="absolute -inset-x-20 top-0 h-px bg-gradient-to-r from-transparent via-amber-400/40 to-transparent pointer-events-none" />
       <div>
         <Link
           href={AUTH_ROUTES.LOGIN}
@@ -77,7 +79,7 @@ export default function ForgotPasswordPage() {
           </p>
           <Link
             href={`${AUTH_ROUTES.VERIFY_OTP}?email=${encodeURIComponent(email)}`}
-            className="inline-flex items-center justify-center gap-2 w-full py-2.5 px-4 rounded-xl bg-[#B45309] text-white text-xs font-bold hover:bg-[#92400E] transition-all shadow-xs"
+            className="inline-flex items-center justify-center gap-2 w-full py-2.5 px-4 rounded-xl bg-slate-900 hover:bg-black text-white dark:bg-white dark:text-slate-950 dark:hover:bg-slate-100 text-xs font-bold transition-all shadow-sm"
           >
             Enter 6-Digit OTP Code
           </Link>
@@ -90,14 +92,14 @@ export default function ForgotPasswordPage() {
             value={email}
             onChange={(e) => setEmail(e.target.value)}
             placeholder="abebe@example.com"
-            leftIcon={<Mail className="w-4 h-4 text-[#64748B]" />}
+            leftIcon={<Mail className="w-4 h-4 text-slate-400" />}
             required
           />
 
           <button
             type="submit"
             disabled={loading}
-            className="w-full py-3 px-4 rounded-xl bg-[#B45309] hover:bg-[#92400E] text-white text-xs font-bold transition-all shadow-xs flex items-center justify-center gap-2 active:scale-95 disabled:opacity-60 cursor-pointer"
+            className="w-full py-3 px-4 rounded-xl bg-slate-900 hover:bg-black text-white dark:bg-white dark:text-slate-950 dark:hover:bg-slate-100 text-xs font-bold transition-all shadow-sm flex items-center justify-center gap-2 active:scale-95 disabled:opacity-60 cursor-pointer"
           >
             {loading ? (
               <span>Sending code...</span>

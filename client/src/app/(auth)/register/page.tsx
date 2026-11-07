@@ -26,8 +26,11 @@ import {
   ShieldAlert,
 } from "lucide-react";
 import { AUTH_ROUTES, APP_NAME } from "@/lib/constants";
+import { GoogleIcon } from "@/components/ui/google-icon";
+import { GithubIcon } from "@/components/ui/github-icon";
 import { useAuthStore } from "@/stores/auth.store";
 import { useProviderStore } from "@/stores/provider.store";
+import { authService } from "@/services/auth.service";
 import { OrganizationCategory } from "@/types/auth.types";
 import { toast } from "sonner";
 
@@ -52,9 +55,23 @@ function RegisterWizardContent() {
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [googleLoading, setGoogleLoading] = useState(false);
+  const [githubLoading, setGithubLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   const setAuth = useAuthStore((state) => state.setAuth);
+
+  const handleGoogleCustomerAuth = () => {
+    setError(null);
+    setGoogleLoading(true);
+    window.location.href = authService.getOAuthUrl("google", "register");
+  };
+
+  const handleGithubCustomerAuth = () => {
+    setError(null);
+    setGithubLoading(true);
+    window.location.href = authService.getOAuthUrl("github", "register");
+  };
 
   // Customer Form State
   const [customerData, setCustomerData] = useState({
@@ -224,22 +241,16 @@ function RegisterWizardContent() {
     setLoading(true);
 
     try {
-      await new Promise((resolve) => setTimeout(resolve, 800));
+      const res = await authService.registerCustomer({
+        fullName: customerData.fullName.trim(),
+        email: customerData.email.trim().toLowerCase(),
+        phone: customerData.phone.trim(),
+        password: customerData.password,
+        confirmPassword: customerData.confirmPassword,
+        agreeToTerms: customerData.agreeToTerms,
+      });
 
-      setAuth(
-        {
-          id: `cust-${Date.now()}`,
-          name: customerData.fullName.trim(),
-          email: customerData.email.trim().toLowerCase(),
-          phone: customerData.phone.trim(),
-          role: "CUSTOMER",
-          status: "ACTIVE",
-          emailVerified: true,
-          createdAt: new Date().toISOString().split("T")[0],
-        },
-        "mock-jwt-token-customer"
-      );
-
+      setAuth(res.user, res.token);
       toast.success("Account created successfully!");
       router.push("/customer");
     } catch (err: any) {
@@ -272,27 +283,27 @@ function RegisterWizardContent() {
     setLoading(true);
 
     try {
-      await new Promise((resolve) => setTimeout(resolve, 900));
+      const res = await authService.registerOrganization({
+        organizationName: providerData.organizationName.trim(),
+        category: providerData.category,
+        businessLicense: providerData.businessLicense.trim(),
+        taxNumber: providerData.taxNumber.trim() || undefined,
+        contactPersonName: providerData.contactPersonName.trim(),
+        email: providerData.email.trim().toLowerCase(),
+        phone: providerData.phone.trim(),
+        address: providerData.address.trim(),
+        city: providerData.city.trim(),
+        password: providerData.password,
+        confirmPassword: providerData.confirmPassword,
+        agreeToTerms: providerData.agreeToTerms,
+      });
 
+      if (res.user && res.token) {
+        setAuth(res.user, res.token);
+      }
       useProviderStore.getState().setOrganizationCategory(providerData.category);
 
-      setAuth(
-        {
-          id: `prov-${Date.now()}`,
-          name: providerData.organizationName.trim(),
-          email: providerData.email.trim().toLowerCase(),
-          phone: providerData.phone.trim(),
-          role: "ORGANIZATION",
-          organizationId: `org-${Date.now()}`,
-          organizationCategory: providerData.category,
-          status: "PENDING_APPROVAL",
-          emailVerified: true,
-          createdAt: new Date().toISOString().split("T")[0],
-        },
-        "mock-jwt-token-provider"
-      );
-
-      toast.success("Provider application submitted! Awaiting verification.");
+      toast.success(res.message || "Provider application submitted! Awaiting verification.");
       router.push(AUTH_ROUTES.PENDING_APPROVAL);
     } catch (err: any) {
       setError(err?.message || "Provider registration could not be completed.");
@@ -302,14 +313,17 @@ function RegisterWizardContent() {
   };
 
   return (
-    <div className="rounded-2xl bg-white dark:bg-[#161922] border border-slate-200 dark:border-slate-800 p-5 sm:p-6 shadow-lg shadow-black/5 space-y-4">
+    <div className="rounded-3xl backdrop-blur-2xl bg-white/85 dark:bg-[#161922]/85 border border-slate-200/90 dark:border-white/10 p-6 sm:p-8 shadow-xl shadow-slate-900/5 dark:shadow-[0_25px_60px_-15px_rgba(0,0,0,0.7),inset_0_1px_1px_rgba(255,255,255,0.1)] space-y-5 relative overflow-hidden transition-colors duration-200">
+      {/* Subtle specular line */}
+      <div className="absolute -inset-x-20 top-0 h-px bg-gradient-to-r from-transparent via-slate-300/80 dark:via-white/20 to-transparent pointer-events-none" />
+
       {/* Top Stepper Indicator */}
       <div className="space-y-2">
         <div className="flex items-center justify-between text-[11px]">
-          <span className="font-semibold text-foreground">
+          <span className="font-bold text-slate-900 dark:text-white">
             Step {step} of {totalSteps}
           </span>
-          <span className="font-medium text-muted-foreground">
+          <span className="font-semibold text-slate-600 dark:text-slate-400">
             {step === 1 && "Account Type"}
             {step === 2 && (accountType === "customer" ? "Personal Details" : "Business Details")}
             {step === 3 && (accountType === "customer" ? "Security & Password" : "Contact & Settlement")}
@@ -318,12 +332,14 @@ function RegisterWizardContent() {
         </div>
 
         {/* Linear progress bar */}
-        <div className="flex items-center gap-1 w-full">
+        <div className="flex items-center gap-1.5 w-full">
           {Array.from({ length: totalSteps }).map((_, idx) => (
             <div
               key={idx}
-              className={`h-1 flex-1 rounded-full transition-all duration-300 ${
-                idx + 1 <= step ? "bg-[#B45309]" : "bg-slate-200 dark:bg-slate-800"
+              className={`h-1.5 flex-1 rounded-full transition-all duration-300 ${
+                idx + 1 <= step
+                  ? "bg-slate-900 dark:bg-white shadow-2xs"
+                  : "bg-slate-200 dark:bg-white/10"
               }`}
             />
           ))}
@@ -344,10 +360,10 @@ function RegisterWizardContent() {
       {step === 1 && (
         <div className="space-y-4">
           <div className="space-y-1 text-center sm:text-left">
-            <h1 className="text-base sm:text-lg font-bold text-foreground tracking-tight">
+            <h1 className="text-base sm:text-lg font-bold text-slate-900 dark:text-white tracking-tight">
               Create Your Account
             </h1>
-            <p className="text-xs text-muted-foreground">
+            <p className="text-xs text-slate-500 dark:text-slate-400">
               Select how you will be using {APP_NAME} to continue.
             </p>
           </div>
@@ -356,46 +372,46 @@ function RegisterWizardContent() {
             {/* Customer Option */}
             <div
               onClick={() => setAccountType("customer")}
-              className={`p-3.5 rounded-xl border text-left transition-all cursor-pointer ${
+              className={`p-4 rounded-2xl border text-left transition-all duration-200 cursor-pointer backdrop-blur-md ${
                 accountType === "customer"
-                  ? "border-[#B45309] bg-amber-500/5 shadow-xs ring-1 ring-[#B45309]"
-                  : "border-slate-200 dark:border-slate-800 bg-card hover:border-slate-300 dark:hover:border-slate-700"
+                  ? "border-slate-900 dark:border-white bg-slate-900/[0.03] dark:bg-white/[0.06] shadow-sm ring-1 ring-slate-900 dark:ring-white"
+                  : "border-slate-200 dark:border-white/10 bg-slate-50/50 dark:bg-white/[0.02] hover:border-slate-300 dark:hover:border-white/20 hover:bg-slate-100/60 dark:hover:bg-white/[0.04]"
               }`}
             >
               <div className="flex items-start justify-between gap-3">
-                <div className="flex items-start gap-3">
+                <div className="flex items-start gap-3.5">
                   <div
-                    className={`w-9 h-9 rounded-lg flex items-center justify-center shrink-0 transition-all ${
+                    className={`w-10 h-10 rounded-xl flex items-center justify-center shrink-0 transition-all ${
                       accountType === "customer"
-                        ? "bg-[#B45309] text-white"
-                        : "bg-muted text-muted-foreground border border-border"
+                        ? "bg-slate-900 text-white dark:bg-white dark:text-slate-950 shadow-sm"
+                        : "bg-slate-100 dark:bg-white/10 text-slate-500 dark:text-slate-400 border border-slate-200 dark:border-white/10"
                     }`}
                   >
-                    <User className="w-4 h-4" />
+                    <User className="w-5 h-5" />
                   </div>
                   <div>
-                    <div className="flex items-center gap-1.5">
-                      <span className="text-xs font-bold text-foreground">
+                    <div className="flex items-center gap-2">
+                      <span className="text-xs font-bold text-slate-900 dark:text-white">
                         Customer Account
                       </span>
-                      <span className="text-[9px] font-bold px-1.5 py-0.2 rounded bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20">
+                      <span className="text-[9px] font-bold px-2 py-0.5 rounded-full bg-slate-100 dark:bg-white/10 text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-white/10">
                         Individual
                       </span>
                     </div>
-                    <p className="text-[11px] text-muted-foreground mt-0.5">
+                    <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5 leading-relaxed">
                       Book buses, concerts, cinema screenings, and sports tickets with digital QR passes.
                     </p>
                   </div>
                 </div>
 
                 <div
-                  className={`w-4 h-4 rounded-full border flex items-center justify-center shrink-0 mt-0.5 transition-all ${
+                  className={`w-5 h-5 rounded-full border flex items-center justify-center shrink-0 mt-0.5 transition-all ${
                     accountType === "customer"
-                      ? "border-[#B45309] bg-[#B45309] text-white"
-                      : "border-slate-300 dark:border-slate-700 bg-background"
+                      ? "border-slate-900 bg-slate-900 text-white dark:border-white dark:bg-white dark:text-slate-950 shadow-xs"
+                      : "border-slate-300 dark:border-white/20 bg-background"
                   }`}
                 >
-                  {accountType === "customer" && <CheckCircle2 className="w-3.5 h-3.5 text-white" />}
+                  {accountType === "customer" && <CheckCircle2 className="w-3.5 h-3.5 text-white dark:text-slate-950" />}
                 </div>
               </div>
             </div>
@@ -403,67 +419,108 @@ function RegisterWizardContent() {
             {/* Provider Option */}
             <div
               onClick={() => setAccountType("organization")}
-              className={`p-3.5 rounded-xl border text-left transition-all cursor-pointer ${
+              className={`p-4 rounded-2xl border text-left transition-all duration-200 cursor-pointer backdrop-blur-md ${
                 accountType === "organization"
-                  ? "border-[#B45309] bg-amber-500/5 shadow-xs ring-1 ring-[#B45309]"
-                  : "border-slate-200 dark:border-slate-800 bg-card hover:border-slate-300 dark:hover:border-slate-700"
+                  ? "border-slate-900 dark:border-white bg-slate-900/[0.03] dark:bg-white/[0.06] shadow-sm ring-1 ring-slate-900 dark:ring-white"
+                  : "border-slate-200 dark:border-white/10 bg-slate-50/50 dark:bg-white/[0.02] hover:border-slate-300 dark:hover:border-white/20 hover:bg-slate-100/60 dark:hover:bg-white/[0.04]"
               }`}
             >
               <div className="flex items-start justify-between gap-3">
-                <div className="flex items-start gap-3">
+                <div className="flex items-start gap-3.5">
                   <div
-                    className={`w-9 h-9 rounded-lg flex items-center justify-center shrink-0 transition-all ${
+                    className={`w-10 h-10 rounded-xl flex items-center justify-center shrink-0 transition-all ${
                       accountType === "organization"
-                        ? "bg-[#B45309] text-white"
-                        : "bg-muted text-muted-foreground border border-border"
+                        ? "bg-slate-900 text-white dark:bg-white dark:text-slate-950 shadow-sm"
+                        : "bg-slate-100 dark:bg-white/10 text-slate-500 dark:text-slate-400 border border-slate-200 dark:border-white/10"
                     }`}
                   >
-                    <Building2 className="w-4 h-4" />
+                    <Building2 className="w-5 h-5" />
                   </div>
                   <div>
-                    <div className="flex items-center gap-1.5">
-                      <span className="text-xs font-bold text-foreground">
+                    <div className="flex items-center gap-2">
+                      <span className="text-xs font-bold text-slate-900 dark:text-white">
                         Provider Partner
                       </span>
-                      <span className="text-[9px] font-bold px-1.5 py-0.2 rounded bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/20">
+                      <span className="text-[9px] font-bold px-2 py-0.5 rounded-full bg-slate-100 dark:bg-white/10 text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-white/10">
                         Business
                       </span>
                     </div>
-                    <p className="text-[11px] text-muted-foreground mt-0.5">
+                    <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5 leading-relaxed">
                       Sell tickets, manage bus schedules, cinema halls, matchdays, and automated payouts.
                     </p>
                   </div>
                 </div>
 
                 <div
-                  className={`w-4 h-4 rounded-full border flex items-center justify-center shrink-0 mt-0.5 transition-all ${
+                  className={`w-5 h-5 rounded-full border flex items-center justify-center shrink-0 mt-0.5 transition-all ${
                     accountType === "organization"
-                      ? "border-[#B45309] bg-[#B45309] text-white"
-                      : "border-slate-300 dark:border-slate-700 bg-background"
+                      ? "border-slate-900 bg-slate-900 text-white dark:border-white dark:bg-white dark:text-slate-950 shadow-xs"
+                      : "border-slate-300 dark:border-white/20 bg-background"
                   }`}
                 >
-                  {accountType === "organization" && <CheckCircle2 className="w-3.5 h-3.5 text-white" />}
+                  {accountType === "organization" && <CheckCircle2 className="w-3.5 h-3.5 text-white dark:text-slate-950" />}
                 </div>
               </div>
             </div>
           </div>
 
+          {/* Customer Google & GitHub Signup on Step 1 */}
+          {accountType === "customer" && (
+            <div className="space-y-2 pt-1">
+              <button
+                type="button"
+                onClick={handleGoogleCustomerAuth}
+                disabled={googleLoading || githubLoading || loading}
+                className="w-full py-2.5 px-4 rounded-xl border border-slate-200 dark:border-white/10 bg-white hover:bg-slate-50 dark:bg-white/[0.04] dark:hover:bg-white/[0.08] text-slate-700 dark:text-slate-200 hover:text-slate-900 dark:hover:text-white text-xs font-semibold flex items-center justify-center gap-2.5 transition-all shadow-2xs active:scale-[0.99] cursor-pointer disabled:opacity-60"
+              >
+                {googleLoading ? (
+                  <span className="w-4 h-4 border-2 border-slate-400 border-t-transparent rounded-full animate-spin" />
+                ) : (
+                  <GoogleIcon className="w-4 h-4 shrink-0" />
+                )}
+                <span>Continue with Google</span>
+              </button>
+
+              <button
+                type="button"
+                onClick={handleGithubCustomerAuth}
+                disabled={googleLoading || githubLoading || loading}
+                className="w-full py-2.5 px-4 rounded-xl border border-slate-200 dark:border-white/10 bg-white hover:bg-slate-50 dark:bg-white/[0.04] dark:hover:bg-white/[0.08] text-slate-700 dark:text-slate-200 hover:text-slate-900 dark:hover:text-white text-xs font-semibold flex items-center justify-center gap-2.5 transition-all shadow-2xs active:scale-[0.99] cursor-pointer disabled:opacity-60"
+              >
+                {githubLoading ? (
+                  <span className="w-4 h-4 border-2 border-slate-400 border-t-transparent rounded-full animate-spin" />
+                ) : (
+                  <GithubIcon className="w-4 h-4 shrink-0 text-slate-900 dark:text-white" />
+                )}
+                <span>Continue with GitHub</span>
+              </button>
+
+              <div className="relative flex py-1 items-center">
+                <div className="flex-grow border-t border-slate-200/80 dark:border-white/10" />
+                <span className="flex-shrink mx-3 text-[10px] uppercase tracking-wider text-slate-400 font-medium">
+                  Or manual registration
+                </span>
+                <div className="flex-grow border-t border-slate-200/80 dark:border-white/10" />
+              </div>
+            </div>
+          )}
+
           {/* Next Button */}
           <button
             type="button"
             onClick={handleNextFromStep1}
-            className="w-full py-2 px-4 rounded-xl bg-[#B45309] hover:bg-[#92400E] text-white text-xs font-bold shadow-xs active:scale-98 transition-all flex items-center justify-center gap-1.5 cursor-pointer"
+            className="w-full py-2.5 px-4 rounded-xl bg-slate-900 hover:bg-black text-white dark:bg-white dark:text-slate-950 dark:hover:bg-slate-100 text-xs font-bold shadow-sm active:scale-98 transition-all flex items-center justify-center gap-1.5 cursor-pointer"
           >
             <span>Next</span>
             <ArrowRight className="w-3.5 h-3.5" />
           </button>
 
           {/* Sign In Link */}
-          <div className="pt-3 border-t border-slate-100 dark:border-slate-800 text-center text-[11px] text-muted-foreground">
+          <div className="pt-3 border-t border-slate-100 dark:border-white/10 text-center text-[11px] text-slate-500 dark:text-slate-400">
             Already have an account?{" "}
             <Link
               href={AUTH_ROUTES.LOGIN}
-              className="font-bold text-[#B45309] dark:text-amber-400 hover:underline"
+              className="font-bold text-slate-900 dark:text-white hover:text-amber-600 dark:hover:text-amber-400 hover:underline"
             >
               Sign In
             </Link>
@@ -498,6 +555,45 @@ function RegisterWizardContent() {
             <p className="text-[11px] text-muted-foreground">
               Provide your contact information for ticket notifications and passes.
             </p>
+          </div>
+
+          {/* Continue with Google & GitHub on Customer Step 2 */}
+          <div className="space-y-2 pt-1 pb-1">
+            <button
+              type="button"
+              onClick={handleGoogleCustomerAuth}
+              disabled={googleLoading || githubLoading || loading}
+              className="w-full py-2.5 px-4 rounded-xl border border-slate-200 dark:border-white/10 bg-white hover:bg-slate-50 dark:bg-white/[0.04] dark:hover:bg-white/[0.08] text-slate-700 dark:text-slate-200 hover:text-slate-900 dark:hover:text-white text-xs font-semibold flex items-center justify-center gap-2.5 transition-all shadow-2xs active:scale-[0.99] cursor-pointer disabled:opacity-60"
+            >
+              {googleLoading ? (
+                <span className="w-4 h-4 border-2 border-slate-400 border-t-transparent rounded-full animate-spin" />
+              ) : (
+                <GoogleIcon className="w-4 h-4 shrink-0" />
+              )}
+              <span>Continue with Google</span>
+            </button>
+
+            <button
+              type="button"
+              onClick={handleGithubCustomerAuth}
+              disabled={googleLoading || githubLoading || loading}
+              className="w-full py-2.5 px-4 rounded-xl border border-slate-200 dark:border-white/10 bg-white hover:bg-slate-50 dark:bg-white/[0.04] dark:hover:bg-white/[0.08] text-slate-700 dark:text-slate-200 hover:text-slate-900 dark:hover:text-white text-xs font-semibold flex items-center justify-center gap-2.5 transition-all shadow-2xs active:scale-[0.99] cursor-pointer disabled:opacity-60"
+            >
+              {githubLoading ? (
+                <span className="w-4 h-4 border-2 border-slate-400 border-t-transparent rounded-full animate-spin" />
+              ) : (
+                <GithubIcon className="w-4 h-4 shrink-0 text-slate-900 dark:text-white" />
+              )}
+              <span>Continue with GitHub</span>
+            </button>
+
+            <div className="relative flex py-1 items-center">
+              <div className="flex-grow border-t border-slate-100 dark:border-white/5" />
+              <span className="flex-shrink mx-3 text-[10px] uppercase tracking-wider text-slate-400 font-medium">
+                Or fill details manually
+              </span>
+              <div className="flex-grow border-t border-slate-100 dark:border-white/5" />
+            </div>
           </div>
 
           {/* Full Name */}
@@ -612,7 +708,7 @@ function RegisterWizardContent() {
             </button>
             <button
               type="submit"
-              className="py-2 px-5 rounded-xl bg-[#B45309] hover:bg-[#92400E] text-white text-xs font-bold shadow-xs active:scale-98 transition-all flex items-center gap-1.5 cursor-pointer"
+              className="py-2.5 px-5 rounded-xl bg-slate-900 hover:bg-black text-white dark:bg-white dark:text-slate-950 dark:hover:bg-slate-100 text-xs font-bold shadow-sm active:scale-98 transition-all flex items-center gap-1.5 cursor-pointer"
             >
               <span>Next • Security</span>
               <ArrowRight className="w-3.5 h-3.5" />
@@ -769,7 +865,7 @@ function RegisterWizardContent() {
             <button
               type="submit"
               disabled={loading}
-              className="py-2 px-5 rounded-xl bg-[#B45309] hover:bg-[#92400E] text-white text-xs font-bold shadow-xs active:scale-98 transition-all flex items-center gap-1.5 cursor-pointer disabled:opacity-60"
+              className="py-2.5 px-5 rounded-xl bg-slate-900 hover:bg-black text-white dark:bg-white dark:text-slate-950 dark:hover:bg-slate-100 text-xs font-bold shadow-sm active:scale-98 transition-all flex items-center gap-1.5 cursor-pointer disabled:opacity-60"
             >
               <UserPlus className="w-3.5 h-3.5" />
               <span>{loading ? "Creating..." : "Complete Registration"}</span>
@@ -902,7 +998,7 @@ function RegisterWizardContent() {
             </button>
             <button
               type="submit"
-              className="py-2 px-5 rounded-xl bg-[#B45309] hover:bg-[#92400E] text-white text-xs font-bold shadow-xs active:scale-98 transition-all flex items-center gap-1.5 cursor-pointer"
+              className="py-2.5 px-5 rounded-xl bg-slate-900 hover:bg-black text-white dark:bg-white dark:text-slate-950 dark:hover:bg-slate-100 text-xs font-bold shadow-sm active:scale-98 transition-all flex items-center gap-1.5 cursor-pointer"
             >
               <span>Next • Contact & Payout</span>
               <ArrowRight className="w-3.5 h-3.5" />
@@ -1077,7 +1173,7 @@ function RegisterWizardContent() {
             </button>
             <button
               type="submit"
-              className="py-2 px-5 rounded-xl bg-[#B45309] hover:bg-[#92400E] text-white text-xs font-bold shadow-xs active:scale-98 transition-all flex items-center gap-1.5 cursor-pointer"
+              className="py-2.5 px-5 rounded-xl bg-slate-900 hover:bg-black text-white dark:bg-white dark:text-slate-950 dark:hover:bg-slate-100 text-xs font-bold shadow-sm active:scale-98 transition-all flex items-center gap-1.5 cursor-pointer"
             >
               <span>Next • Security</span>
               <ArrowRight className="w-3.5 h-3.5" />
@@ -1234,7 +1330,7 @@ function RegisterWizardContent() {
             <button
               type="submit"
               disabled={loading}
-              className="py-2 px-5 rounded-xl bg-[#B45309] hover:bg-[#92400E] text-white text-xs font-bold shadow-xs active:scale-98 transition-all flex items-center gap-1.5 cursor-pointer disabled:opacity-60"
+              className="py-2.5 px-5 rounded-xl bg-slate-900 hover:bg-black text-white dark:bg-white dark:text-slate-950 dark:hover:bg-slate-100 text-xs font-bold shadow-sm active:scale-98 transition-all flex items-center gap-1.5 cursor-pointer disabled:opacity-60"
             >
               <Building2 className="w-3.5 h-3.5" />
               <span>{loading ? "Submitting..." : "Submit Application"}</span>
