@@ -7,6 +7,8 @@ import passport from "passport";
 import { ENV } from "./config/environment";
 import { configurePassport } from "./config/passport";
 import authRoutes from "./modules/auth/auth.routes";
+import adminRoutes from "./modules/admin/admin.routes";
+import userRoutes from "./modules/users/user.routes";
 
 const app = express();
 
@@ -57,6 +59,12 @@ app.get("/api/health", (_req, res) => {
 
 // Auth Routes
 app.use("/api/auth", authRoutes);
+
+// Admin Routes
+app.use("/api/admin", adminRoutes);
+
+// User Profile Routes
+app.use("/api/users", userRoutes);
 
 // 404 Handler
 app.use((_req, res) => {

@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import {
   Bell,
   CheckCircle2,
@@ -31,6 +31,8 @@ import {
 } from "lucide-react";
 import { useInspectorStore } from "@/stores/inspector.store";
 import { useTheme } from "@/providers/theme-provider";
+import { useAuthStore } from "@/stores/auth.store";
+import { userService } from "@/services/user.service";
 import { toast } from "sonner";
 
 type SettingsTab = "HARDWARE" | "SYNC" | "SECURITY" | "PROFILE";
@@ -38,6 +40,7 @@ type SettingsTab = "HARDWARE" | "SYNC" | "SECURITY" | "PROFILE";
 export default function InspectorSettingsPage() {
   const {
     profile,
+    updateProfile,
     scannerSoundEnabled,
     setScannerSound,
     scannerVibrateEnabled,
@@ -45,7 +48,20 @@ export default function InspectorSettingsPage() {
     autoResetDurationSec,
     setAutoResetDuration,
   } = useInspectorStore();
+  const { user } = useAuthStore();
   const { theme, setTheme } = useTheme();
+
+  useEffect(() => {
+    userService.getProfile().then((data) => {
+      if (data) {
+        updateProfile({
+          fullName: data.name || profile.fullName,
+          email: data.email || profile.email,
+          phone: data.phone || profile.phone,
+        });
+      }
+    }).catch(() => {});
+  }, [updateProfile]);
 
   const [activeTab, setActiveTab] = useState<SettingsTab>("HARDWARE");
 

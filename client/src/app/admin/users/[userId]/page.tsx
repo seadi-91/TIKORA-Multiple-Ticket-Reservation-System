@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, use } from "react";
+import React, { useState, useEffect, use } from "react";
 import Link from "next/link";
 import {
   Users,
@@ -59,7 +59,13 @@ export default function AdminUserDetailPage({ params }: PageProps) {
     users,
     bookings,
     toggleUserStatus,
+    fetchPlatformData,
+    isLoading,
   } = useAdminStore();
+
+  useEffect(() => {
+    fetchPlatformData();
+  }, [fetchPlatformData]);
 
   const user = users.find((u) => u.id === resolvedParams.userId);
 
@@ -69,6 +75,15 @@ export default function AdminUserDetailPage({ params }: PageProps) {
   // Booking table search and category filter
   const [bookingSearch, setBookingSearch] = useState("");
   const [bookingCategory, setBookingCategory] = useState<string>("ALL");
+
+  if (isLoading && !user) {
+    return (
+      <div className="py-20 text-center space-y-4">
+        <div className="w-8 h-8 border-2 border-amber-500 border-t-transparent rounded-full animate-spin mx-auto" />
+        <p className="text-xs text-muted-foreground">Loading platform user record...</p>
+      </div>
+    );
+  }
 
   if (!user) {
     return (

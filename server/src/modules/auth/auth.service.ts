@@ -7,6 +7,7 @@ import {
   AuthResponseDto,
   JwtUserPayload,
 } from "../../types/auth.types";
+import { AuditService } from "../admin/audit.service";
 
 export interface RegisterCustomerInput {
   fullName: string;
@@ -36,15 +37,21 @@ export class AuthService {
     user: any,
     role: UserRoleType,
     organizationId?: number,
-    organizationCategory?: string
+    organizationCategory?: string,
+    accountStatus?: "ACTIVE" | "PENDING_APPROVAL" | "SUSPENDED" | "INACTIVE"
   ): ClientAuthUser {
+    let status: "ACTIVE" | "PENDING_APPROVAL" | "SUSPENDED" | "INACTIVE" = user.isActive ? "ACTIVE" : "INACTIVE";
+    if (accountStatus) {
+      status = accountStatus;
+    }
+
     return {
       id: String(user.id),
       email: user.email,
       name: `${user.firstName} ${user.lastName}`.trim(),
       phone: user.phone || undefined,
       role,
-      status: user.isActive ? "ACTIVE" : "INACTIVE",
+      status,
       avatarUrl: user.profileImage || undefined,
       organizationId: organizationId ? String(organizationId) : undefined,
       organizationCategory: organizationCategory as any,
@@ -89,9 +96,10 @@ export class AuthService {
       role = userRoles[0].role.name as UserRoleType;
     }
 
-    // If organization, check ProviderMember
+    // If organization, check ProviderMember and verification status
     let organizationId: number | undefined;
     let organizationCategory: string | undefined;
+    let accountStatus: "ACTIVE" | "PENDING_APPROVAL" | "SUSPENDED" | "INACTIVE" = user.isActive ? "ACTIVE" : "INACTIVE";
 
     if (role === "ORGANIZATION") {
       const membership = await db.orm.public.ProviderMember.where({ userId: user.id })
@@ -101,6 +109,19 @@ export class AuthService {
       if (membership && membership.provider) {
         organizationId = membership.provider.id;
         organizationCategory = membership.provider.providerType;
+
+        const provStatus = membership.provider.verificationStatus;
+        if (provStatus === "REJECTED") {
+          throw new Error("Your provider application has been rejected by Tikora administrator. Please contact support.");
+        }
+
+        if (provStatus === "PENDING" || !membership.provider.isActive) {
+          accountStatus = "PENDING_APPROVAL";
+        } else if (provStatus === "APPROVED") {
+          accountStatus = "ACTIVE";
+        }
+      } else {
+        accountStatus = "PENDING_APPROVAL";
       }
     }
 
@@ -112,11 +133,23 @@ export class AuthService {
       role,
       organizationId,
       organizationCategory,
-      status: user.isActive ? "ACTIVE" : "INACTIVE",
+      status: accountStatus,
     };
 
     const token = signToken(jwtPayload);
-    const clientUser = this.formatAuthUser(user, role, organizationId, organizationCategory);
+    const clientUser = this.formatAuthUser(user, role, organizationId, organizationCategory, accountStatus);
+
+    AuditService.record({
+      userId: user.id,
+      actorName: `${user.firstName} ${user.lastName}`.trim(),
+      actorRole: role,
+      target: "Session Auth",
+      action: "USER_LOGIN_SUCCESS",
+      entityType: "AUTH",
+      entityId: String(user.id),
+      details: `${role} account ${user.email} successfully logged in.`,
+      severity: "INFO",
+    });
 
     return {
       user: clientUser,
@@ -194,6 +227,18 @@ export class AuthService {
 
     const token = signToken(jwtPayload);
     const clientUser = this.formatAuthUser(user, "CUSTOMER");
+
+    AuditService.record({
+      userId: user.id,
+      actorName: `${user.firstName} ${user.lastName}`.trim(),
+      actorRole: "CUSTOMER",
+      target: "Account Registration",
+      action: "CUSTOMER_REGISTERED",
+      entityType: "AUTH",
+      entityId: String(user.id),
+      details: `New customer account registered: ${user.email}.`,
+      severity: "INFO",
+    });
 
     return {
       user: clientUser,
@@ -283,7 +328,7 @@ export class AuthService {
       address,
       city,
       verificationStatus: "PENDING",
-      isActive: true,
+      isActive: false,
     });
 
     // 4. Link User to Provider as ProviderMember (Owner)
@@ -293,6 +338,27 @@ export class AuthService {
       position: "Owner",
       status: "ACTIVE",
     });
+
+    // 5. Notify all Admin users in PostgreSQL database
+    try {
+      const adminRole = await db.orm.public.Role.where({ name: "ADMIN" }).first();
+      if (adminRole) {
+        const adminUserRoles = await db.orm.public.UserRole.where({ roleId: adminRole.id }).all();
+        for (const ur of adminUserRoles) {
+          await db.orm.public.Notification.create({
+            userId: ur.userId,
+            title: `New Provider Registration: ${provider.name}`,
+            message: `${provider.name} (${category}) has registered for provider access. Review application and approve or reject.`,
+            type: "PROVIDER_APPLICATION",
+            link: `/admin/providers/${provider.id}`,
+            referenceId: String(provider.id),
+            isRead: false,
+          });
+        }
+      }
+    } catch (notifErr) {
+      console.error("Failed to notify admins of new provider registration:", notifErr);
+    }
 
     const jwtPayload: JwtUserPayload = {
       id: user.id,
@@ -305,10 +371,22 @@ export class AuthService {
     };
 
     const token = signToken(jwtPayload);
-    const clientUser = this.formatAuthUser(user, "ORGANIZATION", provider.id, category);
+    const clientUser = this.formatAuthUser(user, "ORGANIZATION", provider.id, category, "PENDING_APPROVAL");
+
+    AuditService.record({
+      userId: user.id,
+      actorName: `${user.firstName} ${user.lastName}`.trim(),
+      actorRole: "ORGANIZATION",
+      target: `Provider: ${provider.name}`,
+      action: "ORGANIZATION_REGISTERED_PENDING",
+      entityType: "PROVIDER",
+      entityId: String(provider.id),
+      details: `New provider registered: ${provider.name} (${category}). Account is under review awaiting administrator approval.`,
+      severity: "INFO",
+    });
 
     return {
-      message: "Organization registration submitted successfully. Your account is pending verification.",
+      message: "Organization registration submitted successfully. Your provider account is under review and awaiting administrator approval.",
       requiresApproval: true,
       user: clientUser,
       token,
@@ -335,6 +413,7 @@ export class AuthService {
 
     let organizationId: number | undefined;
     let organizationCategory: string | undefined;
+    let accountStatus: "ACTIVE" | "PENDING_APPROVAL" | "SUSPENDED" | "INACTIVE" = user.isActive ? "ACTIVE" : "INACTIVE";
 
     if (role === "ORGANIZATION") {
       const membership = await db.orm.public.ProviderMember.where({ userId: user.id })
@@ -344,10 +423,21 @@ export class AuthService {
       if (membership && membership.provider) {
         organizationId = membership.provider.id;
         organizationCategory = membership.provider.providerType;
+
+        const provStatus = membership.provider.verificationStatus;
+        if (provStatus === "PENDING" || !membership.provider.isActive) {
+          accountStatus = "PENDING_APPROVAL";
+        } else if (provStatus === "REJECTED") {
+          accountStatus = "SUSPENDED";
+        } else if (provStatus === "APPROVED") {
+          accountStatus = "ACTIVE";
+        }
+      } else {
+        accountStatus = "PENDING_APPROVAL";
       }
     }
 
-    return this.formatAuthUser(user, role, organizationId, organizationCategory);
+    return this.formatAuthUser(user, role, organizationId, organizationCategory, accountStatus);
   }
 }
 

@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import Link from "next/link";
 import {
   Building2,
@@ -27,8 +27,12 @@ import { useAdminStore } from "@/stores/admin.store";
 import { ActionDropdown } from "@/components/ui/action-dropdown";
 
 export default function AdminProvidersPage() {
-  const { organizations, approveOrganization, suspendOrganization, activateOrganization } =
+  const { organizations, approveOrganization, rejectOrganization, suspendOrganization, activateOrganization, fetchPlatformData } =
     useAdminStore();
+
+  useEffect(() => {
+    fetchPlatformData();
+  }, [fetchPlatformData]);
 
   const [searchQuery, setSearchQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState<string>("ALL");
@@ -160,17 +164,15 @@ export default function AdminProvidersPage() {
           <button
             key={tab.value}
             onClick={() => setStatusFilter(tab.value)}
-            className={`px-2 py-0.5 text-micro font-medium rounded-md transition-all shrink-0 flex items-center gap-1 cursor-pointer ${
-              statusFilter === tab.value
+            className={`px-2 py-0.5 text-micro font-medium rounded-md transition-all shrink-0 flex items-center gap-1 cursor-pointer ${statusFilter === tab.value
                 ? "bg-amber-600 text-white shadow-xs font-semibold"
                 : "bg-muted/40 hover:bg-muted text-muted-foreground hover:text-foreground"
-            }`}
+              }`}
           >
             <span>{tab.label}</span>
             <span
-              className={`px-1.5 py-0.2 rounded-full text-nano font-bold ${
-                statusFilter === tab.value ? "bg-white/20 text-white" : "bg-muted-foreground/15 text-muted-foreground"
-              }`}
+              className={`px-1.5 py-0.2 rounded-full text-nano font-bold ${statusFilter === tab.value ? "bg-white/20 text-white" : "bg-muted-foreground/15 text-muted-foreground"
+                }`}
             >
               {tab.count}
             </span>
@@ -254,33 +256,39 @@ export default function AdminProvidersPage() {
                       },
                       ...(org.status === "PENDING"
                         ? [
-                            {
-                              label: "Approve Provider",
-                              icon: <CheckCircle2 className="w-4 h-4" />,
-                              variant: "success" as const,
-                              onClick: () => approveOrganization(org.id),
-                            },
-                          ]
+                          {
+                            label: "Approve Provider",
+                            icon: <CheckCircle2 className="w-4 h-4" />,
+                            variant: "success" as const,
+                            onClick: () => approveOrganization(org.id),
+                          },
+                          {
+                            label: "Reject Application",
+                            icon: <XCircle className="w-4 h-4" />,
+                            variant: "danger" as const,
+                            onClick: () => rejectOrganization(org.id, "Administrative compliance review"),
+                          },
+                        ]
                         : []),
                       ...(org.status === "APPROVED"
                         ? [
-                            {
-                              label: "Suspend Account",
-                              icon: <XCircle className="w-4 h-4" />,
-                              variant: "danger" as const,
-                              onClick: () => suspendOrganization(org.id, "Administrative review"),
-                            },
-                          ]
+                          {
+                            label: "Suspend Account",
+                            icon: <XCircle className="w-4 h-4" />,
+                            variant: "danger" as const,
+                            onClick: () => suspendOrganization(org.id, "Administrative review"),
+                          },
+                        ]
                         : []),
                       ...(org.status === "SUSPENDED"
                         ? [
-                            {
-                              label: "Reactivate Account",
-                              icon: <CheckCircle2 className="w-4 h-4" />,
-                              variant: "success" as const,
-                              onClick: () => activateOrganization(org.id),
-                            },
-                          ]
+                          {
+                            label: "Reactivate Account",
+                            icon: <CheckCircle2 className="w-4 h-4" />,
+                            variant: "success" as const,
+                            onClick: () => activateOrganization(org.id),
+                          },
+                        ]
                         : []),
                       {
                         label: "Compliance Documents",
@@ -439,33 +447,39 @@ export default function AdminProvidersPage() {
                         },
                         ...(org.status === "PENDING"
                           ? [
-                              {
-                                label: "Approve Provider",
-                                icon: <CheckCircle2 className="w-4 h-4" />,
-                                variant: "success" as const,
-                                onClick: () => approveOrganization(org.id),
-                              },
-                            ]
+                            {
+                              label: "Approve Provider",
+                              icon: <CheckCircle2 className="w-4 h-4" />,
+                              variant: "success" as const,
+                              onClick: () => approveOrganization(org.id),
+                            },
+                            {
+                              label: "Reject Application",
+                              icon: <XCircle className="w-4 h-4" />,
+                              variant: "danger" as const,
+                              onClick: () => rejectOrganization(org.id, "Administrative compliance review"),
+                            },
+                          ]
                           : []),
                         ...(org.status === "APPROVED"
                           ? [
-                              {
-                                label: "Suspend Account",
-                                icon: <XCircle className="w-4 h-4" />,
-                                variant: "danger" as const,
-                                onClick: () => suspendOrganization(org.id, "Administrative review"),
-                              },
-                            ]
+                            {
+                              label: "Suspend Account",
+                              icon: <XCircle className="w-4 h-4" />,
+                              variant: "danger" as const,
+                              onClick: () => suspendOrganization(org.id, "Administrative review"),
+                            },
+                          ]
                           : []),
                         ...(org.status === "SUSPENDED"
                           ? [
-                              {
-                                label: "Reactivate Account",
-                                icon: <CheckCircle2 className="w-4 h-4" />,
-                                variant: "success" as const,
-                                onClick: () => activateOrganization(org.id),
-                              },
-                            ]
+                            {
+                              label: "Reactivate Account",
+                              icon: <CheckCircle2 className="w-4 h-4" />,
+                              variant: "success" as const,
+                              onClick: () => activateOrganization(org.id),
+                            },
+                          ]
                           : []),
                         {
                           label: "Compliance Documents",

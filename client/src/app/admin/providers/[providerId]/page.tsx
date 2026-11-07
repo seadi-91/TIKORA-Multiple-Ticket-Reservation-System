@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, use } from "react";
+import React, { useState, useEffect, use } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import {
@@ -42,12 +42,27 @@ export default function AdminProviderDetailPage({ params }: PageProps) {
     activateOrganization,
     updateOrganizationCommission,
     verifyDocument,
+    fetchPlatformData,
+    isLoading,
   } = useAdminStore();
+
+  useEffect(() => {
+    fetchPlatformData();
+  }, [fetchPlatformData]);
 
   const org = organizations.find((o) => o.id === resolvedParams.providerId);
 
   const [rejectModalOpen, setRejectModalOpen] = useState(false);
   const [rejectReason, setRejectReason] = useState("");
+
+  if (isLoading && !org) {
+    return (
+      <div className="py-20 text-center space-y-4">
+        <div className="w-8 h-8 border-2 border-amber-500 border-t-transparent rounded-full animate-spin mx-auto" />
+        <p className="text-xs text-muted-foreground">Loading provider organization...</p>
+      </div>
+    );
+  }
   const [isEditingCommission, setIsEditingCommission] = useState(false);
   const [commissionInput, setCommissionInput] = useState(org?.commissionRate || 5.0);
 

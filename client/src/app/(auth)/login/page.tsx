@@ -34,7 +34,12 @@ function LoginForm() {
   const [googleLoading, setGoogleLoading] = useState(false);
   const [githubLoading, setGithubLoading] = useState(false);
 
-  const navigateToRolePortal = (userRole: string) => {
+  const navigateToRolePortal = (userRole: string, status?: string) => {
+    if (userRole === "ORGANIZATION" && (status === "PENDING_APPROVAL" || status === "INACTIVE")) {
+      router.push("/pending-approval");
+      return;
+    }
+
     const redirectParam = searchParams.get("redirect");
     if (redirectParam && redirectParam.startsWith("/")) {
       router.push(redirectParam);
@@ -79,9 +84,16 @@ function LoginForm() {
         .then((res) => {
           setAuth(res.user, token);
           setIsSuccess(true);
-          setSuccessMessage("Login Successful! Redirecting to your dashboard...");
+          const isPending =
+            res.user.role === "ORGANIZATION" &&
+            (res.user.status === "PENDING_APPROVAL" || res.user.status === "INACTIVE");
+          setSuccessMessage(
+            isPending
+              ? "Account Under Review! Redirecting to application status..."
+              : "Login Successful! Redirecting to your dashboard..."
+          );
           setTimeout(() => {
-            navigateToRolePortal(res.user.role);
+            navigateToRolePortal(res.user.role, res.user.status);
           }, 1100);
         })
         .catch((err) => {
@@ -128,10 +140,17 @@ function LoginForm() {
       // Update auth store with user & JWT token
       setAuth(res.user, res.token);
       setIsSuccess(true);
-      setSuccessMessage("Login Successful! Redirecting to your dashboard...");
+      const isPending =
+        res.user.role === "ORGANIZATION" &&
+        (res.user.status === "PENDING_APPROVAL" || res.user.status === "INACTIVE");
+      setSuccessMessage(
+        isPending
+          ? "Account Under Review! Redirecting to application status..."
+          : "Login Successful! Redirecting to your dashboard..."
+      );
 
       setTimeout(() => {
-        navigateToRolePortal(res.user.role);
+        navigateToRolePortal(res.user.role, res.user.status);
       }, 1100);
     } catch (err: any) {
       setError(err?.message || "Failed to sign in. Please check your credentials.");

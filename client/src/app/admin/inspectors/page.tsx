@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import Link from "next/link";
 import {
   ScanLine,
@@ -32,7 +32,11 @@ import { ActionDropdown } from "@/components/ui/action-dropdown";
 import { toast } from "sonner";
 
 export default function AdminInspectorsPage() {
-  const { inspectors, organizations, toggleInspectorStatus, createInspector } = useAdminStore();
+  const { inspectors, organizations, toggleInspectorStatus, createInspector, fetchPlatformData } = useAdminStore();
+
+  useEffect(() => {
+    fetchPlatformData();
+  }, [fetchPlatformData]);
 
   const [searchQuery, setSearchQuery] = useState("");
   const [categoryFilter, setCategoryFilter] = useState<string>("ALL");

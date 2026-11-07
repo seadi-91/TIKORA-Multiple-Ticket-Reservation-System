@@ -1,14 +1,20 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { AdminSidebar } from "@/components/navigation/admin-sidebar";
 import { AdminHeader } from "@/components/navigation/admin-header";
 import { AdminBottomNav } from "@/components/navigation/admin-bottom-nav";
 import { AuthGuard } from "@/components/auth/auth-guard";
+import { useAdminStore } from "@/stores/admin.store";
 
 export default function AdminRootLayout({ children }: { children: React.ReactNode }) {
   const [collapsed, setCollapsed] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
+  const fetchPlatformData = useAdminStore((s) => s.fetchPlatformData);
+
+  useEffect(() => {
+    fetchPlatformData();
+  }, [fetchPlatformData]);
 
   return (
     <AuthGuard allowedRoles={["ADMIN"]}>

@@ -1,6 +1,7 @@
 "use client";
 
 import { create } from "zustand";
+import { adminService } from "@/services/admin.service";
 
 export interface PlatformStats {
   totalGMV: number;
@@ -352,9 +353,39 @@ interface AdminState {
 
   updateSettings: (newSettings: Partial<AdminSettings>) => void;
   addAuditLog: (entry: Omit<AdminAuditLog, "id" | "timestamp">) => void;
+
+  isLoading: boolean;
+  fetchPlatformData: () => Promise<void>;
 }
 
 export const useAdminStore = create<AdminState>((set, get) => ({
+  isLoading: false,
+
+  fetchPlatformData: async () => {
+    set({ isLoading: true });
+    try {
+      const [users, providers, inspectors, stats, auditLogs] = await Promise.all([
+        adminService.getUsers().catch(() => []),
+        adminService.getProviders().catch(() => []),
+        adminService.getInspectors().catch(() => []),
+        adminService.getOverview().catch(() => null),
+        adminService.getAuditLogs().catch(() => []),
+      ]);
+
+      set((state) => ({
+        users: users.length > 0 ? users : state.users,
+        organizations: providers,
+        inspectors,
+        stats: stats ? { ...state.stats, ...stats } : state.stats,
+        auditLogs: auditLogs.length > 0 ? auditLogs : state.auditLogs,
+        isLoading: false,
+      }));
+    } catch (error) {
+      console.error("Failed to load platform data:", error);
+      set({ isLoading: false });
+    }
+  },
+
   stats: {
     totalGMV: 0,
     platformRevenue: 0,
@@ -522,6 +553,10 @@ export const useAdminStore = create<AdminState>((set, get) => ({
       },
     }));
 
+    adminService.updateProviderStatus(id, "APPROVED").catch((err) => {
+      console.error("Failed to approve provider on backend:", err);
+    });
+
     get().addAuditLog({
       action: "ORGANIZATION_APPROVED",
       actorName: "Peter SuperAdmin",
@@ -546,6 +581,10 @@ export const useAdminStore = create<AdminState>((set, get) => ({
         pendingApprovals: Math.max(0, state.stats.pendingApprovals - 1),
       },
     }));
+
+    adminService.updateProviderStatus(id, "REJECTED").catch((err) => {
+      console.error("Failed to reject provider on backend:", err);
+    });
 
     get().addAuditLog({
       action: "ORGANIZATION_REJECTED",
@@ -572,6 +611,10 @@ export const useAdminStore = create<AdminState>((set, get) => ({
       },
     }));
 
+    adminService.updateProviderStatus(id, "SUSPENDED").catch((err) => {
+      console.error("Failed to suspend provider on backend:", err);
+    });
+
     get().addAuditLog({
       action: "ORGANIZATION_SUSPENDED",
       actorName: "Peter SuperAdmin",
@@ -596,6 +639,10 @@ export const useAdminStore = create<AdminState>((set, get) => ({
         activeProviders: state.stats.activeProviders + 1,
       },
     }));
+
+    adminService.updateProviderStatus(id, "APPROVED").catch((err) => {
+      console.error("Failed to reactivate provider on backend:", err);
+    });
 
     get().addAuditLog({
       action: "ORGANIZATION_REACTIVATED",
@@ -642,7 +689,7 @@ export const useAdminStore = create<AdminState>((set, get) => ({
     }));
   },
 
-  toggleUserStatus: (id: string) => {
+  toggleUserStatus: async (id: string) => {
     const user = get().users.find((u) => u.id === id);
     if (!user) return;
     const newStatus = user.status === "ACTIVE" ? "SUSPENDED" : "ACTIVE";
@@ -651,61 +698,47 @@ export const useAdminStore = create<AdminState>((set, get) => ({
       users: state.users.map((u) => (u.id === id ? { ...u, status: newStatus } : u)),
     }));
 
+    try {
+      await adminService.toggleUserStatus(id, user.status);
+    } catch (err) {
+      console.error("Failed to toggle status on server:", err);
+      // rollback
+      set((state) => ({
+        users: state.users.map((u) => (u.id === id ? { ...u, status: user.status } : u)),
+      }));
+    }
+
     get().addAuditLog({
       action: newStatus === "ACTIVE" ? "USER_ACTIVATED" : "USER_SUSPENDED",
-      actorName: "Peter SuperAdmin",
-      actorRole: "SUPER_ADMIN",
+      actorName: "System Admin",
+      actorRole: "ADMIN",
       target: `${user.name} (${user.email})`,
       details: `User account status modified to ${newStatus}.`,
-      ipAddress: "197.156.104.22",
+      ipAddress: "127.0.0.1",
       severity: newStatus === "ACTIVE" ? "INFO" : "WARNING",
     });
   },
 
-  createAdminUser: (data) => {
-    const newUser: AdminUser = {
-      id: `usr-${Date.now()}`,
-      name: data.name,
-      email: data.email,
-      phone: data.phone,
-      role: data.role,
-      status: "ACTIVE",
-      nationalId: `ET-FAN-${Math.floor(1000000 + Math.random() * 9000000)}`,
-      faydaStatus: "VERIFIED",
-      kycStatus: "VERIFIED",
-      kycLevel: 2,
-      city: "Addis Ababa",
-      address: "Bole Sub-City, Addis Ababa, Ethiopia",
-      twoFactorEnabled: true,
-      totalBookings: 0,
-      totalSpentETB: 0,
-      loyaltyPoints: 0,
-      addedBy: {
-        name: "Peter SuperAdmin",
-        email: "admin@tikora.et",
-        role: "Super Administrator",
-      },
-      createdAt: new Date().toISOString().split("T")[0],
-      lastLogin: "Never",
-    };
+  createAdminUser: async (data) => {
+    try {
+      const createdUser = await adminService.createUser({
+        name: data.name,
+        email: data.email,
+        phone: data.phone,
+        role: data.role,
+      });
 
-    set((state) => ({
-      users: [newUser, ...state.users],
-      stats: {
-        ...state.stats,
-        totalUsers: state.stats.totalUsers + 1,
-      },
-    }));
-
-    get().addAuditLog({
-      action: "STAFF_PROVISIONED",
-      actorName: "Peter SuperAdmin",
-      actorRole: "SUPER_ADMIN",
-      target: `${data.name} (${data.email})`,
-      details: `Provisioned privileged account with role: ${data.role}`,
-      ipAddress: "197.156.104.22",
-      severity: "WARNING",
-    });
+      set((state) => ({
+        users: [createdUser, ...state.users.filter((u) => u.email !== createdUser.email)],
+        stats: {
+          ...state.stats,
+          totalUsers: state.stats.totalUsers + 1,
+        },
+      }));
+    } catch (err) {
+      console.error("Failed to create user on backend:", err);
+      throw err;
+    }
   },
 
   toggleInspectorStatus: (id: string) => {
@@ -934,6 +967,11 @@ export const useAdminStore = create<AdminState>((set, get) => ({
     set((state) => ({
       auditLogs: [newLog, ...state.auditLogs],
     }));
+
+    // Asynchronously persist to backend PostgreSQL database
+    adminService.createAuditLog(entry).catch((err) => {
+      console.warn("Could not persist audit log to DB:", err);
+    });
   },
 }));
 

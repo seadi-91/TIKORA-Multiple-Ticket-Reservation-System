@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import {
   Bell,
   Building2,
@@ -10,10 +10,12 @@ import {
   ShieldCheck,
 } from "lucide-react";
 import { useProviderStore } from "@/stores/provider.store";
+import { useAuthStore } from "@/stores/auth.store";
 import { toast } from "sonner";
 
 export default function ProviderSettingsPage() {
   const { organization, updateOrganization } = useProviderStore();
+  const { user } = useAuthStore();
 
   const [activeTab, setActiveTab] = useState<"GENERAL" | "PAYOUT" | "NOTIFICATIONS" | "SECURITY">(
     "GENERAL"
@@ -23,13 +25,23 @@ export default function ProviderSettingsPage() {
   const [generalForm, setGeneralForm] = useState({
     name: organization.name,
     legalName: organization.legalName,
-    email: organization.email,
-    phone: organization.phone,
+    email: user?.email || organization.email,
+    phone: user?.phone || organization.phone,
     website: organization.website,
     address: organization.address,
     city: organization.city,
     description: organization.description,
   });
+
+  useEffect(() => {
+    if (user?.email) {
+      setGeneralForm((prev) => ({
+        ...prev,
+        email: user.email,
+        phone: user.phone || prev.phone,
+      }));
+    }
+  }, [user]);
 
   const [payoutForm, setPayoutForm] = useState({
     bankName: organization.payoutAccount.bankName,

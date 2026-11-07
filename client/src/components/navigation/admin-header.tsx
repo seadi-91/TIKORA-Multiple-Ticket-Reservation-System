@@ -35,7 +35,7 @@ export function AdminHeader({ onToggleMobileMenu }: AdminHeaderProps) {
   const router = useRouter();
   const pathname = usePathname();
   const { organizations, refunds, payouts } = useAdminStore();
-  const { logout } = useAuthStore();
+  const { user, logout } = useAuthStore();
   const { theme, setTheme } = useTheme();
 
   const [searchQuery, setSearchQuery] = useState("");
@@ -327,10 +327,10 @@ export function AdminHeader({ onToggleMobileMenu }: AdminHeaderProps) {
             </div>
             <div className="hidden md:flex flex-col text-left">
               <span className="text-xs font-bold text-foreground truncate leading-tight">
-                Peter Admin
+                {user?.name || "System Admin"}
               </span>
               <span className="text-[10px] text-amber-600 dark:text-amber-400 font-semibold">
-                Super Admin
+                {user?.role || "Admin"}
               </span>
             </div>
             <ChevronDown className="w-3.5 h-3.5 text-muted-foreground hidden md:block" />
@@ -339,8 +339,8 @@ export function AdminHeader({ onToggleMobileMenu }: AdminHeaderProps) {
           {showProfileMenu && (
             <div className="absolute right-0 mt-2 w-56 rounded-2xl bg-card border border-slate-200/60 dark:border-slate-800/60 shadow-2xl py-2 z-50">
               <div className="px-4 py-2 border-b border-slate-200/40 dark:border-slate-800/40">
-                <p className="text-xs font-bold text-foreground">Peter SuperAdmin</p>
-                <p className="text-[11px] text-muted-foreground truncate">admin@tikora.et</p>
+                <p className="text-xs font-bold text-foreground">{user?.name || "System Admin"}</p>
+                <p className="text-[11px] text-muted-foreground truncate">{user?.email || "admin@tikora.com"}</p>
                 <div className="mt-1 flex items-center gap-1.5">
                   <span className="px-2 py-0.5 text-[9px] font-bold rounded-full bg-amber-500/10 text-amber-600 dark:text-amber-400">
                     PLATFORM ROOT

@@ -1,25 +1,75 @@
 "use client";
 
-import React, { useState } from "react";
-import { User, Phone, Mail, MapPin, Calendar, ShieldCheck, CheckCircle2, Award } from "lucide-react";
+import React, { useState, useEffect } from "react";
+import { User, Phone, Mail, MapPin, Calendar, ShieldCheck, CheckCircle2, Award, Loader2 } from "lucide-react";
 import { PageContainer } from "@/components/layout/page-container";
 import { FormUpload } from "@/components/forms/form-upload";
 import { useAuthStore } from "@/stores/auth.store";
+import { userService } from "@/services/user.service";
+import { toast } from "sonner";
 
 export default function CustomerProfilePage() {
-  const { user } = useAuthStore();
+  const { user, setAuth, token } = useAuthStore();
   const [fullName, setFullName] = useState(user?.name || "");
   const [email, setEmail] = useState(user?.email || "");
   const [phone, setPhone] = useState(user?.phone || "");
-  const [city, setCity] = useState("");
+  const [city, setCity] = useState("Addis Ababa");
   const [gender, setGender] = useState("MALE");
   const [dob, setDob] = useState("");
+  const [loyaltyPoints, setLoyaltyPoints] = useState(0);
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
   const [savedSuccess, setSavedSuccess] = useState(false);
 
-  const handleSave = (e: React.FormEvent) => {
+  useEffect(() => {
+    userService
+      .getProfile()
+      .then((data) => {
+        setFullName(data.name || "");
+        setEmail(data.email || "");
+        setPhone(data.phone || "");
+        setCity(data.city || "Addis Ababa");
+        setGender(data.gender || "MALE");
+        setDob(data.dateOfBirth || "");
+        setLoyaltyPoints(data.loyaltyPoints || 0);
+      })
+      .catch((err) => {
+        console.warn("Could not load backend profile:", err);
+        if (user) {
+          setFullName(user.name);
+          setEmail(user.email);
+          setPhone(user.phone || "");
+        }
+      })
+      .finally(() => setLoading(false));
+  }, [user]);
+
+  const handleSave = async (e: React.FormEvent) => {
     e.preventDefault();
-    setSavedSuccess(true);
-    setTimeout(() => setSavedSuccess(false), 4000);
+    setSaving(true);
+    setSavedSuccess(false);
+
+    try {
+      const res = await userService.updateProfile({
+        fullName,
+        phone,
+        city,
+        gender,
+        dateOfBirth: dob,
+      });
+
+      if (user && token) {
+        setAuth({ ...user, name: fullName, phone }, token);
+      }
+
+      setSavedSuccess(true);
+      toast.success(res.message || "Profile details saved successfully.");
+      setTimeout(() => setSavedSuccess(false), 4000);
+    } catch (err: any) {
+      toast.error(err.message || "Failed to update profile.");
+    } finally {
+      setSaving(false);
+    }
   };
 
   return (
@@ -153,9 +203,17 @@ export default function CustomerProfilePage() {
             <div className="pt-4 border-t border-[#E2E8F0] dark:border-slate-800 flex justify-end">
               <button
                 type="submit"
-                className="px-6 py-2.5 rounded-xl bg-[#F59E0B] hover:bg-[#D97706] text-white text-xs font-bold transition-all shadow-md active:scale-95 cursor-pointer"
+                disabled={saving}
+                className="px-6 py-2.5 rounded-xl bg-[#F59E0B] hover:bg-[#D97706] text-white text-xs font-bold transition-all shadow-md active:scale-95 cursor-pointer disabled:opacity-60 flex items-center gap-2"
               >
-                Save Changes
+                {saving ? (
+                  <>
+                    <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                    <span>Saving Changes...</span>
+                  </>
+                ) : (
+                  <span>Save Changes</span>
+                )}
               </button>
             </div>
           </form>
@@ -186,8 +244,8 @@ export default function CustomerProfilePage() {
               <Award className="w-5 h-5 text-amber-300" />
               <h4 className="text-sm font-bold">TIKORA Rewards</h4>
             </div>
-            <div className="text-lg font-bold">480 Loyalty Points</div>
-            <p className="text-xs text-indigo-100/80 leading-relaxed">
+            <div className="text-lg font-bold">{loyaltyPoints} Loyalty Points</div>
+            <p className="text-xs text-amber-100/90 leading-relaxed">
               Earn 10 points for every 100 ETB spent. Redeemable for cinema concessions, VIP concert upgrades, and holiday bus discounts.
             </p>
           </div>

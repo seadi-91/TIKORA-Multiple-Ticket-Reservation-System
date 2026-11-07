@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import Link from "next/link";
 import {
   ShieldCheck,
@@ -15,8 +15,11 @@ import {
   Lock,
   Copy,
   Eye,
+  RefreshCw,
+  Loader2,
 } from "lucide-react";
 import { useAdminStore } from "@/stores/admin.store";
+import { adminService } from "@/services/admin.service";
 import { toast } from "sonner";
 import { ActionDropdown } from "@/components/ui/action-dropdown";
 
@@ -25,6 +28,23 @@ export default function AdminAuditLogsPage() {
 
   const [searchQuery, setSearchQuery] = useState("");
   const [severityFilter, setSeverityFilter] = useState<string>("ALL");
+  const [isRefreshing, setIsRefreshing] = useState(false);
+
+  const loadLogs = useCallback(async () => {
+    setIsRefreshing(true);
+    try {
+      const logs = await adminService.getAuditLogs();
+      useAdminStore.setState({ auditLogs: logs });
+    } catch (err: any) {
+      toast.error("Failed to sync audit logs: " + (err.message || "Network error"));
+    } finally {
+      setIsRefreshing(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    loadLogs();
+  }, [loadLogs]);
 
   const filteredLogs = auditLogs.filter((log) => {
     const matchesSearch =
@@ -75,9 +95,20 @@ export default function AdminAuditLogsPage() {
           </p>
         </div>
 
-        <div className="flex items-center gap-2 px-3.5 py-1.5 rounded-xl bg-card border border-slate-200/60 dark:border-slate-800/60 text-xs shadow-xs">
-          <Lock className="w-3.5 h-3.5 text-emerald-500" />
-          <span className="font-semibold text-foreground">Append-Only Ledger Active</span>
+        <div className="flex items-center gap-2">
+          <button
+            onClick={loadLogs}
+            disabled={isRefreshing}
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-card border border-slate-200/60 dark:border-slate-800/60 text-xs font-semibold text-foreground hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors cursor-pointer"
+          >
+            <RefreshCw className={`w-3.5 h-3.5 ${isRefreshing ? "animate-spin" : ""}`} />
+            <span>{isRefreshing ? "Syncing..." : "Refresh Ledger"}</span>
+          </button>
+
+          <div className="flex items-center gap-2 px-3.5 py-1.5 rounded-xl bg-card border border-slate-200/60 dark:border-slate-800/60 text-xs shadow-xs">
+            <Lock className="w-3.5 h-3.5 text-emerald-500" />
+            <span className="font-semibold text-foreground">PostgreSQL Ledger Active</span>
+          </div>
         </div>
       </div>
 

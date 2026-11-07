@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import {
   Building2,
   Calendar,
@@ -13,33 +13,71 @@ import {
   ShieldCheck,
   Smartphone,
   User,
+  Loader2,
 } from "lucide-react";
 import { useInspectorStore } from "@/stores/inspector.store";
+import { useAuthStore } from "@/stores/auth.store";
+import { userService } from "@/services/user.service";
 import { toast } from "sonner";
 
 export default function InspectorProfilePage() {
   const { profile, updateProfile } = useInspectorStore();
+  const { user, setAuth, token } = useAuthStore();
 
   const [formData, setFormData] = useState({
-    fullName: profile.fullName,
-    email: profile.email,
-    phone: profile.phone,
+    fullName: user?.name || profile.fullName,
+    email: user?.email || profile.email,
+    phone: user?.phone || profile.phone,
   });
 
   const [isSaving, setIsSaving] = useState(false);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  useEffect(() => {
+    userService
+      .getProfile()
+      .then((data) => {
+        setFormData({
+          fullName: data.name || "",
+          email: data.email || "",
+          phone: data.phone || "",
+        });
+        updateProfile({
+          fullName: data.name,
+          email: data.email,
+          phone: data.phone || "",
+          organizationName: data.organizationName || "TIKORA Gate Operations",
+        });
+      })
+      .catch((err) => {
+        console.warn("Could not load inspector backend profile:", err);
+      });
+  }, [updateProfile]);
+
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsSaving(true);
-    setTimeout(() => {
+    try {
+      await userService.updateProfile({
+        fullName: formData.fullName,
+        phone: formData.phone,
+      });
+
       updateProfile({
         fullName: formData.fullName,
         email: formData.email,
         phone: formData.phone,
       });
+
+      if (user && token) {
+        setAuth({ ...user, name: formData.fullName, phone: formData.phone }, token);
+      }
+
+      toast.success("Inspector profile updated successfully.");
+    } catch (err: any) {
+      toast.error(err.message || "Failed to update profile.");
+    } finally {
       setIsSaving(false);
-      toast.success("Inspector contact profile updated successfully.");
-    }, 500);
+    }
   };
 
   return (

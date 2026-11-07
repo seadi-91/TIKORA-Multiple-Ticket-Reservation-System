@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useMemo } from "react";
+import React, { useState, useMemo, useEffect } from "react";
 import Link from "next/link";
 import {
   TrendingUp,
@@ -39,7 +39,12 @@ export default function AdminDashboardPage() {
     inspectors,
     refunds,
     approveOrganization,
+    fetchPlatformData,
   } = useAdminStore();
+
+  useEffect(() => {
+    fetchPlatformData();
+  }, [fetchPlatformData]);
 
   const [revenueRange, setRevenueRange] = useState<"6M" | "30D" | "7D">("6M");
 

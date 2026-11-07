@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, use } from "react";
+import React, { useState, useEffect, use } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import {
@@ -50,12 +50,27 @@ export default function AdminInspectorDetailPage({ params }: PageProps) {
     organizations,
     toggleInspectorStatus,
     updateInspectorAssignment,
+    fetchPlatformData,
+    isLoading,
   } = useAdminStore();
+
+  useEffect(() => {
+    fetchPlatformData();
+  }, [fetchPlatformData]);
 
   const inspector = inspectors.find((i) => i.id === resolvedParams.inspectorId);
 
   const [isEditingStation, setIsEditingStation] = useState(false);
   const [newStation, setNewStation] = useState(inspector?.assignedStation || "");
+
+  if (isLoading && !inspector) {
+    return (
+      <div className="py-16 text-center space-y-4">
+        <div className="w-8 h-8 border-2 border-amber-500 border-t-transparent rounded-full animate-spin mx-auto" />
+        <p className="text-xs text-muted-foreground">Loading field inspector officer...</p>
+      </div>
+    );
+  }
 
   if (!inspector) {
     return (

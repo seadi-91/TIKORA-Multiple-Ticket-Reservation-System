@@ -54,7 +54,22 @@ export function AuthGuard({ children, allowedRoles }: AuthGuardProps) {
       return;
     }
 
-    // 3. Role-based check
+    // 3. Provider status check: unapproved or pending provider cannot access provider portal
+    if (user.role === "ORGANIZATION") {
+      if (user.status === "PENDING_APPROVAL" || user.status === "INACTIVE") {
+        setAuthorized(false);
+        router.replace("/pending-approval");
+        return;
+      }
+      if (user.status === "SUSPENDED") {
+        setAuthorized(false);
+        logout();
+        router.replace("/login?error=account_suspended");
+        return;
+      }
+    }
+
+    // 4. Role-based check
     if (allowedRoles && allowedRoles.length > 0) {
       if (!allowedRoles.includes(user.role)) {
         setAuthorized(false);
@@ -62,7 +77,11 @@ export function AuthGuard({ children, allowedRoles }: AuthGuardProps) {
         if (user.role === "ADMIN") {
           router.replace("/admin/dashboard");
         } else if (user.role === "ORGANIZATION") {
-          router.replace("/provider/dashboard");
+          if (user.status === "PENDING_APPROVAL") {
+            router.replace("/pending-approval");
+          } else {
+            router.replace("/provider/dashboard");
+          }
         } else if (user.role === "INSPECTOR") {
           router.replace("/inspector/scanner");
         } else {

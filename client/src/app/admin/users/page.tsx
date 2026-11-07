@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import Link from "next/link";
 import {
   Users,
@@ -27,7 +27,11 @@ import { useAdminStore, AdminUser } from "@/stores/admin.store";
 import { ActionDropdown } from "@/components/ui/action-dropdown";
 
 export default function AdminUsersPage() {
-  const { users, toggleUserStatus, createAdminUser } = useAdminStore();
+  const { users, toggleUserStatus, createAdminUser, isLoading, fetchPlatformData } = useAdminStore();
+
+  useEffect(() => {
+    fetchPlatformData();
+  }, [fetchPlatformData]);
 
   const [searchQuery, setSearchQuery] = useState("");
   const [roleFilter, setRoleFilter] = useState<string>("ALL");

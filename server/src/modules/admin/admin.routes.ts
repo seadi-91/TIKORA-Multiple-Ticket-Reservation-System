@@ -1,0 +1,26 @@
+import { Router } from "express";
+import { AdminController } from "./admin.controller";
+import { authenticate, authorize } from "../../middleware/auth.middleware";
+
+const router = Router();
+
+// Protect all admin endpoints with authentication & ADMIN role
+router.use(authenticate);
+router.use(authorize("ADMIN"));
+
+router.get("/users", AdminController.getUsers);
+router.post("/users", AdminController.createUser);
+router.patch("/users/:id/status", AdminController.toggleUserStatus);
+
+router.get("/providers", AdminController.getProviders);
+router.patch("/providers/:id/status", AdminController.updateProviderStatus);
+
+router.get("/inspectors", AdminController.getInspectors);
+
+router.get("/overview", AdminController.getOverview);
+
+router.get("/audit-logs", AdminController.getAuditLogs);
+router.post("/audit-logs", AdminController.createAuditLog);
+
+export default router;
+
