@@ -1,14 +1,20 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { ProviderSidebar } from "@/components/navigation/provider-sidebar";
 import { ProviderHeader } from "@/components/navigation/provider-header";
 import { ProviderBottomNav } from "@/components/navigation/provider-bottom-nav";
 import { AuthGuard } from "@/components/auth/auth-guard";
+import { useProviderStore } from "@/stores/provider.store";
 
 export default function ProviderRootLayout({ children }: { children: React.ReactNode }) {
   const [collapsed, setCollapsed] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
+  const { fetchOrganization } = useProviderStore();
+
+  useEffect(() => {
+    fetchOrganization();
+  }, [fetchOrganization]);
 
   return (
     <AuthGuard allowedRoles={["ORGANIZATION", "ADMIN"]}>

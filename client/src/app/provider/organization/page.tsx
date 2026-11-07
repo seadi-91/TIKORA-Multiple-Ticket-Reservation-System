@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import Link from "next/link";
 import {
   Building2,
@@ -13,259 +13,332 @@ import {
   CheckCircle2,
   Clock,
   AlertTriangle,
+  XCircle,
   Save,
-  Upload,
   User,
   CreditCard,
-  ExternalLink,
+  Loader2,
+  RefreshCw,
 } from "lucide-react";
 import { useProviderStore } from "@/stores/provider.store";
-import { PageContainer } from "@/components/layout/page-container";
+import { providerService } from "@/services/provider.service";
+import { toast } from "sonner";
 
 export default function ProviderOrganizationPage() {
-  const { organization, updateOrganization, toggleApprovalStatus } = useProviderStore();
+  const { organization, updateOrganization } = useProviderStore();
 
+  const [isLoading, setIsLoading] = useState(true);
   const [isEditing, setIsEditing] = useState(false);
-  const [saveSuccess, setSaveSuccess] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
 
   const [formData, setFormData] = useState({
-    name: organization.name,
-    legalName: organization.legalName,
-    tinNumber: organization.tinNumber,
-    registrationNumber: organization.registrationNumber,
-    licenseNumber: organization.licenseNumber,
-    email: organization.email,
-    phone: organization.phone,
-    website: organization.website,
-    address: organization.address,
-    city: organization.city,
-    description: organization.description,
-    contactName: organization.contactPerson.fullName,
-    contactRole: organization.contactPerson.role,
-    contactPhone: organization.contactPerson.phone,
-    contactEmail: organization.contactPerson.email,
-    bankName: organization.payoutAccount.bankName,
-    accountNumber: organization.payoutAccount.accountNumber,
-    accountHolder: organization.payoutAccount.accountHolder,
+    name: "",
+    legalName: "",
+    tinNumber: "",
+    registrationNumber: "",
+    licenseNumber: "",
+    email: "",
+    phone: "",
+    website: "",
+    address: "",
+    city: "Addis Ababa",
+    description: "",
+    contactName: "",
+    contactRole: "",
+    contactPhone: "",
+    contactEmail: "",
+    bankName: "",
+    accountNumber: "",
+    accountHolder: "",
   });
 
-  const handleSave = (e: React.FormEvent) => {
+  const syncFormFromOrg = (org: typeof organization) => {
+    setFormData({
+      name: org.name || "",
+      legalName: org.legalName || org.name || "",
+      tinNumber: org.tinNumber || "",
+      registrationNumber: org.registrationNumber || "",
+      licenseNumber: org.licenseNumber || "",
+      email: org.email || "",
+      phone: org.phone || "",
+      website: org.website || "",
+      address: org.address || "",
+      city: org.city || "Addis Ababa",
+      description: org.description || "",
+      contactName: org.contactPerson?.fullName || "",
+      contactRole: org.contactPerson?.role || "Operations Lead / Owner",
+      contactPhone: org.contactPerson?.phone || org.phone || "",
+      contactEmail: org.contactPerson?.email || org.email || "",
+      bankName: org.payoutAccount?.bankName || "Commercial Bank of Ethiopia (CBE)",
+      accountNumber: org.payoutAccount?.accountNumber || "",
+      accountHolder: org.payoutAccount?.accountHolder || org.name || "",
+    });
+  };
+
+  const loadProfile = async () => {
+    setIsLoading(true);
+    try {
+      const liveOrg = await providerService.getProfile();
+      if (liveOrg) {
+        updateOrganization(liveOrg);
+        syncFormFromOrg(liveOrg);
+      } else {
+        syncFormFromOrg(organization);
+      }
+    } catch (err: any) {
+      console.warn("Could not fetch organization from API, using cached:", err);
+      syncFormFromOrg(organization);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    loadProfile();
+  }, []);
+
+  const handleSave = async (e: React.FormEvent) => {
     e.preventDefault();
-    updateOrganization({
-      name: formData.name,
-      legalName: formData.legalName,
-      tinNumber: formData.tinNumber,
-      registrationNumber: formData.registrationNumber,
-      licenseNumber: formData.licenseNumber,
-      email: formData.email,
-      phone: formData.phone,
-      website: formData.website,
-      address: formData.address,
-      city: formData.city,
-      description: formData.description,
+    setIsSaving(true);
+
+    const payload = {
+      name: formData.name.trim(),
+      legalName: formData.legalName.trim(),
+      tinNumber: formData.tinNumber.trim(),
+      registrationNumber: formData.registrationNumber.trim(),
+      licenseNumber: formData.licenseNumber.trim(),
+      email: formData.email.trim().toLowerCase(),
+      phone: formData.phone.trim(),
+      website: formData.website.trim(),
+      address: formData.address.trim(),
+      city: formData.city.trim(),
+      description: formData.description.trim(),
       contactPerson: {
-        fullName: formData.contactName,
-        role: formData.contactRole,
-        phone: formData.contactPhone,
-        email: formData.contactEmail,
+        fullName: formData.contactName.trim(),
+        role: formData.contactRole.trim(),
+        phone: formData.contactPhone.trim(),
+        email: formData.contactEmail.trim(),
       },
       payoutAccount: {
-        bankName: formData.bankName,
-        accountNumber: formData.accountNumber,
-        accountHolder: formData.accountHolder,
+        bankName: formData.bankName.trim(),
+        accountNumber: formData.accountNumber.trim(),
+        accountHolder: formData.accountHolder.trim(),
       },
-    });
+    };
 
-    setSaveSuccess(true);
-    setIsEditing(false);
-    setTimeout(() => setSaveSuccess(false), 3000);
+    try {
+      const updated = await providerService.updateProfile(payload);
+      updateOrganization(updated || payload);
+      syncFormFromOrg(updated || { ...organization, ...payload });
+      setIsEditing(false);
+      toast.success("Organization profile updated and saved to database!");
+    } catch (err: any) {
+      toast.error(err.message || "Failed to save organization changes.");
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  const getStatusBadge = (status: string) => {
+    switch (status) {
+      case "APPROVED":
+        return (
+          <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[9px] font-bold bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20">
+            <CheckCircle2 className="w-2.5 h-2.5" /> VERIFIED & APPROVED
+          </span>
+        );
+      case "REJECTED":
+        return (
+          <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[9px] font-bold bg-rose-500/10 text-rose-600 dark:text-rose-400 border border-rose-500/20">
+            <XCircle className="w-2.5 h-2.5" /> REJECTED
+          </span>
+        );
+      case "SUSPENDED":
+        return (
+          <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[9px] font-bold bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/20">
+            <AlertTriangle className="w-2.5 h-2.5" /> SUSPENDED
+          </span>
+        );
+      default:
+        return (
+          <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[9px] font-bold bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/20">
+            <Clock className="w-2.5 h-2.5" /> PENDING REVIEW
+          </span>
+        );
+    }
   };
 
   return (
-    <div className="space-y-6">
-      {/* Page Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+    <div className="space-y-4 max-w-6xl mx-auto">
+      {/* Page Header - Minimized Text */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-2 border-b border-slate-200/60 dark:border-slate-800/60">
         <div>
-          <div className="flex items-center gap-2 text-xs text-slate-400 mb-1">
-            <Link href="/provider" className="hover:text-[#B45309]">
-              Provider Dashboard
+          <div className="flex items-center gap-1.5 text-[10px] text-muted-foreground mb-0.5 font-medium">
+            <Link href="/provider/dashboard" className="hover:text-amber-600 transition-colors">
+              Provider Portal
             </Link>
             <span>/</span>
-            <span className="font-semibold text-[#0F172A] dark:text-white">Organization Profile</span>
+            <span className="text-foreground font-semibold">Organization Profile</span>
           </div>
-          <h1 className="text-base sm:text-lg font-bold text-[#0F172A] dark:text-white tracking-tight">
-            Organization Identity & Verification
+          <h1 className="text-xs sm:text-sm font-bold text-foreground tracking-tight flex items-center gap-2">
+            <span>Corporate Identity & Commercial Registry</span>
+            {isLoading && <Loader2 className="w-3 h-3 animate-spin text-amber-600" />}
           </h1>
-          <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
-            Manage your legal entity registration, business license, and settlement payout accounts.
+          <p className="text-[10px] text-muted-foreground mt-0.5">
+            Verified entity credentials, legal business license, and settlement payout settings.
           </p>
         </div>
 
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 shrink-0">
+          <button
+            onClick={loadProfile}
+            disabled={isLoading}
+            className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg bg-card border border-slate-200/60 dark:border-slate-800/60 text-[10px] font-semibold text-muted-foreground hover:text-foreground transition-all cursor-pointer shadow-2xs"
+            title="Refresh database records"
+          >
+            <RefreshCw className={`w-3 h-3 ${isLoading ? "animate-spin" : ""}`} />
+            <span>Sync</span>
+          </button>
+
           <Link
             href="/provider/organization/verification"
-            className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 font-bold text-xs transition-all"
+            className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg bg-card border border-slate-200/60 dark:border-slate-800/60 text-[10px] font-semibold text-muted-foreground hover:text-foreground transition-all shadow-2xs"
           >
-            <FileText className="w-3.5 h-3.5" />
-            <span>Uploaded Documents</span>
+            <FileText className="w-3 h-3" />
+            <span>Documents</span>
           </Link>
 
           <button
             onClick={() => setIsEditing(!isEditing)}
-            className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-[#B45309] hover:bg-[#92400E] text-white font-bold text-xs shadow-xs active:scale-95 transition-all cursor-pointer"
+            className={`inline-flex items-center gap-1 px-3 py-1.5 rounded-lg text-[10px] font-bold transition-all shadow-xs active:scale-95 cursor-pointer ${
+              isEditing
+                ? "bg-slate-200 dark:bg-slate-800 text-foreground hover:bg-slate-300"
+                : "bg-amber-600 hover:bg-amber-700 text-white"
+            }`}
           >
-            <span>{isEditing ? "Cancel Edit" : "Edit Details"}</span>
+            <span>{isEditing ? "Cancel" : "Edit Profile"}</span>
           </button>
         </div>
       </div>
 
-      {saveSuccess && (
-        <div className="p-3.5 rounded-2xl bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-800 text-emerald-800 dark:text-emerald-300 text-xs font-semibold flex items-center gap-2">
-          <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
-          <span>Organization profile updated successfully!</span>
-        </div>
-      )}
-
-      {/* Main Grid */}
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-5 sm:gap-6 items-start">
-        {/* Left 4 Cols: Organization Badge & Status Card */}
-        <div className="lg:col-span-4 space-y-5 sm:space-y-6">
-          <div className="rounded-2xl sm:rounded-3xl bg-white dark:bg-[#161922] border border-slate-200/50 dark:border-slate-800/40 p-5 sm:p-6 shadow-xs text-center space-y-4">
-            <div className="w-16 h-16 mx-auto rounded-2xl bg-gradient-to-tr from-[#B45309] to-[#D97706] text-white flex items-center justify-center font-bold text-base shadow-md">
-              {organization.name.substring(0, 2).toUpperCase()}
+      {/* Main Grid Layout - Minimized Spacing */}
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 items-start">
+        {/* Left 4 Columns: Compact Identity & Status Badge */}
+        <div className="lg:col-span-4 space-y-3">
+          <div className="rounded-2xl bg-card border border-slate-200/60 dark:border-slate-800/60 p-4 shadow-2xs text-center space-y-3">
+            <div className="w-12 h-12 mx-auto rounded-xl bg-gradient-to-tr from-amber-600 to-amber-500 text-white flex items-center justify-center font-bold text-xs shadow-sm">
+              {(organization.name || "TK").substring(0, 2).toUpperCase()}
             </div>
 
             <div>
-              <h2 className="text-base sm:text-lg font-bold text-[#0F172A] dark:text-white">
-                {organization.name}
+              <h2 className="text-xs sm:text-sm font-bold text-foreground truncate">
+                {organization.name || "Tikora Provider"}
               </h2>
-              <span className="text-xs text-slate-400 block mt-0.5">{organization.legalName}</span>
+              <span className="text-[10px] text-muted-foreground block truncate">
+                {organization.legalName || organization.name}
+              </span>
+              <span className="inline-block mt-1 font-mono text-[9px] font-semibold px-2 py-0.5 rounded-md bg-amber-500/10 text-amber-700 dark:text-amber-300">
+                Category: {organization.category || "BUS"}
+              </span>
             </div>
 
-            {/* Approval Status Badge */}
-            <div className="p-3.5 rounded-2xl bg-slate-50/70 dark:bg-slate-800/30 border border-slate-200/40 dark:border-slate-800/40 space-y-2">
-              <span className="text-[10px] uppercase font-bold text-slate-400 tracking-wider block">
-                Platform Verification Status
+            {/* Live PostgreSQL Verification Status Badge */}
+            <div className="p-2.5 rounded-xl bg-slate-50/70 dark:bg-slate-800/30 border border-slate-200/40 dark:border-slate-800/40 space-y-1.5">
+              <span className="text-[9px] uppercase font-bold text-muted-foreground tracking-wider block">
+                Verification Ledger
               </span>
-              <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-500/10 text-emerald-700 dark:text-emerald-300 text-xs font-bold border border-emerald-500/20">
-                <ShieldCheck className="w-4 h-4 text-emerald-600" />
-                <span>
-                  {organization.approvalStatus === "APPROVED"
-                    ? "Approved by Super Admin"
-                    : organization.approvalStatus}
-                </span>
-              </div>
-              <p className="text-[11px] text-slate-400 leading-relaxed">
-                Authorized for live digital ticketing and online merchant payments.
+              <div>{getStatusBadge(organization.approvalStatus)}</div>
+              <p className="text-[9px] text-muted-foreground leading-relaxed">
+                {organization.approvalStatus === "APPROVED"
+                  ? "Authorized for platform transit ticketing & live payouts."
+                  : "Under compliance review. Administrative approval required."}
               </p>
-            </div>
-
-            {/* Demo Status Switcher for UI Verification */}
-            <div className="pt-2 border-t border-slate-100 dark:border-slate-800 text-left">
-              <span className="text-[10px] font-bold uppercase text-slate-400 block mb-1.5">
-                Simulate Status State (UI Test):
-              </span>
-              <div className="flex flex-wrap gap-1.5">
-                {(["APPROVED", "PENDING_APPROVAL", "SUSPENDED"] as const).map((st) => (
-                  <button
-                    key={st}
-                    onClick={() => toggleApprovalStatus(st)}
-                    className={`px-2 py-0.5 rounded-lg text-[10px] font-bold border transition-colors cursor-pointer ${
-                      organization.approvalStatus === st
-                        ? "bg-[#B45309] text-white border-[#B45309]"
-                        : "bg-slate-50 dark:bg-slate-800 text-slate-600 dark:text-slate-400 border-slate-200 dark:border-slate-700"
-                    }`}
-                  >
-                    {st === "APPROVED" ? "Approved" : st === "PENDING_APPROVAL" ? "Pending" : "Suspended"}
-                  </button>
-                ))}
-              </div>
             </div>
           </div>
 
-          {/* Quick Bank Settlement Widget */}
-          <div className="rounded-2xl sm:rounded-3xl bg-white dark:bg-[#161922] border border-slate-200/50 dark:border-slate-800/40 p-5 sm:p-6 shadow-xs space-y-3">
-            <div className="flex items-center gap-2">
-              <CreditCard className="w-4 h-4 text-[#B45309]" />
-              <h3 className="text-xs font-bold text-[#0F172A] dark:text-white uppercase tracking-wider">
-                Payout Bank Ledger
+          {/* Compact Settlement Account Widget */}
+          <div className="rounded-2xl bg-card border border-slate-200/60 dark:border-slate-800/60 p-4 shadow-2xs space-y-2">
+            <div className="flex items-center gap-1.5">
+              <CreditCard className="w-3.5 h-3.5 text-amber-600" />
+              <h3 className="text-[10px] font-bold text-foreground uppercase tracking-wider">
+                Payout Settlement Account
               </h3>
             </div>
 
-            <div className="p-3.5 rounded-2xl bg-amber-500/5 dark:bg-amber-950/20 border border-amber-500/15 dark:border-amber-900/40 space-y-1">
-              <span className="text-[10px] text-slate-400 block font-medium">Bank Institution</span>
-              <strong className="text-xs text-[#0F172A] dark:text-white block font-bold">
-                {organization.payoutAccount.bankName}
+            <div className="p-2.5 rounded-xl bg-amber-500/5 border border-amber-500/15 space-y-0.5">
+              <span className="text-[9px] text-muted-foreground block font-medium">Institution</span>
+              <strong className="text-[11px] text-foreground block font-bold truncate">
+                {organization.payoutAccount?.bankName || "Commercial Bank of Ethiopia"}
               </strong>
-              <div className="pt-1.5 flex items-center justify-between text-xs">
-                <span className="font-mono text-slate-500 dark:text-slate-400">
-                  {organization.payoutAccount.accountNumber}
+              <div className="pt-1 flex items-center justify-between text-[10px]">
+                <span className="font-mono text-muted-foreground truncate">
+                  {organization.payoutAccount?.accountNumber || "No Account Assigned"}
                 </span>
-                <span className="text-[10px] font-bold text-emerald-600">Active</span>
+                <span className="text-[9px] font-bold text-emerald-600 shrink-0">Active</span>
               </div>
             </div>
 
             <Link
               href="/provider/payments"
-              className="w-full text-center block pt-1 text-xs font-bold text-[#B45309] dark:text-amber-400 hover:underline"
+              className="w-full text-center block pt-0.5 text-[10px] font-bold text-amber-600 dark:text-amber-400 hover:underline"
             >
               View Settlement Statement & Payouts →
             </Link>
           </div>
         </div>
 
-        {/* Right 8 Cols: Entity Information Details & Form */}
-        <div className="lg:col-span-8 rounded-2xl sm:rounded-3xl bg-white dark:bg-[#161922] border border-slate-200/50 dark:border-slate-800/40 p-5 sm:p-6 shadow-xs space-y-6">
-          <form onSubmit={handleSave} className="space-y-6">
-            {/* General Legal Information */}
+        {/* Right 8 Columns: Entity Form with Compact Typography */}
+        <div className="lg:col-span-8 rounded-2xl bg-card border border-slate-200/60 dark:border-slate-800/60 p-4 sm:p-5 shadow-2xs">
+          <form onSubmit={handleSave} className="space-y-4">
+            {/* Section 1: Commercial Registration */}
             <div>
-              <h3 className="text-sm font-bold text-[#0F172A] dark:text-white pb-3 border-b border-slate-100 dark:border-slate-800 flex items-center gap-2">
-                <Building2 className="w-4 h-4 text-[#B45309]" />
-                <span>Commercial Registration & Tax Identifiers</span>
+              <h3 className="text-xs font-bold text-foreground pb-2 border-b border-slate-100 dark:border-slate-800/60 flex items-center gap-1.5">
+                <Building2 className="w-3.5 h-3.5 text-amber-600" />
+                <span>Commercial Registry & Tax Identifiers</span>
               </h3>
 
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-3">
                 <div>
-                  <label className="block text-[11px] font-bold text-slate-500 uppercase mb-1">
-                    Organization Name (Display)
+                  <label className="block text-[10px] font-semibold text-muted-foreground uppercase mb-1">
+                    Display Name
                   </label>
                   <input
                     type="text"
                     disabled={!isEditing}
                     value={formData.name}
                     onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                    className="w-full px-3 py-2 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-900 text-xs text-[#0F172A] dark:text-white disabled:opacity-75 focus:outline-none focus:border-[#B45309]"
+                    className="w-full h-8 px-2.5 py-1 rounded-lg border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-900 text-xs text-foreground disabled:opacity-75 focus:outline-none focus:border-amber-500 transition-colors"
                   />
                 </div>
 
                 <div>
-                  <label className="block text-[11px] font-bold text-slate-500 uppercase mb-1">
-                    Registered Legal Entity Name
+                  <label className="block text-[10px] font-semibold text-muted-foreground uppercase mb-1">
+                    Legal Entity Name
                   </label>
                   <input
                     type="text"
                     disabled={!isEditing}
                     value={formData.legalName}
                     onChange={(e) => setFormData({ ...formData, legalName: e.target.value })}
-                    className="w-full px-3 py-2 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-900 text-xs text-[#0F172A] dark:text-white disabled:opacity-75 focus:outline-none focus:border-[#B45309]"
+                    className="w-full h-8 px-2.5 py-1 rounded-lg border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-900 text-xs text-foreground disabled:opacity-75 focus:outline-none focus:border-amber-500 transition-colors"
                   />
                 </div>
 
                 <div>
-                  <label className="block text-[11px] font-bold text-slate-500 uppercase mb-1">
-                    Tax Identification Number (TIN)
+                  <label className="block text-[10px] font-semibold text-muted-foreground uppercase mb-1">
+                    Tax Number (TIN)
                   </label>
                   <input
                     type="text"
                     disabled={!isEditing}
                     value={formData.tinNumber}
                     onChange={(e) => setFormData({ ...formData, tinNumber: e.target.value })}
-                    className="w-full px-3 py-2 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-900 text-xs text-[#0F172A] dark:text-white font-mono disabled:opacity-75 focus:outline-none focus:border-[#B45309]"
+                    className="w-full h-8 px-2.5 py-1 rounded-lg border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-900 text-xs font-mono text-foreground disabled:opacity-75 focus:outline-none focus:border-amber-500 transition-colors"
                   />
                 </div>
 
                 <div>
-                  <label className="block text-[11px] font-bold text-slate-500 uppercase mb-1">
+                  <label className="block text-[10px] font-semibold text-muted-foreground uppercase mb-1">
                     Commercial License No.
                   </label>
                   <input
@@ -273,125 +346,230 @@ export default function ProviderOrganizationPage() {
                     disabled={!isEditing}
                     value={formData.licenseNumber}
                     onChange={(e) => setFormData({ ...formData, licenseNumber: e.target.value })}
-                    className="w-full px-3 py-2 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-900 text-xs text-[#0F172A] dark:text-white font-mono disabled:opacity-75 focus:outline-none focus:border-[#B45309]"
+                    className="w-full h-8 px-2.5 py-1 rounded-lg border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-900 text-xs font-mono text-foreground disabled:opacity-75 focus:outline-none focus:border-amber-500 transition-colors"
                   />
                 </div>
               </div>
             </div>
 
-            {/* Official Contact & Location */}
+            {/* Section 2: Contact & Headquarters */}
             <div>
-              <h3 className="text-sm font-bold text-[#0F172A] dark:text-white pb-3 border-b border-slate-100 dark:border-slate-800 flex items-center gap-2">
-                <MapPin className="w-4 h-4 text-[#B45309]" />
-                <span>Headquarters & Digital Contacts</span>
+              <h3 className="text-xs font-bold text-foreground pb-2 border-b border-slate-100 dark:border-slate-800/60 flex items-center gap-1.5">
+                <MapPin className="w-3.5 h-3.5 text-amber-600" />
+                <span>Headquarters & Location Details</span>
               </h3>
 
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-3">
                 <div>
-                  <label className="block text-[11px] font-bold text-slate-500 uppercase mb-1">
-                    Official Dispatch Email
+                  <label className="block text-[10px] font-semibold text-muted-foreground uppercase mb-1">
+                    Corporate Email
                   </label>
                   <input
                     type="email"
                     disabled={!isEditing}
                     value={formData.email}
                     onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                    className="w-full px-3 py-2 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-900 text-xs text-[#0F172A] dark:text-white disabled:opacity-75 focus:outline-none focus:border-[#B45309]"
+                    className="w-full h-8 px-2.5 py-1 rounded-lg border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-900 text-xs text-foreground disabled:opacity-75 focus:outline-none focus:border-amber-500 transition-colors"
                   />
                 </div>
 
                 <div>
-                  <label className="block text-[11px] font-bold text-slate-500 uppercase mb-1">
-                    Telephone Hotline
+                  <label className="block text-[10px] font-semibold text-muted-foreground uppercase mb-1">
+                    Hotline Phone
                   </label>
                   <input
                     type="text"
                     disabled={!isEditing}
                     value={formData.phone}
                     onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
-                    className="w-full px-3 py-2 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-900 text-xs text-[#0F172A] dark:text-white disabled:opacity-75 focus:outline-none focus:border-[#B45309]"
+                    className="w-full h-8 px-2.5 py-1 rounded-lg border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-900 text-xs text-foreground disabled:opacity-75 focus:outline-none focus:border-amber-500 transition-colors"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-[10px] font-semibold text-muted-foreground uppercase mb-1">
+                    City / Jurisdiction
+                  </label>
+                  <input
+                    type="text"
+                    disabled={!isEditing}
+                    value={formData.city}
+                    onChange={(e) => setFormData({ ...formData, city: e.target.value })}
+                    className="w-full h-8 px-2.5 py-1 rounded-lg border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-900 text-xs text-foreground disabled:opacity-75 focus:outline-none focus:border-amber-500 transition-colors"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-[10px] font-semibold text-muted-foreground uppercase mb-1">
+                    Official Website
+                  </label>
+                  <input
+                    type="text"
+                    disabled={!isEditing}
+                    value={formData.website}
+                    onChange={(e) => setFormData({ ...formData, website: e.target.value })}
+                    placeholder="https://provider.et"
+                    className="w-full h-8 px-2.5 py-1 rounded-lg border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-900 text-xs text-foreground disabled:opacity-75 focus:outline-none focus:border-amber-500 transition-colors"
                   />
                 </div>
 
                 <div className="sm:col-span-2">
-                  <label className="block text-[11px] font-bold text-slate-500 uppercase mb-1">
-                    Headquarters Address
+                  <label className="block text-[10px] font-semibold text-muted-foreground uppercase mb-1">
+                    Physical Address
                   </label>
                   <input
                     type="text"
                     disabled={!isEditing}
                     value={formData.address}
                     onChange={(e) => setFormData({ ...formData, address: e.target.value })}
-                    className="w-full px-3 py-2 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-900 text-xs text-[#0F172A] dark:text-white disabled:opacity-75 focus:outline-none focus:border-[#B45309]"
+                    className="w-full h-8 px-2.5 py-1 rounded-lg border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-900 text-xs text-foreground disabled:opacity-75 focus:outline-none focus:border-amber-500 transition-colors"
                   />
                 </div>
 
                 <div className="sm:col-span-2">
-                  <label className="block text-[11px] font-bold text-slate-500 uppercase mb-1">
-                    Public Description / About Merchant
+                  <label className="block text-[10px] font-semibold text-muted-foreground uppercase mb-1">
+                    Public Description
                   </label>
                   <textarea
-                    rows={3}
+                    rows={2}
                     disabled={!isEditing}
                     value={formData.description}
                     onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-                    className="w-full px-3 py-2 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-900 text-xs text-[#0F172A] dark:text-white disabled:opacity-75 focus:outline-none focus:border-[#B45309]"
+                    className="w-full px-2.5 py-1.5 rounded-lg border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-900 text-xs text-foreground disabled:opacity-75 focus:outline-none focus:border-amber-500 transition-colors"
                   />
                 </div>
               </div>
             </div>
 
-            {/* Authorized Representative */}
+            {/* Section 3: Authorized Representative */}
             <div>
-              <h3 className="text-sm font-bold text-[#0F172A] dark:text-white pb-3 border-b border-slate-100 dark:border-slate-800 flex items-center gap-2">
-                <User className="w-4 h-4 text-[#B45309]" />
+              <h3 className="text-xs font-bold text-foreground pb-2 border-b border-slate-100 dark:border-slate-800/60 flex items-center gap-1.5">
+                <User className="w-3.5 h-3.5 text-amber-600" />
                 <span>Authorized Contact Person</span>
               </h3>
 
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-3">
                 <div>
-                  <label className="block text-[11px] font-bold text-slate-500 uppercase mb-1">
-                    Full Name
+                  <label className="block text-[10px] font-semibold text-muted-foreground uppercase mb-1">
+                    Representative Name
                   </label>
                   <input
                     type="text"
                     disabled={!isEditing}
                     value={formData.contactName}
                     onChange={(e) => setFormData({ ...formData, contactName: e.target.value })}
-                    className="w-full px-3 py-2 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-900 text-xs text-[#0F172A] dark:text-white disabled:opacity-75 focus:outline-none focus:border-[#B45309]"
+                    className="w-full h-8 px-2.5 py-1 rounded-lg border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-900 text-xs text-foreground disabled:opacity-75 focus:outline-none focus:border-amber-500 transition-colors"
                   />
                 </div>
 
                 <div>
-                  <label className="block text-[11px] font-bold text-slate-500 uppercase mb-1">
-                    Corporate Role
+                  <label className="block text-[10px] font-semibold text-muted-foreground uppercase mb-1">
+                    Official Position / Role
                   </label>
                   <input
                     type="text"
                     disabled={!isEditing}
                     value={formData.contactRole}
                     onChange={(e) => setFormData({ ...formData, contactRole: e.target.value })}
-                    className="w-full px-3 py-2 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-900 text-xs text-[#0F172A] dark:text-white disabled:opacity-75 focus:outline-none focus:border-[#B45309]"
+                    className="w-full h-8 px-2.5 py-1 rounded-lg border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-900 text-xs text-foreground disabled:opacity-75 focus:outline-none focus:border-amber-500 transition-colors"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-[10px] font-semibold text-muted-foreground uppercase mb-1">
+                    Direct Contact Phone
+                  </label>
+                  <input
+                    type="text"
+                    disabled={!isEditing}
+                    value={formData.contactPhone}
+                    onChange={(e) => setFormData({ ...formData, contactPhone: e.target.value })}
+                    className="w-full h-8 px-2.5 py-1 rounded-lg border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-900 text-xs text-foreground disabled:opacity-75 focus:outline-none focus:border-amber-500 transition-colors"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-[10px] font-semibold text-muted-foreground uppercase mb-1">
+                    Direct Contact Email
+                  </label>
+                  <input
+                    type="email"
+                    disabled={!isEditing}
+                    value={formData.contactEmail}
+                    onChange={(e) => setFormData({ ...formData, contactEmail: e.target.value })}
+                    className="w-full h-8 px-2.5 py-1 rounded-lg border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-900 text-xs text-foreground disabled:opacity-75 focus:outline-none focus:border-amber-500 transition-colors"
                   />
                 </div>
               </div>
             </div>
 
+            {/* Section 4: Settlement Banking Information */}
+            <div>
+              <h3 className="text-xs font-bold text-foreground pb-2 border-b border-slate-100 dark:border-slate-800/60 flex items-center gap-1.5">
+                <CreditCard className="w-3.5 h-3.5 text-amber-600" />
+                <span>Settlement Bank Details</span>
+              </h3>
+
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 pt-3">
+                <div>
+                  <label className="block text-[10px] font-semibold text-muted-foreground uppercase mb-1">
+                    Bank Name
+                  </label>
+                  <input
+                    type="text"
+                    disabled={!isEditing}
+                    value={formData.bankName}
+                    onChange={(e) => setFormData({ ...formData, bankName: e.target.value })}
+                    className="w-full h-8 px-2.5 py-1 rounded-lg border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-900 text-xs text-foreground disabled:opacity-75 focus:outline-none focus:border-amber-500 transition-colors"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-[10px] font-semibold text-muted-foreground uppercase mb-1">
+                    Account Number
+                  </label>
+                  <input
+                    type="text"
+                    disabled={!isEditing}
+                    value={formData.accountNumber}
+                    onChange={(e) => setFormData({ ...formData, accountNumber: e.target.value })}
+                    className="w-full h-8 px-2.5 py-1 rounded-lg border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-900 text-xs font-mono text-foreground disabled:opacity-75 focus:outline-none focus:border-amber-500 transition-colors"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-[10px] font-semibold text-muted-foreground uppercase mb-1">
+                    Account Beneficiary Holder
+                  </label>
+                  <input
+                    type="text"
+                    disabled={!isEditing}
+                    value={formData.accountHolder}
+                    onChange={(e) => setFormData({ ...formData, accountHolder: e.target.value })}
+                    className="w-full h-8 px-2.5 py-1 rounded-lg border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-900 text-xs text-foreground disabled:opacity-75 focus:outline-none focus:border-amber-500 transition-colors"
+                  />
+                </div>
+              </div>
+            </div>
+
+            {/* Action Bar */}
             {isEditing && (
-              <div className="flex justify-end gap-3 pt-4 border-t border-slate-100 dark:border-slate-800">
+              <div className="flex justify-end gap-2 pt-3 border-t border-slate-100 dark:border-slate-800/60">
                 <button
                   type="button"
                   onClick={() => setIsEditing(false)}
-                  className="px-4 py-2 rounded-xl border border-slate-200 dark:border-slate-800 text-slate-600 dark:text-slate-300 text-xs font-bold"
+                  disabled={isSaving}
+                  className="px-3 py-1.5 rounded-lg border border-slate-200 dark:border-slate-800 text-muted-foreground hover:text-foreground text-[11px] font-bold transition-colors cursor-pointer"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
-                  className="inline-flex items-center gap-1.5 px-5 py-2 rounded-xl bg-[#B45309] hover:bg-[#92400E] text-white text-xs font-bold shadow-xs active:scale-95 transition-all"
+                  disabled={isSaving}
+                  className="inline-flex items-center gap-1.5 px-4 py-1.5 rounded-lg bg-amber-600 hover:bg-amber-700 text-white text-[11px] font-bold shadow-xs active:scale-95 transition-all cursor-pointer disabled:opacity-70"
                 >
-                  <Save className="w-3.5 h-3.5" />
-                  <span>Save Organization Profile</span>
+                  {isSaving ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Save className="w-3.5 h-3.5" />}
+                  <span>{isSaving ? "Saving..." : "Save Profile Changes"}</span>
                 </button>
               </div>
             )}

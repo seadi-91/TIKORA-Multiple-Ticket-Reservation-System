@@ -11,6 +11,7 @@ import {
 } from "lucide-react";
 import { useProviderStore } from "@/stores/provider.store";
 import { useAuthStore } from "@/stores/auth.store";
+import { providerService } from "@/services/provider.service";
 import { toast } from "sonner";
 
 export default function ProviderSettingsPage() {
@@ -34,14 +35,32 @@ export default function ProviderSettingsPage() {
   });
 
   useEffect(() => {
-    if (user?.email) {
-      setGeneralForm((prev) => ({
-        ...prev,
-        email: user.email,
-        phone: user.phone || prev.phone,
-      }));
-    }
-  }, [user]);
+    providerService
+      .getProfile()
+      .then((data) => {
+        if (data) {
+          updateOrganization(data);
+          setGeneralForm({
+            name: data.name || "",
+            legalName: data.legalName || data.name || "",
+            email: data.email || user?.email || "",
+            phone: data.phone || user?.phone || "",
+            website: data.website || "",
+            address: data.address || "",
+            city: data.city || "Addis Ababa",
+            description: data.description || "",
+          });
+          if (data.payoutAccount) {
+            setPayoutForm({
+              bankName: data.payoutAccount.bankName || "",
+              accountNumber: data.payoutAccount.accountNumber || "",
+              accountHolder: data.payoutAccount.accountHolder || "",
+            });
+          }
+        }
+      })
+      .catch(() => {});
+  }, [updateOrganization, user]);
 
   const [payoutForm, setPayoutForm] = useState({
     bankName: organization.payoutAccount.bankName,

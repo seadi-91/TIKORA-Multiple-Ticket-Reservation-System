@@ -9,6 +9,7 @@ import { configurePassport } from "./config/passport";
 import authRoutes from "./modules/auth/auth.routes";
 import adminRoutes from "./modules/admin/admin.routes";
 import userRoutes from "./modules/users/user.routes";
+import organizationRoutes from "./modules/organizations/organization.routes";
 
 const app = express();
 
@@ -65,6 +66,10 @@ app.use("/api/admin", adminRoutes);
 
 // User Profile Routes
 app.use("/api/users", userRoutes);
+
+// Provider & Organization Routes
+app.use("/api/provider", organizationRoutes);
+app.use("/api/organizations", organizationRoutes);
 
 // 404 Handler
 app.use((_req, res) => {

@@ -2,6 +2,7 @@
 
 import { create } from "zustand";
 import { TicketCategory } from "@/types/ticket.types";
+import { providerService } from "@/services/provider.service";
 
 export interface ProviderOrganization {
   id: string;
@@ -136,6 +137,7 @@ interface ProviderStoreState {
   refunds: ProviderRefundItem[];
   notifications: ProviderNotification[];
   // Actions
+  fetchOrganization: () => Promise<ProviderOrganization | null>;
   updateOrganization: (data: Partial<ProviderOrganization>) => void;
   toggleApprovalStatus: (status: ProviderOrganization["approvalStatus"]) => void;
   // Bus Actions
@@ -233,10 +235,39 @@ export const useProviderStore = create<ProviderStoreState>((set) => ({
   refunds: [],
   notifications: [],
 
-  updateOrganization: (data) =>
+  fetchOrganization: async () => {
+    try {
+      const org = await providerService.getProfile();
+      if (org) {
+        set((state) => ({
+          organization: {
+            ...state.organization,
+            ...org,
+            stats: {
+              ...state.organization.stats,
+              ...(org.stats || {}),
+            },
+          },
+        }));
+        return org;
+      }
+      return null;
+    } catch (err) {
+      console.warn("Could not fetch organization profile from DB:", err);
+      return null;
+    }
+  },
+
+  updateOrganization: (data) => {
     set((state) => ({
       organization: { ...state.organization, ...data },
-    })),
+    }));
+
+    // Asynchronously persist updates to PostgreSQL database
+    providerService.updateProfile(data).catch((err) => {
+      console.warn("Failed to persist organization profile update:", err);
+    });
+  },
 
   toggleApprovalStatus: (approvalStatus) =>
     set((state) => ({
