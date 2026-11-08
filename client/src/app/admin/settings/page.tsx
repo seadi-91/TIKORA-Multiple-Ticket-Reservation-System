@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useMemo } from "react";
+import React, { useState, useMemo, useEffect, useRef } from "react";
 import {
   Globe,
   DollarSign,
@@ -31,8 +31,14 @@ import {
   Filter,
   Menu,
   X,
+  Upload,
+  Image as ImageIcon,
+  Ticket,
+  Trash2,
+  RefreshCw,
 } from "lucide-react";
 import { useAdminStore, AdminSettings } from "@/stores/admin.store";
+import { adminService } from "@/services/admin.service";
 import { formatCurrency } from "@/lib/format-currency";
 import { toast } from "sonner";
 
@@ -65,7 +71,14 @@ interface NavGroup {
 }
 
 export default function AdminSettingsPage() {
-  const { settings, updateSettings } = useAdminStore();
+  const { settings, updateSettings, fetchPlatformData, isLoading } = useAdminStore();
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const [isUploadingLogo, setIsUploadingLogo] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
+
+  useEffect(() => {
+    fetchPlatformData();
+  }, [fetchPlatformData]);
 
   const [activeSection, setActiveSection] = useState<SettingSection>("GENERAL");
   const [searchQuery, setSearchQuery] = useState("");
@@ -75,9 +88,62 @@ export default function AdminSettingsPage() {
   // Form state initialized with store settings
   const [form, setForm] = useState<AdminSettings>({ ...settings });
 
+  useEffect(() => {
+    setForm((prev) => ({ ...prev, ...settings }));
+  }, [settings]);
+
   // Update specific field
   const updateField = <K extends keyof AdminSettings>(key: K, value: AdminSettings[K]) => {
-    setForm((prev) => ({ ...prev, [key]: value }));
+    setForm((prev) => {
+      const next = { ...prev, [key]: value };
+      if (key === "siteName" && typeof value === "string") {
+        next.platformName = value;
+      } else if (key === "platformName" && typeof value === "string") {
+        next.siteName = value;
+      }
+      return next;
+    });
+  };
+
+  const handleLogoFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    if (!file.type.startsWith("image/")) {
+      toast.error("Please upload a valid image file (PNG, JPG, SVG, WEBP).");
+      return;
+    }
+
+    if (file.size > 5 * 1024 * 1024) {
+      toast.error("Image file size exceeds 5MB limit.");
+      return;
+    }
+
+    setIsUploadingLogo(true);
+    try {
+      const uploadedUrl = await adminService.uploadLogo(file).catch(() => null);
+      if (uploadedUrl) {
+        updateField("logoUrl", uploadedUrl);
+        toast.success("Logo image uploaded successfully.");
+      } else {
+        const reader = new FileReader();
+        reader.onload = () => {
+          const result = reader.result as string;
+          updateField("logoUrl", result);
+          toast.success("Logo image loaded.");
+        };
+        reader.readAsDataURL(file);
+      }
+    } catch {
+      const reader = new FileReader();
+      reader.onload = () => {
+        const result = reader.result as string;
+        updateField("logoUrl", result);
+      };
+      reader.readAsDataURL(file);
+    } finally {
+      setIsUploadingLogo(false);
+    }
   };
 
   // Detect unsaved changes
@@ -90,12 +156,19 @@ export default function AdminSettingsPage() {
   const hasUnsavedChanges = unsavedKeys.length > 0;
 
   // Handle Save
-  const handleSave = (e?: React.FormEvent) => {
+  const handleSave = async (e?: React.FormEvent) => {
     if (e) e.preventDefault();
-    updateSettings(form);
-    toast.success("Platform settings saved successfully!", {
-      description: `${unsavedKeys.length || "All"} configuration values persisted & audit-logged.`,
-    });
+    setIsSaving(true);
+    try {
+      await updateSettings(form);
+      toast.success("Platform settings saved and persisted to database!", {
+        description: "Branding, site name, logo, and footer information are now active across the platform.",
+      });
+    } catch (err: any) {
+      toast.error("Failed to persist settings: " + (err.message || "Unknown error"));
+    } finally {
+      setIsSaving(false);
+    }
   };
 
   // Handle Discard
@@ -108,10 +181,16 @@ export default function AdminSettingsPage() {
   const handleResetToDefaults = () => {
     const factoryDefaults: AdminSettings = {
       platformName: "TIKORA Ethiopia",
+      siteName: "TIKORA",
+      logoUrl: "",
       tagline: "Ethiopia's Unified Smart Ticket & Transit Hub",
       supportEmail: "support@tikora.et",
-      supportPhone: "+251 115 500 000",
-      headquartersAddress: "Bole Medhanialem, Mega Building 4th Floor, Addis Ababa",
+      supportPhone: "+251 11 667 8900",
+      headquartersAddress: "Edna Mall Tower, Bole Sub-City, Addis Ababa, Ethiopia",
+      footerEmail: "support@tikora.et",
+      footerPhone: "+251 11 667 8900",
+      footerLocation: "Edna Mall Tower, Bole Sub-City, Addis Ababa, Ethiopia",
+      copyrightText: "© 2026 TIKORA Technologies Inc. All Rights Reserved.",
       operatingRegion: "Federal Democratic Republic of Ethiopia",
       defaultTimezone: "Africa/Addis_Ababa (UTC+3)",
       defaultLanguage: "en",
@@ -646,26 +725,163 @@ export default function AdminSettingsPage() {
         <main className="flex-1 min-w-0 p-5 sm:p-6 lg:p-7 flex flex-col justify-between space-y-6 overflow-y-auto">
           {/* SECTION 1: GENERAL & IDENTITY */}
           {activeSection === "GENERAL" && (
-            <div className="space-y-5 animate-in fade-in duration-150">
-              <div className="border-b border-slate-100 dark:border-slate-800/60 pb-3">
-                <span className="text-[10px] font-bold uppercase tracking-wider text-amber-600 dark:text-amber-400 block">
-                  System & Brand
-                </span>
-                <h2 className="text-base font-bold text-foreground">General Platform Identity</h2>
-                <p className="text-xs text-muted-foreground">
-                  Public marketplace name, support communication routing, and headquarters data.
-                </p>
+            <div className="space-y-6 animate-in fade-in duration-150">
+              <div className="border-b border-slate-100 dark:border-slate-800/60 pb-3 flex items-center justify-between">
+                <div>
+                  <span className="text-[10px] font-bold uppercase tracking-wider text-amber-600 dark:text-amber-400 block">
+                    System & Brand Identity
+                  </span>
+                  <h2 className="text-base font-bold text-foreground">General Platform Identity & Footer Configuration</h2>
+                  <p className="text-xs text-muted-foreground">
+                    Customize your platform site name, branding logo, customer support channels, and footer contact credentials.
+                  </p>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => fetchPlatformData()}
+                  disabled={isLoading}
+                  className="px-3 py-1.5 text-xs font-semibold rounded-xl bg-card border border-slate-200/60 dark:border-slate-800/60 text-foreground hover:bg-muted transition-colors flex items-center gap-1.5 shadow-2xs cursor-pointer"
+                >
+                  <RefreshCw className={`w-3.5 h-3.5 text-amber-500 ${isLoading ? "animate-spin" : ""}`} />
+                  <span>{isLoading ? "Syncing..." : "Sync DB"}</span>
+                </button>
               </div>
 
+              {/* Logo Customizer Card */}
+              <div className="p-4 sm:p-5 rounded-2xl bg-amber-500/[0.03] dark:bg-amber-500/[0.05] border border-amber-500/20 space-y-4">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-amber-500/15 pb-3">
+                  <div className="flex items-center gap-2.5">
+                    <div className="w-8 h-8 rounded-xl bg-amber-500/10 text-amber-600 dark:text-amber-400 flex items-center justify-center">
+                      <ImageIcon className="w-4 h-4" />
+                    </div>
+                    <div>
+                      <h3 className="font-bold text-xs text-foreground">Platform Logo & Visual Identity</h3>
+                      <p className="text-[11px] text-muted-foreground">
+                        Upload a brand image or enter a remote image URL to display in the header, footer, and mobile nav.
+                      </p>
+                    </div>
+                  </div>
+
+                  {form.logoUrl && (
+                    <button
+                      type="button"
+                      onClick={() => updateField("logoUrl", "")}
+                      className="px-2.5 py-1 text-[11px] font-semibold text-rose-600 dark:text-rose-400 hover:bg-rose-500/10 rounded-lg transition-colors flex items-center gap-1 cursor-pointer self-start sm:self-auto"
+                    >
+                      <Trash2 className="w-3 h-3" />
+                      <span>Reset to Default Logo</span>
+                    </button>
+                  )}
+                </div>
+
+                <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4">
+                  {/* Logo Preview Box */}
+                  <div className="w-20 h-20 rounded-2xl bg-white dark:bg-[#161922] border-2 border-dashed border-amber-500/40 flex items-center justify-center p-2 shrink-0 shadow-sm overflow-hidden relative group">
+                    {form.logoUrl ? (
+                      <img
+                        src={form.logoUrl}
+                        alt="Platform Brand Logo"
+                        className="w-full h-full object-contain"
+                      />
+                    ) : (
+                      <div className="text-center space-y-1">
+                        <div className="w-8 h-8 rounded-lg bg-[#B45309] text-white flex items-center justify-center mx-auto shadow-2xs">
+                          <Ticket className="w-4 h-4 transform -rotate-12" />
+                        </div>
+                        <span className="text-[9px] font-bold text-muted-foreground block">Default SVG</span>
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Upload Controls & URL Input */}
+                  <div className="flex-1 space-y-2.5 w-full">
+                    <div className="flex items-center gap-2 flex-wrap">
+                      <input
+                        type="file"
+                        ref={fileInputRef}
+                        accept="image/png,image/jpeg,image/svg+xml,image/webp"
+                        onChange={handleLogoFileChange}
+                        className="hidden"
+                      />
+                      <button
+                        type="button"
+                        onClick={() => fileInputRef.current?.click()}
+                        disabled={isUploadingLogo}
+                        className="px-3 py-1.5 rounded-xl bg-amber-600 hover:bg-amber-700 text-white text-xs font-semibold shadow-xs transition-all flex items-center gap-1.5 cursor-pointer disabled:opacity-60"
+                      >
+                        <Upload className="w-3.5 h-3.5" />
+                        <span>{isUploadingLogo ? "Uploading..." : "Upload Logo Image"}</span>
+                      </button>
+                      <span className="text-[10px] text-muted-foreground">
+                        PNG, JPG, SVG or WEBP (Max 5MB)
+                      </span>
+                    </div>
+
+                    <div className="space-y-1">
+                      <label className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider block">
+                        Or Specify Direct Logo Image URL / CDN Link
+                      </label>
+                      <input
+                        type="text"
+                        value={form.logoUrl || ""}
+                        onChange={(e) => updateField("logoUrl", e.target.value)}
+                        placeholder="https://example.com/branding/tikora-logo.png"
+                        className="w-full h-8 px-3 text-xs rounded-xl bg-white dark:bg-[#161922] border border-slate-200 dark:border-slate-700 text-foreground font-mono focus:outline-none focus:border-amber-500"
+                      />
+                    </div>
+                  </div>
+                </div>
+
+                {/* Live Header & Footer Preview Strip */}
+                <div className="p-3 rounded-xl bg-muted/30 border border-border/30 space-y-1.5">
+                  <span className="text-[9px] font-bold uppercase tracking-wider text-muted-foreground block">
+                    Live Brand Preview (Header & Footer)
+                  </span>
+                  <div className="flex flex-wrap items-center justify-between gap-3 text-xs bg-card p-2.5 rounded-xl border border-border/40">
+                    <div className="flex items-center gap-2">
+                      {form.logoUrl ? (
+                        <img
+                          src={form.logoUrl}
+                          alt="Logo"
+                          className="w-7 h-7 object-contain rounded-md"
+                        />
+                      ) : (
+                        <div className="w-7 h-7 rounded-md bg-[#B45309] text-white flex items-center justify-center">
+                          <Ticket className="w-3.5 h-3.5 transform -rotate-12" />
+                        </div>
+                      )}
+                      <div>
+                        <span className="font-black text-foreground text-sm tracking-tight">
+                          {form.siteName || form.platformName || "TIKORA"}
+                        </span>
+                        <span className="text-[9px] text-muted-foreground block font-medium">
+                          Multi-Ticket Ethiopia
+                        </span>
+                      </div>
+                    </div>
+                    <div className="text-right text-[10px] text-muted-foreground">
+                      <p>{form.footerLocation || form.headquartersAddress || "Addis Ababa, Ethiopia"}</p>
+                      <p className="font-mono">{form.footerPhone || form.supportPhone || "+251 11 667 8900"}</p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* General Identity & Site Name Grid */}
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs">
                 <div className="space-y-1">
-                  <label className="font-semibold text-foreground">Platform Display Name</label>
+                  <label className="font-semibold text-foreground">Platform Site Name (Brand)</label>
                   <input
                     type="text"
-                    value={form.platformName}
-                    onChange={(e) => updateField("platformName", e.target.value)}
+                    value={form.siteName || form.platformName}
+                    onChange={(e) => {
+                      updateField("siteName", e.target.value);
+                      updateField("platformName", e.target.value);
+                    }}
+                    placeholder="e.g. TIKORA"
                     className="w-full h-8.5 px-3 rounded-xl bg-slate-50 dark:bg-slate-800/40 border border-slate-200 dark:border-slate-700 text-foreground font-semibold focus:outline-none focus:border-amber-500"
                   />
+                  <span className="text-[10px] text-muted-foreground">Appears in header, browser tabs, and emails.</span>
                 </div>
 
                 <div className="space-y-1">
@@ -674,58 +890,102 @@ export default function AdminSettingsPage() {
                     type="text"
                     value={form.tagline}
                     onChange={(e) => updateField("tagline", e.target.value)}
+                    placeholder="e.g. Ethiopia's Unified Smart Ticket & Transit Hub"
                     className="w-full h-8.5 px-3 rounded-xl bg-slate-50 dark:bg-slate-800/40 border border-slate-200 dark:border-slate-700 text-foreground focus:outline-none focus:border-amber-500"
                   />
+                  <span className="text-[10px] text-muted-foreground">Headline displayed on hero banners and metadata.</span>
+                </div>
+              </div>
+
+              {/* Footer Information & Public Communications Section */}
+              <div className="p-4 sm:p-5 rounded-2xl bg-card border border-slate-200/60 dark:border-slate-800/60 space-y-4">
+                <div className="border-b border-border/40 pb-2.5">
+                  <span className="text-[10px] font-bold uppercase tracking-wider text-amber-600 dark:text-amber-400 block">
+                    Website Footer & Public Credentials
+                  </span>
+                  <h3 className="font-bold text-xs text-foreground">Public Footer Contact & Legal Notice</h3>
+                  <p className="text-[11px] text-muted-foreground">
+                    Information displayed at the bottom of all public pages, booking vouchers, and passenger confirmations.
+                  </p>
                 </div>
 
-                <div className="space-y-1">
-                  <label className="font-semibold text-foreground">Primary Support Email</label>
-                  <input
-                    type="email"
-                    value={form.supportEmail}
-                    onChange={(e) => updateField("supportEmail", e.target.value)}
-                    className="w-full h-8.5 px-3 rounded-xl bg-slate-50 dark:bg-slate-800/40 border border-slate-200 dark:border-slate-700 text-foreground font-mono focus:outline-none focus:border-amber-500"
-                  />
-                </div>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs">
+                  <div className="space-y-1">
+                    <label className="font-semibold text-foreground flex items-center gap-1.5">
+                      <Mail className="w-3.5 h-3.5 text-slate-400" />
+                      <span>Footer Contact Email</span>
+                    </label>
+                    <input
+                      type="email"
+                      value={form.footerEmail || form.supportEmail}
+                      onChange={(e) => updateField("footerEmail", e.target.value)}
+                      placeholder="support@tikora.et"
+                      className="w-full h-8.5 px-3 rounded-xl bg-slate-50 dark:bg-slate-800/40 border border-slate-200 dark:border-slate-700 text-foreground font-mono focus:outline-none focus:border-amber-500"
+                    />
+                    <span className="text-[10px] text-muted-foreground">Public support inbox for customer inquiries.</span>
+                  </div>
 
-                <div className="space-y-1">
-                  <label className="font-semibold text-foreground">Helpdesk Telephone Hotline</label>
-                  <input
-                    type="text"
-                    value={form.supportPhone}
-                    onChange={(e) => updateField("supportPhone", e.target.value)}
-                    className="w-full h-8.5 px-3 rounded-xl bg-slate-50 dark:bg-slate-800/40 border border-slate-200 dark:border-slate-700 text-foreground font-mono focus:outline-none focus:border-amber-500"
-                  />
-                </div>
+                  <div className="space-y-1">
+                    <label className="font-semibold text-foreground flex items-center gap-1.5">
+                      <Phone className="w-3.5 h-3.5 text-slate-400" />
+                      <span>Footer Hotline Telephone</span>
+                    </label>
+                    <input
+                      type="text"
+                      value={form.footerPhone || form.supportPhone}
+                      onChange={(e) => updateField("footerPhone", e.target.value)}
+                      placeholder="+251 11 667 8900"
+                      className="w-full h-8.5 px-3 rounded-xl bg-slate-50 dark:bg-slate-800/40 border border-slate-200 dark:border-slate-700 text-foreground font-mono focus:outline-none focus:border-amber-500"
+                    />
+                    <span className="text-[10px] text-muted-foreground">Customer call center and SMS assistance hotline.</span>
+                  </div>
 
-                <div className="sm:col-span-2 space-y-1">
-                  <label className="font-semibold text-foreground">Registered Headquarters Office</label>
-                  <input
-                    type="text"
-                    value={form.headquartersAddress}
-                    onChange={(e) => updateField("headquartersAddress", e.target.value)}
-                    className="w-full h-8.5 px-3 rounded-xl bg-slate-50 dark:bg-slate-800/40 border border-slate-200 dark:border-slate-700 text-foreground focus:outline-none focus:border-amber-500"
-                  />
-                </div>
+                  <div className="sm:col-span-2 space-y-1">
+                    <label className="font-semibold text-foreground flex items-center gap-1.5">
+                      <Building2 className="w-3.5 h-3.5 text-slate-400" />
+                      <span>Footer Physical Office Location / Headquarters</span>
+                    </label>
+                    <input
+                      type="text"
+                      value={form.footerLocation || form.headquartersAddress}
+                      onChange={(e) => updateField("footerLocation", e.target.value)}
+                      placeholder="e.g. Edna Mall Tower, Bole Sub-City, Addis Ababa, Ethiopia"
+                      className="w-full h-8.5 px-3 rounded-xl bg-slate-50 dark:bg-slate-800/40 border border-slate-200 dark:border-slate-700 text-foreground focus:outline-none focus:border-amber-500"
+                    />
+                    <span className="text-[10px] text-muted-foreground">Office address shown in the footer and official invoices.</span>
+                  </div>
 
-                <div className="space-y-1">
-                  <label className="font-semibold text-foreground">Jurisdiction & Region</label>
-                  <input
-                    type="text"
-                    disabled
-                    value={form.operatingRegion}
-                    className="w-full h-8.5 px-3 rounded-xl bg-slate-100/70 dark:bg-slate-900/60 border border-slate-200/50 dark:border-slate-800 text-muted-foreground cursor-not-allowed text-[11px]"
-                  />
-                </div>
+                  <div className="sm:col-span-2 space-y-1">
+                    <label className="font-semibold text-foreground">Footer Copyright Notice</label>
+                    <input
+                      type="text"
+                      value={form.copyrightText || `© ${new Date().getFullYear()} ${form.siteName || form.platformName || "TIKORA"} Technologies Inc. All Rights Reserved.`}
+                      onChange={(e) => updateField("copyrightText", e.target.value)}
+                      placeholder="e.g. © 2026 TIKORA Technologies Inc. All Rights Reserved."
+                      className="w-full h-8.5 px-3 rounded-xl bg-slate-50 dark:bg-slate-800/40 border border-slate-200 dark:border-slate-700 text-foreground focus:outline-none focus:border-amber-500"
+                    />
+                    <span className="text-[10px] text-muted-foreground">Legal copyright line rendered at the bottom bar of the site.</span>
+                  </div>
 
-                <div className="space-y-1">
-                  <label className="font-semibold text-foreground">Default Operating Timezone</label>
-                  <input
-                    type="text"
-                    disabled
-                    value={form.defaultTimezone}
-                    className="w-full h-8.5 px-3 rounded-xl bg-slate-100/70 dark:bg-slate-900/60 border border-slate-200/50 dark:border-slate-800 text-muted-foreground cursor-not-allowed text-[11px]"
-                  />
+                  <div className="space-y-1">
+                    <label className="font-semibold text-foreground">Jurisdiction & Operating Region</label>
+                    <input
+                      type="text"
+                      disabled
+                      value={form.operatingRegion}
+                      className="w-full h-8.5 px-3 rounded-xl bg-slate-100/70 dark:bg-slate-900/60 border border-slate-200/50 dark:border-slate-800 text-muted-foreground cursor-not-allowed text-[11px]"
+                    />
+                  </div>
+
+                  <div className="space-y-1">
+                    <label className="font-semibold text-foreground">Default Operating Timezone</label>
+                    <input
+                      type="text"
+                      disabled
+                      value={form.defaultTimezone}
+                      className="w-full h-8.5 px-3 rounded-xl bg-slate-100/70 dark:bg-slate-900/60 border border-slate-200/50 dark:border-slate-800 text-muted-foreground cursor-not-allowed text-[11px]"
+                    />
+                  </div>
                 </div>
               </div>
             </div>

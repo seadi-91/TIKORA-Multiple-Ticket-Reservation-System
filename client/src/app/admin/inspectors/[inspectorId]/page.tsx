@@ -174,12 +174,12 @@ export default function AdminInspectorDetailPage({ params }: PageProps) {
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <div className="flex items-center gap-4">
             <div className="w-16 h-16 rounded-2xl bg-gradient-to-tr from-amber-600 to-amber-500 text-white font-black text-xl flex items-center justify-center shadow-md shadow-amber-500/20 shrink-0 ring-4 ring-amber-500/10">
-              {inspector.name.charAt(0)}
+              {inspector.name?.charAt(0) || "I"}
             </div>
             <div>
               <div className="flex items-center gap-2.5 flex-wrap">
                 <h1 className="text-base sm:text-lg font-bold text-foreground">
-                  {inspector.name}
+                  {inspector.name || "Field Inspector"}
                 </h1>
                 {inspector.status === "ACTIVE" ? (
                   <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-emerald-500/10 text-emerald-600 dark:text-emerald-400">
@@ -195,7 +195,7 @@ export default function AdminInspectorDetailPage({ params }: PageProps) {
               </div>
               <p className="text-xs text-muted-foreground mt-0.5">
                 Authorized Field Inspection Officer • Assigned to{" "}
-                <span className="font-semibold text-foreground">{inspector.organizationName}</span>
+                <span className="font-semibold text-foreground">{inspector.organizationName || "Verified Organization"}</span>
               </p>
               <div className="flex items-center gap-3 text-[11px] font-mono text-muted-foreground mt-1.5 flex-wrap">
                 <span className="text-amber-600 dark:text-amber-400 font-bold bg-amber-500/10 px-2 py-0.5 rounded-md">
@@ -213,7 +213,7 @@ export default function AdminInspectorDetailPage({ params }: PageProps) {
                 Total Check-ins
               </span>
               <span className="text-base font-black text-foreground font-mono">
-                {inspector.validScans.toLocaleString()}
+                {(inspector.validScans ?? 0).toLocaleString()}
               </span>
             </div>
             <div className="w-px h-8 bg-slate-200 dark:bg-slate-700" />
@@ -222,7 +222,7 @@ export default function AdminInspectorDetailPage({ params }: PageProps) {
                 Flagged / Fraud
               </span>
               <span className="text-base font-black text-rose-600 dark:text-rose-400 font-mono">
-                {inspector.flaggedScans}
+                {inspector.flaggedScans ?? 0}
               </span>
             </div>
           </div>
@@ -283,7 +283,7 @@ export default function AdminInspectorDetailPage({ params }: PageProps) {
           </div>
         </div>
 
-        {/* Card 2: Organization Affiliation ("Yetgnaw Organization Lay Endemisera") */}
+        {/* Card 2: Organization Affiliation */}
         <div className="p-5 rounded-3xl bg-card border border-slate-200/50 dark:border-slate-800/50 shadow-xs space-y-4">
           <div className="flex items-center justify-between border-b border-slate-100 dark:border-slate-800/50 pb-3">
             <div className="flex items-center gap-2.5">
@@ -313,12 +313,12 @@ export default function AdminInspectorDetailPage({ params }: PageProps) {
             <div className="flex items-center justify-between p-3 rounded-xl bg-slate-50 dark:bg-slate-800/40 border border-slate-100 dark:border-slate-800">
               <div className="flex items-center gap-2.5">
                 <div className="w-9 h-9 rounded-xl bg-amber-500/10 flex items-center justify-center">
-                  {getCategoryIcon(inspector.organizationCategory)}
+                  {getCategoryIcon(inspector.organizationCategory || "BUS")}
                 </div>
                 <div>
-                  <p className="font-bold text-foreground text-xs">{inspector.organizationName}</p>
+                  <p className="font-bold text-foreground text-xs">{inspector.organizationName || "Verified Provider"}</p>
                   <p className="text-[10px] text-muted-foreground">
-                    Sector: {inspector.organizationCategory} Operations
+                    Sector: {inspector.organizationCategory || "Transit"} Operations
                   </p>
                 </div>
               </div>
@@ -354,7 +354,7 @@ export default function AdminInspectorDetailPage({ params }: PageProps) {
           </div>
         </div>
 
-        {/* Card 3: Provisioning & Audit Trail ("Man Add Endaderegew Ena Meche Add Endetederege") */}
+        {/* Card 3: Provisioning & Audit Trail */}
         <div className="p-5 rounded-3xl bg-card border border-slate-200/50 dark:border-slate-800/50 shadow-xs space-y-4">
           <div className="flex items-center gap-2.5 border-b border-slate-100 dark:border-slate-800/50 pb-3">
             <div className="w-8 h-8 rounded-xl bg-purple-500/10 text-purple-600 dark:text-purple-400 flex items-center justify-center">
@@ -374,17 +374,19 @@ export default function AdminInspectorDetailPage({ params }: PageProps) {
             <div className="p-3.5 rounded-2xl bg-amber-500/[0.04] dark:bg-amber-500/[0.06] border border-amber-500/20 space-y-2">
               <span className="text-[10px] font-bold text-amber-700 dark:text-amber-300 uppercase tracking-wider flex items-center gap-1.5">
                 <Sparkles className="w-3 h-3" />
-                Provisioned & Authorized By (Man Add Endaderegew)
+                Provisioned & Authorized By
               </span>
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="font-bold text-foreground text-xs">{inspector.addedBy.name}</p>
+                  <p className="font-bold text-foreground text-xs">
+                    {inspector.addedBy?.name || "Platform Security & Admin"}
+                  </p>
                   <p className="text-[11px] text-muted-foreground font-mono">
-                    {inspector.addedBy.email}
+                    {inspector.addedBy?.email || "security@tikora.et"}
                   </p>
                 </div>
                 <span className="px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-amber-500/15 text-amber-700 dark:text-amber-300">
-                  {inspector.addedBy.role}
+                  {inspector.addedBy?.role || "SYSTEM_ADMIN"}
                 </span>
               </div>
             </div>
@@ -393,9 +395,9 @@ export default function AdminInspectorDetailPage({ params }: PageProps) {
               <div className="p-3 rounded-xl bg-muted/30 space-y-0.5">
                 <span className="text-[10px] text-muted-foreground flex items-center gap-1">
                   <Clock className="w-3 h-3 text-slate-400" />
-                  Date Added (Meche Add Endetederege)
+                  Date Added
                 </span>
-                <p className="font-mono font-bold text-foreground">{inspector.createdAt}</p>
+                <p className="font-mono font-bold text-foreground">{inspector.createdAt || "Recent"}</p>
               </div>
 
               <div className="p-3 rounded-xl bg-muted/30 space-y-0.5">
@@ -404,7 +406,7 @@ export default function AdminInspectorDetailPage({ params }: PageProps) {
                   Last Active Session
                 </span>
                 <p className="font-mono font-bold text-emerald-600 dark:text-emerald-400">
-                  {inspector.lastActive}
+                  {inspector.lastActive || "Just now"}
                 </p>
               </div>
             </div>
@@ -567,22 +569,22 @@ export default function AdminInspectorDetailPage({ params }: PageProps) {
             <div>
               <div className="flex justify-between text-[11px] mb-1 font-medium">
                 <span className="text-emerald-600 dark:text-emerald-400 font-semibold">
-                  {inspector.validScans.toLocaleString()} Valid Check-ins
+                  {(inspector.validScans ?? 0).toLocaleString()} Valid Check-ins
                 </span>
                 <span className="text-rose-500 font-semibold">
-                  {inspector.flaggedScans} Flagged Fraud Attempts
+                  {inspector.flaggedScans ?? 0} Flagged Fraud Attempts
                 </span>
               </div>
               <div className="w-full h-2.5 rounded-full bg-slate-100 dark:bg-slate-800 overflow-hidden flex">
                 <div
                   style={{
-                    width: `${(inspector.validScans / (inspector.totalScans || 1)) * 100}%`,
+                    width: `${((inspector.validScans ?? 0) / (inspector.totalScans || (inspector.validScans ?? 0) + (inspector.flaggedScans ?? 0) || 1)) * 100}%`,
                   }}
                   className="bg-emerald-500 h-full rounded-l-full"
                 />
                 <div
                   style={{
-                    width: `${(inspector.flaggedScans / (inspector.totalScans || 1)) * 100}%`,
+                    width: `${((inspector.flaggedScans ?? 0) / (inspector.totalScans || (inspector.validScans ?? 0) + (inspector.flaggedScans ?? 0) || 1)) * 100}%`,
                   }}
                   className="bg-rose-500 h-full rounded-r-full"
                 />

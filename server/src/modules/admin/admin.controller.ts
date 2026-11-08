@@ -312,28 +312,60 @@ export class AdminController {
       const users = await db.orm.public.User.all();
       const inspectorUsers = users.filter((u) => inspectorUserIds.includes(u.id));
 
-      const mappedInspectors = inspectorUsers.map((u) => ({
-        id: String(u.id),
-        badgeId: `INS-${String(u.id).padStart(4, "0")}`,
-        name: `${u.firstName} ${u.lastName}`.trim(),
-        email: u.email,
-        phone: u.phone || "Not Provided",
-        nationalId: u.nationalId || `ET-${String(u.id).padStart(6, "0")}`,
-        organizationId: "1",
-        organizationName: "TIKORA Platform Transit",
-        category: "BUS" as any,
-        status: (u.isActive ? "ACTIVE" : "INACTIVE") as any,
-        totalScans: 0,
-        validScans: 0,
-        invalidScans: 0,
-        flaggedTickets: 0,
-        assignedStation: u.city ? `${u.city} Central Station` : "Addis Ababa Central Station",
-        terminalGate: "Gate 01",
-        deviceModel: "Sunmi V2 Pro Android POS Scanner",
-        shiftSchedule: "Full Time: 08:00 - 17:00",
-        lastActive: (u as any).updatedAt?.toString() || new Date().toISOString(),
-        joinedDate: u.createdAt?.toString() || new Date().toISOString(),
-      }));
+      const providerMembers = await db.orm.public.ProviderMember.all();
+      const providers = await db.orm.public.Provider.all();
+      const providerMap = new Map<number, any>();
+      providers.forEach((p) => providerMap.set(p.id, p));
+
+      const memberOrgMap = new Map<number, any>();
+      providerMembers.forEach((pm) => {
+        const prov = providerMap.get(pm.providerId);
+        if (prov) {
+          memberOrgMap.set(pm.userId, {
+            organizationId: String(prov.id),
+            organizationName: prov.name,
+            category: prov.providerType,
+            assignedStation: pm.position,
+          });
+        }
+      });
+
+      const mappedInspectors = inspectorUsers.map((u) => {
+        const orgInfo = memberOrgMap.get(u.id);
+        const joinedDate = u.createdAt ? new Date(u.createdAt).toISOString().split("T")[0] : new Date().toISOString().split("T")[0];
+        const lastActive = (u as any).updatedAt ? new Date((u as any).updatedAt).toISOString().split("T")[0] : "Just now";
+        return {
+          id: String(u.id),
+          badgeId: `INS-${String(u.id).padStart(4, "0")}`,
+          name: `${u.firstName} ${u.lastName}`.trim() || u.email || "Field Inspector",
+          email: u.email,
+          phone: u.phone || "Not Provided",
+          nationalId: u.nationalId || `ET-${String(u.id).padStart(6, "0")}`,
+          organizationId: orgInfo?.organizationId || "1",
+          organizationName: orgInfo?.organizationName || "TIKORA Platform Transit",
+          organizationCategory: (orgInfo?.category || "BUS") as any,
+          category: (orgInfo?.category || "BUS") as any,
+          status: (u.isActive ? "ACTIVE" : "INACTIVE") as any,
+          totalScans: 0,
+          validScans: 0,
+          invalidScans: 0,
+          flaggedScans: 0,
+          flaggedTickets: 0,
+          assignedStation: orgInfo?.assignedStation || (u.city ? `${u.city} Central Station` : "Addis Ababa Central Station"),
+          terminalGate: "Gate 01",
+          deviceModel: "Sunmi V2 Pro Android POS Scanner",
+          appVersion: "v2.4.1",
+          shiftSchedule: "Full Time: 08:00 - 17:00",
+          lastActive,
+          createdAt: joinedDate,
+          joinedDate,
+          addedBy: {
+            name: "Platform Security & Admin",
+            email: "security@tikora.et",
+            role: "SYSTEM_SUPER_ADMIN",
+          },
+        };
+      });
 
       res.status(200).json({ success: true, inspectors: mappedInspectors });
     } catch (error: any) {
@@ -344,7 +376,7 @@ export class AdminController {
 
   /**
    * GET /api/admin/overview
-   * Retrieve platform aggregated statistics
+   * Retrieve platform aggregated statistics directly from PostgreSQL
    */
   static async getOverview(_req: Request, res: Response): Promise<void> {
     try {
@@ -362,6 +394,31 @@ export class AdminController {
       const pendingApprovals = providers.filter((p) => p.verificationStatus === "PENDING").length;
       const activeTickets = (await db.orm.public.TicketOffering.where({ status: "ACTIVE" }).all()).length;
 
+      // Query bookings and payments from DB
+      let bookingsCount = 0;
+      let totalGMV = 0;
+      let platformRevenue = 0;
+      try {
+        const bookings = await db.orm.public.Booking.all();
+        bookingsCount = bookings.length;
+        totalGMV = bookings.reduce((sum, b) => sum + (Number(b.totalAmount) || 0), 0);
+        platformRevenue = bookings.reduce(
+          (sum, b) => sum + (Number(b.serviceFee) || Math.round((Number(b.totalAmount) || 0) * 0.05)),
+          0
+        );
+      } catch (err) {
+        console.warn("Booking table query warning:", err);
+      }
+
+      // Query refunds from DB
+      let refundsRequested = 0;
+      try {
+        const pendingRefunds = await db.orm.public.Refund.where({ status: "PENDING" }).all();
+        refundsRequested = pendingRefunds.length;
+      } catch (err) {
+        console.warn("Refund table query warning:", err);
+      }
+
       res.status(200).json({
         success: true,
         stats: {
@@ -369,16 +426,141 @@ export class AdminController {
           activeProviders,
           pendingApprovals,
           activeInspectors: inspectorCount,
-          totalBookings: 0,
-          totalGMV: 0,
-          platformRevenue: 0,
+          totalBookings: bookingsCount,
+          totalGMV,
+          platformRevenue,
           activeTickets,
-          refundsRequested: 0,
+          refundsRequested,
         },
       });
     } catch (error: any) {
       console.error("Admin getOverview error:", error);
       res.status(500).json({ success: false, message: error.message || "Failed to fetch platform overview." });
+    }
+  }
+
+  /**
+   * GET /api/admin/bookings
+   * Retrieve all platform customer bookings from PostgreSQL
+   */
+  static async getBookings(_req: Request, res: Response): Promise<void> {
+    try {
+      const bookings = await db.orm.public.Booking.all();
+      const providers = await db.orm.public.Provider.all();
+      const providerMap = new Map<number, any>();
+      providers.forEach((p) => providerMap.set(p.id, p));
+
+      const mappedBookings = bookings.map((b) => {
+        const prov = b.providerId ? providerMap.get(b.providerId) : null;
+        const totalAmount = Number(b.totalAmount) || 0;
+        const platformFee = Number(b.serviceFee) || Math.round(totalAmount * 0.05);
+        const providerPayout = Math.max(0, totalAmount - platformFee);
+
+        let parsedSeats: string[] = [];
+        try {
+          if (Array.isArray(b.selectedSeats)) {
+            parsedSeats = b.selectedSeats;
+          } else if (typeof b.selectedSeats === "string") {
+            parsedSeats = JSON.parse(b.selectedSeats);
+          }
+        } catch {
+          parsedSeats = ["Standard Seat"];
+        }
+
+        return {
+          id: String(b.id),
+          reference: b.bookingNumber || `TIKORA-BKG-${b.id}`,
+          customerName: b.customerName || "Valued Customer",
+          customerEmail: b.customerEmail || "",
+          customerPhone: b.customerPhone || "",
+          providerId: String(b.providerId || "1"),
+          providerName: prov?.name || "Verified Organization",
+          serviceTitle: "TIKORA Travel Pass",
+          category: (prov?.category as any) || "BUS",
+          quantity: parsedSeats.length || 1,
+          seatNumbers: parsedSeats,
+          seats: parsedSeats,
+          totalAmount,
+          platformFee,
+          providerPayout,
+          paymentMethod: (b.paymentMethod as any) || "CHAPA",
+          paymentStatus: (b.paymentStatus as any) || "PAID",
+          bookingStatus: (b.status as any) || "CONFIRMED",
+          bookingDate: b.createdAt ? new Date(b.createdAt).toISOString().split("T")[0] : new Date().toISOString().split("T")[0],
+        };
+      });
+
+      res.status(200).json({ success: true, bookings: mappedBookings });
+    } catch (error: any) {
+      console.error("Admin getBookings error:", error);
+      res.status(500).json({ success: false, message: error.message || "Failed to fetch bookings." });
+    }
+  }
+
+  /**
+   * GET /api/admin/refunds
+   * Retrieve all platform refund requests from PostgreSQL
+   */
+  static async getRefunds(_req: Request, res: Response): Promise<void> {
+    try {
+      const refunds = await db.orm.public.Refund.all();
+      const mappedRefunds = refunds.map((r) => ({
+        id: String(r.id),
+        bookingId: String(r.bookingId),
+        paymentId: String(r.paymentId),
+        amount: Number(r.amount) || 0,
+        reason: r.reason || "Customer requested refund",
+        status: (r.status as any) || "PENDING",
+        createdAt: r.createdAt ? new Date(r.createdAt).toISOString() : new Date().toISOString(),
+        processedAt: r.processedAt ? new Date(r.processedAt).toISOString() : undefined,
+      }));
+
+      res.status(200).json({ success: true, refunds: mappedRefunds });
+    } catch (error: any) {
+      console.error("Admin getRefunds error:", error);
+      res.status(500).json({ success: false, message: error.message || "Failed to fetch refunds." });
+    }
+  }
+
+  /**
+   * GET /api/admin/support
+   * Retrieve all customer support tickets from PostgreSQL
+   */
+  static async getSupportTickets(_req: Request, res: Response): Promise<void> {
+    try {
+      const tickets = await db.orm.public.SupportTicket.all();
+      const users = await db.orm.public.User.all();
+      const userMap = new Map<number, any>();
+      users.forEach((u) => userMap.set(u.id, u));
+
+      const mappedTickets = tickets.map((t) => {
+        const requester = userMap.get(t.userId);
+        return {
+          id: String(t.id),
+          ticketNumber: t.ticketNumber || `TKT-${t.id}`,
+          requesterName: requester ? `${requester.firstName} ${requester.lastName}`.trim() : "Platform User",
+          requesterRole: "CUSTOMER",
+          requesterEmail: requester?.email || "customer@tikora.et",
+          subject: t.subject || "Customer Support Inquiry",
+          category: (t.category as any) || "TICKET_ISSUE",
+          priority: (t.priority as any) || "MEDIUM",
+          status: (t.status as any) || "OPEN",
+          createdAt: t.createdAt ? new Date(t.createdAt).toISOString() : new Date().toISOString(),
+          messages: [
+            {
+              sender: requester ? `${requester.firstName} ${requester.lastName}`.trim() : "Customer",
+              isStaff: false,
+              message: t.description || "",
+              timestamp: t.createdAt ? new Date(t.createdAt).toISOString() : new Date().toISOString(),
+            },
+          ],
+        };
+      });
+
+      res.status(200).json({ success: true, supportTickets: mappedTickets });
+    } catch (error: any) {
+      console.error("Admin getSupportTickets error:", error);
+      res.status(500).json({ success: false, message: error.message || "Failed to fetch support tickets." });
     }
   }
 
@@ -456,6 +638,32 @@ export class AdminController {
     } catch (error: any) {
       console.error("Admin createAuditLog error:", error);
       res.status(500).json({ success: false, message: error.message || "Failed to create audit log." });
+    }
+  }
+
+  /**
+   * DELETE /api/admin/audit-logs
+   * Delete selected or all audit logs
+   */
+  static async deleteAuditLogs(req: Request, res: Response): Promise<void> {
+    try {
+      const { ids, deleteAll } = req.body || {};
+      if (deleteAll) {
+        await AuditService.clearAll();
+        res.status(200).json({ success: true, message: "All audit logs deleted successfully." });
+        return;
+      }
+
+      if (Array.isArray(ids) && ids.length > 0) {
+        await AuditService.deleteLogs(ids);
+        res.status(200).json({ success: true, message: `Deleted ${ids.length} audit logs.` });
+        return;
+      }
+
+      res.status(400).json({ success: false, message: "No audit log IDs provided." });
+    } catch (error: any) {
+      console.error("Admin deleteAuditLogs error:", error);
+      res.status(500).json({ success: false, message: error.message || "Failed to delete audit logs." });
     }
   }
 

@@ -235,7 +235,7 @@ export default function AdminProvidersPage() {
               <div className="flex items-start justify-between gap-2.5">
                 <div className="flex items-start gap-3 min-w-0 flex-1">
                   <div className="w-10 h-10 rounded-xl bg-gradient-to-tr from-amber-500/15 to-amber-500/5 text-amber-600 dark:text-amber-400 flex items-center justify-center shrink-0 font-extrabold text-sm shadow-xs border border-amber-500/20 mt-0.5">
-                    {org.name.charAt(0)}
+                    {org.name?.charAt(0) || "P"}
                   </div>
                   <div className="min-w-0 flex-1">
                     <Link
@@ -352,7 +352,7 @@ export default function AdminProvidersPage() {
                     Gross Revenue
                   </span>
                   <span className="text-xs font-black text-amber-600 dark:text-amber-400 font-mono mt-0.5 block truncate">
-                    {org.totalRevenue.toLocaleString()} <span className="text-[9px] font-normal">ETB</span>
+                    {(org.totalRevenue || 0).toLocaleString()} <span className="text-[9px] font-normal">ETB</span>
                   </span>
                 </div>
                 <div className="border-x border-amber-500/15">
@@ -411,7 +411,7 @@ export default function AdminProvidersPage() {
                   <td className="px-5 py-3.5 min-w-[220px]">
                     <div className="flex items-center gap-3">
                       <div className="w-10 h-10 rounded-xl bg-gradient-to-tr from-amber-500/15 to-amber-500/5 text-amber-600 dark:text-amber-400 flex items-center justify-center shrink-0 font-extrabold text-sm shadow-xs">
-                        {org.name.charAt(0)}
+                        {org.name?.charAt(0) || "P"}
                       </div>
                       <div className="min-w-0">
                         <Link
@@ -450,7 +450,7 @@ export default function AdminProvidersPage() {
                     <div>
                       <p className="font-bold text-foreground">{org.totalServices} services</p>
                       <p className="text-[11px] text-muted-foreground">
-                        {org.totalRevenue.toLocaleString()} ETB
+                        {(org.totalRevenue || 0).toLocaleString()} ETB
                       </p>
                     </div>
                   </td>

@@ -63,6 +63,40 @@ export class AuditService {
   }
 
   /**
+   * Delete specific audit trail entries by IDs
+   */
+  static async deleteLogs(ids: string[]): Promise<boolean> {
+    try {
+      for (const id of ids) {
+        const numId = Number(id);
+        if (!isNaN(numId)) {
+          await db.orm.public.AuditLog.where({ id: numId }).delete().catch(() => {});
+        }
+      }
+      return true;
+    } catch (error) {
+      console.error("AuditService.deleteLogs error:", error);
+      return false;
+    }
+  }
+
+  /**
+   * Delete all audit trail entries
+   */
+  static async clearAll(): Promise<boolean> {
+    try {
+      const allLogs = await db.orm.public.AuditLog.all();
+      for (const l of allLogs) {
+        await db.orm.public.AuditLog.where({ id: l.id }).delete().catch(() => {});
+      }
+      return true;
+    } catch (error) {
+      console.error("AuditService.clearAll error:", error);
+      return false;
+    }
+  }
+
+  /**
    * Populate initial baseline audit log entries if ledger is empty
    */
   private static async seedInitialLogs() {

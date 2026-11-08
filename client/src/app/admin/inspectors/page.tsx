@@ -321,7 +321,7 @@ export default function AdminInspectorsPage() {
               <div className="flex items-start justify-between gap-2.5">
                 <div className="flex items-start gap-3 min-w-0 flex-1">
                   <div className="w-10 h-10 rounded-xl bg-gradient-to-tr from-amber-500/15 to-amber-500/5 text-amber-600 dark:text-amber-400 font-extrabold text-sm flex items-center justify-center shrink-0 shadow-xs border border-amber-500/20 mt-0.5">
-                    {inspector.name.charAt(0)}
+                    {inspector.name?.charAt(0) || "I"}
                   </div>
                   <div className="min-w-0 flex-1">
                     <Link
@@ -335,12 +335,12 @@ export default function AdminInspectorsPage() {
                         {inspector.badgeId}
                       </span>
                       {inspector.status === "ACTIVE" ? (
-                        <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 ring-1 ring-inset ring-emerald-500/20">
+                        <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-500/10 text-emerald-600 dark:text-emerald-400">
                           <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
                           Active
                         </span>
                       ) : (
-                        <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-rose-500/10 text-rose-600 dark:text-rose-400 ring-1 ring-inset ring-rose-500/20">
+                        <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-rose-500/10 text-rose-600 dark:text-rose-400">
                           <span className="w-1.5 h-1.5 rounded-full bg-rose-500" />
                           Suspended
                         </span>
@@ -411,7 +411,7 @@ export default function AdminInspectorsPage() {
                     Valid Scans
                   </span>
                   <span className="text-xs font-black text-emerald-600 dark:text-emerald-400 font-mono mt-0.5 block truncate">
-                    {inspector.validScans.toLocaleString()}
+                    {(inspector.validScans ?? 0).toLocaleString()}
                   </span>
                 </div>
                 <div className="border-x border-amber-500/15">
@@ -419,7 +419,7 @@ export default function AdminInspectorsPage() {
                     Flagged
                   </span>
                   <span className="text-xs font-black text-rose-500 font-mono mt-0.5 block">
-                    {inspector.flaggedScans}
+                    {inspector.flaggedScans ?? 0}
                   </span>
                 </div>
                 <div>
@@ -427,7 +427,7 @@ export default function AdminInspectorsPage() {
                     Scanner HW
                   </span>
                   <span className="text-xs font-extrabold text-foreground mt-0.5 block truncate">
-                    {inspector.deviceModel.split(" ")[0]}
+                    {(inspector.deviceModel || "Sunmi POS").split(" ")[0]}
                   </span>
                 </div>
               </div>
@@ -479,7 +479,7 @@ export default function AdminInspectorsPage() {
                     <td className="px-5 py-3.5 min-w-[200px]">
                       <div className="flex items-center gap-3">
                         <div className="w-9 h-9 rounded-xl bg-amber-500/10 text-amber-600 dark:text-amber-400 font-extrabold text-xs flex items-center justify-center shrink-0 shadow-xs ring-1 ring-amber-500/20">
-                          {inspector.name.charAt(0)}
+                          {inspector.name?.charAt(0) || "I"}
                         </div>
                         <div className="min-w-0">
                           <Link
@@ -497,7 +497,7 @@ export default function AdminInspectorsPage() {
 
                     <td className="px-4 py-3.5 whitespace-nowrap min-w-[180px]">
                       <div className="flex items-center gap-2">
-                        {getCategoryIcon(inspector.organizationCategory)}
+                        {getCategoryIcon(inspector.organizationCategory || "BUS")}
                         <span className="font-semibold text-foreground truncate">
                           {inspector.organizationName}
                         </span>
@@ -523,11 +523,11 @@ export default function AdminInspectorsPage() {
                     <td className="px-4 py-3.5 whitespace-nowrap min-w-[130px]">
                       <div className="font-mono">
                         <span className="font-bold text-foreground">
-                          {inspector.validScans.toLocaleString()}
+                          {(inspector.validScans ?? 0).toLocaleString()}
                         </span>
                         <span className="text-[10px] text-muted-foreground"> valid</span>
                       </div>
-                      {inspector.flaggedScans > 0 ? (
+                      {(inspector.flaggedScans ?? 0) > 0 ? (
                         <p className="text-[10px] text-rose-500 font-mono font-semibold mt-0.5">
                           {inspector.flaggedScans} flagged
                         </p>

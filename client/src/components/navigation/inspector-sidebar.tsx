@@ -22,6 +22,7 @@ import {
   Film,
   Bus,
   Trophy,
+  Ticket,
 } from "lucide-react";
 import { useInspectorStore } from "@/stores/inspector.store";
 import { useAuthStore } from "@/stores/auth.store";
@@ -90,6 +91,7 @@ export function InspectorSidebar({
         return [
           { label: "Dashboard", href: "/inspector", icon: LayoutDashboard },
           { label: "Scan Movie Passes", href: "/inspector/scanner", icon: QrCode, highlight: true, badge: "Live" },
+          { label: "Patron Manifest", href: "/inspector/manifest", icon: Ticket, badge: "Booked" },
           {
             label: "Screening Shifts",
             href: "/inspector/assigned",
@@ -112,6 +114,7 @@ export function InspectorSidebar({
         return [
           { label: "Dashboard", href: "/inspector", icon: LayoutDashboard },
           { label: "Scan Boarding Passes", href: "/inspector/scanner", icon: QrCode, highlight: true, badge: "Live" },
+          { label: "Passenger Manifest", href: "/inspector/manifest", icon: Ticket, badge: "Booked" },
           {
             label: "Boarding Shifts",
             href: "/inspector/assigned",
@@ -134,6 +137,7 @@ export function InspectorSidebar({
         return [
           { label: "Dashboard", href: "/inspector", icon: LayoutDashboard },
           { label: "Scan Festival Passes", href: "/inspector/scanner", icon: QrCode, highlight: true, badge: "Live" },
+          { label: "Attendee Manifest", href: "/inspector/manifest", icon: Ticket, badge: "Booked" },
           {
             label: "Turnstile Shifts",
             href: "/inspector/assigned",
@@ -156,6 +160,7 @@ export function InspectorSidebar({
         return [
           { label: "Dashboard", href: "/inspector", icon: LayoutDashboard },
           { label: "Scan Match Passes", href: "/inspector/scanner", icon: QrCode, highlight: true, badge: "Live" },
+          { label: "Supporter Manifest", href: "/inspector/manifest", icon: Ticket, badge: "Booked" },
           {
             label: "Tribune Shifts",
             href: "/inspector/assigned",

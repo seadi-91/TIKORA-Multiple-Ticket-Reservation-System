@@ -173,7 +173,7 @@ export default function SportDetailPage({ params }: { params: Promise<{ sportId:
       try {
         setIsProcessingPayment(true);
         const returnUrl = typeof window !== "undefined"
-          ? `${window.location.origin}/payments/callback?category=SPORTS&ticketId=${match.id}`
+          ? `${window.location.origin}/payments/callback`
           : undefined;
 
         const res = await PaymentService.initializeChapaPayment({
@@ -360,8 +360,11 @@ export default function SportDetailPage({ params }: { params: Promise<{ sportId:
                     <span className="text-[10px] uppercase font-bold text-[#64748B] dark:text-slate-400 block tracking-wider">
                       Passes Starting From
                     </span>
-                    <span className="text-2xl sm:text-3xl font-black text-[#0F172A] dark:text-white">
+                    <span className="text-2xl sm:text-3xl font-black text-[#0F172A] dark:text-white block">
                       {formatCurrency(tiers[0]?.price || match.price)}
+                    </span>
+                    <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20 text-[11px] font-bold font-mono mt-1">
+                      {match.availableSeats !== undefined ? match.availableSeats : 420} seats left
                     </span>
                   </div>
                 </div>
@@ -392,7 +395,7 @@ export default function SportDetailPage({ params }: { params: Promise<{ sportId:
                   <div className="p-3 rounded-xl bg-slate-50 dark:bg-[#0F1117] border border-slate-200 dark:border-slate-800">
                     <span className="text-[10px] uppercase font-bold text-[#64748B] block flex items-center gap-1">
                       <Clock className="w-3.5 h-3.5 text-[#B45309]" />
-                      <span>Match Kickoff (የሚጀምርበት ሰዓት)</span>
+                      <span>Match Kickoff</span>
                     </span>
                     <strong className="text-xs sm:text-sm text-[#0F172A] dark:text-white block mt-1">
                       {formatDate(match.date)} • {match.time}
@@ -496,6 +499,12 @@ export default function SportDetailPage({ params }: { params: Promise<{ sportId:
                                   </li>
                                 ))}
                               </ul>
+                              <div className="pt-2 border-t border-slate-200/50 dark:border-slate-800 flex items-center justify-between text-[11px]">
+                                <span className="font-bold text-emerald-600 dark:text-emerald-400 font-mono">
+                                  {tier.available !== undefined ? tier.available : Math.floor((match.availableSeats || 420) / tiers.length)} seats left
+                                </span>
+                                <span className="text-[10px] text-muted-foreground font-medium">In stock</span>
+                              </div>
                             </div>
                           </div>
                         );

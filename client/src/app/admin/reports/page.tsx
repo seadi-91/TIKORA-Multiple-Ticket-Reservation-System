@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import Link from "next/link";
 import {
   FileText,
@@ -16,14 +16,20 @@ import {
   Film,
   Trophy,
   ArrowUpRight,
+  RefreshCw,
 } from "lucide-react";
+import { toast } from "sonner";
 import { useAdminStore } from "@/stores/admin.store";
 import { DashboardLineChart } from "@/components/charts/line-chart";
 import { DashboardBarChart } from "@/components/charts/bar-chart";
 import { DashboardPieChart } from "@/components/charts/pie-chart";
 
 export default function AdminReportsPage() {
-  const { stats, organizations, bookings } = useAdminStore();
+  const { stats, organizations, bookings, fetchPlatformData, isLoading } = useAdminStore();
+
+  useEffect(() => {
+    fetchPlatformData();
+  }, [fetchPlatformData]);
 
   const [dateRange, setDateRange] = useState<"30D" | "90D" | "YTD">("30D");
 

@@ -4,22 +4,25 @@ import React, { useState, useEffect } from "react";
 import Link from "next/link";
 import {
   AlertTriangle,
-  Bus,
+  Boxes,
   Eye,
-  Film,
   Layers,
-  Music,
   Plus,
   RefreshCw,
   Search,
   SlidersHorizontal,
   Ticket,
-  Trophy,
   Users,
   X,
+  TrendingUp,
+  RotateCcw,
+  Calendar,
+  Clock,
+  MapPin,
+  CheckCircle2,
 } from "lucide-react";
 import { TicketService } from "@/services/ticket.service";
-import { TicketCategory } from "@/types/ticket.types";
+import { TicketCategory, TicketItem } from "@/types/ticket.types";
 import { formatCurrency } from "@/lib/format-currency";
 import { toast } from "sonner";
 import { ActionDropdown } from "@/components/ui/action-dropdown";
@@ -34,69 +37,234 @@ interface InventoryRow {
   location: string;
   totalCapacity: number;
   availableSeats: number;
+  soldSeats: number;
+  revenue: number;
   price: number;
+  fillPercentage: number;
   status: "NORMAL" | "LOW_STOCK" | "SOLD_OUT";
 }
 
 export default function InventoryManagementPage() {
   const { organization } = useProviderStore();
-  const allTickets = TicketService.getAllTickets().filter((t) => t.category === organization.category);
-
-  // Initial inventory state based on tickets
-  const [inventory, setInventory] = useState<InventoryRow[]>(
-    allTickets.map((t) => {
-      let status: "NORMAL" | "LOW_STOCK" | "SOLD_OUT" = "NORMAL";
-      if (t.availableSeats === 0) status = "SOLD_OUT";
-      else if (t.availableSeats <= Math.ceil(t.totalSeats * 0.2)) status = "LOW_STOCK";
-
-      return {
-        id: t.id,
-        title: t.title,
-        category: t.category,
-        date: t.date,
-        time: t.time,
-        location: t.location,
-        totalCapacity: t.totalSeats,
-        availableSeats: t.availableSeats,
-        price: t.price,
-        status,
-      };
-    })
-  );
-
+  const [inventory, setInventory] = useState<InventoryRow[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState<string>("ALL");
 
-  useEffect(() => {
-    const sectorTickets = TicketService.getAllTickets().filter(
-      (t) => t.category === organization.category
-    );
-    setInventory(
-      sectorTickets.map((t) => {
-        let status: "NORMAL" | "LOW_STOCK" | "SOLD_OUT" = "NORMAL";
-        if (t.availableSeats === 0) status = "SOLD_OUT";
-        else if (t.availableSeats <= Math.ceil(t.totalSeats * 0.2)) status = "LOW_STOCK";
-
-        return {
-          id: t.id,
-          title: t.title,
-          category: t.category,
-          date: t.date,
-          time: t.time,
-          location: t.location,
-          totalCapacity: t.totalSeats,
-          availableSeats: t.availableSeats,
-          price: t.price,
-          status,
-        };
-      })
-    );
-  }, [organization.category]);
-
   // Seat Adjustment Modal State
   const [adjustModalItem, setAdjustModalItem] = useState<InventoryRow | null>(null);
-  const [seatAdjustmentValue, setSeatAdjustmentValue] = useState<number>(0);
+  const [seatAdjustmentValue, setSeatAdjustmentValue] = useState<number>(5);
   const [adjustmentAction, setAdjustmentAction] = useState<"ADD" | "REMOVE">("ADD");
+
+  const syncInventoryFromData = (ticketsList: TicketItem[], bookingsList: any[]) => {
+    const sector = organization.category;
+    const filteredTickets = ticketsList.filter(
+      (t) => !sector || t.category === sector || t.organizer === organization.name
+    );
+    const targetTickets = filteredTickets.length > 0 ? filteredTickets : ticketsList;
+
+    const rows: InventoryRow[] = targetTickets.map((t) => {
+      // Find matching bookings for this ticket from database
+      const ticketBookings = bookingsList.filter(
+        (b) =>
+          String(b.ticketId) === String(t.id) ||
+          b.serviceTitle === t.title ||
+          (b.ticket?.id && String(b.ticket.id) === String(t.id))
+      );
+
+      const bookedCountFromBookings = ticketBookings.reduce(
+        (sum, b) => sum + (b.quantity || b.seats?.length || b.selectedSeats?.length || 1),
+        0
+      );
+
+      const totalCap = Math.max(1, Number(t.totalSeats || 50));
+      const ticketAvailable = Number(t.availableSeats !== undefined ? t.availableSeats : totalCap);
+      const ticketSoldFromDiff = Math.max(0, totalCap - ticketAvailable);
+      const effectiveSold = Math.min(totalCap, Math.max(ticketSoldFromDiff, bookedCountFromBookings));
+      const effectiveAvailable = Math.max(0, totalCap - effectiveSold);
+      const revenue = effectiveSold * (t.price || 0);
+
+      // Exact Fill Rate Calculation: (Sold / Total Capacity) * 100%
+      const fillPercentage = totalCap > 0 ? Math.round((effectiveSold / totalCap) * 100) : 0;
+
+      let status: "NORMAL" | "LOW_STOCK" | "SOLD_OUT" = "NORMAL";
+      if (effectiveAvailable === 0) status = "SOLD_OUT";
+      else if (effectiveAvailable <= Math.ceil(totalCap * 0.2)) status = "LOW_STOCK";
+
+      return {
+        id: String(t.id),
+        title: t.title,
+        category: t.category,
+        date: t.date ? String(t.date).slice(0, 10) : "Upcoming",
+        time: t.time || "Scheduled",
+        location: t.location || "Addis Ababa, Ethiopia",
+        totalCapacity: totalCap,
+        availableSeats: effectiveAvailable,
+        soldSeats: effectiveSold,
+        revenue,
+        price: t.price || 0,
+        fillPercentage,
+        status,
+      };
+    });
+
+    setInventory(rows);
+    setLoading(false);
+
+    // Keep provider store stats synchronized with live inventory & bookings
+    try {
+      const totalAvail = rows.reduce((acc, r) => acc + r.availableSeats, 0);
+      const totalSld = rows.reduce((acc, r) => acc + r.soldSeats, 0);
+      const totalBkgs = bookingsList.length;
+      useProviderStore.getState().updateOrganization({
+        stats: {
+          ...organization.stats,
+          availableSeats: totalAvail,
+          totalTicketsSold: totalSld,
+          totalBookings: Math.max(totalBkgs, organization.stats.totalBookings || 0),
+        },
+      });
+    } catch {}
+  };
+
+  const loadData = async () => {
+    try {
+      const tickets = await TicketService.fetchTickets(true);
+      let bookings: any[] = [];
+      try {
+        const res = await fetch("/api/bookings");
+        const data = await res.json();
+        if (data.success && data.bookings) {
+          bookings = data.bookings;
+        }
+      } catch {}
+      syncInventoryFromData(tickets, bookings);
+    } catch {
+      const localTickets = TicketService.getAllTickets(true);
+      syncInventoryFromData(localTickets, []);
+    }
+  };
+
+  useEffect(() => {
+    loadData();
+  }, [organization.category]);
+
+  const handleRefresh = async () => {
+    setRefreshing(true);
+    await loadData();
+    setRefreshing(false);
+    toast.success("Inventory & fill rates re-synchronized with live bookings");
+  };
+
+  const handleOpenAdjustModal = (item: InventoryRow) => {
+    setAdjustModalItem(item);
+    setSeatAdjustmentValue(5);
+    setAdjustmentAction("ADD");
+  };
+
+  const handleConfirmAdjustment = async () => {
+    if (!adjustModalItem) return;
+
+    const newAvailable =
+      adjustmentAction === "ADD"
+        ? adjustModalItem.availableSeats + seatAdjustmentValue
+        : Math.max(0, adjustModalItem.availableSeats - seatAdjustmentValue);
+
+    const newTotal =
+      adjustmentAction === "ADD"
+        ? Math.max(adjustModalItem.totalCapacity, adjustModalItem.totalCapacity + seatAdjustmentValue)
+        : adjustModalItem.totalCapacity;
+
+    const newSold = Math.max(0, newTotal - newAvailable);
+    const newFill = newTotal > 0 ? Math.round((newSold / newTotal) * 100) : 0;
+    const newRevenue = newSold * adjustModalItem.price;
+
+    let newStatus: "AVAILABLE" | "LOW_STOCK" | "SOLD_OUT" = "AVAILABLE";
+    if (newAvailable === 0) newStatus = "SOLD_OUT";
+
+    let rowStatus: "NORMAL" | "LOW_STOCK" | "SOLD_OUT" = "NORMAL";
+    if (newAvailable === 0) rowStatus = "SOLD_OUT";
+    else if (newAvailable <= Math.ceil(newTotal * 0.2)) rowStatus = "LOW_STOCK";
+
+    // 1. Update TicketService (which syncs to memory, localStorage, and /api/tickets/[ticketId])
+    TicketService.updateTicket(adjustModalItem.id, {
+      totalSeats: newTotal,
+      availableSeats: newAvailable,
+      status: newStatus,
+    });
+
+    // 2. Persist to API route
+    try {
+      await fetch(`/api/tickets/${adjustModalItem.id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          totalSeats: newTotal,
+          availableSeats: newAvailable,
+          status: newStatus,
+        }),
+      });
+    } catch {}
+
+    // 3. Update React state immediately
+    setInventory((prev) =>
+      prev.map((row) =>
+        row.id === adjustModalItem.id
+          ? {
+              ...row,
+              totalCapacity: newTotal,
+              availableSeats: newAvailable,
+              soldSeats: newSold,
+              revenue: newRevenue,
+              fillPercentage: newFill,
+              status: rowStatus,
+            }
+          : row
+      )
+    );
+
+    toast.success(
+      `Inventory for "${adjustModalItem.title}" updated: ${
+        adjustmentAction === "ADD" ? `+${seatAdjustmentValue} seats added` : `-${seatAdjustmentValue} seats held/removed`
+      }`
+    );
+    setAdjustModalItem(null);
+  };
+
+  const handleResetCapacity = async (item: InventoryRow) => {
+    TicketService.updateTicket(item.id, {
+      availableSeats: item.totalCapacity,
+      status: "AVAILABLE",
+    });
+
+    try {
+      await fetch(`/api/tickets/${item.id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          availableSeats: item.totalCapacity,
+          status: "AVAILABLE",
+        }),
+      });
+    } catch {}
+
+    setInventory((prev) =>
+      prev.map((r) =>
+        r.id === item.id
+          ? {
+              ...r,
+              availableSeats: r.totalCapacity,
+              soldSeats: 0,
+              revenue: 0,
+              fillPercentage: 0,
+              status: "NORMAL",
+            }
+          : r
+      )
+    );
+    toast.success(`Reset capacity for "${item.title}" to full ${item.totalCapacity} available seats.`);
+  };
 
   // Filtered rows
   const filteredInventory = inventory.filter((item) => {
@@ -111,347 +279,299 @@ export default function InventoryManagementPage() {
   // KPI Calculations
   const totalCapacity = inventory.reduce((acc, i) => acc + i.totalCapacity, 0);
   const totalAvailable = inventory.reduce((acc, i) => acc + i.availableSeats, 0);
-  const totalSold = totalCapacity - totalAvailable;
+  const totalSold = inventory.reduce((acc, i) => acc + i.soldSeats, 0);
+  const totalRevenue = inventory.reduce((acc, i) => acc + i.revenue, 0);
   const overallOccupancy = totalCapacity > 0 ? Math.round((totalSold / totalCapacity) * 100) : 0;
   const lowStockCount = inventory.filter((i) => i.status === "LOW_STOCK").length;
 
-  const handleOpenAdjustModal = (item: InventoryRow) => {
-    setAdjustModalItem(item);
-    setSeatAdjustmentValue(5);
-    setAdjustmentAction("ADD");
-  };
-
-  const handleConfirmAdjustment = () => {
-    if (!adjustModalItem) return;
-
-    setInventory((prev) =>
-      prev.map((row) => {
-        if (row.id !== adjustModalItem.id) return row;
-
-        const newAvailable =
-          adjustmentAction === "ADD"
-            ? row.availableSeats + seatAdjustmentValue
-            : Math.max(0, row.availableSeats - seatAdjustmentValue);
-
-        const newTotal =
-          adjustmentAction === "ADD"
-            ? Math.max(row.totalCapacity, row.totalCapacity + seatAdjustmentValue)
-            : row.totalCapacity;
-
-        let status: "NORMAL" | "LOW_STOCK" | "SOLD_OUT" = "NORMAL";
-        if (newAvailable === 0) status = "SOLD_OUT";
-        else if (newAvailable <= Math.ceil(newTotal * 0.2)) status = "LOW_STOCK";
-
-        return {
-          ...row,
-          totalCapacity: newTotal,
-          availableSeats: newAvailable,
-          status,
-        };
-      })
-    );
-
-    toast.success(
-      `Inventory for "${adjustModalItem.title}" updated: ${
-        adjustmentAction === "ADD" ? `+${seatAdjustmentValue} seats added` : `-${seatAdjustmentValue} seats removed`
-      }`
-    );
-    setAdjustModalItem(null);
-  };
-
-  const getCategoryBadge = (cat: TicketCategory) => {
-    switch (cat) {
-      case "BUS":
-        return (
-          <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-semibold bg-amber-500/10 text-amber-700 dark:text-amber-300 border border-amber-600/20">
-            <Bus className="w-3 h-3 text-amber-600" /> Bus
-          </span>
-        );
-      case "EVENT":
-        return (
-          <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-semibold bg-purple-500/10 text-purple-700 dark:text-purple-300 border border-purple-600/20">
-            <Music className="w-3 h-3 text-purple-600" /> Event
-          </span>
-        );
-      case "SPORTS":
-        return (
-          <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-semibold bg-emerald-500/10 text-emerald-700 dark:text-emerald-300 border border-emerald-600/20">
-            <Trophy className="w-3 h-3 text-emerald-600" /> Sports
-          </span>
-        );
-      case "CINEMA":
-        return (
-          <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-semibold bg-sky-500/10 text-sky-700 dark:text-sky-300 border border-sky-600/20">
-            <Film className="w-3 h-3 text-sky-600" /> Cinema
-          </span>
-        );
-    }
-  };
-
   return (
-    <div className="space-y-6">
+    <div className="space-y-5">
       {/* Page Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 border-b border-border/60 pb-5">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 border-b border-border/60 pb-4">
         <div>
+          <div className="flex items-center gap-2 mb-0.5">
+            <span className="text-xs font-semibold text-muted-foreground">{organization.name}</span>
+          </div>
           <h1 className="text-base sm:text-lg font-bold tracking-tight text-foreground">
-            Inventory & Seat Allocation Matrix
+            Seat Inventory &amp; Capacity Allocation
           </h1>
           <p className="text-xs text-muted-foreground">
-            Real-time seat capacity, fill rates, and instant seat allocation across all sectors.
+            Real-time seat capacity, sold tickets, available stock, accurate fill rates, and captured sales revenue.
           </p>
         </div>
 
         <div className="flex items-center gap-2">
           <button
             type="button"
-            onClick={() => {
-              toast.success("Inventory cache refreshed with real-time bookings");
-            }}
-            className="inline-flex items-center gap-1.5 px-3 py-2 text-xs font-medium rounded-lg border border-border/70 bg-card hover:bg-muted text-foreground transition-colors"
+            onClick={handleRefresh}
+            disabled={refreshing}
+            className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-xl border border-border/70 bg-card hover:bg-muted text-foreground transition-colors cursor-pointer disabled:opacity-60"
           >
-            <RefreshCw className="w-3.5 h-3.5" /> Refresh Sync
+            <RefreshCw className={`w-3.5 h-3.5 ${refreshing ? "animate-spin text-amber-600" : ""}`} />
+            <span>{refreshing ? "Syncing..." : "Refresh Sync"}</span>
           </button>
           <Link
             href="/provider/tickets/create"
-            className="inline-flex items-center gap-1.5 px-4 py-2 text-xs font-semibold rounded-lg bg-amber-600 hover:bg-amber-700 text-white shadow-sm transition-colors"
+            className="inline-flex items-center gap-1.5 px-3.5 py-1.5 text-xs font-semibold rounded-xl bg-amber-600 hover:bg-amber-700 text-white shadow-xs transition-colors"
           >
-            <Plus className="w-3.5 h-3.5" /> Add Listing
+            <Plus className="w-3.5 h-3.5" />
+            <span>Add Listing</span>
           </Link>
         </div>
       </div>
 
-      {/* KPI Cards */}
-      <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
-        <div className="bg-card border border-border/60 rounded-xl p-4 shadow-xs">
+      {/* KPI 5-Cards Grid */}
+      <div className="grid grid-cols-2 sm:grid-cols-5 gap-2.5 sm:gap-3">
+        {/* Total Capacity */}
+        <div className="bg-card border border-border/60 rounded-xl p-3 shadow-xs">
           <div className="flex items-center justify-between text-muted-foreground text-xs mb-1">
-            <span>Total Fleet / Hall Seats</span>
-            <Layers className="w-4 h-4 text-amber-600" />
+            <span className="text-[10px] sm:text-xs truncate font-medium">Total Capacity</span>
+            <Layers className="w-3.5 h-3.5 text-amber-600 shrink-0" />
           </div>
-          <div className="text-sm sm:text-base font-bold text-foreground">{totalCapacity.toLocaleString()}</div>
-          <p className="text-[11px] text-muted-foreground mt-0.5">Across {inventory.length} active listings</p>
+          <div className="text-sm sm:text-base font-bold text-foreground font-mono">{totalCapacity.toLocaleString()}</div>
+          <p className="text-[10px] text-muted-foreground mt-0.5 truncate">{inventory.length} listings</p>
         </div>
 
-        <div className="bg-card border border-border/60 rounded-xl p-4 shadow-xs">
+        {/* Sold Seats */}
+        <div className="bg-card border border-border/60 rounded-xl p-3 shadow-xs">
           <div className="flex items-center justify-between text-muted-foreground text-xs mb-1">
-            <span>Sold / Reserved</span>
-            <Users className="w-4 h-4 text-blue-600" />
+            <span className="text-[10px] sm:text-xs truncate font-medium">Sold / Reserved</span>
+            <Users className="w-3.5 h-3.5 text-blue-600 shrink-0" />
           </div>
-          <div className="text-sm sm:text-base font-bold text-foreground">{totalSold.toLocaleString()}</div>
-          <p className="text-[11px] text-muted-foreground mt-0.5">Confirmed reservations</p>
+          <div className="text-sm sm:text-base font-bold text-blue-600 font-mono">{totalSold.toLocaleString()}</div>
+          <p className="text-[10px] text-muted-foreground mt-0.5 truncate">Confirmed passes</p>
         </div>
 
-        <div className="bg-card border border-border/60 rounded-xl p-4 shadow-xs">
+        {/* Available Seats Left */}
+        <div className="bg-card border border-border/60 rounded-xl p-3 shadow-xs">
           <div className="flex items-center justify-between text-muted-foreground text-xs mb-1">
-            <span>Remaining Stock</span>
-            <Ticket className="w-4 h-4 text-emerald-600" />
+            <span className="text-[10px] sm:text-xs truncate font-medium">Seats Left (Available)</span>
+            <Ticket className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
           </div>
-          <div className="text-sm sm:text-base font-bold text-foreground">{totalAvailable.toLocaleString()}</div>
-          <p className="text-[11px] text-muted-foreground mt-0.5">Seats open for purchase</p>
+          <div className="text-sm sm:text-base font-bold text-emerald-600 font-mono">{totalAvailable.toLocaleString()} left</div>
+          <p className="text-[10px] text-muted-foreground mt-0.5 truncate">In stock &amp; open for booking</p>
         </div>
 
-        <div className="bg-card border border-border/60 rounded-xl p-4 shadow-xs">
+        {/* Gross Revenue */}
+        <div className="bg-card border border-border/60 rounded-xl p-3 shadow-xs">
           <div className="flex items-center justify-between text-muted-foreground text-xs mb-1">
-            <span>Average Occupancy</span>
-            <AlertTriangle className="w-4 h-4 text-amber-600" />
+            <span className="text-[10px] sm:text-xs truncate font-medium">Captured Revenue</span>
+            <TrendingUp className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
           </div>
-          <div className="text-sm sm:text-base font-bold text-foreground">{overallOccupancy}%</div>
-          <div className="flex items-center gap-1.5 text-[11px] text-muted-foreground mt-0.5">
-            <span className="w-2 h-2 rounded-full bg-amber-500" />
-            <span>{lowStockCount} listings below 20%</span>
+          <div className="text-sm sm:text-base font-bold text-foreground font-mono truncate">{formatCurrency(totalRevenue)}</div>
+          <p className="text-[10px] text-muted-foreground mt-0.5 truncate">From sold seats</p>
+        </div>
+
+        {/* Fill Rate */}
+        <div className="bg-card border border-border/60 rounded-xl p-3 shadow-xs col-span-2 sm:col-span-1">
+          <div className="flex items-center justify-between text-muted-foreground text-xs mb-1">
+            <span className="text-[10px] sm:text-xs truncate font-medium">Fill Rate</span>
+            <AlertTriangle className="w-3.5 h-3.5 text-amber-600 shrink-0" />
+          </div>
+          <div className="text-sm sm:text-base font-bold text-foreground font-mono">{overallOccupancy}%</div>
+          <div className="flex items-center gap-1 text-[10px] text-muted-foreground mt-0.5">
+            <span className="w-1.5 h-1.5 rounded-full bg-amber-500" />
+            <span>{lowStockCount} low stock listings</span>
           </div>
         </div>
       </div>
 
-      {/* Filter and Search Bar */}
-      <div className="bg-card border border-slate-200/50 dark:border-slate-800/50 rounded-3xl p-5 shadow-sm space-y-3">
-        <div className="flex flex-col sm:flex-row gap-3 items-stretch sm:items-center justify-between">
-          {/* Sector Badge */}
-          <div className="flex items-center gap-2">
-            <span className="px-3.5 py-1.5 text-xs font-semibold rounded-xl bg-amber-600 text-white shadow-sm inline-flex items-center gap-1.5">
-              <span>{organization.category} Matrix</span>
-              <span className="px-1.5 py-0.2 rounded-full bg-white/20 text-[10px]">
-                {filteredInventory.length}
-              </span>
-            </span>
-            <span className="text-xs text-muted-foreground hidden sm:inline">
-              Allocated exclusively for {organization.name}
-            </span>
+      {/* Filter and Search Bar - Clean, Compact (NO SECTOR) */}
+      <div className="bg-card border border-border/60 rounded-xl p-3 shadow-xs flex flex-col sm:flex-row gap-2.5 items-stretch sm:items-center justify-between">
+        <div className="flex items-center gap-2">
+          <span className="text-xs font-bold text-foreground">
+            Listings Inventory ({filteredInventory.length})
+          </span>
+        </div>
+
+        <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2">
+          <div className="relative flex-1 sm:w-64">
+            <Search className="w-3.5 h-3.5 absolute left-2.5 top-1/2 -translate-y-1/2 text-muted-foreground pointer-events-none" />
+            <input
+              type="text"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              placeholder="Search by title or venue..."
+              className="w-full pl-8 pr-3 py-1.5 text-xs rounded-lg border border-border/70 bg-card text-foreground focus:outline-none focus:ring-1 focus:ring-amber-500"
+            />
           </div>
 
-          {/* Search & Stock Filter */}
-          <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2">
-            <div className="relative flex-1 sm:w-60">
-              <Search className="w-3.5 h-3.5 absolute left-3.5 top-1/2 -translate-y-1/2 text-muted-foreground pointer-events-none" />
-              <input
-                type="text"
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                placeholder="Search listing or venue..."
-                className="w-full pl-9 pr-3 py-2 text-xs rounded-xl border border-slate-200/60 dark:border-slate-800/60 bg-card text-foreground focus:outline-none focus:ring-2 focus:ring-amber-500/30"
-              />
-            </div>
-
-            <select
-              value={statusFilter}
-              onChange={(e) => setStatusFilter(e.target.value)}
-              className="px-3 py-2 text-xs font-medium rounded-xl border border-slate-200/60 dark:border-slate-800/60 bg-card text-foreground focus:outline-none focus:ring-2 focus:ring-amber-500/30"
-            >
-              <option value="ALL">All Stock Levels</option>
-              <option value="NORMAL">Healthy Stock</option>
-              <option value="LOW_STOCK">Low Stock (&lt;20%)</option>
-              <option value="SOLD_OUT">Sold Out</option>
-            </select>
-          </div>
+          <select
+            value={statusFilter}
+            onChange={(e) => setStatusFilter(e.target.value)}
+            className="px-2.5 py-1.5 text-xs font-medium rounded-lg border border-border/70 bg-card text-foreground focus:outline-none focus:ring-1 focus:ring-amber-500"
+          >
+            <option value="ALL">All Stock Levels</option>
+            <option value="NORMAL">Optimal Stock</option>
+            <option value="LOW_STOCK">Low Stock (&lt;20%)</option>
+            <option value="SOLD_OUT">Sold Out</option>
+          </select>
         </div>
       </div>
 
-      {/* Inventory Matrix Table */}
-      <div className="bg-card border border-slate-200/50 dark:border-slate-800/50 rounded-3xl shadow-sm overflow-hidden">
+      {/* Inventory Matrix Table (SECTOR COLUMN REMOVED) */}
+      <div className="bg-card border border-border/60 rounded-xl shadow-xs overflow-hidden">
         <div className="overflow-x-auto">
           <table className="w-full text-left border-collapse text-xs">
             <thead>
-              <tr className="bg-slate-50/60 dark:bg-slate-800/40 text-muted-foreground uppercase text-[10px] font-bold tracking-wider">
-                <th className="py-3.5 px-4">Service & Route</th>
-                <th className="py-3.5 px-4">Sector</th>
-                <th className="py-3.5 px-4">Date & Time</th>
-                <th className="py-3.5 px-4 text-center">Total Capacity</th>
-                <th className="py-3.5 px-4 text-center">Sold</th>
-                <th className="py-3.5 px-4 text-center">In Stock</th>
-                <th className="py-3.5 px-4 min-w-[140px]">Fill Rate</th>
-                <th className="py-3.5 px-4">Status</th>
-                <th className="py-3.5 px-5 text-right">Actions</th>
+              <tr className="bg-muted/40 text-muted-foreground uppercase text-[10px] font-bold tracking-wider border-b border-border/60">
+                <th className="py-2.5 px-3.5 min-w-[200px]">Service &amp; Venue</th>
+                <th className="py-2.5 px-3 min-w-[130px]">Schedule</th>
+                <th className="py-2.5 px-3 text-right">Unit Price</th>
+                <th className="py-2.5 px-3 text-center">Total Capacity</th>
+                <th className="py-2.5 px-3 text-center">Sold</th>
+                <th className="py-2.5 px-3 text-center min-w-[100px]">Seats Left</th>
+                <th className="py-2.5 px-3 text-right">Captured Revenue</th>
+                <th className="py-2.5 px-3 min-w-[150px]">Fill Rate</th>
+                <th className="py-2.5 px-3 text-center">Status</th>
+                <th className="py-2.5 px-3.5 text-right">Actions</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-slate-100 dark:divide-slate-800/40">
+            <tbody className="divide-y divide-border/40">
               {filteredInventory.length === 0 ? (
                 <tr>
-                  <td colSpan={9} className="py-16 text-center text-xs text-muted-foreground">
-                    <div className="w-12 h-12 rounded-2xl bg-amber-500/10 text-amber-600 flex items-center justify-center mx-auto mb-3">
-                      <Ticket className="w-6 h-6" />
+                  <td colSpan={10} className="py-12 text-center text-xs text-muted-foreground">
+                    <div className="w-10 h-10 rounded-xl bg-amber-500/10 text-amber-600 flex items-center justify-center mx-auto mb-2">
+                      <Ticket className="w-5 h-5" />
                     </div>
-                    <p className="font-bold text-foreground text-sm">No inventory records available</p>
-                    <p className="text-[11px] mt-1 max-w-sm mx-auto text-muted-foreground">
-                      No tickets or seat allocations found for {organization.name}. Create a ticket listing to populate your seat inventory matrix.
+                    <p className="font-bold text-foreground text-xs">No inventory records available</p>
+                    <p className="text-[11px] mt-0.5 max-w-sm mx-auto text-muted-foreground">
+                      No listings match your search. Create a ticket listing to populate your seat inventory matrix.
                     </p>
                   </td>
                 </tr>
               ) : (
-                filteredInventory.map((item) => {
-                  const sold = item.totalCapacity - item.availableSeats;
-                  const fillPercentage = Math.round((sold / item.totalCapacity) * 100);
+                filteredInventory.map((item) => (
+                  <tr key={item.id} className="hover:bg-amber-500/[0.02] transition-colors">
+                    {/* Service & Venue */}
+                    <td className="py-2.5 px-3.5">
+                      <Link
+                        href={`/provider/tickets/${item.id}`}
+                        className="font-semibold text-foreground hover:text-amber-600 transition-colors block line-clamp-1"
+                      >
+                        {item.title}
+                      </Link>
+                      <span className="text-[10px] text-muted-foreground flex items-center gap-1 mt-0.5">
+                        <MapPin className="w-3 h-3 text-muted-foreground/70 shrink-0" />
+                        <span className="line-clamp-1">{item.location}</span>
+                      </span>
+                    </td>
 
-                  return (
-                    <tr key={item.id} className="hover:bg-muted/20 transition-colors">
-                      <td className="py-3.5 px-4">
-                        <Link
-                          href={`/provider/tickets/${item.id}`}
-                          className="font-semibold text-foreground hover:text-amber-600 transition-colors block line-clamp-1"
-                        >
-                          {item.title}
-                        </Link>
-                        <span className="text-[11px] text-muted-foreground block line-clamp-1 mt-0.5">
-                          {item.location}
-                        </span>
-                      </td>
+                    {/* Schedule */}
+                    <td className="py-2.5 px-3 text-muted-foreground">
+                      <div className="flex items-center gap-1 font-medium text-foreground">
+                        <Calendar className="w-3 h-3 text-muted-foreground shrink-0" />
+                        <span>{item.date}</span>
+                      </div>
+                      <div className="flex items-center gap-1 text-[10px] text-muted-foreground mt-0.5">
+                        <Clock className="w-3 h-3 text-muted-foreground/70 shrink-0" />
+                        <span>{item.time}</span>
+                      </div>
+                    </td>
 
-                      <td className="py-3.5 px-3">{getCategoryBadge(item.category)}</td>
+                    {/* Unit Price */}
+                    <td className="py-2.5 px-3 text-right font-mono font-medium text-foreground">
+                      {formatCurrency(item.price)}
+                    </td>
 
-                      <td className="py-3.5 px-3 text-muted-foreground">
-                        <span className="font-medium text-foreground block">{item.date}</span>
-                        <span className="text-[11px]">{item.time}</span>
-                      </td>
+                    {/* Total Capacity */}
+                    <td className="py-2.5 px-3 text-center font-mono font-medium text-foreground">
+                      {item.totalCapacity}
+                    </td>
 
-                      <td className="py-3.5 px-3 text-center font-mono font-medium text-foreground">
-                        {item.totalCapacity}
-                      </td>
+                    {/* Sold Seats */}
+                    <td className="py-2.5 px-3 text-center font-mono font-bold text-blue-600">
+                      {item.soldSeats}
+                    </td>
 
-                      <td className="py-3.5 px-3 text-center font-mono font-medium text-blue-600">
-                        {sold}
-                      </td>
+                    {/* Available Seats Left */}
+                    <td className="py-2.5 px-3 text-center font-mono">
+                      <span className="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-bold font-mono bg-emerald-500/10 text-emerald-600 dark:text-emerald-400">
+                        {item.availableSeats} left
+                      </span>
+                    </td>
 
-                      <td className="py-3.5 px-3 text-center font-mono font-bold text-amber-600">
-                        {item.availableSeats}
-                      </td>
+                    {/* Captured Revenue */}
+                    <td className="py-2.5 px-3 text-right font-mono font-bold text-foreground">
+                      {formatCurrency(item.revenue)}
+                    </td>
 
-                      <td className="py-3.5 px-4">
-                        <div className="flex items-center justify-between text-[11px] mb-1">
-                          <span className="font-medium text-foreground">{fillPercentage}%</span>
-                          <span className="text-muted-foreground">
-                            {sold}/{item.totalCapacity}
+                    {/* Fill Rate - Fully accurate progress & metrics */}
+                    <td className="py-2.5 px-3">
+                      <div className="space-y-1">
+                        <div className="flex items-center justify-between text-[10px]">
+                          <span className="font-bold text-foreground font-mono">{item.fillPercentage}%</span>
+                          <span className="text-muted-foreground font-mono text-[9px]">
+                            {item.soldSeats}/{item.totalCapacity}
                           </span>
                         </div>
-                        <div className="w-full bg-muted rounded-full h-1.5 overflow-hidden">
+                        <div className="w-full bg-slate-100 dark:bg-slate-800 rounded-full h-1.5 overflow-hidden border border-border/40">
                           <div
-                            className={`h-full rounded-full transition-all ${
-                              fillPercentage >= 90
+                            className={`h-full rounded-full transition-all duration-300 ${
+                              item.fillPercentage >= 85
                                 ? "bg-rose-500"
-                                : fillPercentage >= 70
+                                : item.fillPercentage >= 50
                                 ? "bg-amber-500"
                                 : "bg-emerald-500"
                             }`}
-                            style={{ width: `${Math.min(100, fillPercentage)}%` }}
+                            style={{
+                              width: `${Math.min(100, Math.max(item.fillPercentage, item.soldSeats > 0 ? 5 : 0))}%`,
+                            }}
                           />
                         </div>
-                      </td>
+                      </div>
+                    </td>
 
-                      <td className="py-3.5 px-3">
-                        {item.status === "SOLD_OUT" && (
-                          <span className="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-semibold bg-rose-500/10 text-rose-600 border border-rose-500/20">
-                            Sold Out
-                          </span>
-                        )}
-                        {item.status === "LOW_STOCK" && (
-                          <span className="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-semibold bg-amber-500/10 text-amber-600 border border-amber-500/20">
-                            Low Stock
-                          </span>
-                        )}
-                        {item.status === "NORMAL" && (
-                          <span className="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-semibold bg-emerald-500/10 text-emerald-600 border border-emerald-500/20">
-                            Optimal
-                          </span>
-                        )}
-                      </td>
+                    {/* Status */}
+                    <td className="py-2.5 px-3 text-center">
+                      {item.status === "SOLD_OUT" && (
+                        <span className="inline-flex items-center px-2.5 py-1 rounded-full text-[10px] font-bold bg-rose-500/10 text-rose-600 dark:text-rose-400">
+                          Sold Out
+                        </span>
+                      )}
+                      {item.status === "LOW_STOCK" && (
+                        <span className="inline-flex items-center px-2.5 py-1 rounded-full text-[10px] font-bold bg-amber-500/10 text-amber-600 dark:text-amber-400">
+                          Low Stock
+                        </span>
+                      )}
+                      {item.status === "NORMAL" && (
+                        <span className="inline-flex items-center px-2.5 py-1 rounded-full text-[10px] font-bold bg-emerald-500/10 text-emerald-600 dark:text-emerald-400">
+                          Optimal
+                        </span>
+                      )}
+                    </td>
 
-                      <td className="py-3.5 px-5 text-right">
-                        <div className="flex items-center justify-end">
-                          <ActionDropdown
-                            items={[
-                              {
-                                label: "Adjust Seat Allocation",
-                                icon: <SlidersHorizontal className="w-3.5 h-3.5" />,
-                                onClick: () => handleOpenAdjustModal(item),
-                              },
-                              {
-                                label: "View Listing Details",
-                                icon: <Eye className="w-3.5 h-3.5" />,
-                                href: `/provider/tickets/${item.id}`,
-                              },
-                              {
-                                label: "Edit Pricing & Schedule",
-                                icon: <Ticket className="w-3.5 h-3.5" />,
-                                href: `/provider/tickets/${item.id}/edit`,
-                              },
-                              {
-                                label: "Reset to Full Capacity",
-                                icon: <RefreshCw className="w-3.5 h-3.5" />,
-                                onClick: () => {
-                                  setInventory((prev) =>
-                                    prev.map((r) =>
-                                      r.id === item.id
-                                        ? { ...r, availableSeats: r.totalCapacity, status: "NORMAL" }
-                                        : r
-                                    )
-                                  );
-                                  toast.success("Capacity reset to full available.");
-                                },
-                              },
-                            ]}
-                          />
-                        </div>
-                      </td>
-                    </tr>
-                  );
-                })
+                    {/* Actions */}
+                    <td className="py-2.5 px-3.5 text-right">
+                      <div className="flex items-center justify-end">
+                        <ActionDropdown
+                          items={[
+                            {
+                              label: "Adjust Seat Allocation",
+                              icon: <SlidersHorizontal className="w-3.5 h-3.5" />,
+                              onClick: () => handleOpenAdjustModal(item),
+                            },
+                            {
+                              label: "Reset to Full Capacity",
+                              icon: <RotateCcw className="w-3.5 h-3.5" />,
+                              onClick: () => handleResetCapacity(item),
+                            },
+                            {
+                              label: "View Listing Details",
+                              icon: <Eye className="w-3.5 h-3.5" />,
+                              href: `/provider/tickets/${item.id}`,
+                            },
+                            {
+                              label: "Edit Pricing & Schedule",
+                              icon: <Ticket className="w-3.5 h-3.5" />,
+                              href: `/provider/tickets/${item.id}/edit`,
+                            },
+                          ]}
+                        />
+                      </div>
+                    </td>
+                  </tr>
+                ))
               )}
             </tbody>
           </table>
@@ -460,49 +580,53 @@ export default function InventoryManagementPage() {
 
       {/* Seat Adjustment Modal */}
       {adjustModalItem && (
-        <div className="fixed inset-0 z-50 bg-background/80 backdrop-blur-xs flex items-center justify-center p-4">
-          <div className="bg-card border border-border/80 rounded-xl shadow-xl max-w-md w-full p-5 space-y-4 animate-in fade-in zoom-in-95 duration-150">
-            <div className="flex items-center justify-between border-b border-border/60 pb-3">
+        <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-center justify-center p-4">
+          <div className="bg-card border border-border/80 rounded-2xl shadow-xl max-w-md w-full p-4.5 space-y-3.5 animate-in fade-in zoom-in-95 duration-150">
+            <div className="flex items-center justify-between border-b border-border/60 pb-2.5">
               <div>
-                <h3 className="text-sm font-bold text-foreground">Quick Seat Allocation</h3>
-                <p className="text-xs text-muted-foreground mt-0.5 line-clamp-1">
+                <h3 className="text-xs sm:text-sm font-bold text-foreground">Adjust Seat Allocation</h3>
+                <p className="text-[11px] text-muted-foreground mt-0.5 line-clamp-1">
                   {adjustModalItem.title}
                 </p>
               </div>
               <button
                 type="button"
                 onClick={() => setAdjustModalItem(null)}
-                className="p-1 rounded text-muted-foreground hover:text-foreground hover:bg-muted"
+                className="p-1 rounded text-muted-foreground hover:text-foreground hover:bg-muted cursor-pointer"
               >
                 <X className="w-4 h-4" />
               </button>
             </div>
 
-            <div className="bg-muted/30 rounded-lg p-3 text-xs space-y-1.5 border border-border/50">
-              <div className="flex justify-between">
-                <span className="text-muted-foreground">Current Available Seats:</span>
-                <span className="font-bold text-foreground font-mono">
-                  {adjustModalItem.availableSeats}
-                </span>
-              </div>
+            <div className="bg-muted/30 rounded-xl p-2.5 text-xs space-y-1.5 border border-border/50 font-mono">
               <div className="flex justify-between">
                 <span className="text-muted-foreground">Total Capacity:</span>
-                <span className="font-bold text-foreground font-mono">
-                  {adjustModalItem.totalCapacity}
-                </span>
+                <span className="font-bold text-foreground">{adjustModalItem.totalCapacity}</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-muted-foreground">Sold / Reserved Seats:</span>
+                <span className="font-bold text-blue-600">{adjustModalItem.soldSeats}</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-muted-foreground">Currently Available Seats:</span>
+                <span className="font-bold text-emerald-600">{adjustModalItem.availableSeats}</span>
+              </div>
+              <div className="flex justify-between border-t border-border/40 pt-1">
+                <span className="text-muted-foreground">Current Fill Rate:</span>
+                <span className="font-bold text-foreground">{adjustModalItem.fillPercentage}%</span>
               </div>
             </div>
 
             <div className="space-y-3">
-              <label className="block text-xs font-semibold text-foreground">Action</label>
+              <label className="block text-xs font-semibold text-foreground">Adjustment Action</label>
               <div className="grid grid-cols-2 gap-2">
                 <button
                   type="button"
                   onClick={() => setAdjustmentAction("ADD")}
-                  className={`py-2 text-xs font-medium rounded-lg border text-center transition-colors ${
+                  className={`py-2 text-xs rounded-xl border text-center transition-colors cursor-pointer ${
                     adjustmentAction === "ADD"
-                      ? "border-emerald-600 bg-emerald-500/10 text-emerald-600 font-semibold"
-                      : "border-border/70 hover:bg-muted text-muted-foreground"
+                      ? "border-emerald-600 bg-emerald-500/10 text-emerald-600 font-bold"
+                      : "border-border/70 hover:bg-muted text-muted-foreground font-medium"
                   }`}
                 >
                   + Add Available Seats
@@ -510,10 +634,10 @@ export default function InventoryManagementPage() {
                 <button
                   type="button"
                   onClick={() => setAdjustmentAction("REMOVE")}
-                  className={`py-2 text-xs font-medium rounded-lg border text-center transition-colors ${
+                  className={`py-2 text-xs rounded-xl border text-center transition-colors cursor-pointer ${
                     adjustmentAction === "REMOVE"
-                      ? "border-rose-600 bg-rose-500/10 text-rose-600 font-semibold"
-                      : "border-border/70 hover:bg-muted text-muted-foreground"
+                      ? "border-rose-600 bg-rose-500/10 text-rose-600 font-bold"
+                      : "border-border/70 hover:bg-muted text-muted-foreground font-medium"
                   }`}
                 >
                   - Hold / Remove Seats
@@ -521,16 +645,16 @@ export default function InventoryManagementPage() {
               </div>
 
               <div>
-                <label className="block text-xs font-medium text-foreground mb-1.5">
-                  Number of Seats
+                <label className="block text-xs font-medium text-foreground mb-1">
+                  Number of Seats to {adjustmentAction === "ADD" ? "Add" : "Remove"}
                 </label>
                 <input
                   type="number"
                   min="1"
-                  max="100"
+                  max="500"
                   value={seatAdjustmentValue}
                   onChange={(e) => setSeatAdjustmentValue(Math.max(1, Number(e.target.value)))}
-                  className="w-full px-3 py-2 text-xs rounded-lg border border-border/70 bg-background text-foreground font-mono"
+                  className="w-full px-3 py-1.5 text-xs rounded-xl border border-border/70 bg-background text-foreground font-mono focus:outline-none focus:ring-1 focus:ring-amber-500"
                 />
               </div>
             </div>
@@ -539,14 +663,14 @@ export default function InventoryManagementPage() {
               <button
                 type="button"
                 onClick={() => setAdjustModalItem(null)}
-                className="px-3 py-2 text-xs font-medium rounded-lg border border-border/70 hover:bg-muted text-foreground transition-colors"
+                className="px-3 py-1.5 text-xs font-medium rounded-xl border border-border/70 hover:bg-muted text-foreground transition-colors cursor-pointer"
               >
                 Cancel
               </button>
               <button
                 type="button"
                 onClick={handleConfirmAdjustment}
-                className="px-4 py-2 text-xs font-semibold rounded-lg bg-amber-600 hover:bg-amber-700 text-white transition-colors"
+                className="px-3.5 py-1.5 text-xs font-semibold rounded-xl bg-amber-600 hover:bg-amber-700 text-white transition-colors cursor-pointer"
               >
                 Apply Allocation
               </button>

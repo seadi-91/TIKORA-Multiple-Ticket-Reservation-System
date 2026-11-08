@@ -40,17 +40,8 @@ export class PaymentService {
     const lastName = dto.lastName || fullName.split(" ")[1] || "Customer";
     const phoneNumber = dto.phone || user?.phone || "+251911000000";
 
-    let returnUrl = dto.returnUrl;
-    if (returnUrl) {
-      const sep = returnUrl.includes("?") ? "&" : "?";
-      if (!returnUrl.includes("tx_ref=")) {
-        returnUrl = `${returnUrl}${sep}tx_ref=${encodeURIComponent(txRef)}`;
-      }
-    } else {
-      returnUrl = `${ENV.CLIENT_URL}/payments/callback?tx_ref=${encodeURIComponent(
-        txRef
-      )}&ticketId=${dto.ticketId || ""}`;
-    }
+    // Clean return_url so Chapa appends ?trx_ref cleanly without query string collisions
+    let returnUrl = dto.returnUrl ? dto.returnUrl.split("?")[0] : `${ENV.CLIENT_URL}/payments/callback`;
 
     let cleanEmail = (dto.email || "").trim().toLowerCase();
     if (!cleanEmail.includes("@") || cleanEmail.endsWith(".et") || cleanEmail.includes("tikora.et")) {
@@ -64,8 +55,8 @@ export class PaymentService {
       amount: String(dto.amount),
       currency: dto.currency || "ETB",
       email: cleanEmail,
-      first_name: firstName.replace(/[^a-zA-Z0-9]/g, "") || "Valued",
-      last_name: lastName.replace(/[^a-zA-Z0-9]/g, "") || "Customer",
+      first_name: firstName.replace(/[^a-zA-Z0-9]/g, "").slice(0, 30) || "Valued",
+      last_name: lastName.replace(/[^a-zA-Z0-9]/g, "").slice(0, 30) || "Customer",
       phone_number: phoneNumber,
       tx_ref: txRef,
       callback_url: ENV.CHAPA_CALLBACK_URL,

@@ -47,17 +47,8 @@ export async function POST(req: Request) {
     const protocol = host.includes("localhost") ? "http" : "https";
     const origin = `${protocol}://${host}`;
 
-    let returnUrl = clientReturnUrl;
-    if (returnUrl) {
-      const sep = returnUrl.includes("?") ? "&" : "?";
-      if (!returnUrl.includes("tx_ref=")) {
-        returnUrl = `${returnUrl}${sep}tx_ref=${encodeURIComponent(txRef)}`;
-      }
-    } else {
-      returnUrl = `${origin}/payments/callback?tx_ref=${encodeURIComponent(
-        txRef
-      )}&ticketId=${ticketId || ""}&category=${category || ""}`;
-    }
+    // Clean return_url so Chapa appends ?trx_ref cleanly without query string conflicts
+    let returnUrl = clientReturnUrl ? clientReturnUrl.split("?")[0] : `${origin}/payments/callback`;
 
     let cleanEmail = (email || "").trim().toLowerCase();
     if (!cleanEmail.includes("@") || cleanEmail.endsWith(".et") || cleanEmail.includes("tikora.et")) {
@@ -71,8 +62,8 @@ export async function POST(req: Request) {
       amount: String(amount),
       currency: currency || "ETB",
       email: cleanEmail,
-      first_name: fName.replace(/[^a-zA-Z0-9]/g, "") || "Valued",
-      last_name: lName.replace(/[^a-zA-Z0-9]/g, "") || "Customer",
+      first_name: fName.replace(/[^a-zA-Z0-9]/g, "").slice(0, 30) || "Valued",
+      last_name: lName.replace(/[^a-zA-Z0-9]/g, "").slice(0, 30) || "Customer",
       phone_number: phoneNum,
       tx_ref: txRef,
       callback_url: `${origin}/api/payments/chapa/webhook`,

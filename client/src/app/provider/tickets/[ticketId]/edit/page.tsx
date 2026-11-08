@@ -251,9 +251,9 @@ export default function EditTicketPage() {
               <div>
                 <label className="block text-xs font-medium text-foreground mb-1.5">
                   {ticket?.category === "CINEMA"
-                    ? "Showtime / Starts At (የሚጀምርበት ሰዓት)"
+                    ? "Showtime / Starts At"
                     : ticket?.category === "BUS"
-                    ? "Departure Time (የሚነሳበት ሰዓት)"
+                    ? "Departure Time"
                     : "Showtime / Departure Time"}
                 </label>
                 <div className="relative">

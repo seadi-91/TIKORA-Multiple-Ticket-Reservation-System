@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import Link from "next/link";
 import {
   Percent,
@@ -18,14 +18,19 @@ import {
   CheckCircle2,
   Copy,
   Eye,
+  RefreshCw,
 } from "lucide-react";
 import { useAdminStore } from "@/stores/admin.store";
 import { toast } from "sonner";
 import { ActionDropdown } from "@/components/ui/action-dropdown";
 
 export default function AdminCommissionsPage() {
-  const { categories, organizations, bookings, settings, updateSettings, updateCategoryCommission } =
+  const { categories, organizations, bookings, settings, updateSettings, updateCategoryCommission, fetchPlatformData, isLoading } =
     useAdminStore();
+
+  useEffect(() => {
+    fetchPlatformData();
+  }, [fetchPlatformData]);
 
   const [defaultRate, setDefaultRate] = useState(settings.defaultCommissionRate);
   const [editingDefault, setEditingDefault] = useState(false);

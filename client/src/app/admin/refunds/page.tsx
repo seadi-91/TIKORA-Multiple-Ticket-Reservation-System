@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import Link from "next/link";
 import {
   RotateCcw,
@@ -17,12 +17,18 @@ import {
   X,
   Check,
   Eye,
+  RefreshCw,
 } from "lucide-react";
+import { toast } from "sonner";
 import { useAdminStore, AdminRefund } from "@/stores/admin.store";
 import { ActionDropdown, ActionDropdownItem } from "@/components/ui/action-dropdown";
 
 export default function AdminRefundsPage() {
-  const { refunds, processRefund } = useAdminStore();
+  const { refunds, processRefund, fetchPlatformData, isLoading } = useAdminStore();
+
+  useEffect(() => {
+    fetchPlatformData();
+  }, [fetchPlatformData]);
 
   const [statusFilter, setStatusFilter] = useState<string>("ALL");
   const [searchQuery, setSearchQuery] = useState("");

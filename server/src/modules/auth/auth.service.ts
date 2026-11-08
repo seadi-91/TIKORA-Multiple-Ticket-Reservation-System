@@ -38,7 +38,9 @@ export class AuthService {
     role: UserRoleType,
     organizationId?: number,
     organizationCategory?: string,
-    accountStatus?: "ACTIVE" | "PENDING_APPROVAL" | "SUSPENDED" | "INACTIVE"
+    accountStatus?: "ACTIVE" | "PENDING_APPROVAL" | "SUSPENDED" | "INACTIVE",
+    organizationName?: string,
+    assignedStation?: string
   ): ClientAuthUser {
     let status: "ACTIVE" | "PENDING_APPROVAL" | "SUSPENDED" | "INACTIVE" = user.isActive ? "ACTIVE" : "INACTIVE";
     if (accountStatus) {
@@ -55,9 +57,11 @@ export class AuthService {
       avatarUrl: user.profileImage || undefined,
       organizationId: organizationId ? String(organizationId) : undefined,
       organizationCategory: organizationCategory as any,
+      organizationName: organizationName || undefined,
+      assignedStation: assignedStation || undefined,
       emailVerified: user.isEmailVerified,
       createdAt: user.createdAt?.toString() || new Date().toISOString(),
-    };
+    } as any;
   }
 
   /**
@@ -136,12 +140,14 @@ export class AuthService {
       role = userRoles[0].role.name as UserRoleType;
     }
 
-    // If organization, check ProviderMember and verification status
+    // If organization or inspector, check ProviderMember and organization details
     let organizationId: number | undefined;
+    let organizationName: string | undefined;
     let organizationCategory: string | undefined;
+    let assignedStation: string | undefined;
     let accountStatus: "ACTIVE" | "PENDING_APPROVAL" | "SUSPENDED" | "INACTIVE" = user.isActive ? "ACTIVE" : "INACTIVE";
 
-    if (role === "ORGANIZATION") {
+    if (role === "ORGANIZATION" || role === "INSPECTOR") {
       const membership = await db.orm.public.ProviderMember.where({ userId: user.id })
         .include("provider")
         .first();
@@ -149,18 +155,24 @@ export class AuthService {
       if (membership && membership.provider) {
         organizationId = membership.provider.id;
         organizationCategory = membership.provider.providerType;
+        organizationName = membership.provider.name;
+        assignedStation = membership.position || undefined;
 
-        const provStatus = membership.provider.verificationStatus;
-        if (provStatus === "REJECTED") {
-          throw new Error("Your provider application has been rejected by Tikora administrator. Please contact support.");
-        }
+        if (role === "ORGANIZATION") {
+          const provStatus = membership.provider.verificationStatus;
+          if (provStatus === "REJECTED") {
+            throw new Error("Your provider application has been rejected by Tikora administrator. Please contact support.");
+          }
 
-        if (provStatus === "PENDING" || !membership.provider.isActive) {
-          accountStatus = "PENDING_APPROVAL";
-        } else if (provStatus === "APPROVED") {
-          accountStatus = "ACTIVE";
+          if (provStatus === "PENDING" || !membership.provider.isActive) {
+            accountStatus = "PENDING_APPROVAL";
+          } else if (provStatus === "APPROVED") {
+            accountStatus = "ACTIVE";
+          }
+        } else {
+          accountStatus = user.isActive ? "ACTIVE" : "SUSPENDED";
         }
-      } else {
+      } else if (role === "ORGANIZATION") {
         accountStatus = "PENDING_APPROVAL";
       }
     }
@@ -177,7 +189,15 @@ export class AuthService {
     };
 
     const token = signToken(jwtPayload);
-    const clientUser = this.formatAuthUser(user, role, organizationId, organizationCategory, accountStatus);
+    const clientUser = this.formatAuthUser(
+      user,
+      role,
+      organizationId,
+      organizationCategory,
+      accountStatus,
+      organizationName,
+      assignedStation
+    );
 
     AuditService.record({
       userId: user.id,

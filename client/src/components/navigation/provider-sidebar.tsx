@@ -33,6 +33,7 @@ import {
 } from "lucide-react";
 import { useProviderStore } from "@/stores/provider.store";
 import { useAuthStore } from "@/stores/auth.store";
+import { TicketService } from "@/services/ticket.service";
 import { toast } from "sonner";
 
 interface ProviderSidebarProps {
@@ -49,7 +50,7 @@ export function ProviderSidebar({
   onCloseMobile,
 }: ProviderSidebarProps) {
   const pathname = usePathname();
-  const { organization, notifications, refunds } = useProviderStore();
+  const { organization, notifications, refunds, bookings: storeBookings } = useProviderStore();
   const { logout } = useAuthStore();
   const [mounted, setMounted] = useState(false);
 
@@ -72,6 +73,89 @@ export function ProviderSidebar({
   const [cinemaExpanded, setCinemaExpanded] = useState(pathname.startsWith("/provider/cinema"));
 
   const pendingRefunds = refunds.filter((r) => r.status === "PENDING").length;
+
+  const getSectorDefaultSeats = (category: string) => {
+    switch (category) {
+      case "CINEMA":
+        return 48;
+      case "SPORTS":
+        return 420;
+      case "EVENT":
+        return 185;
+      case "BUS":
+      default:
+        return 46;
+    }
+  };
+
+  const [liveAvailableSeats, setLiveAvailableSeats] = useState<number>(() => {
+    return organization.stats.availableSeats > 0
+      ? organization.stats.availableSeats
+      : getSectorDefaultSeats(organization.category);
+  });
+
+  const [liveBookingsCount, setLiveBookingsCount] = useState<number>(() => {
+    return organization.stats.totalBookings > 0
+      ? organization.stats.totalBookings
+      : (storeBookings?.length || 0);
+  });
+
+  useEffect(() => {
+    const updateStats = () => {
+      // 1. Calculate live remaining seats left
+      const tickets = TicketService.getAllTickets(true);
+      const sectorTickets = tickets.filter(
+        (t) =>
+          !organization.category ||
+          t.category?.toUpperCase() === organization.category?.toUpperCase() ||
+          t.organizer?.toLowerCase() === organization.name?.toLowerCase()
+      );
+      const target = sectorTickets.length > 0 ? sectorTickets : tickets;
+      const sumSeats = target.reduce((acc, t) => {
+        const avail = t.availableSeats !== undefined ? Number(t.availableSeats) : (Number(t.totalSeats) || 50);
+        return acc + avail;
+      }, 0);
+
+      const defaultSeats = getSectorDefaultSeats(organization.category);
+      setLiveAvailableSeats(
+        sumSeats > 0
+          ? sumSeats
+          : organization.stats.availableSeats > 0
+          ? organization.stats.availableSeats
+          : defaultSeats
+      );
+
+      // 2. Calculate live customer bookings count
+      let bCount = storeBookings?.length || 0;
+      if (typeof window !== "undefined") {
+        try {
+          const raw = localStorage.getItem("tikora_provider_bookings");
+          if (raw) {
+            const list = JSON.parse(raw);
+            if (Array.isArray(list) && list.length > 0) {
+              bCount = Math.max(bCount, list.length);
+            }
+          }
+        } catch {}
+      }
+      if (bCount === 0 && organization.stats.totalBookings > 0) {
+        bCount = organization.stats.totalBookings;
+      }
+      setLiveBookingsCount(bCount);
+    };
+
+    updateStats();
+    TicketService.fetchTickets(true).then(() => updateStats()).catch(() => {});
+
+    fetch("/api/bookings")
+      .then((res) => res.json())
+      .then((data) => {
+        if (data.success && Array.isArray(data.bookings)) {
+          setLiveBookingsCount((prev) => Math.max(prev, data.bookings.length));
+        }
+      })
+      .catch(() => {});
+  }, [organization.category, organization.name, organization.stats.availableSeats, organization.stats.totalBookings, storeBookings]);
 
   const isActive = (href: string, exact = false) => {
     if (exact) return pathname === href;
@@ -171,13 +255,13 @@ export function ProviderSidebar({
           label: "Seat Inventory",
           href: "/provider/inventory",
           icon: Boxes,
-          badge: `${organization.stats.availableSeats} left`,
+          badge: `${liveAvailableSeats} left`,
         },
         {
           label: "Customer Bookings",
           href: "/provider/bookings",
           icon: ShoppingBag,
-          badge: `${organization.stats.totalBookings}`,
+          badge: `${liveBookingsCount} bookings`,
         },
       ],
     },

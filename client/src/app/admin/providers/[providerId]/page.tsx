@@ -151,7 +151,7 @@ export default function AdminProviderDetailPage({ params }: PageProps) {
         <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-4">
           <div className="flex items-start gap-4">
             <div className="w-14 h-14 rounded-2xl bg-amber-500/10 text-amber-600 dark:text-amber-400 flex items-center justify-center font-bold text-xl border border-amber-500/20 shrink-0">
-              {org.name.charAt(0)}
+              {org.name?.charAt(0) || "P"}
             </div>
             <div className="space-y-1">
               <div className="flex flex-wrap items-center gap-2">
@@ -226,7 +226,7 @@ export default function AdminProviderDetailPage({ params }: PageProps) {
             <div className="border-l border-slate-200/60 dark:border-slate-800/60 pl-4">
               <p className="text-[10px] text-muted-foreground uppercase font-semibold">Total Revenue</p>
               <p className="font-bold text-base text-foreground mt-0.5">
-                {org.totalRevenue.toLocaleString()} <span className="text-xs text-muted-foreground font-normal">ETB</span>
+                {(org.totalRevenue || 0).toLocaleString()} <span className="text-xs text-muted-foreground font-normal">ETB</span>
               </p>
             </div>
           </div>
@@ -323,7 +323,7 @@ export default function AdminProviderDetailPage({ params }: PageProps) {
               <div>
                 <h3 className="font-bold text-sm text-foreground flex items-center gap-2">
                   <FileText className="w-4 h-4 text-amber-600 dark:text-amber-400" />
-                  <span>Submitted Regulatory Documents ({org.documents.length})</span>
+                  <span>Submitted Regulatory Documents ({(org.documents || []).length})</span>
                 </h3>
                 <p className="text-xs text-muted-foreground">
                   Verification of government credentials and operational licenses
@@ -332,7 +332,7 @@ export default function AdminProviderDetailPage({ params }: PageProps) {
             </div>
 
             <div className="space-y-3">
-              {org.documents.map((doc) => (
+              {(org.documents || []).map((doc) => (
                 <div
                   key={doc.id}
                   className="p-4 rounded-2xl border border-slate-200/50 dark:border-slate-800/50 bg-slate-50/50 dark:bg-slate-800/20 hover:bg-slate-100/60 dark:hover:bg-slate-800/40 transition-colors space-y-2"

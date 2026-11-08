@@ -259,14 +259,14 @@ export default function VerificationHistoryPage() {
                   </div>
 
                   <span
-                    className={`inline-flex items-center gap-1 px-2.5 py-0.5 rounded-lg text-[10px] font-semibold border ${
+                    className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[10px] font-bold ${
                       item.result === "VALID"
-                        ? "bg-emerald-500/10 text-emerald-600 border-emerald-500/20"
+                        ? "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400"
                         : item.result === "ALREADY_USED"
-                        ? "bg-amber-500/10 text-amber-600 border-amber-500/20"
+                        ? "bg-amber-500/10 text-amber-600 dark:text-amber-400"
                         : item.result === "WRONG_ASSIGNMENT"
-                        ? "bg-purple-500/10 text-purple-600 border-purple-500/20"
-                        : "bg-rose-500/10 text-rose-600 border-rose-500/20"
+                        ? "bg-purple-500/10 text-purple-600 dark:text-purple-400"
+                        : "bg-rose-500/10 text-rose-600 dark:text-rose-400"
                     }`}
                   >
                     <span
@@ -295,18 +295,18 @@ export default function VerificationHistoryPage() {
         </div>
 
         {/* Desktop View: Full Table */}
-        <div className="hidden sm:block overflow-x-auto">
-          <table className="w-full text-left border-collapse text-xs">
+        <div className="hidden sm:block overflow-x-auto scrollbar-thin">
+          <table className="w-full text-left border-collapse text-xs min-w-[1100px]">
             <thead>
               <tr className="bg-slate-50/60 dark:bg-slate-800/40 text-muted-foreground uppercase text-[10px] font-bold tracking-wider">
-                <th className="py-3.5 px-5">Ticket Ref</th>
-                <th className="py-3.5 px-4">Passenger</th>
-                <th className="py-3.5 px-4">Service / Departure</th>
-                <th className="py-3.5 px-4 text-center">Seat</th>
-                <th className="py-3.5 px-4">Timestamp</th>
-                <th className="py-3.5 px-4">Terminal Gate</th>
-                <th className="py-3.5 px-4 text-center">Outcome</th>
-                <th className="py-3.5 px-5 text-right">Details</th>
+                <th className="py-4 px-5 min-w-[160px]">Ticket Ref</th>
+                <th className="py-4 px-5 min-w-[180px]">Passenger</th>
+                <th className="py-4 px-5 min-w-[220px]">Service / Departure</th>
+                <th className="py-4 px-4 text-center min-w-[120px]">Seat</th>
+                <th className="py-4 px-4 min-w-[160px]">Timestamp</th>
+                <th className="py-4 px-4 min-w-[140px]">Terminal Gate</th>
+                <th className="py-4 px-4 text-center min-w-[140px]">Outcome</th>
+                <th className="py-4 px-5 text-right min-w-[100px]">Details</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100 dark:divide-slate-800/40">
@@ -348,14 +348,14 @@ export default function VerificationHistoryPage() {
 
                     <td className="py-3.5 px-4 text-center">
                       <span
-                        className={`inline-flex items-center gap-1 px-2.5 py-0.5 rounded-lg text-[10px] font-semibold border ${
+                        className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[11px] font-bold ${
                           item.result === "VALID"
-                            ? "bg-emerald-500/10 text-emerald-600 border-emerald-500/20"
+                            ? "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400"
                             : item.result === "ALREADY_USED"
-                            ? "bg-amber-500/10 text-amber-600 border-amber-500/20"
+                            ? "bg-amber-500/10 text-amber-600 dark:text-amber-400"
                             : item.result === "WRONG_ASSIGNMENT"
-                            ? "bg-purple-500/10 text-purple-600 border-purple-500/20"
-                            : "bg-rose-500/10 text-rose-600 border-rose-500/20"
+                            ? "bg-purple-500/10 text-purple-600 dark:text-purple-400"
+                            : "bg-rose-500/10 text-rose-600 dark:text-rose-400"
                         }`}
                       >
                         <span

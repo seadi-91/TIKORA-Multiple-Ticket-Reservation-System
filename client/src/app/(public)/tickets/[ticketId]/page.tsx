@@ -62,13 +62,13 @@ export default function UniversalTicketDetailPage({
   const getTimeLabel = (cat: string) => {
     switch (cat) {
       case "CINEMA":
-        return "Showtime / Starts At (የሚጀምርበት ሰዓት)";
+        return "Showtime / Starts At";
       case "BUS":
-        return "Departure Time (የሚነሳበት ሰዓት)";
+        return "Departure Time";
       case "SPORTS":
-        return "Match Kickoff (የሚጀምርበት ሰዓት)";
+        return "Match Kickoff";
       default:
-        return "Gate Opens / Starts (የሚጀምርበት ሰዓት)";
+        return "Gate Opens / Starts";
     }
   };
 
@@ -408,8 +408,8 @@ export default function UniversalTicketDetailPage({
               <div className="p-3.5 rounded-2xl bg-amber-500/[0.04] border border-amber-500/15 space-y-2 text-xs">
                 <div className="flex items-center justify-between font-bold">
                   <span className="text-muted-foreground">Availability</span>
-                  <span className="text-emerald-600 dark:text-emerald-400">
-                    {ticket.availableSeats} of {ticket.totalSeats} seats open
+                  <span className="text-emerald-600 dark:text-emerald-400 font-mono">
+                    {ticket.availableSeats} seats left ({ticket.totalSeats} total)
                   </span>
                 </div>
                 <div className="w-full h-2 rounded-full bg-slate-200 dark:bg-slate-700 overflow-hidden">

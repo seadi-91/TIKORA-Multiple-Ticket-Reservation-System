@@ -1,5 +1,18 @@
 import { API_BASE_URL } from "./auth.service";
-import { AdminUser, AdminOrganization, AdminInspector, PlatformStats, AdminAuditLog, AdminService, AdminCategory } from "@/stores/admin.store";
+import {
+  AdminUser,
+  AdminOrganization,
+  AdminInspector,
+  PlatformStats,
+  AdminAuditLog,
+  AdminService,
+  AdminCategory,
+  AdminBooking,
+  AdminRefund,
+  AdminSupportTicket,
+  AdminPayout,
+  AdminSettings,
+} from "@/stores/admin.store";
 
 function getAuthHeaders(): HeadersInit {
   const token = typeof window !== "undefined" ? localStorage.getItem("tikora_auth_token") : null;
@@ -110,7 +123,32 @@ export const adminService = {
     }
 
     const data = await res.json();
-    return data.inspectors || [];
+    return (data.inspectors || []).map((i: any) => ({
+      id: String(i.id),
+      badgeId: i.badgeId || `INS-${String(i.id).padStart(4, "0")}`,
+      name: i.name || "Field Inspector",
+      email: i.email || "",
+      phone: i.phone || "N/A",
+      nationalId: i.nationalId || `ET-FAN-${String(i.id).padStart(6, "0")}`,
+      organizationId: String(i.organizationId || "1"),
+      organizationName: i.organizationName || "Verified Organization",
+      organizationCategory: (i.organizationCategory || i.category || "BUS") as any,
+      assignedStation: i.assignedStation || "Addis Ababa Central Station",
+      addedBy: i.addedBy || {
+        name: "Platform Security & Admin",
+        email: "security@tikora.et",
+        role: "SYSTEM_SUPER_ADMIN",
+      },
+      createdAt: i.createdAt || i.joinedDate || new Date().toISOString().split("T")[0],
+      lastActive: i.lastActive || "Just now",
+      status: (i.status === "ACTIVE" ? "ACTIVE" : i.status === "SUSPENDED" ? "SUSPENDED" : "INACTIVE") as any,
+      totalScans: Number(i.totalScans || 0),
+      validScans: Number(i.validScans || 0),
+      flaggedScans: Number(i.flaggedScans || i.flaggedTickets || 0),
+      deviceModel: i.deviceModel || "Sunmi V2 Pro Android POS Scanner",
+      appVersion: i.appVersion || "Tikora Gate v2.4.1",
+      shiftSchedule: i.shiftSchedule || "Full Time: 08:00 - 17:00",
+    }));
   },
 
   async getOverview(): Promise<PlatformStats> {
@@ -159,6 +197,89 @@ export const adminService = {
 
     const data = await res.json();
     return data.log || null;
+  },
+
+  async deleteAuditLogs(ids: string[]): Promise<boolean> {
+    try {
+      const res = await fetch(`${API_BASE_URL}/admin/audit-logs`, {
+        method: "DELETE",
+        headers: getAuthHeaders(),
+        body: JSON.stringify({ ids }),
+        credentials: "include",
+      });
+      return res.ok;
+    } catch {
+      return false;
+    }
+  },
+
+  async clearAllAuditLogs(): Promise<boolean> {
+    try {
+      const res = await fetch(`${API_BASE_URL}/admin/audit-logs`, {
+        method: "DELETE",
+        headers: getAuthHeaders(),
+        body: JSON.stringify({ deleteAll: true }),
+        credentials: "include",
+      });
+      return res.ok;
+    } catch {
+      return false;
+    }
+  },
+
+  async getSettings(): Promise<AdminSettings> {
+    const res = await fetch(`${API_BASE_URL}/admin/settings`, {
+      method: "GET",
+      headers: getAuthHeaders(),
+      credentials: "include",
+    });
+
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({}));
+      throw new Error(err.message || "Failed to fetch platform settings.");
+    }
+
+    const data = await res.json();
+    return data.settings;
+  },
+
+  async updateSettings(payload: Partial<AdminSettings>): Promise<AdminSettings> {
+    const res = await fetch(`${API_BASE_URL}/admin/settings`, {
+      method: "PUT",
+      headers: { ...getAuthHeaders(), "Content-Type": "application/json" },
+      body: JSON.stringify(payload),
+      credentials: "include",
+    });
+
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({}));
+      throw new Error(err.message || "Failed to update platform settings.");
+    }
+
+    const data = await res.json();
+    return data.settings;
+  },
+
+  async uploadLogo(file: File): Promise<string> {
+    const formData = new FormData();
+    formData.append("image", file);
+
+    const res = await fetch(`${API_BASE_URL}/upload/image`, {
+      method: "POST",
+      headers: {
+        Authorization: typeof window !== "undefined" ? `Bearer ${localStorage.getItem("tikora_token") || ""}` : "",
+      },
+      body: formData,
+      credentials: "include",
+    });
+
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({}));
+      throw new Error(err.message || "Failed to upload logo image.");
+    }
+
+    const data = await res.json();
+    return data.url || data.imageUrl || "";
   },
 
   async getTickets(): Promise<AdminService[]> {
@@ -340,6 +461,118 @@ export const adminService = {
     }
 
     return true;
+  },
+
+  async getBookings(): Promise<AdminBooking[]> {
+    let backendBookings: AdminBooking[] = [];
+    try {
+      const res = await fetch(`${API_BASE_URL}/admin/bookings`, {
+        method: "GET",
+        headers: getAuthHeaders(),
+        credentials: "include",
+      });
+      if (res.ok) {
+        const data = await res.json();
+        backendBookings = (data.bookings || []).map((b: any) => {
+          const s = b.seatNumbers || b.seats || [];
+          return {
+            ...b,
+            seatNumbers: s,
+            seats: s,
+            quantity: b.quantity || s.length || 1,
+          };
+        });
+      }
+    } catch {}
+
+    let clientApiBookings: AdminBooking[] = [];
+    try {
+      const res = await fetch("/api/bookings");
+      if (res.ok) {
+        const data = await res.json();
+        if (data.success && Array.isArray(data.bookings)) {
+          clientApiBookings = data.bookings.map((b: any) => {
+            const total = Number(
+              b.pricing?.total ||
+                b.totalAmount ||
+                (b.ticket?.price ? b.ticket.price * (b.quantity || 1) : 500)
+            );
+            const platformFee = Math.round(total * 0.05);
+            const providerPayout = Math.max(0, total - platformFee);
+            const seats =
+              (b.selectedSeats && b.selectedSeats.length > 0 && b.selectedSeats) ||
+              (b.seats && b.seats.length > 0 && b.seats) ||
+              [b.selectedTier || "Standard Pass"];
+
+            return {
+              id: String(b.id || b.bookingReference),
+              reference: String(b.bookingReference || b.reference || b.id),
+              customerName: b.customerName || "Valued Customer",
+              customerEmail: b.customerEmail || "customer@tikora.et",
+              customerPhone: b.customerPhone || "0911000000",
+              providerId: String(b.ticket?.providerId || b.providerId || "1"),
+              providerName: b.ticket?.organizer || b.providerName || "Verified Organization",
+              serviceTitle: b.serviceTitle || b.ticket?.title || "TIKORA Experience Pass",
+              category: (b.category || b.ticket?.category || "BUS") as any,
+              quantity: b.quantity || seats.length || 1,
+              seatNumbers: seats,
+              seats,
+              totalAmount: total,
+              platformFee,
+              providerPayout,
+              paymentMethod: (b.paymentMethod || "CHAPA") as any,
+              paymentStatus: (b.paymentStatus || "PAID") as any,
+              bookingStatus: (b.bookingStatus || "CONFIRMED") as any,
+              bookingDate: b.createdAt
+                ? new Date(b.createdAt).toISOString().split("T")[0]
+                : new Date().toISOString().split("T")[0],
+              travelDate: b.ticket?.date || b.travelDate,
+              departureTime: b.ticket?.time || b.departureTime,
+            };
+          });
+        }
+      }
+    } catch {}
+
+    const map = new Map<string, AdminBooking>();
+    for (const b of backendBookings) {
+      map.set(b.reference, b);
+    }
+    for (const b of clientApiBookings) {
+      map.set(b.reference, b);
+    }
+
+    return Array.from(map.values());
+  },
+
+  async getRefunds(): Promise<AdminRefund[]> {
+    try {
+      const res = await fetch(`${API_BASE_URL}/admin/refunds`, {
+        method: "GET",
+        headers: getAuthHeaders(),
+        credentials: "include",
+      });
+      if (res.ok) {
+        const data = await res.json();
+        return data.refunds || [];
+      }
+    } catch {}
+    return [];
+  },
+
+  async getSupportTickets(): Promise<AdminSupportTicket[]> {
+    try {
+      const res = await fetch(`${API_BASE_URL}/admin/support`, {
+        method: "GET",
+        headers: getAuthHeaders(),
+        credentials: "include",
+      });
+      if (res.ok) {
+        const data = await res.json();
+        return data.supportTickets || [];
+      }
+    } catch {}
+    return [];
   },
 };
 

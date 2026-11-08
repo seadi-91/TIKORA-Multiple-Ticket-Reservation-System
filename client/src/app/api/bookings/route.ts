@@ -94,8 +94,8 @@ export async function POST(req: Request) {
     const updatedBooking = {
       ...booking,
       bookingReference: targetRef,
-      bookingStatus: "CONFIRMED",
-      paymentStatus: "PAID",
+      bookingStatus: booking.bookingStatus || "CONFIRMED",
+      paymentStatus: booking.paymentStatus || "PAID",
       paymentMethod: booking.paymentMethod || "CHAPA",
       updatedAt: new Date().toISOString(),
     };
@@ -115,6 +115,55 @@ export async function POST(req: Request) {
     });
   } catch (err: any) {
     console.error("[POST /api/bookings] Error:", err);
+    return NextResponse.json(
+      { success: false, message: err?.message || "Internal server error." },
+      { status: 500 }
+    );
+  }
+}
+
+export async function PATCH(req: Request) {
+  try {
+    const body = await req.json();
+    const { reference, bookingStatus = "CHECKED_IN" } = body;
+
+    if (!reference) {
+      return NextResponse.json(
+        { success: false, message: "Booking reference is required." },
+        { status: 400 }
+      );
+    }
+
+    const bookings = readStoredBookings();
+    const target = reference.toUpperCase();
+
+    const existingIndex = bookings.findIndex(
+      (b) =>
+        (b.bookingReference && b.bookingReference.toUpperCase() === target) ||
+        (b.id && String(b.id).toUpperCase() === target) ||
+        (b.bookingReference && b.bookingReference.toUpperCase().includes(target)) ||
+        (target.includes(b.bookingReference ? b.bookingReference.toUpperCase() : "___"))
+    );
+
+    if (existingIndex >= 0) {
+      bookings[existingIndex].bookingStatus = bookingStatus;
+      bookings[existingIndex].checkedInAt = new Date().toISOString();
+      bookings[existingIndex].updatedAt = new Date().toISOString();
+      writeStoredBookings(bookings);
+
+      return NextResponse.json({
+        success: true,
+        message: `Booking status updated to ${bookingStatus}.`,
+        booking: bookings[existingIndex],
+      });
+    }
+
+    return NextResponse.json(
+      { success: false, message: "Booking not found in database." },
+      { status: 404 }
+    );
+  } catch (err: any) {
+    console.error("[PATCH /api/bookings] Error:", err);
     return NextResponse.json(
       { success: false, message: err?.message || "Internal server error." },
       { status: 500 }

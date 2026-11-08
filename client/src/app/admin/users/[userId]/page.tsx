@@ -109,18 +109,19 @@ export default function AdminUserDetailPage({ params }: PageProps) {
   // Filter bookings related to this user by email or name
   const rawUserBookings = bookings.filter(
     (b) =>
-      b.customerEmail.toLowerCase() === user.email.toLowerCase() ||
-      b.customerName.toLowerCase() === user.name.toLowerCase() ||
-      (user.phone && b.customerPhone === user.phone)
+      Boolean(b.customerEmail && user.email && b.customerEmail.toLowerCase() === user.email.toLowerCase()) ||
+      Boolean(b.customerName && user.name && b.customerName.toLowerCase() === user.name.toLowerCase()) ||
+      Boolean(user.phone && b.customerPhone && b.customerPhone === user.phone)
   );
 
   const userBookings: AdminBooking[] = rawUserBookings;
 
   const filteredBookings = userBookings.filter((b) => {
+    const query = bookingSearch.toLowerCase();
     const matchesQuery =
-      b.reference.toLowerCase().includes(bookingSearch.toLowerCase()) ||
-      b.serviceTitle.toLowerCase().includes(bookingSearch.toLowerCase()) ||
-      b.providerName.toLowerCase().includes(bookingSearch.toLowerCase());
+      (b.reference || "").toLowerCase().includes(query) ||
+      (b.serviceTitle || "").toLowerCase().includes(query) ||
+      (b.providerName || "").toLowerCase().includes(query);
     const matchesCategory = bookingCategory === "ALL" || b.category === bookingCategory;
     return matchesQuery && matchesCategory;
   });
@@ -260,7 +261,7 @@ export default function AdminUserDetailPage({ params }: PageProps) {
         <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-5">
           <div className="flex items-start sm:items-center gap-4">
             <div className="w-16 h-16 sm:w-20 sm:h-20 rounded-2xl bg-gradient-to-tr from-amber-600 to-amber-500 text-white font-black text-2xl sm:text-3xl flex items-center justify-center shadow-lg shadow-amber-500/25 shrink-0 ring-4 ring-amber-500/15">
-              {user.name.charAt(0)}
+              {user.name?.charAt(0) || "U"}
             </div>
 
             <div className="space-y-1 min-w-0">

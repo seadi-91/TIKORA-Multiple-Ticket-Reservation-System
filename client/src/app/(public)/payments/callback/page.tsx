@@ -51,10 +51,11 @@ function PaymentCallbackContent() {
   const [paymentData, setPaymentData] = useState<any>(null);
   const [matchedBooking, setMatchedBooking] = useState<BookingRecord | null>(null);
   const [activeTxRef, setActiveTxRef] = useState<string>("");
+  const [manualRefInput, setManualRefInput] = useState<string>("");
 
   useEffect(() => {
-    // 1. Resolve Transaction Reference from URL or Storage
-    const urlTxRef =
+    // 1. Resolve Transaction Reference from URL, storage, or regex fallback
+    let urlTxRef =
       searchParams.get("tx_ref") ||
       searchParams.get("trx_ref") ||
       searchParams.get("txRef") ||
@@ -62,6 +63,18 @@ function PaymentCallbackContent() {
       searchParams.get("trx_id") ||
       searchParams.get("transaction_id") ||
       "";
+
+    // Check window.location.href directly using regex in case Chapa or router added extra question marks
+    if (!urlTxRef && typeof window !== "undefined") {
+      const match = window.location.href.match(/[?&](?:tx_ref|trx_ref|reference|txRef)=([^&#?]+)/i);
+      if (match && match[1]) {
+        urlTxRef = decodeURIComponent(match[1]);
+      }
+    }
+
+    if (urlTxRef) {
+      urlTxRef = urlTxRef.split("?")[0].split("&")[0].trim();
+    }
 
     let storedPendingBooking: BookingRecord | null = null;
     let storedTxRef = "";
@@ -84,6 +97,9 @@ function PaymentCallbackContent() {
         localStorage.getItem("tikora_last_confirmed_ref") ||
         storedPendingBooking?.bookingReference ||
         "";
+      if (storedTxRef) {
+        storedTxRef = storedTxRef.split("?")[0].split("&")[0].trim();
+      }
     }
 
     const recentBookingRef =
@@ -92,6 +108,9 @@ function PaymentCallbackContent() {
       "";
 
     let resolvedTxRef = urlTxRef || storedTxRef || recentBookingRef;
+    if (resolvedTxRef) {
+      resolvedTxRef = resolvedTxRef.split("?")[0].split("&")[0].trim();
+    }
     setActiveTxRef(resolvedTxRef);
 
     const chapaStatus = searchParams.get("status");
@@ -481,6 +500,33 @@ function PaymentCallbackContent() {
           )}
         </div>
 
+        {/* Manual Reference Lookup Input if reference was not detected */}
+        <div className="pt-1 max-w-sm mx-auto">
+          <form
+            onSubmit={(e) => {
+              e.preventDefault();
+              if (manualRefInput.trim()) {
+                window.location.href = `/payments/callback?tx_ref=${encodeURIComponent(manualRefInput.trim())}`;
+              }
+            }}
+            className="flex items-center gap-2"
+          >
+            <input
+              type="text"
+              placeholder="Enter Ref Code (e.g. TIKORA-...)"
+              value={manualRefInput}
+              onChange={(e) => setManualRefInput(e.target.value)}
+              className="flex-1 px-3 py-2 text-xs rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 text-foreground focus:outline-none focus:ring-2 focus:ring-amber-500"
+            />
+            <button
+              type="submit"
+              className="px-4 py-2 rounded-xl bg-amber-600 hover:bg-amber-700 text-white text-xs font-bold transition-all shadow-xs cursor-pointer"
+            >
+              Verify
+            </button>
+          </form>
+        </div>
+
         <div className="flex flex-col sm:flex-row items-center justify-center gap-3 pt-2">
           <button
             onClick={() => window.location.reload()}
@@ -509,7 +555,7 @@ function PaymentCallbackContent() {
           <CheckCircle2 className="w-9 h-9" />
         </div>
         <span className="text-xs font-bold text-emerald-600 dark:text-emerald-400 uppercase tracking-widest block">
-          Payment Successfully Verified (ክፍያው በተሳካ ሁኔታ ተረጋግጧል)
+          Payment Successfully Verified
         </span>
         <h2 className="text-2xl font-black text-[#0F172A] dark:text-white">
           Booking Confirmed & Digital Pass Ready!
@@ -670,7 +716,7 @@ function PaymentCallbackContent() {
               className="px-4 py-2.5 rounded-xl border border-slate-200 dark:border-slate-700 text-xs font-semibold text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 flex items-center gap-1.5 transition-colors cursor-pointer"
             >
               <Printer className="w-3.5 h-3.5" />
-              <span>Print Pass / Receipt (ደረሰኝ አትም)</span>
+              <span>Print Pass / Receipt</span>
             </button>
 
             <div className="flex items-center gap-2">

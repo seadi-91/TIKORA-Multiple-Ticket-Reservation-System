@@ -13,7 +13,9 @@ export interface AuthUser {
   status: AccountStatus;
   avatarUrl?: string;
   organizationId?: string;
+  organizationName?: string;
   organizationCategory?: OrganizationCategory;
+  assignedStation?: string;
   emailVerified?: boolean;
   createdAt: string;
 }

@@ -38,6 +38,7 @@ import { AUTH_ROUTES, CUSTOMER_ROUTES } from "@/lib/constants";
 import { useTheme, Theme } from "@/providers/theme-provider";
 import { useBookingStore } from "@/stores/booking.store";
 import { useAuthStore } from "@/stores/auth.store";
+import { useAdminStore } from "@/stores/admin.store";
 import { toast } from "sonner";
 
 interface PublicNavbarProps {
@@ -49,6 +50,8 @@ export function PublicNavbar({ onSearchClick }: PublicNavbarProps) {
   const { theme, systemIsDark, setTheme } = useTheme();
   const { favorites, notifications, bookings } = useBookingStore();
   const { user, isAuthenticated, logout } = useAuthStore();
+  const { settings } = useAdminStore();
+  const brandName = settings.siteName || settings.platformName || "TIKORA";
 
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [themeDropdownOpen, setThemeDropdownOpen] = useState(false);
@@ -168,17 +171,25 @@ export function PublicNavbar({ onSearchClick }: PublicNavbarProps) {
           </button>
 
           {/* Logo - Icon displays always; Name text is hidden on mobile, visible on sm and desktop */}
-          <Link href="/" className="flex items-center gap-2 group shrink-0" title="TIKORA Home">
-            <div className="w-8 h-8 rounded-lg bg-[#B45309] flex items-center justify-center text-white shadow-xs group-hover:scale-105 transition-transform shrink-0">
-              <Ticket className="w-4 h-4 transform -rotate-12" />
-            </div>
+          <Link href="/" className="flex items-center gap-2 group shrink-0" title={`${brandName} Home`}>
+            {settings.logoUrl ? (
+              <img
+                src={settings.logoUrl}
+                alt={brandName}
+                className="w-8 h-8 rounded-lg object-contain shadow-xs group-hover:scale-105 transition-transform shrink-0 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-0.5"
+              />
+            ) : (
+              <div className="w-8 h-8 rounded-lg bg-[#B45309] flex items-center justify-center text-white shadow-xs group-hover:scale-105 transition-transform shrink-0">
+                <Ticket className="w-4 h-4 transform -rotate-12" />
+              </div>
+            )}
             {/* Brand name text hidden on mobile, shown on sm/desktop */}
             <div className="hidden sm:block">
               <span className="text-base sm:text-lg font-black tracking-tight text-[#0F172A] dark:text-white flex items-center gap-0.5 leading-none">
-                TIK<span className="text-[#B45309] dark:text-[#D97706]">ORA</span>
+                {brandName}
               </span>
               <span className="text-[8px] uppercase tracking-widest text-[#64748B] dark:text-slate-400 font-semibold block mt-0.5">
-                Multi-Ticket Ethiopia
+                {settings.tagline || "Multi-Ticket Ethiopia"}
               </span>
             </div>
           </Link>
@@ -451,15 +462,23 @@ export function PublicNavbar({ onSearchClick }: PublicNavbarProps) {
               className="p-4 border-b border-[#E2E8F0] dark:border-slate-800 flex items-center justify-between shrink-0 bg-white dark:bg-[#161922]"
             >
               <div className="flex items-center gap-2.5">
-                <div className="w-8 h-8 rounded-lg bg-[#B45309] text-white flex items-center justify-center shadow-xs shrink-0">
-                  <Ticket className="w-4 h-4 transform -rotate-12" />
-                </div>
+                {settings.logoUrl ? (
+                  <img
+                    src={settings.logoUrl}
+                    alt={brandName}
+                    className="w-8 h-8 rounded-lg object-contain shadow-xs shrink-0 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-0.5"
+                  />
+                ) : (
+                  <div className="w-8 h-8 rounded-lg bg-[#B45309] text-white flex items-center justify-center shadow-xs shrink-0">
+                    <Ticket className="w-4 h-4 transform -rotate-12" />
+                  </div>
+                )}
                 <div>
                   <span className="text-base font-black tracking-tight text-[#0F172A] dark:text-white leading-none block">
-                    TIK<span className="text-[#B45309] dark:text-[#D97706]">ORA</span>
+                    {brandName}
                   </span>
                   <span className="text-[9px] uppercase tracking-widest text-[#64748B] dark:text-slate-400 font-semibold block mt-0.5">
-                    Verified Ticket Hub
+                    {settings.tagline || "Verified Ticket Hub"}
                   </span>
                 </div>
               </div>

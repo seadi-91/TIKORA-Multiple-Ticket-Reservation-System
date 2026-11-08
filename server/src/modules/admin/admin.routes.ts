@@ -1,5 +1,6 @@
 import { Router } from "express";
 import { AdminController } from "./admin.controller";
+import { SettingsController } from "./settings.controller";
 import { authenticate, authorize } from "../../middleware/auth.middleware";
 
 const router = Router();
@@ -20,9 +21,13 @@ router.delete("/providers/:id", AdminController.deleteProvider);
 router.get("/inspectors", AdminController.getInspectors);
 
 router.get("/overview", AdminController.getOverview);
+router.get("/bookings", AdminController.getBookings);
+router.get("/refunds", AdminController.getRefunds);
+router.get("/support", AdminController.getSupportTickets);
 
 router.get("/audit-logs", AdminController.getAuditLogs);
 router.post("/audit-logs", AdminController.createAuditLog);
+router.delete("/audit-logs", AdminController.deleteAuditLogs);
 
 router.get("/categories", AdminController.getCategories);
 router.post("/categories", AdminController.createCategory);
@@ -30,6 +35,10 @@ router.patch("/categories/:id", AdminController.updateCategory);
 router.delete("/categories/:id", AdminController.deleteCategory);
 
 router.get("/notifications", AdminController.getNotifications);
+
+router.get("/settings", SettingsController.getSettings);
+router.put("/settings", SettingsController.updateSettings);
+router.post("/settings", SettingsController.updateSettings);
 
 export default router;
 

@@ -71,9 +71,10 @@
     },
     "paymentMethod": "CHAPA",
     "paymentStatus": "PAID",
-    "bookingStatus": "CONFIRMED",
+    "bookingStatus": "CHECKED_IN",
     "createdAt": "2026-11-08T02:04:58.659Z",
     "qrCodeData": "TIKORA-PASS:TIKORA-1794103497812-1767:1050:PAID",
-    "updatedAt": "2026-11-08T02:05:10.731Z"
+    "updatedAt": "2026-11-08T05:05:57.091Z",
+    "checkedInAt": "2026-11-08T05:05:57.091Z"
   }
 ]

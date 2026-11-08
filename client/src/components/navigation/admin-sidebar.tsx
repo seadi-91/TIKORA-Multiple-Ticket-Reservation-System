@@ -59,13 +59,26 @@ export function AdminSidebar({
   onCloseMobile,
 }: AdminSidebarProps) {
   const pathname = usePathname();
-  const { organizations, refunds, supportTickets } = useAdminStore();
+  const {
+    organizations,
+    refunds,
+    supportTickets,
+    bookings,
+    users,
+    inspectors,
+    services,
+    auditLogs,
+    settings,
+    fetchPlatformData,
+  } = useAdminStore();
+  const brandName = settings?.siteName || settings?.platformName || "TIKORA";
   const { logout } = useAuthStore();
   const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
     setMounted(true);
-  }, []);
+    fetchPlatformData();
+  }, [fetchPlatformData]);
 
   useEffect(() => {
     if (mobileOpen) {
@@ -81,6 +94,7 @@ export function AdminSidebar({
   const pendingProvidersCount = organizations.filter((o) => o.status === "PENDING").length;
   const pendingRefundsCount = refunds.filter((r) => r.status === "PENDING").length;
   const openTicketsCount = supportTickets.filter((t) => t.status === "OPEN").length;
+  const totalBookingsCount = bookings.length;
 
   const isActive = (href: string, exact = false) => {
     if (exact) {
@@ -111,6 +125,8 @@ export function AdminSidebar({
           label: "Audit Logs",
           href: "/admin/audit-logs",
           icon: ShieldCheck,
+          badge: auditLogs.length > 0 ? auditLogs.length : undefined,
+          badgeColor: "bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300",
         },
       ],
     },
@@ -128,6 +144,8 @@ export function AdminSidebar({
           label: "Verifications",
           href: "/admin/verifications",
           icon: ShieldCheck,
+          badge: pendingProvidersCount > 0 ? pendingProvidersCount : undefined,
+          badgeColor: "bg-amber-500/15 text-amber-700 dark:text-amber-300",
         },
       ],
     },
@@ -138,16 +156,22 @@ export function AdminSidebar({
           label: "Platform Users",
           href: "/admin/users",
           icon: Users,
+          badge: users.length > 0 ? users.length : undefined,
+          badgeColor: "bg-blue-500/10 text-blue-700 dark:text-blue-300",
         },
         {
           label: "Field Inspectors",
           href: "/admin/inspectors",
           icon: ScanLine,
+          badge: inspectors.length > 0 ? inspectors.length : undefined,
+          badgeColor: "bg-emerald-500/10 text-emerald-700 dark:text-emerald-300",
         },
         {
           label: "Services & Tickets",
           href: "/admin/tickets",
           icon: Ticket,
+          badge: services.length > 0 ? services.length : undefined,
+          badgeColor: "bg-purple-500/10 text-purple-700 dark:text-purple-300",
         },
         {
           label: "Categories",
@@ -185,6 +209,8 @@ export function AdminSidebar({
           label: "All Bookings",
           href: "/admin/bookings",
           icon: BookOpen,
+          badge: totalBookingsCount > 0 ? totalBookingsCount : undefined,
+          badgeColor: "bg-amber-500/15 text-amber-700 dark:text-amber-300",
         },
         {
           label: "Support & Disputes",
@@ -211,13 +237,21 @@ export function AdminSidebar({
           className="flex items-center gap-3 overflow-hidden group"
           onClick={onCloseMobile}
         >
-          <div className="w-9 h-9 rounded-xl bg-gradient-to-tr from-amber-600 to-amber-500 flex items-center justify-center text-white shadow-md shadow-amber-500/20 shrink-0 ring-1 ring-amber-400/30">
-            <Crown className="w-5 h-5 text-white" />
-          </div>
+          {settings?.logoUrl ? (
+            <img
+              src={settings.logoUrl}
+              alt={brandName}
+              className="w-9 h-9 rounded-xl object-contain bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-0.5 shadow-xs shrink-0 ring-1 ring-amber-400/30"
+            />
+          ) : (
+            <div className="w-9 h-9 rounded-xl bg-gradient-to-tr from-amber-600 to-amber-500 flex items-center justify-center text-white shadow-md shadow-amber-500/20 shrink-0 ring-1 ring-amber-400/30">
+              <Crown className="w-5 h-5 text-white" />
+            </div>
+          )}
           {!collapsed && (
             <div className="flex flex-col min-w-0">
               <span className="font-bold text-sm tracking-tight text-[#0F172A] dark:text-white truncate group-hover:text-amber-600 dark:group-hover:text-amber-400 transition-colors">
-                TIKORA
+                {brandName}
               </span>
               <span className="text-[10px] font-semibold uppercase tracking-wider text-amber-600 dark:text-amber-400 flex items-center gap-1">
                 <Sparkles className="w-2.5 h-2.5" /> Super Admin

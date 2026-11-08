@@ -173,7 +173,7 @@ export default function BusDetailPage({ params }: { params: Promise<{ busId: str
       try {
         setIsProcessingPayment(true);
         const returnUrl = typeof window !== "undefined"
-          ? `${window.location.origin}/payments/callback?category=BUS&ticketId=${bus.id}`
+          ? `${window.location.origin}/payments/callback`
           : undefined;
 
         const res = await PaymentService.initializeChapaPayment({
@@ -336,8 +336,11 @@ export default function BusDetailPage({ params }: { params: Promise<{ busId: str
                     <span className="text-[10px] uppercase font-bold text-[#64748B] dark:text-amber-400/60 block">
                       Single Seat Fare
                     </span>
-                    <span className="text-2xl font-black text-[#F59E0B] dark:text-amber-400">
+                    <span className="text-2xl font-black text-[#F59E0B] dark:text-amber-400 block">
                       {formatCurrency(bus.price)}
+                    </span>
+                    <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20 text-[11px] font-bold font-mono mt-1">
+                      {seats.filter((s) => s.isAvailable).length} seats left
                     </span>
                   </div>
                 </div>
@@ -345,7 +348,7 @@ export default function BusDetailPage({ params }: { params: Promise<{ busId: str
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 text-xs text-[#64748B] dark:text-slate-400">
                   <div className="space-y-1">
                     <span className="text-[10px] uppercase font-bold text-[#64748B] dark:text-amber-400/60 block">
-                      Departure Time (የሚነሳበት ሰዓት)
+                      Departure Time
                     </span>
                     <div className="flex items-center gap-1.5 font-bold text-[#0F172A] dark:text-white">
                       <Clock className="w-3.5 h-3.5 text-[#F59E0B]" />
@@ -399,6 +402,10 @@ export default function BusDetailPage({ params }: { params: Promise<{ busId: str
                         <p className="text-xs text-[#64748B] dark:text-slate-400">
                           Click available seats to reserve. Currently selected:{" "}
                           <strong className="text-[#B45309] dark:text-[#D97706]">{selectedSeatIds.join(", ")}</strong>
+                          {" • "}
+                          <span className="text-emerald-600 dark:text-emerald-400 font-bold font-mono">
+                            {seats.filter((s) => s.isAvailable).length} seats left
+                          </span>
                         </p>
                       </div>
 

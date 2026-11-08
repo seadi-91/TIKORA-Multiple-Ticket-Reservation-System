@@ -14,12 +14,15 @@ import {
   Search,
   Trophy,
   UserCheck,
+  Ticket,
+  Boxes,
 } from "lucide-react";
 import { formatCurrency } from "@/lib/format-currency";
 import { TicketCategory } from "@/types/ticket.types";
 import { toast } from "sonner";
 import { ActionDropdown } from "@/components/ui/action-dropdown";
 import { useProviderStore } from "@/stores/provider.store";
+import { TicketService } from "@/services/ticket.service";
 
 export interface ProviderBookingRecord {
   id: string;
@@ -47,6 +50,38 @@ export default function ProviderBookingsPage() {
   const [searchQuery, setSearchQuery] = useState("");
   const [paymentFilter, setPaymentFilter] = useState<string>("ALL");
   const [statusFilter, setStatusFilter] = useState<string>("ALL");
+  const [liveAvailableSeats, setLiveAvailableSeats] = useState<number>(46);
+
+  useEffect(() => {
+    const updateSeats = () => {
+      const tickets = TicketService.getAllTickets(true);
+      const sectorTickets = tickets.filter(
+        (t) =>
+          !organization.category ||
+          t.category?.toUpperCase() === organization.category?.toUpperCase() ||
+          t.organizer?.toLowerCase() === organization.name?.toLowerCase()
+      );
+      const target = sectorTickets.length > 0 ? sectorTickets : tickets;
+      const sum = target.reduce(
+        (acc, t) => acc + Number(t.availableSeats !== undefined ? t.availableSeats : t.totalSeats || 50),
+        0
+      );
+      const sectorDefault =
+        organization.category === "CINEMA"
+          ? 48
+          : organization.category === "SPORTS"
+          ? 420
+          : organization.category === "EVENT"
+          ? 185
+          : 46;
+      setLiveAvailableSeats(
+        sum > 0 ? sum : organization.stats.availableSeats > 0 ? organization.stats.availableSeats : sectorDefault
+      );
+    };
+
+    updateSeats();
+    TicketService.fetchTickets(true).then(() => updateSeats()).catch(() => {});
+  }, [organization.category, organization.name, organization.stats.availableSeats]);
 
   useEffect(() => {
     let list: ProviderBookingRecord[] = [];
@@ -94,6 +129,11 @@ export default function ProviderBookingsPage() {
         .catch(() => {});
     }
   }, [storeBookings, organization.category]);
+
+  const totalBookedSeats = localBookings.reduce(
+    (sum, b) => sum + (b.seats && b.seats.length > 0 ? b.seats.length : 1),
+    0
+  );
 
   const filteredBookings = localBookings.filter((b) => {
     const matchesPayment = paymentFilter === "ALL" || b.paymentStatus === paymentFilter;
@@ -168,8 +208,8 @@ export default function ProviderBookingsPage() {
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2.5 border-b border-border/50 pb-3">
         <div>
           <div className="flex items-center gap-1.5 mb-0.5">
-            <span className="text-[9px] font-bold uppercase tracking-wider px-1.5 py-0.2 rounded-full bg-amber-500/10 text-amber-600 border border-amber-500/20">
-              {organization.category} Orders
+            <span className="text-[9px] font-bold uppercase tracking-wider px-1.5 py-0.2 rounded-full bg-emerald-500/10 text-emerald-600 border border-emerald-500/20">
+              Live Customer Orders
             </span>
             <span className="text-[11px] text-muted-foreground">{organization.name}</span>
           </div>
@@ -177,7 +217,7 @@ export default function ProviderBookingsPage() {
             Customer Bookings &amp; Orders
           </h1>
           <p className="text-[11px] text-muted-foreground">
-            Confirmed reservations and admissions. Ticket base revenue shown with 5% VAT excluded.
+            Confirmed reservations, seat allocations, and boarding status. Ticket base revenue shown with 5% VAT excluded.
           </p>
         </div>
 
@@ -193,52 +233,59 @@ export default function ProviderBookingsPage() {
         </div>
       </div>
 
-      {/* KPI Cards - Compact */}
-      <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5 sm:gap-3">
+      {/* KPI Cards - 5 Metrics including Seats Left */}
+      <div className="grid grid-cols-2 sm:grid-cols-5 gap-2.5 sm:gap-3">
         <div className="bg-card border border-border/60 rounded-xl p-3 shadow-2xs">
-          <span className="text-muted-foreground text-[10px] uppercase font-semibold block mb-0.5">Total Bookings</span>
-          <div className="text-xs sm:text-sm font-bold text-foreground">{localBookings.length}</div>
-          <span className="text-[9px] text-muted-foreground">Order ledger count</span>
+          <span className="text-muted-foreground text-[10px] uppercase font-semibold block mb-0.5">Total Orders</span>
+          <div className="text-xs sm:text-sm font-bold text-foreground font-mono">{localBookings.length}</div>
+          <span className="text-[9px] text-muted-foreground">Confirmed bookings</span>
         </div>
 
         <div className="bg-card border border-border/60 rounded-xl p-3 shadow-2xs">
-          <span className="text-muted-foreground text-[10px] uppercase font-semibold block mb-0.5">Verified Boarded</span>
-          <div className="text-xs sm:text-sm font-bold text-emerald-600">
+          <span className="text-muted-foreground text-[10px] uppercase font-semibold block mb-0.5">Seats Booked</span>
+          <div className="text-xs sm:text-sm font-bold text-blue-600 font-mono">
+            {totalBookedSeats} seats
+          </div>
+          <span className="text-[9px] text-muted-foreground">Reserved passes</span>
+        </div>
+
+        <div className="bg-card border border-border/60 rounded-xl p-3 shadow-2xs">
+          <span className="text-muted-foreground text-[10px] uppercase font-semibold block mb-0.5">Seats Left (Stock)</span>
+          <div className="text-xs sm:text-sm font-bold text-emerald-600 font-mono">
+            {liveAvailableSeats} left
+          </div>
+          <span className="text-[9px] text-muted-foreground">Available to book</span>
+        </div>
+
+        <div className="bg-card border border-border/60 rounded-xl p-3 shadow-2xs">
+          <span className="text-muted-foreground text-[10px] uppercase font-semibold block mb-0.5">Boarded Gate</span>
+          <div className="text-xs sm:text-sm font-bold text-emerald-600 font-mono">
             {localBookings.filter((b) => b.bookingStatus === "CHECKED_IN").length}
           </div>
-          <span className="text-[9px] text-muted-foreground">Gate turnstile scanned</span>
+          <span className="text-[9px] text-muted-foreground">Scanned turnstiles</span>
         </div>
 
-        <div className="bg-card border border-border/60 rounded-xl p-3 shadow-2xs">
-          <span className="text-muted-foreground text-[10px] uppercase font-semibold block mb-0.5">Cancelled</span>
-          <div className="text-xs sm:text-sm font-bold text-rose-600">
-            {localBookings.filter((b) => b.bookingStatus === "CANCELLED").length}
-          </div>
-          <span className="text-[9px] text-muted-foreground">Refund disputes</span>
-        </div>
-
-        <div className="bg-card border border-border/60 rounded-xl p-3 shadow-2xs">
+        <div className="bg-card border border-border/60 rounded-xl p-3 shadow-2xs col-span-2 sm:col-span-1">
           <span className="text-muted-foreground text-[10px] uppercase font-semibold block mb-0.5">Ticket Sales (No VAT)</span>
-          <div className="text-xs sm:text-sm font-bold text-amber-600">
+          <div className="text-xs sm:text-sm font-bold text-amber-600 font-mono">
             {formatCurrency(totalGrossRevenue)}
           </div>
           <span className="text-[9px] text-muted-foreground">Base fare &bull; VAT excluded</span>
         </div>
       </div>
 
-      {/* Filter and Search Bar */}
-      <div className="bg-card border border-slate-200/50 dark:border-slate-800/50 rounded-3xl p-5 shadow-sm space-y-3">
+      {/* Filter and Search Bar (NO SECTOR) */}
+      <div className="bg-card border border-slate-200/50 dark:border-slate-800/50 rounded-2xl p-4 shadow-sm space-y-3">
         <div className="flex flex-col sm:flex-row gap-3 items-stretch sm:items-center justify-between">
-          {/* Sector Badge */}
           <div className="flex items-center gap-2">
             <span className="px-3.5 py-1.5 rounded-xl text-xs font-semibold bg-amber-600 text-white shadow-sm inline-flex items-center gap-1.5">
-              <span>{organization.category} Bookings</span>
-              <span className="px-1.5 py-0.2 rounded-full bg-white/20 text-[10px]">
+              <span>Customer Bookings</span>
+              <span className="px-1.5 py-0.2 rounded-full bg-white/20 text-[10px] font-mono">
                 {filteredBookings.length}
               </span>
             </span>
             <span className="text-xs text-muted-foreground hidden sm:inline">
-              Orders for {organization.name}
+              Manage passenger reservations and seat allocations
             </span>
           </div>
 
@@ -375,15 +422,15 @@ export default function ProviderBookingsPage() {
                 <div className="flex items-center justify-between pt-1 text-xs">
                   <div className="flex items-center gap-1.5 flex-wrap">
                     <span className="inline-flex items-center px-2 py-0.5 rounded-lg text-[10px] font-semibold bg-slate-100 dark:bg-slate-800 text-foreground font-mono">
-                      Seats: {b.seats.join(", ")}
+                      Seats: {b.seats.join(", ")} ({b.seats.length} booked)
                     </span>
                     <span
-                      className={`inline-flex items-center px-2 py-0.5 rounded-lg text-[10px] font-semibold border ${
+                      className={`inline-flex items-center px-2.5 py-1 rounded-full text-[10px] font-bold ${
                         b.bookingStatus === "CHECKED_IN"
-                          ? "bg-emerald-500/10 text-emerald-600 border-emerald-500/20"
+                          ? "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400"
                           : b.bookingStatus === "CANCELLED"
-                          ? "bg-rose-500/10 text-rose-600 border-rose-500/20"
-                          : "bg-blue-500/10 text-blue-600 border-blue-500/20"
+                          ? "bg-rose-500/10 text-rose-600 dark:text-rose-400"
+                          : "bg-blue-500/10 text-blue-600 dark:text-blue-400"
                       }`}
                     >
                       {b.bookingStatus === "CHECKED_IN"
@@ -405,18 +452,18 @@ export default function ProviderBookingsPage() {
 
         {/* Desktop View: Full Table - Spacious Layout */}
         <div className="hidden sm:block overflow-x-auto scrollbar-thin">
-          <table className="w-full text-left border-collapse min-w-[1100px] text-xs sm:text-[13px]">
+          <table className="w-full text-left border-collapse min-w-[1450px] text-xs sm:text-[13px]">
             <thead>
               <tr className="bg-slate-50/80 dark:bg-slate-800/50 text-muted-foreground uppercase text-[10px] font-bold tracking-wider border-b border-slate-100 dark:border-slate-800">
-                <th className="py-4 px-5 min-w-[160px]">Reference</th>
-                <th className="py-4 px-5 min-w-[220px]">Customer & Contact</th>
-                <th className="py-4 px-5 min-w-[260px]">Service & Route</th>
-                <th className="py-4 px-4 min-w-[140px]">Schedule Date</th>
-                <th className="py-4 px-4 text-center min-w-[120px]">Seats</th>
-                <th className="py-4 px-4 text-right min-w-[130px]">Amount (ETB)</th>
-                <th className="py-4 px-4 text-center min-w-[120px]">Payment</th>
-                <th className="py-4 px-4 text-center min-w-[130px]">Boarding</th>
-                <th className="py-4 px-5 text-right min-w-[90px]">Actions</th>
+                <th className="py-4.5 px-6 min-w-[200px]">Reference</th>
+                <th className="py-4.5 px-6 min-w-[260px]">Customer & Contact</th>
+                <th className="py-4.5 px-6 min-w-[300px]">Service & Route</th>
+                <th className="py-4.5 px-6 min-w-[160px]">Schedule Date</th>
+                <th className="py-4.5 px-6 text-center min-w-[160px]">Seats</th>
+                <th className="py-4.5 px-6 text-right min-w-[150px]">Amount (ETB)</th>
+                <th className="py-4.5 px-6 text-center min-w-[140px]">Payment</th>
+                <th className="py-4.5 px-6 text-center min-w-[150px]">Boarding</th>
+                <th className="py-4.5 px-6 text-right min-w-[120px]">Actions</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100 dark:divide-slate-800/40">
@@ -429,7 +476,7 @@ export default function ProviderBookingsPage() {
               ) : (
                 filteredBookings.map((b) => (
                   <tr key={b.id} className="hover:bg-amber-500/[0.03] dark:hover:bg-amber-500/[0.06] transition-colors">
-                    <td className="py-4 px-5 font-mono font-bold text-amber-600 dark:text-amber-400 whitespace-nowrap">
+                    <td className="py-4.5 px-6 font-mono font-bold text-amber-600 dark:text-amber-400 whitespace-nowrap">
                       <Link
                         href={`/provider/bookings/${b.id}`}
                         className="hover:underline"
@@ -438,7 +485,7 @@ export default function ProviderBookingsPage() {
                       </Link>
                     </td>
 
-                    <td className="py-4 px-5">
+                    <td className="py-4.5 px-6">
                       <span className="font-semibold text-foreground block">
                         {b.customerName}
                       </span>
@@ -447,50 +494,55 @@ export default function ProviderBookingsPage() {
                       </span>
                     </td>
 
-                    <td className="py-4 px-5">
+                    <td className="py-4.5 px-6">
                       <div className="flex items-center gap-1.5 font-medium text-foreground">
                         {getCategoryIcon(b.category)}
                         <span className="line-clamp-1">{b.serviceTitle}</span>
                       </div>
                     </td>
 
-                    <td className="py-4 px-4 text-muted-foreground whitespace-nowrap">
+                    <td className="py-4.5 px-6 text-muted-foreground whitespace-nowrap">
                       <span className="font-medium text-foreground block">{b.travelDate}</span>
-                      <span className="text-[11px] font-mono">{b.departureTime}</span>
+                      <span className="text-[11px] font-mono text-amber-600 dark:text-amber-400">{b.departureTime}</span>
                     </td>
 
-                    <td className="py-4 px-4 text-center font-mono whitespace-nowrap">
-                      <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-slate-100 dark:bg-slate-800 text-foreground text-xs font-semibold">
-                        {b.seats.join(", ")}
-                      </span>
+                    <td className="py-4.5 px-6 text-center font-mono whitespace-nowrap">
+                      <div className="inline-flex flex-col items-center gap-0.5">
+                        <span className="inline-flex items-center gap-1 px-3 py-1.5 rounded-xl bg-slate-100 dark:bg-slate-800 text-foreground text-xs font-bold font-mono">
+                          {b.seats.join(", ")}
+                        </span>
+                        <span className="text-[10px] text-muted-foreground font-semibold">
+                          {b.seats.length} seat{b.seats.length > 1 ? "s" : ""} booked
+                        </span>
+                      </div>
                     </td>
 
-                    <td className="py-4 px-4 text-right font-mono font-bold text-foreground whitespace-nowrap">
+                    <td className="py-4.5 px-6 text-right font-mono font-bold text-foreground whitespace-nowrap">
                       {formatCurrency(b.totalAmount)}
                     </td>
 
-                    <td className="py-4 px-4 text-center whitespace-nowrap">
+                    <td className="py-4.5 px-6 text-center whitespace-nowrap">
                       <span
-                        className={`inline-flex items-center px-2.5 py-0.5 rounded-lg text-[10px] font-semibold border ${
+                        className={`inline-flex items-center px-3 py-1 rounded-full text-[10px] font-bold ${
                           b.paymentStatus === "PAID"
-                            ? "bg-emerald-500/10 text-emerald-600 border-emerald-500/20"
+                            ? "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400"
                             : b.paymentStatus === "REFUNDED"
-                            ? "bg-rose-500/10 text-rose-600 border-rose-500/20"
-                            : "bg-amber-500/10 text-amber-600 border-amber-500/20"
+                            ? "bg-rose-500/10 text-rose-600 dark:text-rose-400"
+                            : "bg-amber-500/10 text-amber-600 dark:text-amber-400"
                         }`}
                       >
                         {b.paymentStatus}
                       </span>
                     </td>
 
-                    <td className="py-4 px-4 text-center whitespace-nowrap">
+                    <td className="py-4.5 px-6 text-center whitespace-nowrap">
                       <span
-                        className={`inline-flex items-center gap-1 px-2.5 py-0.5 rounded-lg text-[10px] font-semibold border ${
+                        className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[10px] font-bold ${
                           b.bookingStatus === "CHECKED_IN"
-                            ? "bg-emerald-500/10 text-emerald-600 border-emerald-500/20"
+                            ? "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400"
                             : b.bookingStatus === "CANCELLED"
-                            ? "bg-rose-500/10 text-rose-600 border-rose-500/20"
-                            : "bg-blue-500/10 text-blue-600 border-blue-500/20"
+                            ? "bg-rose-500/10 text-rose-600 dark:text-rose-400"
+                            : "bg-blue-500/10 text-blue-600 dark:text-blue-400"
                         }`}
                       >
                         <span
@@ -510,7 +562,7 @@ export default function ProviderBookingsPage() {
                       </span>
                     </td>
 
-                    <td className="py-3.5 px-5 text-right">
+                    <td className="py-4.5 px-6 text-right">
                       <div className="flex items-center justify-end">
                         <ActionDropdown
                           items={[

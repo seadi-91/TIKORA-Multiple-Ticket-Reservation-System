@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import Link from "next/link";
 import {
   Headphones,
@@ -16,12 +16,18 @@ import {
   ShieldCheck,
   X,
   Eye,
+  RefreshCw,
 } from "lucide-react";
+import { toast } from "sonner";
 import { useAdminStore, AdminSupportTicket } from "@/stores/admin.store";
 import { ActionDropdown } from "@/components/ui/action-dropdown";
 
 export default function AdminSupportPage() {
-  const { supportTickets, replyToSupportTicket } = useAdminStore();
+  const { supportTickets, replyToSupportTicket, fetchPlatformData, isLoading } = useAdminStore();
+
+  useEffect(() => {
+    fetchPlatformData();
+  }, [fetchPlatformData]);
 
   const [statusFilter, setStatusFilter] = useState<string>("ALL");
   const [searchQuery, setSearchQuery] = useState("");
@@ -248,7 +254,7 @@ export default function AdminSupportPage() {
               <div className="flex items-center justify-between text-[11px] p-2.5 rounded-xl bg-slate-50/60 dark:bg-slate-800/25 border border-slate-200/30 dark:border-slate-800/40">
                 <div className="flex items-center gap-2">
                   <div className="w-7 h-7 rounded-lg bg-amber-500/10 text-amber-600 dark:text-amber-400 font-bold text-[11px] flex items-center justify-center shrink-0">
-                    {t.requesterName.charAt(0)}
+                    {t.requesterName?.charAt(0) || "T"}
                   </div>
                   <div>
                     <p className="font-semibold text-foreground text-xs">{t.requesterName}</p>
@@ -256,7 +262,7 @@ export default function AdminSupportPage() {
                   </div>
                 </div>
                 <span className="text-[10px] font-mono text-muted-foreground">
-                  {t.messages.length} msg(s)
+                  {(t.messages || []).length} msg(s)
                 </span>
               </div>
 
@@ -412,7 +418,7 @@ export default function AdminSupportPage() {
 
             {/* Conversation Messages */}
             <div className="flex-1 overflow-y-auto space-y-3 p-1 text-xs">
-              {selectedTicket.messages.map((m, idx) => (
+              {(selectedTicket.messages || []).map((m, idx) => (
                 <div
                   key={idx}
                   className={`p-3.5 rounded-2xl space-y-1 ${m.isStaff

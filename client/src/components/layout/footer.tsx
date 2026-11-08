@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import Link from "next/link";
 import {
   Ticket,
@@ -17,10 +17,23 @@ import {
   QrCode,
 } from "lucide-react";
 import { AUTH_ROUTES, CUSTOMER_ROUTES } from "@/lib/constants";
+import { useAdminStore } from "@/stores/admin.store";
 
 export function Footer() {
+  const { settings, fetchPlatformData } = useAdminStore();
+
+  useEffect(() => {
+    fetchPlatformData();
+  }, [fetchPlatformData]);
+
   const [newsletterEmail, setNewsletterEmail] = useState("");
   const [subscribed, setSubscribed] = useState(false);
+
+  const brandName = settings.siteName || settings.platformName || "TIKORA";
+  const brandLocation = settings.footerLocation || settings.headquartersAddress || "Edna Mall Tower, Addis Ababa";
+  const brandPhone = settings.footerPhone || settings.supportPhone || "+251 11 667 8900";
+  const brandEmail = settings.footerEmail || settings.supportEmail || "support@tikora.et";
+  const copyrightNotice = settings.copyrightText || `© ${new Date().getFullYear()} ${brandName} Ethiopia Inc. All Rights Reserved.`;
 
   const handleSubscribe = (e: React.FormEvent) => {
     e.preventDefault();
@@ -60,30 +73,38 @@ export function Footer() {
         {/* Brand Column - Compact & 2-Col Span on Mobile */}
         <div className="col-span-2 md:col-span-2 space-y-2">
           <Link href="/" className="inline-flex items-center gap-2 group">
-            <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-lg bg-[#B45309] flex items-center justify-center text-white shadow-xs">
-              <Ticket className="w-3.5 h-3.5 sm:w-4 sm:h-4 transform -rotate-12" />
-            </div>
+            {settings.logoUrl ? (
+              <img
+                src={settings.logoUrl}
+                alt={brandName}
+                className="w-7 h-7 sm:w-8 sm:h-8 rounded-lg object-contain shadow-xs"
+              />
+            ) : (
+              <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-lg bg-[#B45309] flex items-center justify-center text-white shadow-xs">
+                <Ticket className="w-3.5 h-3.5 sm:w-4 sm:h-4 transform -rotate-12" />
+              </div>
+            )}
             <span className="text-sm sm:text-base font-black tracking-tight text-[#0F172A] dark:text-white">
-              TIK<span className="text-[#B45309] dark:text-[#D97706]">ORA</span>
+              {brandName}
             </span>
           </Link>
 
           <p className="text-[10px] sm:text-[11px] text-[#64748B] dark:text-slate-400 leading-relaxed max-w-sm">
-            Ethiopia&apos;s unified multi-category reservation platform. Secure, instant digital QR passes for buses, movies, concerts, and stadium sports.
+            {settings.tagline || "Ethiopia's unified multi-category reservation platform. Secure, instant digital QR passes for buses, movies, concerts, and stadium sports."}
           </p>
 
           <div className="flex flex-wrap items-center gap-x-3 gap-y-1 pt-0.5 text-[10px] sm:text-[11px] text-[#0F172A] dark:text-slate-300">
             <div className="flex items-center gap-1">
               <MapPin className="w-3 h-3 text-slate-400 shrink-0" />
-              <span>Edna Mall Tower, Addis Ababa</span>
+              <span>{brandLocation}</span>
             </div>
             <div className="flex items-center gap-1">
               <Phone className="w-3 h-3 text-slate-400 shrink-0" />
-              <span>+251 11 667 8900</span>
+              <span>{brandPhone}</span>
             </div>
             <div className="flex items-center gap-1">
               <Mail className="w-3 h-3 text-slate-400 shrink-0" />
-              <span>support@tikora.et</span>
+              <span>{brandEmail}</span>
             </div>
           </div>
         </div>
@@ -224,7 +245,7 @@ export function Footer() {
       {/* Copyright Bar - Compact */}
       <div className="border-t border-[#E2E8F0] dark:border-slate-800 py-2.5 px-3 sm:px-6">
         <div className="max-w-7xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-1.5 text-center sm:text-left text-[10px] sm:text-[11px] text-[#64748B] dark:text-slate-400">
-          <p>© {new Date().getFullYear()} TIKORA Ethiopia Inc. All Rights Reserved.</p>
+          <p>{copyrightNotice}</p>
           <div className="flex items-center justify-center gap-3">
             <Link href="/about" className="hover:text-[#B45309] dark:hover:text-[#D97706]">About</Link>
             <Link href="/contact" className="hover:text-[#B45309] dark:hover:text-[#D97706]">Terms</Link>

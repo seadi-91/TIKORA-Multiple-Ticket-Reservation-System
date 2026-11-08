@@ -253,9 +253,9 @@ export default function CustomerSettingsPage() {
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 max-w-xl">
             {[
               { id: "EN", label: "English", sub: "Default" },
-              { id: "AM", label: "አማርኛ (Amharic)", sub: "Active" },
+              { id: "AM", label: "Amharic", sub: "Active" },
               { id: "OM", label: "Afaan Oromoo", sub: "Active" },
-              { id: "TI", label: "ትግርኛ (Tigrinya)", sub: "Active" },
+              { id: "TI", label: "Tigrinya", sub: "Active" },
             ].map((lang) => (
               <button
                 key={lang.id}

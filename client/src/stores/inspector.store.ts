@@ -222,6 +222,9 @@ interface InspectorStoreState {
   scannerSoundEnabled: boolean;
   scannerVibrateEnabled: boolean;
   autoResetDurationSec: number;
+  organizationBookings: any[];
+  organizationTickets: any[];
+  isLoadingBookings: boolean;
 
   // Actions
   setInspectorCategory: (category: TicketCategory, orgName?: string) => void;
@@ -236,6 +239,9 @@ interface InspectorStoreState {
   setAutoResetDuration: (sec: number) => void;
   syncOrganizationTickets: (tickets: any[]) => void;
   fetchOrganizationServices: () => Promise<void>;
+  fetchOrganizationBookings: () => Promise<void>;
+  checkInBooking: (reference: string) => Promise<boolean>;
+  initializeFromAuthUser: (user: any) => void;
 }
 
 export const useInspectorStore = create<InspectorStoreState>((set, get) => ({
@@ -254,6 +260,9 @@ export const useInspectorStore = create<InspectorStoreState>((set, get) => ({
   scannerSoundEnabled: true,
   scannerVibrateEnabled: true,
   autoResetDurationSec: 5,
+  organizationBookings: [],
+  organizationTickets: [],
+  isLoadingBookings: false,
 
   // Change sector dynamically (Cinema vs Bus vs Event vs Sports)
   setInspectorCategory: (category: TicketCategory, customOrgName?: string) => {
@@ -276,6 +285,37 @@ export const useInspectorStore = create<InspectorStoreState>((set, get) => ({
       verificationHistory: dataset.history,
       notifications: dataset.notifications,
     }));
+
+    get().fetchOrganizationServices();
+  },
+
+  initializeFromAuthUser: (user: any) => {
+    if (!user) return;
+    const cat = ((user.organizationCategory || user.category || "BUS") as string).toUpperCase() as TicketCategory;
+    const dataset = SECTOR_DATASETS[cat] || SECTOR_DATASETS.BUS;
+    const orgName =
+      user.organizationName ||
+      user.organization ||
+      dataset.profile.organizationName ||
+      "Provider Organization";
+    const station = user.assignedStation || dataset.profile.assignedStation || "Main Gate Terminal";
+
+    set((state) => ({
+      profile: {
+        ...state.profile,
+        ...dataset.profile,
+        id: String(user.id || state.profile.id),
+        fullName: user.name || state.profile.fullName,
+        email: user.email || state.profile.email,
+        phone: user.phone || state.profile.phone,
+        organizationName: orgName,
+        organizationId: user.organizationId ? String(user.organizationId) : state.profile.organizationId,
+        category: cat,
+        assignedStation: station,
+      } as InspectorProfile,
+    }));
+
+    get().fetchOrganizationServices();
   },
 
   setCurrentAssignment: (id: string) => {
@@ -291,11 +331,17 @@ export const useInspectorStore = create<InspectorStoreState>((set, get) => ({
   syncOrganizationTickets: (tickets: any[]) => {
     const profile = get().profile;
     const cat = profile.category || "CINEMA";
-    const matching = tickets.filter(
-      (t) =>
-        t.category === cat ||
-        (profile.organizationName && t.organizer?.toLowerCase().includes(profile.organizationName.toLowerCase()))
-    );
+    const cleanOrg = (profile.organizationName || "").toLowerCase().trim();
+    const orgWords = cleanOrg.split(/\s+/).filter((w) => w.length > 2 && w !== "express" && w !== "lines" && w !== "plc" && w !== "ltd");
+
+    const matching = tickets.filter((t) => {
+      const tOrg = (t.organizer || "").toLowerCase();
+      const tTitle = (t.title || "").toLowerCase();
+      if (cleanOrg && (tOrg.includes(cleanOrg) || cleanOrg.includes(tOrg))) return true;
+      if (orgWords.some((w) => tOrg.includes(w) || tTitle.includes(w))) return true;
+      if (t.category === cat) return true;
+      return false;
+    });
 
     const mappedAssignments: InspectorAssignment[] = matching.map((t) => ({
       id: `asn-${t.id}`,
@@ -305,7 +351,7 @@ export const useInspectorStore = create<InspectorStoreState>((set, get) => ({
       venueOrTerminal: t.location || t.city || "Addis Ababa",
       gate: t.category === "CINEMA" ? "Auditorium Hall 1" : "Terminal Gate 3",
       scheduledDate: t.date || "2026-11-20",
-      scheduledTime: t.time || "05:30 PM", // Showtime / Starts At (የሚጀምርበት ሰዓት) or Departure Time
+      scheduledTime: t.time || "05:30 PM", // Showtime / Starts At or Departure Time
       coachOrHall: t.category === "CINEMA" ? "Cinema Hall VIP" : "Coach 01",
       driverOrLead: t.organizer,
       totalSeats: t.totalSeats || 50,
@@ -315,25 +361,176 @@ export const useInspectorStore = create<InspectorStoreState>((set, get) => ({
       validReferencePrefix: "TIK-",
     }));
 
-    if (mappedAssignments.length > 0) {
-      set({
-        assignments: mappedAssignments,
-        currentAssignmentId: mappedAssignments[0]?.id || "",
-      });
-    }
+    set({
+      organizationTickets: matching.length > 0 ? matching : tickets,
+      assignments: mappedAssignments.length > 0 ? mappedAssignments : get().assignments,
+      currentAssignmentId: mappedAssignments[0]?.id || get().currentAssignmentId,
+    });
   },
 
   fetchOrganizationServices: async () => {
     try {
       const tickets = await TicketService.fetchTickets();
       get().syncOrganizationTickets(tickets);
+      get().fetchOrganizationBookings();
     } catch (e) {
       console.error("Failed to sync inspector services:", e);
     }
   },
 
+  fetchOrganizationBookings: async () => {
+    set({ isLoadingBookings: true });
+    try {
+      const profile = get().profile;
+      const cleanOrg = (profile.organizationName || "").toLowerCase().trim();
+      const cat = profile.category || "CINEMA";
+      const orgWords = cleanOrg.split(/\s+/).filter((w) => w.length > 2 && w !== "express" && w !== "lines" && w !== "plc" && w !== "ltd");
+
+      // 1. Fetch from server API
+      let serverBookings: any[] = [];
+      try {
+        const res = await fetch("/api/bookings");
+        if (res.ok) {
+          const data = await res.json();
+          if (data.success && Array.isArray(data.bookings)) {
+            serverBookings = data.bookings;
+          }
+        }
+      } catch (err) {
+        console.warn("Could not fetch server bookings:", err);
+      }
+
+      // 2. Fetch from local storages
+      let localBookings: any[] = [];
+      if (typeof window !== "undefined") {
+        try {
+          const b1 = JSON.parse(localStorage.getItem("tikora_bookings") || "[]");
+          const b2 = JSON.parse(localStorage.getItem("tikora_provider_bookings") || "[]");
+          const b3 = JSON.parse(localStorage.getItem("tikora_admin_bookings") || "[]");
+          localBookings = [...b1, ...b2, ...b3];
+        } catch {}
+      }
+
+      // Combine and deduplicate
+      const combined = [...serverBookings, ...localBookings];
+      const seen = new Set<string>();
+      const unique = combined.filter((b) => {
+        const ref = (b.bookingReference || b.reference || b.id || "").toUpperCase();
+        if (!ref || seen.has(ref)) return false;
+        seen.add(ref);
+        return true;
+      });
+
+      // Filter for this organization
+      const matched = unique.filter((b) => {
+        const bOrg = (b.providerName || b.ticket?.organizer || b.organizer || "").toLowerCase();
+        const bTitle = (b.serviceTitle || b.ticket?.title || "").toLowerCase();
+        const bCat = (b.category || b.ticket?.category || "").toUpperCase();
+
+        if (cleanOrg && (bOrg.includes(cleanOrg) || cleanOrg.includes(bOrg))) return true;
+        if (orgWords.some((w) => bOrg.includes(w) || bTitle.includes(w))) return true;
+        if (bCat === cat) return true;
+        return false;
+      });
+
+      set({ organizationBookings: matched, isLoadingBookings: false });
+    } catch (err) {
+      console.error("fetchOrganizationBookings error:", err);
+      set({ isLoadingBookings: false });
+    }
+  },
+
+  checkInBooking: async (reference: string) => {
+    try {
+      const cleanRef = reference.trim().toUpperCase();
+
+      // 1. Send update to server API
+      await fetch("/api/bookings", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ reference: cleanRef, bookingStatus: "CHECKED_IN" }),
+      }).catch(() => {});
+
+      // 2. Update store state
+      const nowTime = new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
+      set((s) => ({
+        organizationBookings: s.organizationBookings.map((b) => {
+          const bRef = (b.bookingReference || b.reference || b.id || "").toUpperCase();
+          if (bRef === cleanRef || bRef.includes(cleanRef) || cleanRef.includes(bRef)) {
+            return { ...b, bookingStatus: "CHECKED_IN", checkedInAt: nowTime };
+          }
+          return b;
+        }),
+      }));
+
+      // 3. Update local storage copies
+      if (typeof window !== "undefined") {
+        try {
+          const updateStorage = (key: string) => {
+            const list = JSON.parse(localStorage.getItem(key) || "[]");
+            const updated = list.map((b: any) => {
+              const bRef = (b.bookingReference || b.reference || b.id || "").toUpperCase();
+              if (bRef === cleanRef || bRef.includes(cleanRef) || cleanRef.includes(bRef)) {
+                return { ...b, bookingStatus: "CHECKED_IN", checkedInAt: nowTime };
+              }
+              return b;
+            });
+            localStorage.setItem(key, JSON.stringify(updated));
+          };
+          updateStorage("tikora_bookings");
+          updateStorage("tikora_provider_bookings");
+          updateStorage("tikora_admin_bookings");
+        } catch {}
+      }
+
+      // 4. Record to inspector verification audit history
+      const matched = get().organizationBookings.find((b) => {
+        const bRef = (b.bookingReference || b.reference || b.id || "").toUpperCase();
+        return bRef === cleanRef || bRef.includes(cleanRef) || cleanRef.includes(bRef);
+      });
+
+      const logItem: VerificationLogItem = {
+        id: `VLOG-${Date.now()}`,
+        ticketReference: cleanRef,
+        passengerName: matched?.customerName || "Patron Admitted",
+        seatNumber:
+          (matched?.selectedSeats && matched.selectedSeats.join(", ")) ||
+          (matched?.seats && matched.seats.join(", ")) ||
+          matched?.selectedTier ||
+          "Standard Pass",
+        serviceTitle: matched?.serviceTitle || matched?.ticket?.title || get().profile.organizationName,
+        category: get().profile.category,
+        verificationDate: "Today",
+        verificationTime: nowTime,
+        location: get().profile.assignedStation,
+        result: "VALID",
+      };
+
+      set((s) => ({
+        verificationHistory: [logItem, ...s.verificationHistory],
+        assignments: s.assignments.map((a, idx) =>
+          idx === 0 ? { ...a, scannedSeats: a.scannedSeats + 1 } : a
+        ),
+      }));
+
+      return true;
+    } catch (err) {
+      console.error("checkInBooking error:", err);
+      return false;
+    }
+  },
+
   verifyTicket: (reference: string) => {
-    const rawRef = reference.trim().toUpperCase();
+    let rawRef = reference.trim();
+    // Support parsing raw QR code string: TIKORA-PASS:<ref>:<amount>:PAID
+    if (rawRef.startsWith("TIKORA-PASS:")) {
+      const parts = rawRef.split(":");
+      if (parts[1]) {
+        rawRef = parts[1];
+      }
+    }
+    const cleanRef = rawRef.toUpperCase();
+
     const state = get();
     const activeCategory = state.profile.category;
     const currentAssignment =
@@ -347,10 +544,10 @@ export const useInspectorStore = create<InspectorStoreState>((set, get) => ({
     let outcome: VerificationOutcome;
 
     // Check 1: Empty or invalid barcode
-    if (!rawRef || rawRef.length < 5 || rawRef.startsWith("INV") || rawRef.includes("FAKE")) {
+    if (!cleanRef || cleanRef.length < 4 || cleanRef.startsWith("INV") || cleanRef.includes("FAKE")) {
       outcome = {
         result: "INVALID",
-        ticketReference: rawRef || "UNKNOWN_QR",
+        ticketReference: cleanRef || "UNKNOWN_QR",
         passengerName: "Unregistered Holder",
         serviceTitle,
         category: activeCategory,
@@ -362,10 +559,10 @@ export const useInspectorStore = create<InspectorStoreState>((set, get) => ({
       };
     }
     // Check 2: Expired pass test
-    else if (rawRef.includes("EXP") || rawRef === "TH-EXP-001") {
+    else if (cleanRef.includes("EXP") || cleanRef === "TH-EXP-001") {
       outcome = {
         result: "EXPIRED",
-        ticketReference: rawRef,
+        ticketReference: cleanRef,
         passengerName: "Pass Holder",
         seatNumber: "Expired Pass",
         serviceTitle,
@@ -379,22 +576,22 @@ export const useInspectorStore = create<InspectorStoreState>((set, get) => ({
     }
     // Check 3: Wrong Category / Assignment (e.g., Bus ticket presented at Cinema or vice-versa)
     else if (
-      (activeCategory === "CINEMA" && (rawRef.startsWith("TH-BUS") || rawRef.startsWith("TH-EVT") || rawRef.startsWith("TH-SPT"))) ||
-      (activeCategory === "BUS" && (rawRef.startsWith("TH-CNM") || rawRef.startsWith("TH-EVT") || rawRef.startsWith("TH-SPT"))) ||
-      (activeCategory === "EVENT" && (rawRef.startsWith("TH-BUS") || rawRef.startsWith("TH-CNM") || rawRef.startsWith("TH-SPT"))) ||
-      (activeCategory === "SPORTS" && (rawRef.startsWith("TH-BUS") || rawRef.startsWith("TH-CNM") || rawRef.startsWith("TH-EVT")))
+      (activeCategory === "CINEMA" && (cleanRef.startsWith("TH-BUS") || cleanRef.startsWith("TH-EVT") || cleanRef.startsWith("TH-SPT"))) ||
+      (activeCategory === "BUS" && (cleanRef.startsWith("TH-CNM") || cleanRef.startsWith("TH-EVT") || cleanRef.startsWith("TH-SPT"))) ||
+      (activeCategory === "EVENT" && (cleanRef.startsWith("TH-BUS") || cleanRef.startsWith("TH-CNM") || cleanRef.startsWith("TH-SPT"))) ||
+      (activeCategory === "SPORTS" && (cleanRef.startsWith("TH-BUS") || cleanRef.startsWith("TH-CNM") || cleanRef.startsWith("TH-EVT")))
     ) {
-      const foreignCategory = rawRef.startsWith("TH-CNM")
+      const foreignCategory = cleanRef.startsWith("TH-CNM")
         ? "Cinema"
-        : rawRef.startsWith("TH-BUS")
+        : cleanRef.startsWith("TH-BUS")
         ? "Bus Coach"
-        : rawRef.startsWith("TH-EVT")
+        : cleanRef.startsWith("TH-EVT")
         ? "Event Festival"
         : "Stadium Sports";
 
       outcome = {
         result: "WRONG_ASSIGNMENT",
-        ticketReference: rawRef,
+        ticketReference: cleanRef,
         passengerName: "Cross-Sector Voucher",
         seatNumber: "--",
         serviceTitle: foreignCategory,
@@ -410,13 +607,13 @@ export const useInspectorStore = create<InspectorStoreState>((set, get) => ({
     // Check 4: Check if already scanned in today's local verification history
     else {
       const existingValidScan = state.verificationHistory.find(
-        (v) => v.ticketReference === rawRef && v.result === "VALID"
+        (v) => v.ticketReference === cleanRef && v.result === "VALID"
       );
 
       if (existingValidScan) {
         outcome = {
           result: "ALREADY_USED",
-          ticketReference: rawRef,
+          ticketReference: cleanRef,
           passengerName: existingValidScan.passengerName,
           seatNumber: existingValidScan.seatNumber,
           serviceTitle,
@@ -429,6 +626,40 @@ export const useInspectorStore = create<InspectorStoreState>((set, get) => ({
           },
         };
       } else {
+        // Resolve real booking data from persistent storage if available
+        let matchedPassenger = "Verified Patron";
+        let matchedSeat = "Standard Entry";
+        let matchedService = serviceTitle;
+        let matchedCat = activeCategory;
+
+        if (typeof window !== "undefined") {
+          try {
+            const stored = [
+              ...(JSON.parse(localStorage.getItem("tikora_bookings") || "[]")),
+              ...(JSON.parse(localStorage.getItem("tikora_provider_bookings") || "[]")),
+              ...(JSON.parse(localStorage.getItem("tikora_admin_bookings") || "[]")),
+            ];
+            const found = stored.find(
+              (b: any) =>
+                (b.bookingReference && b.bookingReference.toUpperCase() === cleanRef) ||
+                (b.reference && b.reference.toUpperCase() === cleanRef) ||
+                (b.id && String(b.id).toUpperCase() === cleanRef) ||
+                (b.bookingReference && cleanRef.includes(b.bookingReference.toUpperCase())) ||
+                (b.reference && cleanRef.includes(b.reference.toUpperCase()))
+            );
+            if (found) {
+              matchedPassenger = found.customerName || found.passengerName || matchedPassenger;
+              matchedSeat =
+                (found.selectedSeats && found.selectedSeats.join(", ")) ||
+                (found.seats && found.seats.join(", ")) ||
+                found.selectedTier ||
+                matchedSeat;
+              matchedService = found.serviceTitle || found.ticket?.title || matchedService;
+              if (found.category) matchedCat = found.category;
+            }
+          } catch {}
+        }
+
         const successMessage =
           activeCategory === "CINEMA"
             ? "Ticket verified successfully. Patron auditorium admission approved."
@@ -440,11 +671,11 @@ export const useInspectorStore = create<InspectorStoreState>((set, get) => ({
 
         outcome = {
           result: "VALID",
-          ticketReference: rawRef,
-          passengerName: "Verified Patron",
-          seatNumber: "Standard Entry",
-          serviceTitle,
-          category: activeCategory,
+          ticketReference: cleanRef,
+          passengerName: matchedPassenger,
+          seatNumber: matchedSeat,
+          serviceTitle: matchedService,
+          category: matchedCat,
           verifiedAt: timestamp,
           message: successMessage,
           details: {

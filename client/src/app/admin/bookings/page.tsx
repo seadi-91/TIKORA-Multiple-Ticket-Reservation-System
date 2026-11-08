@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import Link from "next/link";
 import {
   BookOpen,
@@ -20,12 +20,18 @@ import {
   CreditCard,
   Building2,
   User,
+  RefreshCw,
 } from "lucide-react";
+import { toast } from "sonner";
 import { useAdminStore, AdminBooking } from "@/stores/admin.store";
 import { ActionDropdown } from "@/components/ui/action-dropdown";
 
 export default function AdminBookingsPage() {
-  const { bookings } = useAdminStore();
+  const { bookings, fetchPlatformData, isLoading } = useAdminStore();
+
+  useEffect(() => {
+    fetchPlatformData();
+  }, [fetchPlatformData]);
 
   const [searchQuery, setSearchQuery] = useState("");
   const [categoryFilter, setCategoryFilter] = useState<string>("ALL");
@@ -109,13 +115,27 @@ export default function AdminBookingsPage() {
           </p>
         </div>
 
-        <button
-          onClick={exportCSV}
-          className="px-4 py-2 text-xs font-bold rounded-xl bg-card border border-slate-200/50 dark:border-slate-800/50 hover:bg-muted text-foreground transition-all flex items-center gap-2 self-start sm:self-auto shadow-xs"
-        >
-          <Download className="w-4 h-4 text-amber-600 dark:text-amber-400" />
-          <span>Export Ledger CSV</span>
-        </button>
+        <div className="flex items-center gap-2 self-start sm:self-auto flex-wrap">
+          <button
+            type="button"
+            onClick={async () => {
+              await fetchPlatformData();
+              toast.success("Synchronized bookings with PostgreSQL database & ledger.");
+            }}
+            disabled={isLoading}
+            className="px-3.5 py-2 text-xs font-semibold rounded-xl bg-card border border-slate-200/50 dark:border-slate-800/50 hover:bg-muted text-foreground transition-all flex items-center gap-1.5 shadow-xs cursor-pointer disabled:opacity-60"
+          >
+            <RefreshCw className={`w-3.5 h-3.5 ${isLoading ? "animate-spin text-amber-600" : "text-amber-600 dark:text-amber-400"}`} />
+            <span>{isLoading ? "Syncing..." : "Sync DB"}</span>
+          </button>
+          <button
+            onClick={exportCSV}
+            className="px-4 py-2 text-xs font-bold rounded-xl bg-card border border-slate-200/50 dark:border-slate-800/50 hover:bg-muted text-foreground transition-all flex items-center gap-2 shadow-xs cursor-pointer"
+          >
+            <Download className="w-4 h-4 text-amber-600 dark:text-amber-400" />
+            <span>Export Ledger CSV</span>
+          </button>
+        </div>
       </div>
 
       {/* Mobile Filter Dropdown */}
@@ -275,8 +295,10 @@ export default function AdminBookingsPage() {
                   <span className="text-[10px] uppercase font-bold text-muted-foreground tracking-wider">
                     Customer / Passenger
                   </span>
-                  <span className="font-mono text-[10px] bg-amber-500/10 text-amber-600 dark:text-amber-400 font-bold px-2 py-0.5 rounded-md border border-amber-500/20">
-                    {b.seatNumbers.length > 0 ? `Seats: ${b.seatNumbers.join(", ")}` : `${b.quantity} passes`}
+                  <span className="font-mono text-[10px] bg-amber-500/10 text-amber-600 dark:text-amber-400 font-bold px-2 py-0.5 rounded-md">
+                    {(b.seatNumbers?.length || b.seats?.length || 0) > 0
+                      ? `Seats: ${(b.seatNumbers || b.seats || []).join(", ")}`
+                      : `${b.quantity || 1} passes`}
                   </span>
                 </div>
                 <div className="flex items-center justify-between text-[11px]">
@@ -372,9 +394,11 @@ export default function AdminBookingsPage() {
                   <td className="px-4 py-3.5 font-semibold text-foreground whitespace-nowrap">{b.providerName}</td>
                   <td className="px-4 py-3.5 whitespace-nowrap">
                     <div>
-                      <p className="font-bold text-foreground">{b.quantity} ticket(s)</p>
+                      <p className="font-bold text-foreground">
+                        {b.quantity || (b.seatNumbers || b.seats || []).length || 1} ticket(s)
+                      </p>
                       <p className="text-[10px] text-muted-foreground font-mono">
-                        {b.seatNumbers.join(", ")}
+                        {(b.seatNumbers || b.seats || []).join(", ") || "Standard"}
                       </p>
                     </div>
                   </td>
@@ -393,11 +417,11 @@ export default function AdminBookingsPage() {
                   </td>
                   <td className="px-4 py-3.5 whitespace-nowrap">
                     {b.bookingStatus === "CONFIRMED" ? (
-                      <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 ring-1 ring-inset ring-emerald-500/20">
+                      <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-emerald-500/10 text-emerald-600 dark:text-emerald-400">
                         <CheckCircle2 className="w-3 h-3" /> Confirmed
                       </span>
                     ) : (
-                      <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-rose-500/10 text-rose-600 dark:text-rose-400 ring-1 ring-inset ring-rose-500/20">
+                      <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-rose-500/10 text-rose-600 dark:text-rose-400">
                         <RotateCcw className="w-3 h-3" /> Cancelled
                       </span>
                     )}
@@ -480,9 +504,11 @@ export default function AdminBookingsPage() {
                 <div>
                   <p className="text-muted-foreground text-[11px]">Seats Assigned</p>
                   <p className="font-mono font-extrabold text-foreground mt-0.5 text-sm">
-                    {selectedBooking.seatNumbers.join(", ")}
+                    {(selectedBooking.seatNumbers || selectedBooking.seats || []).join(", ") || "Standard Admission"}
                   </p>
-                  <p className="text-[11px] text-muted-foreground">Quantity: {selectedBooking.quantity} ticket(s)</p>
+                  <p className="text-[11px] text-muted-foreground">
+                    Quantity: {selectedBooking.quantity || (selectedBooking.seatNumbers || selectedBooking.seats || []).length || 1} ticket(s)
+                  </p>
                 </div>
               </div>
 

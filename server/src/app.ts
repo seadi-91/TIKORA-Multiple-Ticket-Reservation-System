@@ -6,6 +6,7 @@ import session from "express-session";
 import passport from "passport";
 import { ENV } from "./config/environment";
 import { configurePassport } from "./config/passport";
+import { SettingsController } from "./modules/admin/settings.controller";
 import authRoutes from "./modules/auth/auth.routes";
 import adminRoutes from "./modules/admin/admin.routes";
 import userRoutes from "./modules/users/user.routes";
@@ -60,6 +61,10 @@ app.use(passport.session());
 app.get("/api/health", (_req, res) => {
   res.status(200).json({ status: "OK", timestamp: new Date().toISOString() });
 });
+
+// Public Platform Settings (Site name, logo, contact & copyright)
+app.get("/api/settings", SettingsController.getPublicSettings);
+app.get("/api/platform/settings", SettingsController.getPublicSettings);
 
 // Auth Routes
 app.use("/api/auth", authRoutes);

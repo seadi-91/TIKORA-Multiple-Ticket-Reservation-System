@@ -319,7 +319,7 @@ export default function ProviderPaymentsPage() {
           }`}
         >
           <Ticket className="w-3.5 h-3.5" />
-          <span>Ticket Sales Revenue (የቲኬት ሽያጭ ገቢ)</span>
+          <span>Ticket Sales Revenue</span>
           <span className="ml-1 px-1.5 py-0.2 rounded-full text-[10px] bg-amber-500/10 text-amber-600">
             {ticketSales.length}
           </span>
@@ -334,7 +334,7 @@ export default function ProviderPaymentsPage() {
           }`}
         >
           <Receipt className="w-3.5 h-3.5" />
-          <span>Disbursements &amp; Payouts (የባንክ ማስተላለፊያ)</span>
+          <span>Disbursements &amp; Payouts</span>
           <span className="ml-1 px-1.5 py-0.2 rounded-full text-[10px] bg-slate-100 dark:bg-slate-800 text-muted-foreground">
             {transactions.length}
           </span>

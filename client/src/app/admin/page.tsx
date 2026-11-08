@@ -23,7 +23,9 @@ import {
   Layers,
   ChevronRight,
   Activity,
+  RefreshCw,
 } from "lucide-react";
+import { toast } from "sonner";
 import { useAdminStore } from "@/stores/admin.store";
 import { DashboardLineChart } from "@/components/charts/line-chart";
 import { DashboardBarChart } from "@/components/charts/bar-chart";
@@ -40,6 +42,7 @@ export default function AdminDashboardPage() {
     refunds,
     approveOrganization,
     fetchPlatformData,
+    isLoading,
   } = useAdminStore();
 
   useEffect(() => {
@@ -211,7 +214,19 @@ export default function AdminDashboardPage() {
             </p>
           </div>
 
-          <div className="flex items-center gap-2.5 shrink-0">
+          <div className="flex items-center gap-2.5 shrink-0 flex-wrap">
+            <button
+              type="button"
+              onClick={async () => {
+                await fetchPlatformData();
+                toast.success("Synchronized with PostgreSQL database & live ledger.");
+              }}
+              disabled={isLoading}
+              className="px-3 py-2 text-xs font-semibold rounded-xl bg-card hover:bg-muted text-foreground transition-all shadow-xs flex items-center gap-1.5 border border-slate-200/50 dark:border-slate-800/50 cursor-pointer disabled:opacity-60"
+            >
+              <RefreshCw className={`w-3.5 h-3.5 ${isLoading ? "animate-spin text-amber-600" : "text-amber-600 dark:text-amber-400"}`} />
+              <span>{isLoading ? "Syncing..." : "Sync DB"}</span>
+            </button>
             <Link
               href="/admin/providers"
               className="px-3 py-2 text-xs font-semibold rounded-xl bg-card/90 hover:bg-card text-foreground transition-all shadow-xs flex items-center gap-2 border border-slate-200/50 dark:border-slate-800/50"

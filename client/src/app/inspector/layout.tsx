@@ -1,10 +1,12 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { InspectorSidebar } from "@/components/navigation/inspector-sidebar";
 import { InspectorHeader } from "@/components/navigation/inspector-header";
 import { InspectorBottomNav } from "@/components/navigation/inspector-bottom-nav";
 import { AuthGuard } from "@/components/auth/auth-guard";
+import { useAuthStore } from "@/stores/auth.store";
+import { useInspectorStore } from "@/stores/inspector.store";
 
 export default function InspectorLayout({
   children,
@@ -13,6 +15,16 @@ export default function InspectorLayout({
 }) {
   const [collapsed, setCollapsed] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
+  const { user } = useAuthStore();
+  const { initializeFromAuthUser, fetchOrganizationServices } = useInspectorStore();
+
+  useEffect(() => {
+    if (user && (user.role === "INSPECTOR" || user.organizationName)) {
+      initializeFromAuthUser(user);
+    } else {
+      fetchOrganizationServices();
+    }
+  }, [user]);
 
   return (
     <AuthGuard allowedRoles={["INSPECTOR", "ADMIN"]}>

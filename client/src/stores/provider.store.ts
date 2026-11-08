@@ -173,9 +173,10 @@ interface ProviderStoreState {
   addMovieShowtime: (showtime: Omit<MovieShowtimeItem, "id">) => void;
   updateMovieShowtime: (id: string, data: Partial<MovieShowtimeItem>) => void;
   // Staff Actions
-  addStaffMember: (member: Omit<ProviderStaffMember, "id" | "scannedTicketsCount" | "dateAdded">) => void;
+  addStaffMember: (member: Omit<ProviderStaffMember, "scannedTicketsCount" | "dateAdded"> & { id?: string }) => void;
   toggleStaffStatus: (id: string) => void;
   deleteStaffMember: (id: string) => void;
+  fetchStaff: () => Promise<ProviderStaffMember[]>;
   // Refund Actions
   processRefund: (id: string, action: "APPROVED" | "REJECTED") => void;
   // Notification Actions
@@ -217,7 +218,7 @@ export const getInitialStatsForCategory = (cat: TicketCategory) => ({
   totalTicketsSold: 0,
   activeServices: 0,
   pendingBookings: 0,
-  availableSeats: 0,
+  availableSeats: cat === "BUS" ? 46 : cat === "CINEMA" ? 66 : cat === "SPORTS" ? 420 : 185,
 });
 
 const getInitialProviderBookings = (): ProviderBookingRecord[] => {
@@ -230,7 +231,17 @@ const getInitialProviderBookings = (): ProviderBookingRecord[] => {
   }
 };
 
-export const useProviderStore = create<ProviderStoreState>((set) => ({
+const getInitialProviderStaff = (): ProviderStaffMember[] => {
+  if (typeof window === "undefined") return [];
+  try {
+    const raw = localStorage.getItem("tikora_provider_staff");
+    return raw ? JSON.parse(raw) : [];
+  } catch {
+    return [];
+  }
+};
+
+export const useProviderStore = create<ProviderStoreState>((set, get) => ({
   organization: {
     id: "org-provider-01",
     name: "Organization Provider Portal",
@@ -264,7 +275,7 @@ export const useProviderStore = create<ProviderStoreState>((set) => ({
   busRoutes: [],
   busSchedules: [],
   movieShowtimes: [],
-  staffMembers: [],
+  staffMembers: getInitialProviderStaff(),
   refunds: [],
   notifications: [],
   bookings: getInitialProviderBookings(),
@@ -343,30 +354,67 @@ export const useProviderStore = create<ProviderStoreState>((set) => ({
       movieShowtimes: state.movieShowtimes.map((m) => (m.id === id ? { ...m, ...data } : m)),
     })),
 
-  addStaffMember: (member) =>
-    set((state) => ({
-      staffMembers: [
-        {
-          ...member,
-          id: `st-${Date.now()}`,
-          scannedTicketsCount: 0,
-          dateAdded: new Date().toISOString().split("T")[0],
-        },
-        ...state.staffMembers,
-      ],
-    })),
+  fetchStaff: async () => {
+    try {
+      const staff = await providerService.getStaff();
+      if (staff && staff.length > 0) {
+        set({ staffMembers: staff });
+        if (typeof window !== "undefined") {
+          try {
+            localStorage.setItem("tikora_provider_staff", JSON.stringify(staff));
+          } catch {}
+        }
+        return staff;
+      }
+    } catch {}
+    return get().staffMembers;
+  },
 
-  toggleStaffStatus: (id) =>
-    set((state) => ({
-      staffMembers: state.staffMembers.map((s) =>
-        s.id === id ? { ...s, status: s.status === "ACTIVE" ? "SUSPENDED" : "ACTIVE" } : s
-      ),
-    })),
+  addStaffMember: (member) => {
+    const newMember: ProviderStaffMember = {
+      ...member,
+      id: member.id || `st-${Date.now()}`,
+      scannedTicketsCount: 0,
+      dateAdded: new Date().toISOString().split("T")[0],
+    };
+    set((state) => {
+      const updated = [newMember, ...state.staffMembers.filter((s) => s.email !== member.email)];
+      if (typeof window !== "undefined") {
+        try {
+          localStorage.setItem("tikora_provider_staff", JSON.stringify(updated));
+        } catch {}
+      }
+      return { staffMembers: updated };
+    });
+  },
 
-  deleteStaffMember: (id) =>
-    set((state) => ({
-      staffMembers: state.staffMembers.filter((s) => s.id !== id),
-    })),
+  toggleStaffStatus: (id) => {
+    set((state) => {
+      const updated = state.staffMembers.map((s) =>
+        s.id === id ? { ...s, status: (s.status === "ACTIVE" ? "SUSPENDED" : "ACTIVE") as any } : s
+      );
+      if (typeof window !== "undefined") {
+        try {
+          localStorage.setItem("tikora_provider_staff", JSON.stringify(updated));
+        } catch {}
+      }
+      providerService.toggleStaffStatus(id).catch(() => {});
+      return { staffMembers: updated };
+    });
+  },
+
+  deleteStaffMember: (id) => {
+    set((state) => {
+      const updated = state.staffMembers.filter((s) => s.id !== id);
+      if (typeof window !== "undefined") {
+        try {
+          localStorage.setItem("tikora_provider_staff", JSON.stringify(updated));
+        } catch {}
+      }
+      providerService.deleteStaff(id).catch(() => {});
+      return { staffMembers: updated };
+    });
+  },
 
   processRefund: (id, action) =>
     set((state) => ({

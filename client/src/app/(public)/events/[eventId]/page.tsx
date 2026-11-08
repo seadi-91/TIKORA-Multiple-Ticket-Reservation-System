@@ -169,7 +169,7 @@ export default function EventDetailPage({ params }: { params: Promise<{ eventId:
       try {
         setIsProcessingPayment(true);
         const returnUrl = typeof window !== "undefined"
-          ? `${window.location.origin}/payments/callback?category=EVENT&ticketId=${event.id}`
+          ? `${window.location.origin}/payments/callback`
           : undefined;
 
         const res = await PaymentService.initializeChapaPayment({
@@ -337,8 +337,11 @@ export default function EventDetailPage({ params }: { params: Promise<{ eventId:
                     <span className="text-[10px] uppercase font-bold text-[#64748B] dark:text-amber-400/60 block">
                       Starting At
                     </span>
-                    <span className="text-2xl font-black text-[#F59E0B] dark:text-amber-400">
+                    <span className="text-2xl font-black text-[#F59E0B] dark:text-amber-400 block">
                       {formatCurrency(tiers[0]?.price || event.price)}
+                    </span>
+                    <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20 text-[11px] font-bold font-mono mt-1">
+                      {event.availableSeats !== undefined ? event.availableSeats : 185} passes left
                     </span>
                   </div>
                 </div>
@@ -350,7 +353,7 @@ export default function EventDetailPage({ params }: { params: Promise<{ eventId:
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs text-[#64748B] dark:text-slate-400 pt-2 border-t border-[#E2E8F0] dark:border-slate-800">
                   <div className="space-y-0.5">
                     <span className="text-[10px] uppercase font-bold text-muted-foreground block">
-                      Event Starts / Gate Opens (የሚጀምርበት ሰዓት)
+                      Event Starts / Gate Opens
                     </span>
                     <div className="flex items-center gap-1.5 font-bold text-[#0F172A] dark:text-white">
                       <Clock className="w-4 h-4 text-[#F59E0B]" />
@@ -414,6 +417,12 @@ export default function EventDetailPage({ params }: { params: Promise<{ eventId:
                                   </li>
                                 ))}
                               </ul>
+                              <div className="pt-2 border-t border-slate-200/50 dark:border-slate-800 flex items-center justify-between text-[11px]">
+                                <span className="font-bold text-emerald-600 dark:text-emerald-400 font-mono">
+                                  {tier.available !== undefined ? tier.available : Math.floor((event.availableSeats || 185) / tiers.length)} tickets left
+                                </span>
+                                <span className="text-[10px] text-muted-foreground font-medium">In stock</span>
+                              </div>
                             </div>
                           </div>
                         );

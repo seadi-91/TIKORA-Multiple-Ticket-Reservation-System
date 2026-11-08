@@ -222,7 +222,7 @@ export default function AdminUsersPage() {
               <div className="flex items-start justify-between gap-2.5">
                 <div className="flex items-start gap-3 min-w-0 flex-1">
                   <div className="w-10 h-10 rounded-xl bg-gradient-to-tr from-amber-500/15 to-amber-500/5 text-amber-600 dark:text-amber-400 flex items-center justify-center shrink-0 font-extrabold text-sm shadow-xs border border-amber-500/20 mt-0.5">
-                    {user.name.charAt(0)}
+                    {user.name?.charAt(0) || "U"}
                   </div>
                   <div className="min-w-0 flex-1">
                     <Link
@@ -379,7 +379,7 @@ export default function AdminUsersPage() {
                   <td className="px-5 py-3.5 min-w-[200px]">
                     <div className="flex items-center gap-3">
                       <div className="w-9 h-9 rounded-xl bg-gradient-to-tr from-amber-500/15 to-amber-500/5 text-amber-600 dark:text-amber-400 font-extrabold text-xs flex items-center justify-center shrink-0 shadow-xs">
-                        {user.name.charAt(0)}
+                        {user.name?.charAt(0) || "U"}
                       </div>
                       <div className="min-w-0">
                         <Link

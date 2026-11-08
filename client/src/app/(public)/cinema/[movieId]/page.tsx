@@ -178,7 +178,7 @@ export default function MovieDetailPage({ params }: { params: Promise<{ movieId:
       try {
         setIsProcessingPayment(true);
         const returnUrl = typeof window !== "undefined"
-          ? `${window.location.origin}/payments/callback?category=CINEMA&ticketId=${movie.id}`
+          ? `${window.location.origin}/payments/callback`
           : undefined;
 
         const res = await PaymentService.initializeChapaPayment({
@@ -351,6 +351,9 @@ export default function MovieDetailPage({ params }: { params: Promise<{ movieId:
                     <span className="text-xs text-[#F59E0B] dark:text-amber-400 font-semibold block">
                       {movie.categoryDetails?.movieHall || movie.location}
                     </span>
+                    <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20 text-[11px] font-bold font-mono mt-1">
+                      {seats.filter((s) => s.isAvailable).length} seats left
+                    </span>
                   </div>
                 </div>
 
@@ -359,7 +362,7 @@ export default function MovieDetailPage({ params }: { params: Promise<{ movieId:
                   <div className="flex items-center justify-between">
                     <span className="text-xs font-bold text-[#0F172A] dark:text-white flex items-center gap-1.5">
                       <Clock className="w-3.5 h-3.5 text-amber-500" />
-                      <span>Showtime / Starts At (የሚጀምርበት ሰዓት):</span>
+                      <span>Showtime / Starts At:</span>
                     </span>
                     <span className="text-[11px] font-bold text-amber-600 dark:text-amber-400">
                       {selectedTime}
@@ -395,6 +398,10 @@ export default function MovieDetailPage({ params }: { params: Promise<{ movieId:
                         </h2>
                         <p className="text-xs text-[#64748B] dark:text-slate-400">
                           Selected Seats: <strong className="text-[#F59E0B] dark:text-amber-400">{selectedSeatIds.join(", ")}</strong>
+                          {" • "}
+                          <span className="text-emerald-600 dark:text-emerald-400 font-bold font-mono">
+                            {seats.filter((s) => s.isAvailable).length} seats left
+                          </span>
                         </p>
                       </div>
 

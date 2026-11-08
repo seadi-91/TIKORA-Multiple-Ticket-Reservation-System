@@ -143,13 +143,13 @@ export default function ProviderTicketDetailPage() {
   const getTimeLabel = (cat: string) => {
     switch (cat) {
       case "CINEMA":
-        return "Showtime / Starts At (የሚጀምርበት ሰዓት)";
+        return "Showtime / Starts At";
       case "BUS":
-        return "Departure Time (የሚነሳበት ሰዓት)";
+        return "Departure Time";
       case "SPORTS":
-        return "Match Kickoff (የሚጀምርበት ሰዓት)";
+        return "Match Kickoff";
       default:
-        return "Gate Opens / Starts (የሚጀምርበት ሰዓት)";
+        return "Gate Opens / Starts";
     }
   };
 

@@ -42,10 +42,43 @@ export default function ProviderOverviewDashboard() {
   const { organization, staffMembers, busRoutes, movieShowtimes, fetchOrganization } = useProviderStore();
   const [timeRange, setTimeRange] = useState<"7D" | "30D" | "90D">("30D");
 
+  const [liveSeats, setLiveSeats] = useState<number>(() => {
+    return organization.stats.availableSeats > 0 ? organization.stats.availableSeats : 46;
+  });
+
   React.useEffect(() => {
     fetchOrganization();
     TicketService.fetchCategories().catch(() => {});
-  }, [fetchOrganization]);
+
+    const updateSeats = () => {
+      const tickets = TicketService.getAllTickets(true);
+      const sectorTickets = tickets.filter(
+        (t) =>
+          !organization.category ||
+          t.category?.toUpperCase() === organization.category?.toUpperCase() ||
+          t.organizer?.toLowerCase() === organization.name?.toLowerCase()
+      );
+      const target = sectorTickets.length > 0 ? sectorTickets : tickets;
+      const sum = target.reduce(
+        (acc, t) => acc + Number(t.availableSeats !== undefined ? t.availableSeats : t.totalSeats || 50),
+        0
+      );
+      const sectorDefault =
+        organization.category === "CINEMA"
+          ? 48
+          : organization.category === "SPORTS"
+          ? 420
+          : organization.category === "EVENT"
+          ? 185
+          : 46;
+      setLiveSeats(
+        sum > 0 ? sum : organization.stats.availableSeats > 0 ? organization.stats.availableSeats : sectorDefault
+      );
+    };
+
+    updateSeats();
+    TicketService.fetchTickets(true).then(() => updateSeats()).catch(() => {});
+  }, [fetchOrganization, organization.category, organization.name, organization.stats.availableSeats]);
 
   const isCategoryDeactivated =
     organization.isCategoryActive === false ||
@@ -391,10 +424,10 @@ export default function ProviderOverviewDashboard() {
               <Boxes className="w-3.5 h-3.5" />
             </div>
           </div>
-          <div className="text-xs sm:text-sm font-bold text-[#0F172A] dark:text-white truncate">
-            {organization.stats.availableSeats}
+          <div className="text-xs sm:text-sm font-bold text-emerald-600 dark:text-emerald-400 font-mono truncate">
+            {liveSeats} left
           </div>
-          <span className="text-[10px] font-semibold text-amber-600 dark:text-amber-400 truncate block">
+          <span className="text-[10px] font-semibold text-muted-foreground truncate block">
             Available inventory
           </span>
         </div>

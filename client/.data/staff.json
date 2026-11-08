@@ -1,0 +1,15 @@
+[
+  {
+    "id": "st-1794112585298",
+    "fullName": "Seadi Murad",
+    "email": "muradsada888@gmail.com",
+    "phone": "+251 91826354",
+    "password": "sa123456",
+    "role": "INSPECTOR",
+    "assignedStation": "Stadium Gate 4 (Grandstand VIP)",
+    "status": "ACTIVE",
+    "scannedTicketsCount": 0,
+    "lastActive": "Just now",
+    "dateAdded": "2026-11-08"
+  }
+]

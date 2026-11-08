@@ -423,9 +423,9 @@ export default function CreateTicketPage() {
               <div>
                 <label className="block text-xs font-medium text-foreground mb-1.5">
                   {category === "CINEMA"
-                    ? "Showtime / Starts At (የሚጀምርበት ሰዓት)"
+                    ? "Showtime / Starts At"
                     : category === "BUS"
-                    ? "Departure Time (የሚነሳበት ሰዓት)"
+                    ? "Departure Time"
                     : category === "EVENT"
                     ? "Gate Opens / Event Starts"
                     : "Kick-off / Match Time"}

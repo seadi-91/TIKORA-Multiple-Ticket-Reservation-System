@@ -102,7 +102,7 @@ export interface AdminInspector {
   organizationName: string;
   organizationCategory: "BUS" | "CINEMA" | "EVENT" | "SPORTS";
   assignedStation: string;
-  addedBy: {
+  addedBy?: {
     name: string;
     email: string;
     role: string;
@@ -171,6 +171,11 @@ export interface AdminBooking {
   category: "BUS" | "CINEMA" | "EVENT" | "SPORTS";
   quantity: number;
   seatNumbers: string[];
+  seats?: string[];
+  providerId?: string;
+  providerPayout?: number;
+  travelDate?: string;
+  departureTime?: string;
   totalAmount: number;
   platformFee: number;
   paymentMethod: "TELEBIRR" | "CBE_BIRR" | "CHAPA" | "CASH";
@@ -246,10 +251,16 @@ export interface AdminAuditLog {
 export interface AdminSettings {
   // General & Branding
   platformName: string;
+  siteName?: string;
+  logoUrl?: string;
   tagline: string;
   supportEmail: string;
   supportPhone: string;
   headquartersAddress: string;
+  footerEmail?: string;
+  footerPhone?: string;
+  footerLocation?: string;
+  copyrightText?: string;
   operatingRegion: string;
   defaultTimezone: string;
   defaultLanguage: string;
@@ -376,12 +387,15 @@ interface AdminState {
   deleteCategory: (categoryId: string) => Promise<boolean>;
 
   processPayout: (id: string, approve: boolean, notes?: string) => void;
+  deletePayout: (id: string) => void;
   processRefund: (id: string, approve: boolean, notes?: string) => void;
   replyToSupportTicket: (id: string, reply: string, updateStatus?: "OPEN" | "IN_PROGRESS" | "RESOLVED") => void;
   addBooking: (booking: AdminBooking) => void;
 
   updateSettings: (newSettings: Partial<AdminSettings>) => void;
   addAuditLog: (entry: Omit<AdminAuditLog, "id" | "timestamp">) => void;
+  deleteAuditLogs: (ids: string[]) => Promise<void>;
+  clearAllAuditLogs: () => Promise<void>;
 
   isLoading: boolean;
   fetchPlatformData: () => Promise<void>;
@@ -403,7 +417,20 @@ export const useAdminStore = create<AdminState>((set, get) => ({
   fetchPlatformData: async () => {
     set({ isLoading: true });
     try {
-      const [users, providers, inspectors, stats, auditLogs, services, notifs, categories] = await Promise.all([
+      const [
+        users,
+        providers,
+        inspectors,
+        stats,
+        auditLogs,
+        services,
+        notifs,
+        categories,
+        bookingsList,
+        refundsList,
+        supportList,
+        settingsData,
+      ] = await Promise.all([
         adminService.getUsers().catch(() => []),
         adminService.getProviders().catch(() => []),
         adminService.getInspectors().catch(() => []),
@@ -412,16 +439,40 @@ export const useAdminStore = create<AdminState>((set, get) => ({
         adminService.getTickets().catch(() => []),
         adminService.getNotifications().catch(() => []),
         adminService.getCategories().catch(() => []),
+        adminService.getBookings().catch(() => []),
+        adminService.getRefunds().catch(() => []),
+        adminService.getSupportTickets().catch(() => []),
+        adminService.getSettings().catch(() => null),
       ]);
+
+      const computedGMV = bookingsList.reduce((sum: number, b: any) => sum + (Number(b.totalAmount) || 0), 0);
+      const computedRev = bookingsList.reduce((sum: number, b: any) => sum + (Number(b.platformFee) || 0), 0);
+      const computedRefunds = refundsList.filter((r: any) => r.status === "PENDING").length;
 
       set((state) => ({
         users: users.length > 0 ? users : state.users,
-        organizations: providers,
-        inspectors,
-        stats: stats ? { ...state.stats, ...stats } : state.stats,
+        organizations: providers.length > 0 ? providers : state.organizations,
+        inspectors: inspectors.length > 0 ? inspectors : state.inspectors,
+        stats: {
+          ...state.stats,
+          ...(stats || {}),
+          totalBookings: Math.max(bookingsList.length, stats?.totalBookings || 0),
+          totalGMV: Math.max(computedGMV, stats?.totalGMV || 0),
+          platformRevenue: Math.max(computedRev, stats?.platformRevenue || 0),
+          refundsRequested: Math.max(computedRefunds, stats?.refundsRequested || 0),
+          totalUsers: users.length > 0 ? users.length : state.stats.totalUsers,
+          activeProviders: providers.filter((p: any) => p.status === "APPROVED").length || state.stats.activeProviders,
+          pendingApprovals: providers.filter((p: any) => p.status === "PENDING").length || state.stats.pendingApprovals,
+          activeTickets: services.length > 0 ? services.length : state.stats.activeTickets,
+          activeInspectors: inspectors.filter((i: any) => i.status === "ACTIVE").length || state.stats.activeInspectors,
+        },
         auditLogs: auditLogs.length > 0 ? auditLogs : state.auditLogs,
         services: services.length > 0 ? services : state.services,
         categories: categories.length > 0 ? categories : state.categories,
+        bookings: bookingsList.length > 0 ? bookingsList : state.bookings,
+        refunds: refundsList.length > 0 ? refundsList : state.refunds,
+        supportTickets: supportList.length > 0 ? supportList : state.supportTickets,
+        settings: settingsData ? { ...state.settings, ...settingsData } : state.settings,
         isLoading: false,
       }));
     } catch (error) {
@@ -503,10 +554,16 @@ export const useAdminStore = create<AdminState>((set, get) => ({
   settings: {
     // General & Branding
     platformName: "TIKORA Ethiopia",
+    siteName: "TIKORA",
+    logoUrl: "",
     tagline: "Ethiopia's Unified Smart Ticket & Transit Hub",
     supportEmail: "support@tikora.et",
-    supportPhone: "+251 115 500 000",
-    headquartersAddress: "Bole Medhanialem, Mega Building 4th Floor, Addis Ababa",
+    supportPhone: "+251 11 667 8900",
+    headquartersAddress: "Edna Mall Tower, Bole Sub-City, Addis Ababa, Ethiopia",
+    footerEmail: "support@tikora.et",
+    footerPhone: "+251 11 667 8900",
+    footerLocation: "Edna Mall Tower, Bole Sub-City, Addis Ababa, Ethiopia",
+    copyrightText: "© 2026 TIKORA Technologies Inc. All Rights Reserved.",
     operatingRegion: "Federal Democratic Republic of Ethiopia",
     defaultTimezone: "Africa/Addis_Ababa (UTC+3)",
     defaultLanguage: "en",
@@ -1145,6 +1202,25 @@ export const useAdminStore = create<AdminState>((set, get) => ({
     });
   },
 
+  deletePayout: (id: string) => {
+    const payout = get().payouts.find((p) => p.id === id);
+    if (!payout) return;
+
+    set((state) => ({
+      payouts: state.payouts.filter((p) => p.id !== id),
+    }));
+
+    get().addAuditLog({
+      action: "PAYOUT_RECORD_DELETED",
+      actorName: "Peter SuperAdmin",
+      actorRole: "SUPER_ADMIN",
+      target: `${payout.reference} (${payout.providerName})`,
+      details: `Permanently removed settlement payout record for ${payout.providerName}. Amount: ETB ${payout.netAmount.toLocaleString()}`,
+      ipAddress: "197.156.104.22",
+      severity: "WARNING",
+    });
+  },
+
   processRefund: (id: string, approve: boolean, notes?: string) => {
     const refund = get().refunds.find((r) => r.id === id);
     if (!refund) return;
@@ -1253,6 +1329,11 @@ export const useAdminStore = create<AdminState>((set, get) => ({
       settings: { ...state.settings, ...newSettings },
     }));
 
+    // Asynchronously persist to backend API & PostgreSQL audit ledger
+    adminService.updateSettings(newSettings).catch((err) => {
+      console.warn("Could not persist settings to backend:", err);
+    });
+
     get().addAuditLog({
       action: "PLATFORM_SETTINGS_UPDATED",
       actorName: "Peter SuperAdmin",
@@ -1278,6 +1359,18 @@ export const useAdminStore = create<AdminState>((set, get) => ({
     adminService.createAuditLog(entry).catch((err) => {
       console.warn("Could not persist audit log to DB:", err);
     });
+  },
+
+  deleteAuditLogs: async (ids: string[]) => {
+    set((state) => ({
+      auditLogs: state.auditLogs.filter((l) => !ids.includes(l.id)),
+    }));
+    await adminService.deleteAuditLogs(ids).catch(() => {});
+  },
+
+  clearAllAuditLogs: async () => {
+    set({ auditLogs: [] });
+    await adminService.clearAllAuditLogs().catch(() => {});
   },
 }));
 

@@ -17,6 +17,7 @@
     "html5-qrcode": "^2.3.8",
     "lucide-react": "^1.66.0",
     "next": "16.4.3",
+    "next-intl": "^4.14.9",
     "postcss": "^8.5.32",
     "qrcode.react": "^4.2.0",
     "react": "19.3.0",

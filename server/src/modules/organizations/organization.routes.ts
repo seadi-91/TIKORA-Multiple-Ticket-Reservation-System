@@ -13,5 +13,11 @@ router.put("/profile", OrganizationController.updateProfile);
 router.get("/organization", OrganizationController.getProfile);
 router.put("/organization", OrganizationController.updateProfile);
 
+// Staff and Gate Inspectors Management
+router.get("/staff", OrganizationController.getStaff);
+router.post("/staff", OrganizationController.createStaff);
+router.patch("/staff/:id/status", OrganizationController.toggleStaffStatus);
+router.delete("/staff/:id", OrganizationController.deleteStaff);
+
 export default router;
 

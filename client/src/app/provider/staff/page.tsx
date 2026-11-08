@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import Link from "next/link";
 import {
   Clock,
@@ -20,9 +20,13 @@ import { toast } from "sonner";
 import { ActionDropdown } from "@/components/ui/action-dropdown";
 
 export default function ProviderStaffPage() {
-  const { organization, staffMembers, toggleStaffStatus, deleteStaffMember } = useProviderStore();
+  const { organization, staffMembers, toggleStaffStatus, deleteStaffMember, fetchStaff } = useProviderStore();
   const [roleFilter, setRoleFilter] = useState<string>("ALL");
   const [searchQuery, setSearchQuery] = useState("");
+
+  useEffect(() => {
+    fetchStaff();
+  }, [fetchStaff]);
 
   const filteredStaff = staffMembers.filter((s) => {
     const matchesRole = roleFilter === "ALL" || s.role === roleFilter;
@@ -76,7 +80,7 @@ export default function ProviderStaffPage() {
             href="/provider/staff/invite"
             className="inline-flex items-center gap-1.5 px-4 py-2 text-xs font-semibold rounded-lg bg-amber-600 hover:bg-amber-700 text-white shadow-sm transition-colors"
           >
-            <UserPlus className="w-3.5 h-3.5" /> Invite Staff Member
+            <UserPlus className="w-3.5 h-3.5" /> Add Staff &amp; Inspector
           </Link>
         </div>
       </div>
