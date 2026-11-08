@@ -1,7 +1,8 @@
 "use client";
 
-import React, { useState, use } from "react";
+import React, { useState, useEffect, use } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import {
   Calendar,
   MapPin,
@@ -17,6 +18,8 @@ import {
   Check,
   Plus,
   Minus,
+  Loader2,
+  Lock,
 } from "lucide-react";
 import { Header } from "@/components/layout/header";
 import { Footer } from "@/components/layout/footer";
@@ -27,31 +30,96 @@ import { PaymentMethodSelector } from "@/components/payment/payment-method";
 import { BookingConfirmation } from "@/components/booking/booking-confirmation";
 import { useBookingStore } from "@/stores/booking.store";
 import { useAuthStore } from "@/stores/auth.store";
+import { userService } from "@/services/user.service";
+import { PaymentService } from "@/services/payment.service";
 import { formatCurrency } from "@/lib/format-currency";
 import { formatDate } from "@/lib/format-date";
 import { BookingRecord } from "@/types/booking.types";
+import { TicketItem, TicketTier } from "@/types/ticket.types";
 
 export default function EventDetailPage({ params }: { params: Promise<{ eventId: string }> }) {
   const resolvedParams = use(params);
-  const { user } = useAuthStore();
-  const event = EventService.getEventById(resolvedParams.eventId);
+  const router = useRouter();
+  const { user, isAuthenticated } = useAuthStore();
+  const [event, setEvent] = useState<TicketItem | null>(() => EventService.getEventById(resolvedParams.eventId) || null);
+  const [loading, setLoading] = useState(!event);
 
   const { addBooking } = useBookingStore();
+
+  useEffect(() => {
+    let isMounted = true;
+    EventService.fetchEventById(resolvedParams.eventId).then((fetched) => {
+      if (isMounted) {
+        if (fetched) setEvent(fetched);
+        setLoading(false);
+      }
+    });
+    return () => {
+      isMounted = false;
+    };
+  }, [resolvedParams.eventId]);
 
   const tiers = event?.tiers || (event ? [
     { id: "reg", name: "Regular Admission", price: event.price, available: 500, perks: ["General Entry", "Food Village Access"] },
     { id: "vip", name: "VIP Pass", price: event.price * 2, available: 100, perks: ["Priority Front Zone", "VIP Bar", "Fast Gate"] },
   ] : []);
 
-  const [selectedTier, setSelectedTier] = useState(tiers[0]);
+  const [selectedTierId, setSelectedTierId] = useState<string>("reg");
+
+  const activeTier =
+    tiers.find((t) => t.id === selectedTierId) ||
+    tiers[0] || {
+      id: "reg",
+      name: "Regular Admission",
+      price: event?.price || 0,
+      available: 500,
+      perks: ["General Entry"],
+    };
+
   const [quantity, setQuantity] = useState(1);
   const [step, setStep] = useState<1 | 2 | 3>(1);
+  const [isProcessingPayment, setIsProcessingPayment] = useState(false);
 
   const [customerName, setCustomerName] = useState(user?.name || "");
   const [customerPhone, setCustomerPhone] = useState(user?.phone || "");
   const [customerEmail, setCustomerEmail] = useState(user?.email || "");
-  const [paymentMethod, setPaymentMethod] = useState("TELEBIRR");
+  const [paymentMethod, setPaymentMethod] = useState("CHAPA");
   const [confirmedBooking, setConfirmedBooking] = useState<BookingRecord | null>(null);
+
+  // Auto-populate customer info from DB & user store
+  useEffect(() => {
+    if (isAuthenticated) {
+      if (user?.name && !customerName) setCustomerName(user.name);
+      if (user?.phone && !customerPhone) setCustomerPhone(user.phone);
+      if (user?.email && !customerEmail) setCustomerEmail(user.email);
+
+      userService
+        .getProfile()
+        .then((profile) => {
+          if (profile) {
+            if (profile.name) setCustomerName(profile.name);
+            if (profile.phone) setCustomerPhone(profile.phone);
+            if (profile.email) setCustomerEmail(profile.email);
+          }
+        })
+        .catch((err) => {
+          console.warn("Could not fetch user profile from DB:", err);
+        });
+    }
+  }, [isAuthenticated, user]);
+
+  if (loading && !event) {
+    return (
+      <div className="min-h-screen flex flex-col bg-[#F8FAFC] dark:bg-[#0F1117] text-[#0F172A] dark:text-[#F8FAFC]">
+        <Header />
+        <main className="flex-1 flex flex-col items-center justify-center p-8 space-y-3">
+          <Loader2 className="w-8 h-8 text-amber-600 animate-spin" />
+          <p className="text-xs font-semibold text-muted-foreground">Loading event details...</p>
+        </main>
+        <Footer />
+      </div>
+    );
+  }
 
   if (!event) {
     return (
@@ -77,15 +145,105 @@ export default function EventDetailPage({ params }: { params: Promise<{ eventId:
     );
   }
 
-  const pricing = BookingService.calculatePricing(selectedTier.price, quantity);
+  const pricing = BookingService.calculatePricing(activeTier.price, quantity);
 
   const handleProceedToPayment = (e: React.FormEvent) => {
     e.preventDefault();
+    if (!isAuthenticated) {
+      const currentPath = typeof window !== "undefined" ? window.location.pathname : `/events/${event.id}`;
+      router.push(`/login?redirect=${encodeURIComponent(currentPath)}`);
+      return;
+    }
     setStep(2);
     window.scrollTo({ top: 0, behavior: "smooth" });
   };
 
-  const handleFinalBooking = () => {
+  const handleFinalBooking = async () => {
+    if (!isAuthenticated) {
+      const currentPath = typeof window !== "undefined" ? window.location.pathname : `/events/${event.id}`;
+      router.push(`/login?redirect=${encodeURIComponent(currentPath)}`);
+      return;
+    }
+
+    if (paymentMethod === "CHAPA") {
+      try {
+        setIsProcessingPayment(true);
+        const returnUrl = typeof window !== "undefined"
+          ? `${window.location.origin}/payments/callback?category=EVENT&ticketId=${event.id}`
+          : undefined;
+
+        const res = await PaymentService.initializeChapaPayment({
+          amount: pricing.total,
+          currency: "ETB",
+          email: customerEmail || user?.email || "customer@tikora.et",
+          firstName: customerName.split(" ")[0] || "Guest",
+          lastName: customerName.split(" ").slice(1).join(" ") || "Customer",
+          phone: customerPhone || user?.phone || "+251911000000",
+          ticketId: event.id,
+          ticketTitle: event.title,
+          category: "EVENT",
+          selectedTier: activeTier.name,
+          quantity,
+          returnUrl,
+        });
+
+        if (res.checkoutUrl) {
+          const pendingBooking: BookingRecord = {
+            id: res.bookingNumber || `BKG-${Date.now()}`,
+            bookingReference: res.txRef,
+            ticketId: event.id,
+            ticket: event,
+            category: "EVENT",
+            customerName,
+            customerEmail,
+            customerPhone,
+            passengers: Array.from({ length: quantity }).map((_, i) => ({
+              fullName: i === 0 ? customerName : `Guest ${i + 1}`,
+              phone: customerPhone,
+              email: customerEmail,
+              seatNumber: `${activeTier.name} #${i + 1}`,
+            })),
+            selectedSeats: [`${activeTier.name} (x${quantity})`],
+            selectedTier: activeTier.name,
+            quantity,
+            pricing,
+            paymentMethod: "CHAPA",
+            paymentStatus: "PENDING",
+            bookingStatus: "PENDING",
+            createdAt: new Date().toISOString(),
+            qrCodeData: `TIKORA-PASS:${res.txRef}:${pricing.total}:PENDING`,
+          };
+          addBooking(pendingBooking);
+
+          // Persist pending reference and pending booking to storage before redirecting to Chapa
+          if (typeof window !== "undefined") {
+            try {
+              localStorage.setItem("tikora_pending_tx_ref", res.txRef);
+              localStorage.setItem("tikora_pending_booking", JSON.stringify(pendingBooking));
+              sessionStorage.setItem("tikora_pending_tx_ref", res.txRef);
+              sessionStorage.setItem("tikora_pending_booking", JSON.stringify(pendingBooking));
+
+              fetch("/api/bookings", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ booking: pendingBooking, txRef: res.txRef }),
+              }).catch(() => {});
+            } catch (storageErr) {
+              console.warn("Storage error saving pending booking:", storageErr);
+            }
+          }
+
+          // Direct browser redirect to Chapa hosted checkout
+          window.location.href = res.checkoutUrl;
+          return;
+        }
+      } catch (err: any) {
+        alert(err.message || "Failed to initialize payment with Chapa.");
+        setIsProcessingPayment(false);
+        return;
+      }
+    }
+
     const newBooking: BookingRecord = {
       id: `BKG-${Date.now()}`,
       bookingReference: BookingService.generateBookingReference("EVENT"),
@@ -99,17 +257,17 @@ export default function EventDetailPage({ params }: { params: Promise<{ eventId:
         fullName: i === 0 ? customerName : `Guest ${i + 1}`,
         phone: customerPhone,
         email: customerEmail,
-        seatNumber: `${selectedTier.name} #${i + 1}`,
+        seatNumber: `${activeTier.name} #${i + 1}`,
       })),
-      selectedSeats: [`${selectedTier.name} (x${quantity})`],
-      selectedTier: selectedTier.name,
+      selectedSeats: [`${activeTier.name} (x${quantity})`],
+      selectedTier: activeTier.name,
       quantity,
       pricing,
       paymentMethod,
       paymentStatus: "PAID",
       bookingStatus: "CONFIRMED",
       createdAt: new Date().toISOString(),
-      qrCodeData: `TH-EVENT:${event.id}:${selectedTier.id}:${quantity}:${customerPhone}`,
+      qrCodeData: `TH-EVENT:${event.id}:${activeTier.id}:${quantity}:${customerPhone}`,
     };
 
     addBooking(newBooking);
@@ -140,10 +298,32 @@ export default function EventDetailPage({ params }: { params: Promise<{ eventId:
             <div className="lg:col-span-8 space-y-6">
               {/* Event Overview Card */}
               <div className="rounded-3xl bg-white dark:bg-[#161922] border border-[#E2E8F0] dark:border-slate-800 p-6 shadow-xs space-y-4">
+                {/* Hero Event Banner if image available */}
+                {event.imageUrl && (
+                  <div className="relative w-full h-44 sm:h-64 rounded-2xl overflow-hidden bg-slate-900 border border-slate-200/50 dark:border-slate-800 shadow-xs">
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img
+                      src={event.imageUrl}
+                      alt={event.title}
+                      className="w-full h-full object-cover"
+                    />
+                    <div className="absolute inset-0 bg-gradient-to-t from-slate-950/85 via-transparent to-black/20" />
+                    <div className="absolute bottom-3 left-3 right-3 flex items-center justify-between text-white text-xs">
+                      <span className="font-bold flex items-center gap-1.5 drop-shadow-sm">
+                        <MapPin className="w-3.5 h-3.5 text-amber-400" />
+                        <span>{event.location} • {event.city}</span>
+                      </span>
+                      <span className="font-bold px-2 py-0.5 rounded-md bg-amber-600 text-white shadow-xs">
+                        {event.badge || "Live Event"}
+                      </span>
+                    </div>
+                  </div>
+                )}
+
                 <div className="flex flex-wrap items-center justify-between gap-3 border-b border-[#E2E8F0] dark:border-slate-800 pb-4">
                   <div>
                     <span className="text-xs font-bold text-amber-700 dark:text-amber-300 px-2.5 py-1 rounded-md bg-amber-50 dark:bg-amber-950">
-                      {event.categoryDetails?.eventCategory || "Live Event"}
+                      {event.categoryDetails?.eventCategory || "Live Concert & Event"}
                     </span>
                     <h1 className="text-xl sm:text-2xl font-black text-[#0F172A] dark:text-white mt-1">
                       {event.title}
@@ -158,7 +338,7 @@ export default function EventDetailPage({ params }: { params: Promise<{ eventId:
                       Starting At
                     </span>
                     <span className="text-2xl font-black text-[#F59E0B] dark:text-amber-400">
-                      {formatCurrency(tiers[0].price)}
+                      {formatCurrency(tiers[0]?.price || event.price)}
                     </span>
                   </div>
                 </div>
@@ -168,13 +348,23 @@ export default function EventDetailPage({ params }: { params: Promise<{ eventId:
                 </p>
 
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs text-[#64748B] dark:text-slate-400 pt-2 border-t border-[#E2E8F0] dark:border-slate-800">
-                  <div className="flex items-center gap-2 font-medium text-[#0F172A] dark:text-white">
-                    <Calendar className="w-4 h-4 text-[#F59E0B]" />
-                    <span>{formatDate(event.date)} at {event.time}</span>
+                  <div className="space-y-0.5">
+                    <span className="text-[10px] uppercase font-bold text-muted-foreground block">
+                      Event Starts / Gate Opens (የሚጀምርበት ሰዓት)
+                    </span>
+                    <div className="flex items-center gap-1.5 font-bold text-[#0F172A] dark:text-white">
+                      <Clock className="w-4 h-4 text-[#F59E0B]" />
+                      <span>{formatDate(event.date)} at {event.time}</span>
+                    </div>
                   </div>
-                  <div className="flex items-center gap-2 font-medium text-[#0F172A] dark:text-white">
-                    <MapPin className="w-4 h-4 text-[#F59E0B]" />
-                    <span>{event.location}</span>
+                  <div className="space-y-0.5">
+                    <span className="text-[10px] uppercase font-bold text-muted-foreground block">
+                      Venue & Location
+                    </span>
+                    <div className="flex items-center gap-1.5 font-bold text-[#0F172A] dark:text-white">
+                      <MapPin className="w-4 h-4 text-[#F59E0B]" />
+                      <span>{event.location}</span>
+                    </div>
                   </div>
                 </div>
               </div>
@@ -189,11 +379,11 @@ export default function EventDetailPage({ params }: { params: Promise<{ eventId:
 
                     <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                       {tiers.map((tier) => {
-                        const isSelected = selectedTier.id === tier.id;
+                        const isSelected = activeTier.id === tier.id;
                         return (
                           <div
                             key={tier.id}
-                            onClick={() => setSelectedTier(tier)}
+                            onClick={() => setSelectedTierId(tier.id)}
                             className={`p-4 rounded-2xl border transition-all cursor-pointer flex flex-col justify-between ${
                               isSelected
                                 ? "border-[#F59E0B] bg-[#FFFBEB]/60 dark:bg-amber-950/40 ring-1 ring-[#F59E0B]"
@@ -217,7 +407,7 @@ export default function EventDetailPage({ params }: { params: Promise<{ eventId:
                                 {formatCurrency(tier.price)}
                               </span>
                               <ul className="text-[11px] text-[#64748B] dark:text-amber-300/70 space-y-1">
-                                {tier.perks.map((p, i) => (
+                                {tier.perks.map((p: string, i: number) => (
                                   <li key={i} className="flex items-center gap-1">
                                     <span className="text-[#F59E0B]">•</span>
                                     <span>{p}</span>
@@ -259,9 +449,33 @@ export default function EventDetailPage({ params }: { params: Promise<{ eventId:
 
                   {/* Customer Information Form */}
                   <div className="rounded-3xl bg-white dark:bg-[#161922] border border-[#E2E8F0] dark:border-slate-800 p-6 shadow-xs space-y-4">
-                    <h3 className="text-base font-bold text-[#0F172A] dark:text-white">
-                      2. Guest Contact Information
-                    </h3>
+                    <div className="flex items-center justify-between">
+                      <h3 className="text-base font-bold text-[#0F172A] dark:text-white">
+                        2. Guest Contact Information
+                      </h3>
+                      {isAuthenticated && (
+                        <span className="text-[11px] font-semibold text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/40 px-2.5 py-1 rounded-full border border-emerald-200/60 dark:border-emerald-800/60 flex items-center gap-1.5 shrink-0">
+                          <ShieldCheck className="w-3.5 h-3.5" />
+                          <span>Auto-Filled from Profile</span>
+                        </span>
+                      )}
+                    </div>
+
+                    {!isAuthenticated && (
+                      <div className="p-3.5 rounded-2xl bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-800/60 flex items-center justify-between gap-3 text-xs text-amber-900 dark:text-amber-200">
+                        <div className="flex items-center gap-2">
+                          <Lock className="w-4 h-4 text-amber-600 shrink-0" />
+                          <span>Please sign in first to book this event ticket and auto-fill your contact details.</span>
+                        </div>
+                        <Link
+                          href={`/login?redirect=${encodeURIComponent(typeof window !== "undefined" ? window.location.pathname : `/events/${event.id}`)}`}
+                          className="px-3 py-1.5 rounded-xl bg-amber-600 hover:bg-amber-700 text-white font-bold text-[11px] shrink-0 transition-colors"
+                        >
+                          Sign In Now
+                        </Link>
+                      </div>
+                    )}
+
                     <form onSubmit={handleProceedToPayment} className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                       <div>
                         <label className="block text-xs font-semibold text-[#0F172A] dark:text-slate-300 mb-1">
@@ -316,8 +530,17 @@ export default function EventDetailPage({ params }: { params: Promise<{ eventId:
                           type="submit"
                           className="w-full py-3 rounded-2xl bg-[#F59E0B] hover:bg-[#D97706] text-white text-xs font-bold transition-all shadow-md active:scale-95 flex items-center justify-center gap-2 cursor-pointer"
                         >
-                          <span>Proceed to Payment ({quantity} × {selectedTier.name})</span>
-                          <ArrowRight className="w-4 h-4" />
+                          {!isAuthenticated ? (
+                            <>
+                              <Lock className="w-4 h-4" />
+                              <span>Sign In to Continue & Book ({quantity} × {activeTier.name})</span>
+                            </>
+                          ) : (
+                            <>
+                              <span>Proceed to Payment ({quantity} × {activeTier.name})</span>
+                              <ArrowRight className="w-4 h-4" />
+                            </>
+                          )}
                         </button>
                       </div>
                     </form>
@@ -332,7 +555,7 @@ export default function EventDetailPage({ params }: { params: Promise<{ eventId:
                         Complete Event Pass Payment
                       </h2>
                       <p className="text-xs text-[#64748B] dark:text-slate-400">
-                        {event.title} • {selectedTier.name} (Qty: {quantity})
+                        {event.title} • {activeTier.name} (Qty: {quantity})
                       </p>
                     </div>
 
@@ -359,10 +582,24 @@ export default function EventDetailPage({ params }: { params: Promise<{ eventId:
                     </button>
                     <button
                       onClick={handleFinalBooking}
-                      className="flex-1 py-3 rounded-2xl bg-[#F59E0B] hover:bg-[#D97706] text-white text-xs font-bold transition-all shadow-md active:scale-95 flex items-center justify-center gap-2 cursor-pointer"
+                      disabled={isProcessingPayment}
+                      className="flex-1 py-3 rounded-2xl bg-[#F59E0B] hover:bg-[#D97706] disabled:opacity-60 disabled:cursor-not-allowed text-white text-xs font-bold transition-all shadow-md active:scale-95 flex items-center justify-center gap-2 cursor-pointer"
                     >
-                      <span>Authorize Payment ({formatCurrency(pricing.total)})</span>
-                      <ArrowRight className="w-4 h-4" />
+                      {isProcessingPayment ? (
+                        <>
+                          <Loader2 className="w-4 h-4 animate-spin" />
+                          <span>Redirecting to Chapa Gateway...</span>
+                        </>
+                      ) : (
+                        <>
+                          <span>
+                            {paymentMethod === "CHAPA"
+                              ? `Pay with Chapa (${formatCurrency(pricing.total)})`
+                              : `Authorize Payment (${formatCurrency(pricing.total)})`}
+                          </span>
+                          <ArrowRight className="w-4 h-4" />
+                        </>
+                      )}
                     </button>
                   </div>
                 </div>
@@ -373,7 +610,7 @@ export default function EventDetailPage({ params }: { params: Promise<{ eventId:
             <div className="lg:col-span-4 sticky top-24 space-y-4">
               <BookingSummary
                 pricing={pricing}
-                selectedTier={`${selectedTier.name} (x${quantity})`}
+                selectedTier={`${activeTier.name} (x${quantity})`}
                 ticketTitle={event.title}
               />
             </div>

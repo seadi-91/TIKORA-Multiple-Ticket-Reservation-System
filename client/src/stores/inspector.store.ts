@@ -2,6 +2,7 @@
 
 import { create } from "zustand";
 import { TicketCategory } from "@/types/ticket.types";
+import { TicketService } from "@/services/ticket.service";
 
 export interface InspectorProfile {
   id: string;
@@ -233,6 +234,8 @@ interface InspectorStoreState {
   setScannerSound: (enabled: boolean) => void;
   setScannerVibrate: (enabled: boolean) => void;
   setAutoResetDuration: (sec: number) => void;
+  syncOrganizationTickets: (tickets: any[]) => void;
+  fetchOrganizationServices: () => Promise<void>;
 }
 
 export const useInspectorStore = create<InspectorStoreState>((set, get) => ({
@@ -283,6 +286,50 @@ export const useInspectorStore = create<InspectorStoreState>((set, get) => ({
     set((state) => ({
       profile: { ...state.profile, ...data },
     }));
+  },
+
+  syncOrganizationTickets: (tickets: any[]) => {
+    const profile = get().profile;
+    const cat = profile.category || "CINEMA";
+    const matching = tickets.filter(
+      (t) =>
+        t.category === cat ||
+        (profile.organizationName && t.organizer?.toLowerCase().includes(profile.organizationName.toLowerCase()))
+    );
+
+    const mappedAssignments: InspectorAssignment[] = matching.map((t) => ({
+      id: `asn-${t.id}`,
+      serviceId: String(t.id),
+      title: t.title,
+      category: t.category,
+      venueOrTerminal: t.location || t.city || "Addis Ababa",
+      gate: t.category === "CINEMA" ? "Auditorium Hall 1" : "Terminal Gate 3",
+      scheduledDate: t.date || "2026-11-20",
+      scheduledTime: t.time || "05:30 PM", // Showtime / Starts At (የሚጀምርበት ሰዓት) or Departure Time
+      coachOrHall: t.category === "CINEMA" ? "Cinema Hall VIP" : "Coach 01",
+      driverOrLead: t.organizer,
+      totalSeats: t.totalSeats || 50,
+      scannedSeats: Math.max(0, (t.totalSeats || 50) - (t.availableSeats || 50)),
+      status: "ACTIVE_NOW",
+      specialInstructions: `Authorized admission validation for ${t.title}. Showtime/Departure: ${t.time}.`,
+      validReferencePrefix: "TIK-",
+    }));
+
+    if (mappedAssignments.length > 0) {
+      set({
+        assignments: mappedAssignments,
+        currentAssignmentId: mappedAssignments[0]?.id || "",
+      });
+    }
+  },
+
+  fetchOrganizationServices: async () => {
+    try {
+      const tickets = await TicketService.fetchTickets();
+      get().syncOrganizationTickets(tickets);
+    } catch (e) {
+      console.error("Failed to sync inspector services:", e);
+    }
   },
 
   verifyTicket: (reference: string) => {

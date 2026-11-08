@@ -22,12 +22,14 @@ import {
   CheckCircle2,
   Eye,
   ArrowRight,
+  Trash2,
 } from "lucide-react";
 import { useAdminStore, AdminUser } from "@/stores/admin.store";
 import { ActionDropdown } from "@/components/ui/action-dropdown";
+import { ConfirmDeleteModal } from "@/components/ui/confirm-delete-modal";
 
 export default function AdminUsersPage() {
-  const { users, toggleUserStatus, createAdminUser, isLoading, fetchPlatformData } = useAdminStore();
+  const { users, toggleUserStatus, deleteUser, createAdminUser, isLoading, fetchPlatformData } = useAdminStore();
 
   useEffect(() => {
     fetchPlatformData();
@@ -37,6 +39,8 @@ export default function AdminUsersPage() {
   const [roleFilter, setRoleFilter] = useState<string>("ALL");
   const [statusFilter, setStatusFilter] = useState<string>("ALL");
   const [showCreateModal, setShowCreateModal] = useState(false);
+  const [userToDelete, setUserToDelete] = useState<AdminUser | null>(null);
+  const [isDeletingUser, setIsDeletingUser] = useState(false);
 
   // New admin form state
   const [newUserName, setNewUserName] = useState("");
@@ -276,6 +280,12 @@ export default function AdminUsersPage() {
                           },
                         ]
                       : []),
+                    {
+                      label: "Delete User",
+                      icon: <Trash2 className="w-4 h-4" />,
+                      variant: "danger" as const,
+                      onClick: () => setUserToDelete(user),
+                    },
                   ]}
                 />
               </div>
@@ -437,6 +447,12 @@ export default function AdminUsersPage() {
                               },
                             ]
                           : []),
+                        {
+                          label: "Delete User",
+                          icon: <Trash2 className="w-4 h-4" />,
+                          variant: "danger" as const,
+                          onClick: () => setUserToDelete(user),
+                        },
                       ]}
                     />
                   </td>
@@ -548,6 +564,29 @@ export default function AdminUsersPage() {
           </form>
         </div>
       )}
+      {/* Confirm Delete Permanent Modal */}
+      <ConfirmDeleteModal
+        isOpen={!!userToDelete}
+        itemType="User Account"
+        itemName={userToDelete ? `${userToDelete.name} (${userToDelete.email})` : ""}
+        warningMessage="This will permanently delete this user account, revoke all credentials, and remove associated data from the database."
+        isDeleting={isDeletingUser}
+        onConfirm={async () => {
+          if (!userToDelete) return;
+          setIsDeletingUser(true);
+          try {
+            await deleteUser(userToDelete.id);
+            setUserToDelete(null);
+          } catch (err) {
+            console.error("Failed to delete user:", err);
+          } finally {
+            setIsDeletingUser(false);
+          }
+        }}
+        onClose={() => {
+          if (!isDeletingUser) setUserToDelete(null);
+        }}
+      />
     </div>
   );
 }

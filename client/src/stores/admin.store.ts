@@ -2,6 +2,7 @@
 
 import { create } from "zustand";
 import { adminService } from "@/services/admin.service";
+import { TicketService } from "@/services/ticket.service";
 
 export interface PlatformStats {
   totalGMV: number;
@@ -125,23 +126,38 @@ export interface AdminService {
   providerName: string;
   location: string;
   price: number;
-  status: "ACTIVE" | "INACTIVE" | "FLAGGED";
+  status: "ACTIVE" | "INACTIVE" | "FLAGGED" | "SOLD_OUT";
   totalSold: number;
   capacity: number;
   startDate: string;
   rating: number;
+  imageUrl?: string;
+  time?: string;
+  date?: string;
+  venue?: string;
+  city?: string;
+  description?: string;
+  availableSeats?: number;
+  tiers?: any[];
+  amenities?: string[];
+  badge?: string;
+  duration?: string;
+  currency?: string;
+  reviewCount?: number;
+  organizerVerified?: boolean;
 }
 
 export interface AdminCategory {
   id: string;
   name: string;
   slug: string;
-  category: "BUS" | "CINEMA" | "EVENT" | "SPORTS";
+  category: "BUS" | "CINEMA" | "EVENT" | "SPORTS" | string;
   commissionRate: number;
   totalProviders: number;
   totalBookings: number;
   isActive: boolean;
   description: string;
+  icon?: string;
 }
 
 export interface AdminBooking {
@@ -344,12 +360,25 @@ interface AdminState {
   }) => void;
 
   toggleServiceStatus: (id: string) => void;
-  updateCategoryCommission: (categoryId: string, rate: number) => void;
-  toggleCategoryActive: (categoryId: string) => void;
+  deleteUser: (id: string) => Promise<boolean>;
+  deleteOrganization: (id: string) => Promise<boolean>;
+  deleteService: (id: string) => Promise<boolean>;
+  createCategory: (payload: {
+    name: string;
+    slug?: string;
+    description?: string;
+    commissionRate?: number;
+    icon?: string;
+  }) => Promise<AdminCategory>;
+  updateCategoryCommission: (categoryId: string, rate: number) => Promise<void>;
+  updateCategoryDetails: (id: string, payload: Partial<AdminCategory>) => Promise<AdminCategory>;
+  toggleCategoryActive: (categoryId: string) => Promise<void>;
+  deleteCategory: (categoryId: string) => Promise<boolean>;
 
   processPayout: (id: string, approve: boolean, notes?: string) => void;
   processRefund: (id: string, approve: boolean, notes?: string) => void;
   replyToSupportTicket: (id: string, reply: string, updateStatus?: "OPEN" | "IN_PROGRESS" | "RESOLVED") => void;
+  addBooking: (booking: AdminBooking) => void;
 
   updateSettings: (newSettings: Partial<AdminSettings>) => void;
   addAuditLog: (entry: Omit<AdminAuditLog, "id" | "timestamp">) => void;
@@ -358,18 +387,31 @@ interface AdminState {
   fetchPlatformData: () => Promise<void>;
 }
 
+const getInitialAdminBookings = (): AdminBooking[] => {
+  if (typeof window === "undefined") return [];
+  try {
+    const raw = localStorage.getItem("tikora_admin_bookings");
+    return raw ? JSON.parse(raw) : [];
+  } catch {
+    return [];
+  }
+};
+
 export const useAdminStore = create<AdminState>((set, get) => ({
   isLoading: false,
 
   fetchPlatformData: async () => {
     set({ isLoading: true });
     try {
-      const [users, providers, inspectors, stats, auditLogs] = await Promise.all([
+      const [users, providers, inspectors, stats, auditLogs, services, notifs, categories] = await Promise.all([
         adminService.getUsers().catch(() => []),
         adminService.getProviders().catch(() => []),
         adminService.getInspectors().catch(() => []),
         adminService.getOverview().catch(() => null),
         adminService.getAuditLogs().catch(() => []),
+        adminService.getTickets().catch(() => []),
+        adminService.getNotifications().catch(() => []),
+        adminService.getCategories().catch(() => []),
       ]);
 
       set((state) => ({
@@ -378,6 +420,8 @@ export const useAdminStore = create<AdminState>((set, get) => ({
         inspectors,
         stats: stats ? { ...state.stats, ...stats } : state.stats,
         auditLogs: auditLogs.length > 0 ? auditLogs : state.auditLogs,
+        services: services.length > 0 ? services : state.services,
+        categories: categories.length > 0 ? categories : state.categories,
         isLoading: false,
       }));
     } catch (error) {
@@ -450,7 +494,7 @@ export const useAdminStore = create<AdminState>((set, get) => ({
     },
   ],
 
-  bookings: [],
+  bookings: getInitialAdminBookings(),
   payouts: [],
   refunds: [],
   supportTickets: [],
@@ -827,32 +871,248 @@ export const useAdminStore = create<AdminState>((set, get) => ({
     });
   },
 
-  toggleServiceStatus: (id: string) => {
+  toggleServiceStatus: async (id: string) => {
+    const service = get().services.find((s) => s.id === id);
+    if (!service) return;
+
+    const nextStatus = service.status === "ACTIVE" ? "INACTIVE" : "ACTIVE";
+
     set((state) => ({
-      services: state.services.map((s) => {
-        if (s.id === id) {
-          const nextStatus = s.status === "ACTIVE" ? "INACTIVE" : "ACTIVE";
-          return { ...s, status: nextStatus };
-        }
-        return s;
-      }),
+      services: state.services.map((s) => (s.id === id ? { ...s, status: nextStatus } : s)),
     }));
+
+    try {
+      await adminService.toggleTicketStatus(id, service.status);
+    } catch (err) {
+      console.warn("Could not sync ticket status to backend, keeping local state:", err);
+    }
+
+    get().addAuditLog({
+      action: nextStatus === "ACTIVE" ? "SERVICE_ACTIVATED" : "SERVICE_DEACTIVATED",
+      actorName: "Peter SuperAdmin",
+      actorRole: "SUPER_ADMIN",
+      target: `${service.title} (${service.category})`,
+      details: `Service #${service.id} status transitioned to ${nextStatus}.`,
+      ipAddress: "127.0.0.1",
+      severity: nextStatus === "INACTIVE" ? "WARNING" : "INFO",
+    });
   },
 
-  updateCategoryCommission: (categoryId: string, rate: number) => {
+  deleteUser: async (id: string) => {
+    const user = get().users.find((u) => u.id === id);
+    set((state) => ({
+      users: state.users.filter((u) => u.id !== id),
+      stats: {
+        ...state.stats,
+        totalUsers: Math.max(0, state.stats.totalUsers - 1),
+      },
+    }));
+
+    try {
+      await adminService.deleteUser(id);
+    } catch (err) {
+      console.warn("Could not delete user on backend:", err);
+    }
+
+    get().addAuditLog({
+      action: "USER_DELETED_PERMANENTLY",
+      actorName: "Peter SuperAdmin",
+      actorRole: "SUPER_ADMIN",
+      target: user ? `${user.name} (${user.email})` : `User #${id}`,
+      details: `User account #${id} was permanently deleted by Super Admin.`,
+      ipAddress: "127.0.0.1",
+      severity: "WARNING",
+    });
+
+    return true;
+  },
+
+  deleteOrganization: async (id: string) => {
+    const org = get().organizations.find((o) => o.id === id);
+    set((state) => ({
+      organizations: state.organizations.filter((o) => o.id !== id),
+      services: state.services.filter((s) => s.providerId !== id),
+      stats: {
+        ...state.stats,
+        activeProviders: Math.max(0, state.stats.activeProviders - 1),
+      },
+    }));
+
+    try {
+      await adminService.deleteProvider(id);
+    } catch (err) {
+      console.warn("Could not delete provider on backend:", err);
+    }
+
+    get().addAuditLog({
+      action: "PROVIDER_DELETED_PERMANENTLY",
+      actorName: "Peter SuperAdmin",
+      actorRole: "SUPER_ADMIN",
+      target: org ? org.name : `Provider #${id}`,
+      details: `Provider organization #${id} was permanently deleted by Super Admin.`,
+      ipAddress: "127.0.0.1",
+      severity: "WARNING",
+    });
+
+    return true;
+  },
+
+  deleteService: async (id: string) => {
+    const srv = get().services.find((s) => s.id === id);
+    set((state) => ({
+      services: state.services.filter((s) => s.id !== id),
+      stats: {
+        ...state.stats,
+        activeTickets: Math.max(0, state.stats.activeTickets - 1),
+      },
+    }));
+
+    try {
+      await adminService.deleteTicket(id);
+    } catch (err) {
+      console.warn("Could not delete ticket on backend:", err);
+    }
+
+    get().addAuditLog({
+      action: "TICKET_DELETED_PERMANENTLY",
+      actorName: "Peter SuperAdmin",
+      actorRole: "SUPER_ADMIN",
+      target: srv ? `${srv.title} (${srv.category})` : `Ticket #${id}`,
+      details: `Ticket listing #${id} was permanently deleted by Super Admin.`,
+      ipAddress: "127.0.0.1",
+      severity: "WARNING",
+    });
+
+    return true;
+  },
+
+  createCategory: async (payload) => {
+    try {
+      const created = await adminService.createCategory(payload);
+      set((state) => ({
+        categories: [...state.categories, created],
+      }));
+      get().addAuditLog({
+        action: "CATEGORY_CREATED",
+        actorName: "Peter SuperAdmin",
+        actorRole: "SUPER_ADMIN",
+        target: `${created.name} (/${created.slug})`,
+        details: `Created new category "${created.name}" with commission ${created.commissionRate}%.`,
+        ipAddress: "127.0.0.1",
+        severity: "INFO",
+      });
+      return created;
+    } catch (err) {
+      console.error("Failed to create category on backend:", err);
+      throw err;
+    }
+  },
+
+  updateCategoryCommission: async (categoryId: string, rate: number) => {
+    const cat = get().categories.find((c) => c.id === categoryId);
     set((state) => ({
       categories: state.categories.map((c) =>
         c.id === categoryId ? { ...c, commissionRate: rate } : c
       ),
     }));
+
+    try {
+      await adminService.updateCategory(categoryId, { commissionRate: rate });
+    } catch (err) {
+      console.warn("Could not sync category commission to backend:", err);
+    }
+
+    get().addAuditLog({
+      action: "COMMISSION_UPDATED",
+      actorName: "Peter SuperAdmin",
+      actorRole: "SUPER_ADMIN",
+      target: cat?.name || categoryId,
+      details: `Commission rate adjusted to ${rate}% in database.`,
+      ipAddress: "127.0.0.1",
+      severity: "INFO",
+    });
   },
 
-  toggleCategoryActive: (categoryId: string) => {
+  updateCategoryDetails: async (id: string, payload: Partial<AdminCategory>) => {
+    try {
+      const updated = await adminService.updateCategory(id, payload);
+      set((state) => ({
+        categories: state.categories.map((c) => (c.id === id ? { ...c, ...updated } : c)),
+      }));
+
+      get().addAuditLog({
+        action: "CATEGORY_UPDATED",
+        actorName: "Peter SuperAdmin",
+        actorRole: "SUPER_ADMIN",
+        target: `${updated.name} (/${updated.slug})`,
+        details: `Updated category #${id} details in database.`,
+        ipAddress: "127.0.0.1",
+        severity: "INFO",
+      });
+
+      return updated;
+    } catch (err) {
+      console.error("Failed to update category details:", err);
+      throw err;
+    }
+  },
+
+  toggleCategoryActive: async (categoryId: string) => {
+    const cat = get().categories.find((c) => c.id === categoryId);
+    if (!cat) return;
+    const nextActive = !cat.isActive;
+
     set((state) => ({
       categories: state.categories.map((c) =>
-        c.id === categoryId ? { ...c, isActive: !c.isActive } : c
+        c.id === categoryId ? { ...c, isActive: nextActive } : c
       ),
     }));
+
+    try {
+      await adminService.updateCategory(categoryId, { isActive: nextActive });
+      TicketService.fetchCategories().catch(() => {});
+      TicketService.fetchTickets().catch(() => {});
+    } catch (err) {
+      console.warn("Could not sync category active state to backend:", err);
+    }
+
+    get().addAuditLog({
+      action: nextActive ? "CATEGORY_ACTIVATED" : "CATEGORY_DEACTIVATED",
+      actorName: "Peter SuperAdmin",
+      actorRole: "SUPER_ADMIN",
+      target: cat.name,
+      details: `Category "${cat.name}" transitioned to ${nextActive ? "ACTIVE" : "DISABLED"} in database.`,
+      ipAddress: "127.0.0.1",
+      severity: nextActive ? "INFO" : "WARNING",
+    });
+  },
+
+  deleteCategory: async (categoryId: string) => {
+    const cat = get().categories.find((c) => c.id === categoryId);
+    set((state) => ({
+      categories: state.categories.filter((c) => c.id !== categoryId),
+    }));
+
+    try {
+      await adminService.deleteCategory(categoryId);
+      TicketService.fetchCategories().catch(() => {});
+      TicketService.fetchTickets().catch(() => {});
+    } catch (err) {
+      console.warn("Could not delete category on backend:", err);
+      throw err;
+    }
+
+    get().addAuditLog({
+      action: "CATEGORY_DELETED_PERMANENTLY",
+      actorName: "Peter SuperAdmin",
+      actorRole: "SUPER_ADMIN",
+      target: cat ? cat.name : `Category #${categoryId}`,
+      details: `Permanently deleted category "${cat?.name || categoryId}" from database.`,
+      ipAddress: "127.0.0.1",
+      severity: "WARNING",
+    });
+
+    return true;
   },
 
   processPayout: (id: string, approve: boolean, notes?: string) => {
@@ -940,6 +1200,52 @@ export const useAdminStore = create<AdminState>((set, get) => ({
           : t
       ),
     }));
+  },
+
+  addBooking: (booking: AdminBooking) => {
+    set((state) => {
+      const existingIdx = state.bookings.findIndex(
+        (b) => b.reference === booking.reference || b.id === booking.id
+      );
+      let updatedBookings: AdminBooking[];
+      if (existingIdx >= 0) {
+        updatedBookings = [...state.bookings];
+        updatedBookings[existingIdx] = { ...updatedBookings[existingIdx], ...booking };
+      } else {
+        updatedBookings = [booking, ...state.bookings];
+      }
+
+      // Automatically decrement available seats and increment totalSold for matching ticket service
+      const updatedServices = state.services.map((s) => {
+        if (s.title === booking.serviceTitle || (booking.id && s.id === booking.id)) {
+          const currentAvailable = Number(s.availableSeats ?? 50);
+          const newAvailable = Math.max(0, currentAvailable - (booking.quantity || 1));
+          return {
+            ...s,
+            availableSeats: newAvailable,
+            totalSold: (s.totalSold || 0) + (booking.quantity || 1),
+            status: newAvailable === 0 ? ("SOLD_OUT" as const) : s.status,
+          };
+        }
+        return s;
+      });
+
+      if (typeof window !== "undefined") {
+        try {
+          localStorage.setItem("tikora_admin_bookings", JSON.stringify(updatedBookings));
+        } catch {}
+      }
+
+      return {
+        bookings: updatedBookings,
+        services: updatedServices,
+        stats: {
+          ...state.stats,
+          totalBookings: updatedBookings.length,
+          totalGMV: updatedBookings.reduce((sum, b) => sum + (b.totalAmount || 0), 0),
+        },
+      };
+    });
   },
 
   updateSettings: (newSettings) => {

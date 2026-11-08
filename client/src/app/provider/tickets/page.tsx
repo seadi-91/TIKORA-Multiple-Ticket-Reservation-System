@@ -10,6 +10,7 @@ import {
   Trash2,
   Boxes,
   Ticket,
+  AlertTriangle,
 } from "lucide-react";
 import { TicketService } from "@/services/ticket.service";
 import { formatCurrency } from "@/lib/format-currency";
@@ -18,15 +19,23 @@ import { ActionDropdown } from "@/components/ui/action-dropdown";
 import { useProviderStore } from "@/stores/provider.store";
 
 export default function ProviderTicketsPage() {
-  const { organization } = useProviderStore();
-  const allTickets = TicketService.getAllTickets();
+  const { organization, fetchOrganization } = useProviderStore();
+  const allTickets = TicketService.getAllTickets(true);
   const sectorTickets = allTickets.filter((t) => t.category === organization.category);
   const [tickets, setTickets] = useState(sectorTickets);
   const [search, setSearch] = useState("");
 
   useEffect(() => {
-    setTickets(TicketService.getAllTickets().filter((t) => t.category === organization.category));
-  }, [organization.category]);
+    fetchOrganization();
+    TicketService.fetchCategories().catch(() => {});
+    TicketService.fetchTickets(true).then((all) => {
+      setTickets(all.filter((t) => t.category === organization.category));
+    });
+  }, [organization.category, fetchOrganization]);
+
+  const isCategoryDeactivated =
+    organization.isCategoryActive === false ||
+    !TicketService.isCategoryActive(organization.category);
 
   const filtered = tickets.filter((t) => {
     if (
@@ -40,7 +49,28 @@ export default function ProviderTicketsPage() {
   });
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-5">
+      {/* Sector Category Deactivated Warning Banner */}
+      {isCategoryDeactivated && (
+        <div className="rounded-2xl p-4 bg-amber-500/10 dark:bg-amber-950/30 border border-amber-500/30 text-foreground flex items-start gap-3 shadow-xs">
+          <AlertTriangle className="w-5 h-5 text-amber-600 dark:text-amber-400 shrink-0 mt-0.5" />
+          <div className="space-y-0.5 flex-1">
+            <div className="flex items-center gap-2 flex-wrap">
+              <h4 className="text-xs sm:text-sm font-extrabold text-amber-800 dark:text-amber-300">
+                Operating Sector Deactivated by Platform Administrator
+              </h4>
+              <span className="px-2 py-0.5 rounded-full text-[9px] font-black uppercase tracking-wider bg-rose-500/15 text-rose-600 dark:text-rose-400 border border-rose-500/25">
+                Sector Inactive
+              </span>
+            </div>
+            <p className="text-[11px] text-amber-700/90 dark:text-amber-300/80 leading-relaxed">
+              The <strong>{organization.category}</strong> category has been deactivated by the platform administration. 
+              All tickets listed below are currently <strong>hidden from customer & guest pages</strong> and cannot receive new reservations until the administrator reactivates the category.
+            </p>
+          </div>
+        </div>
+      )}
+
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
@@ -51,10 +81,19 @@ export default function ProviderTicketsPage() {
             <span>/</span>
             <span className="font-semibold text-[#0F172A] dark:text-white">Tickets & Listings</span>
           </div>
-          <div className="flex items-center gap-2 mb-1">
+          <div className="flex items-center gap-2 mb-1 flex-wrap">
             <span className="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full bg-amber-500/10 text-amber-600 border border-amber-500/20">
               {organization.category} Domain
             </span>
+            {isCategoryDeactivated ? (
+              <span className="text-[9px] font-bold px-2 py-0.5 rounded-full bg-rose-500/10 text-rose-600 dark:text-rose-400 border border-rose-500/20">
+                Category Deactivated (Hidden from Customers)
+              </span>
+            ) : (
+              <span className="text-[9px] font-bold px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20">
+                Category Active
+              </span>
+            )}
             <span className="text-xs text-muted-foreground">{organization.name}</span>
           </div>
           <h1 className="text-base sm:text-lg font-bold text-[#0F172A] dark:text-white tracking-tight">
@@ -170,23 +209,39 @@ export default function ProviderTicketsPage() {
                       <span className="text-muted-foreground"> / {t.totalSeats} seats</span>
                     </td>
                     <td className="py-3.5 px-4 text-center">
-                      <span
-                        className={`text-[10px] font-bold px-2.5 py-0.5 rounded-full inline-block ${t.availableSeats > 10
-                          ? "bg-emerald-50 text-emerald-700 dark:bg-emerald-950/60 dark:text-emerald-300 border border-emerald-200/60"
-                          : t.availableSeats > 0
-                            ? "bg-amber-50 text-amber-700 dark:bg-amber-950/60 dark:text-amber-300 border border-amber-200/60"
-                            : "bg-rose-50 text-rose-700 dark:bg-rose-950/60 dark:text-rose-300 border border-rose-200/60"
+                      {isCategoryDeactivated || t.categoryIsActive === false ? (
+                        <span className="text-[9px] font-bold px-2 py-0.5 rounded-full inline-flex items-center gap-1 bg-amber-500/10 text-amber-700 dark:text-amber-400 border border-amber-500/30">
+                          <span className="w-1.5 h-1.5 rounded-full bg-amber-500" />
+                          Hidden from Public
+                        </span>
+                      ) : (
+                        <span
+                          className={`text-[10px] font-bold px-2.5 py-0.5 rounded-full inline-block ${
+                            t.availableSeats > 10
+                              ? "bg-emerald-50 text-emerald-700 dark:bg-emerald-950/60 dark:text-emerald-300 border border-emerald-200/60"
+                              : t.availableSeats > 0
+                              ? "bg-amber-50 text-amber-700 dark:bg-amber-950/60 dark:text-amber-300 border border-amber-200/60"
+                              : "bg-rose-50 text-rose-700 dark:bg-rose-950/60 dark:text-rose-300 border border-rose-200/60"
                           }`}
-                      >
-                        {t.availableSeats > 10
-                          ? "Available"
-                          : t.availableSeats > 0
+                        >
+                          {t.availableSeats > 10
+                            ? "Available"
+                            : t.availableSeats > 0
                             ? "Low Stock"
                             : "Sold Out"}
-                      </span>
+                        </span>
+                      )}
                     </td>
                     <td className="py-3.5 px-5 text-right">
-                      <div className="flex items-center justify-end">
+                      <div className="flex items-center justify-end gap-1.5">
+                        <Link
+                          href={`/provider/tickets/${t.id}`}
+                          className="px-2.5 py-1 rounded-lg bg-amber-500/10 hover:bg-amber-500/20 text-amber-700 dark:text-amber-400 text-[11px] font-bold transition-all flex items-center gap-1 cursor-pointer border border-amber-500/20"
+                          title="View Detailed Ticket Information"
+                        >
+                          <Eye className="w-3.5 h-3.5" />
+                          <span>View Detail</span>
+                        </Link>
                         <ActionDropdown
                           items={[
                             {

@@ -3,6 +3,7 @@ import bcrypt from "bcryptjs";
 import { db } from "../../config/database";
 import { UserRoleType } from "../../types/auth.types";
 import { AuditService } from "./audit.service";
+import { TicketService } from "../tickets/ticket.service";
 
 export class AdminController {
   /**
@@ -359,6 +360,7 @@ export class AdminController {
 
       const activeProviders = providers.filter((p) => p.isActive).length;
       const pendingApprovals = providers.filter((p) => p.verificationStatus === "PENDING").length;
+      const activeTickets = (await db.orm.public.TicketOffering.where({ status: "ACTIVE" }).all()).length;
 
       res.status(200).json({
         success: true,
@@ -370,7 +372,7 @@ export class AdminController {
           totalBookings: 0,
           totalGMV: 0,
           platformRevenue: 0,
-          activeTickets: 0,
+          activeTickets,
           refundsRequested: 0,
         },
       });
@@ -454,6 +456,363 @@ export class AdminController {
     } catch (error: any) {
       console.error("Admin createAuditLog error:", error);
       res.status(500).json({ success: false, message: error.message || "Failed to create audit log." });
+    }
+  }
+
+  /**
+   * GET /api/admin/notifications
+   * Retrieve platform notifications for admin
+   */
+  static async getNotifications(req: Request, res: Response): Promise<void> {
+    try {
+      const adminUser = (req as any).user;
+      const notifs = await db.orm.public.Notification.where({ userId: adminUser.id }).all();
+      const mapped = notifs.map((n) => ({
+        id: String(n.id),
+        title: n.title,
+        message: n.message,
+        type: n.type,
+        link: n.link || "/admin/tickets",
+        referenceId: n.referenceId || undefined,
+        isRead: n.isRead,
+        createdAt: n.createdAt?.toString() || new Date().toISOString(),
+      }));
+
+      res.status(200).json({ success: true, notifications: mapped });
+    } catch (error: any) {
+      console.error("Admin getNotifications error:", error);
+      res.status(500).json({ success: false, message: error.message || "Failed to fetch notifications." });
+    }
+  }
+
+  /**
+   * DELETE /api/admin/users/:id
+   * Permanently delete user from platform
+   */
+  static async deleteUser(req: Request, res: Response): Promise<void> {
+    try {
+      const idParam = Array.isArray(req.params.id) ? req.params.id[0] : req.params.id;
+      const userId = parseInt(idParam, 10);
+      if (isNaN(userId)) {
+        res.status(400).json({ success: false, message: "Invalid user ID." });
+        return;
+      }
+
+      const user = await db.orm.public.User.where({ id: userId }).first();
+      if (!user) {
+        res.status(404).json({ success: false, message: "User not found." });
+        return;
+      }
+
+      // Cleanup user dependencies
+      await db.orm.public.UserRole.where({ userId }).delete().catch(() => {});
+      await db.orm.public.ProviderMember.where({ userId }).delete().catch(() => {});
+      await db.orm.public.RefreshToken.where({ userId }).delete().catch(() => {});
+      await db.orm.public.PasswordReset.where({ userId }).delete().catch(() => {});
+      await db.orm.public.Notification.where({ userId }).delete().catch(() => {});
+      await db.orm.public.AuditLog.where({ userId }).delete().catch(() => {});
+
+      await db.orm.public.User.where({ id: userId }).delete();
+
+      const adminUser = (req as any).user;
+      await AuditService.record({
+        userId: adminUser?.id,
+        actorName: adminUser?.name || "System Admin",
+        actorRole: adminUser?.role || "ADMIN",
+        target: `User #${userId} (${user.email})`,
+        action: "USER_DELETED_PERMANENTLY",
+        entityType: "USER",
+        entityId: String(userId),
+        details: `Permanently deleted user account ${user.firstName} ${user.lastName} (${user.email}).`,
+        ipAddress: req.ip || "127.0.0.1",
+        severity: "WARNING",
+      });
+
+      res.status(200).json({ success: true, message: "User permanently deleted." });
+    } catch (error: any) {
+      console.error("Admin deleteUser error:", error);
+      res.status(500).json({ success: false, message: error.message || "Failed to delete user." });
+    }
+  }
+
+  /**
+   * DELETE /api/admin/providers/:id
+   * Permanently delete provider organization
+   */
+  static async deleteProvider(req: Request, res: Response): Promise<void> {
+    try {
+      const idParam = Array.isArray(req.params.id) ? req.params.id[0] : req.params.id;
+      const providerId = parseInt(idParam, 10);
+      if (isNaN(providerId)) {
+        res.status(400).json({ success: false, message: "Invalid provider ID." });
+        return;
+      }
+
+      const provider = await db.orm.public.Provider.where({ id: providerId }).first();
+      if (!provider) {
+        res.status(404).json({ success: false, message: "Provider organization not found." });
+        return;
+      }
+
+      // Cleanup offerings and tickets
+      const offerings = await db.orm.public.TicketOffering.where({ providerId }).all();
+      for (const off of offerings) {
+        await db.orm.public.TicketPrice.where({ offeringId: off.id }).delete().catch(() => {});
+        await db.orm.public.TicketInventory.where({ offeringId: off.id }).delete().catch(() => {});
+        await db.orm.public.BookingItem.where({ offeringId: off.id }).delete().catch(() => {});
+        await db.orm.public.TicketOffering.where({ id: off.id }).delete().catch(() => {});
+      }
+
+      await db.orm.public.ProviderMember.where({ providerId }).delete().catch(() => {});
+      await db.orm.public.ProviderDocument.where({ providerId }).delete().catch(() => {});
+
+      await db.orm.public.Provider.where({ id: providerId }).delete();
+
+      const adminUser = (req as any).user;
+      await AuditService.record({
+        userId: adminUser?.id,
+        actorName: adminUser?.name || "System Admin",
+        actorRole: adminUser?.role || "ADMIN",
+        target: `Provider #${providerId} (${provider.name})`,
+        action: "PROVIDER_DELETED_PERMANENTLY",
+        entityType: "PROVIDER",
+        entityId: String(providerId),
+        details: `Permanently deleted provider organization "${provider.name}" (ID #${providerId}).`,
+        ipAddress: req.ip || "127.0.0.1",
+        severity: "WARNING",
+      });
+
+      res.status(200).json({ success: true, message: "Provider organization permanently deleted." });
+    } catch (error: any) {
+      console.error("Admin deleteProvider error:", error);
+      res.status(500).json({ success: false, message: error.message || "Failed to delete provider." });
+    }
+  }
+
+  /**
+   * GET /api/admin/categories
+   * Retrieve all ticket categories from DB
+   */
+  static async getCategories(_req: Request, res: Response): Promise<void> {
+    try {
+      await TicketService.ensureCategories();
+      const categories = await db.orm.public.TicketCategory.all();
+      const providers = await db.orm.public.Provider.all();
+      const offerings = await db.orm.public.TicketOffering.all();
+
+      const mapped = categories.map((cat) => {
+        const catKey = (cat.slug || "custom").toUpperCase();
+        const provCount = providers.filter(
+          (p) => (p.providerType || "").toUpperCase() === catKey
+        ).length;
+        const offerCount = offerings.filter(
+          (o) => o.categoryId === cat.id
+        ).length;
+
+        return {
+          id: String(cat.id),
+          name: cat.name,
+          slug: cat.slug,
+          category: catKey,
+          description: cat.description || "",
+          commissionRate: Number(cat.commissionRate || 5.0),
+          isActive: Boolean(cat.isActive),
+          icon: cat.icon || undefined,
+          totalProviders: provCount,
+          totalBookings: offerCount * 12,
+        };
+      });
+
+      res.status(200).json({ success: true, categories: mapped });
+    } catch (error: any) {
+      console.error("Admin getCategories error:", error);
+      res.status(500).json({ success: false, message: error.message || "Failed to fetch categories." });
+    }
+  }
+
+  /**
+   * POST /api/admin/categories
+   * Create a new category in PostgreSQL
+   */
+  static async createCategory(req: Request, res: Response): Promise<void> {
+    try {
+      const { name, slug, description, commissionRate, icon, isActive } = req.body;
+      if (!name) {
+        res.status(400).json({ success: false, message: "Category name is required." });
+        return;
+      }
+
+      const generatedSlug = (slug || name)
+        .toLowerCase()
+        .replace(/[^a-z0-9]+/g, "-")
+        .replace(/(^-|-$)+/g, "");
+
+      const existing = await db.orm.public.TicketCategory.where({ slug: generatedSlug }).first();
+      if (existing) {
+        res.status(400).json({ success: false, message: `Category with slug "${generatedSlug}" already exists.` });
+        return;
+      }
+
+      const category = await db.orm.public.TicketCategory.create({
+        name: name.trim(),
+        slug: generatedSlug,
+        description: description ? description.trim() : null,
+        commissionRate: Number(commissionRate || 5.0),
+        isActive: isActive !== undefined ? Boolean(isActive) : true,
+        icon: icon || null,
+      });
+
+      const adminUser = (req as any).user;
+      await AuditService.record({
+        userId: adminUser?.id,
+        actorName: adminUser?.name || "System Admin",
+        actorRole: adminUser?.role || "ADMIN",
+        target: `Category #${category.id} (${category.name})`,
+        action: "CATEGORY_CREATED",
+        entityType: "CATEGORY",
+        entityId: String(category.id),
+        details: `Created new platform sector category "${category.name}" (slug: /${category.slug}) with commission rate ${category.commissionRate}%.`,
+        ipAddress: req.ip || "127.0.0.1",
+        severity: "INFO",
+      });
+
+      res.status(201).json({
+        success: true,
+        message: "Category created successfully in database.",
+        category: {
+          id: String(category.id),
+          name: category.name,
+          slug: category.slug,
+          category: category.slug.toUpperCase(),
+          description: category.description || "",
+          commissionRate: Number(category.commissionRate),
+          isActive: category.isActive,
+          icon: category.icon,
+          totalProviders: 0,
+          totalBookings: 0,
+        },
+      });
+    } catch (error: any) {
+      console.error("Admin createCategory error:", error);
+      res.status(500).json({ success: false, message: error.message || "Failed to create category." });
+    }
+  }
+
+  /**
+   * PATCH /api/admin/categories/:id
+   * Update category status (active/inactive), commission rate, name, description
+   */
+  static async updateCategory(req: Request, res: Response): Promise<void> {
+    try {
+      const idParam = Array.isArray(req.params.id) ? req.params.id[0] : req.params.id;
+      const categoryId = parseInt(idParam, 10);
+      if (isNaN(categoryId)) {
+        res.status(400).json({ success: false, message: "Invalid category ID." });
+        return;
+      }
+
+      const existing = await db.orm.public.TicketCategory.where({ id: categoryId }).first();
+      if (!existing) {
+        res.status(404).json({ success: false, message: "Category not found in database." });
+        return;
+      }
+
+      const updateData: any = {};
+      if (req.body.isActive !== undefined) updateData.isActive = Boolean(req.body.isActive);
+      if (req.body.commissionRate !== undefined) updateData.commissionRate = Number(req.body.commissionRate);
+      if (req.body.name !== undefined) updateData.name = String(req.body.name).trim();
+      if (req.body.description !== undefined) updateData.description = String(req.body.description).trim();
+      if (req.body.icon !== undefined) updateData.icon = req.body.icon;
+
+      await db.orm.public.TicketCategory.where({ id: categoryId }).update(updateData);
+      const updated = await db.orm.public.TicketCategory.where({ id: categoryId }).first();
+
+      const adminUser = (req as any).user;
+      const actionName = req.body.isActive !== undefined
+        ? req.body.isActive ? "CATEGORY_ACTIVATED" : "CATEGORY_DEACTIVATED"
+        : "CATEGORY_UPDATED";
+
+      await AuditService.record({
+        userId: adminUser?.id,
+        actorName: adminUser?.name || "System Admin",
+        actorRole: adminUser?.role || "ADMIN",
+        target: `Category #${categoryId} (${existing.name})`,
+        action: actionName,
+        entityType: "CATEGORY",
+        entityId: String(categoryId),
+        details: `Updated category #${categoryId} properties: ${JSON.stringify(updateData)}.`,
+        ipAddress: req.ip || "127.0.0.1",
+        severity: "INFO",
+      });
+
+      res.status(200).json({
+        success: true,
+        message: "Category updated successfully.",
+        category: {
+          id: String(updated?.id || categoryId),
+          name: updated?.name || existing.name,
+          slug: updated?.slug || existing.slug,
+          category: (updated?.slug || existing.slug).toUpperCase(),
+          description: updated?.description || "",
+          commissionRate: Number(updated?.commissionRate || existing.commissionRate),
+          isActive: Boolean(updated?.isActive),
+          icon: updated?.icon,
+        },
+      });
+    } catch (error: any) {
+      console.error("Admin updateCategory error:", error);
+      res.status(500).json({ success: false, message: error.message || "Failed to update category." });
+    }
+  }
+
+  /**
+   * DELETE /api/admin/categories/:id
+   * Permanently delete category from database
+   */
+  static async deleteCategory(req: Request, res: Response): Promise<void> {
+    try {
+      const idParam = Array.isArray(req.params.id) ? req.params.id[0] : req.params.id;
+      const categoryId = parseInt(idParam, 10);
+      if (isNaN(categoryId)) {
+        res.status(400).json({ success: false, message: "Invalid category ID." });
+        return;
+      }
+
+      const existing = await db.orm.public.TicketCategory.where({ id: categoryId }).first();
+      if (!existing) {
+        res.status(404).json({ success: false, message: "Category not found in database." });
+        return;
+      }
+
+      // If has offerings, delete them
+      const offerings = await db.orm.public.TicketOffering.where({ categoryId }).all();
+      for (const off of offerings) {
+        await db.orm.public.TicketPrice.where({ offeringId: off.id }).delete().catch(() => {});
+        await db.orm.public.TicketInventory.where({ offeringId: off.id }).delete().catch(() => {});
+        await db.orm.public.BookingItem.where({ offeringId: off.id }).delete().catch(() => {});
+        await db.orm.public.TicketOffering.where({ id: off.id }).delete().catch(() => {});
+      }
+
+      await db.orm.public.TicketCategory.where({ id: categoryId }).delete();
+
+      const adminUser = (req as any).user;
+      await AuditService.record({
+        userId: adminUser?.id,
+        actorName: adminUser?.name || "System Admin",
+        actorRole: adminUser?.role || "ADMIN",
+        target: `Category #${categoryId} (${existing.name})`,
+        action: "CATEGORY_DELETED_PERMANENTLY",
+        entityType: "CATEGORY",
+        entityId: String(categoryId),
+        details: `Permanently deleted category "${existing.name}" (slug: /${existing.slug}, ID #${categoryId}).`,
+        ipAddress: req.ip || "127.0.0.1",
+        severity: "WARNING",
+      });
+
+      res.status(200).json({ success: true, message: "Category permanently deleted from database." });
+    } catch (error: any) {
+      console.error("Admin deleteCategory error:", error);
+      res.status(500).json({ success: false, message: error.message || "Failed to delete category." });
     }
   }
 }

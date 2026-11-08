@@ -22,13 +22,22 @@ import {
   MapPin,
   ShieldCheck,
   Sparkles,
+  Trash2,
 } from "lucide-react";
-import { useAdminStore } from "@/stores/admin.store";
+import { useAdminStore, AdminOrganization } from "@/stores/admin.store";
 import { ActionDropdown } from "@/components/ui/action-dropdown";
+import { ConfirmDeleteModal } from "@/components/ui/confirm-delete-modal";
 
 export default function AdminProvidersPage() {
-  const { organizations, approveOrganization, rejectOrganization, suspendOrganization, activateOrganization, fetchPlatformData } =
-    useAdminStore();
+  const {
+    organizations,
+    approveOrganization,
+    rejectOrganization,
+    suspendOrganization,
+    activateOrganization,
+    deleteOrganization,
+    fetchPlatformData,
+  } = useAdminStore();
 
   useEffect(() => {
     fetchPlatformData();
@@ -37,6 +46,8 @@ export default function AdminProvidersPage() {
   const [searchQuery, setSearchQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState<string>("ALL");
   const [categoryFilter, setCategoryFilter] = useState<string>("ALL");
+  const [orgToDelete, setOrgToDelete] = useState<AdminOrganization | null>(null);
+  const [isDeletingOrg, setIsDeletingOrg] = useState(false);
 
   const filteredOrgs = organizations.filter((org) => {
     const matchesSearch =
@@ -300,6 +311,12 @@ export default function AdminProvidersPage() {
                         icon: <Sparkles className="w-4 h-4" />,
                         href: `/admin/commissions`,
                       },
+                      {
+                        label: "Delete Provider",
+                        icon: <Trash2 className="w-4 h-4" />,
+                        variant: "danger" as const,
+                        onClick: () => setOrgToDelete(org),
+                      },
                     ]}
                   />
                 </div>
@@ -491,6 +508,12 @@ export default function AdminProvidersPage() {
                           icon: <Sparkles className="w-4 h-4" />,
                           href: `/admin/commissions`,
                         },
+                        {
+                          label: "Delete Provider",
+                          icon: <Trash2 className="w-4 h-4" />,
+                          variant: "danger" as const,
+                          onClick: () => setOrgToDelete(org),
+                        },
                       ]}
                     />
                   </td>
@@ -508,6 +531,29 @@ export default function AdminProvidersPage() {
           </table>
         </div>
       </div>
+      {/* Confirm Delete Provider Modal */}
+      <ConfirmDeleteModal
+        isOpen={!!orgToDelete}
+        itemType="Provider Organization"
+        itemName={orgToDelete ? orgToDelete.name : ""}
+        warningMessage="This will permanently delete this provider organization, all their listed tickets, documents, and provider memberships from the database."
+        isDeleting={isDeletingOrg}
+        onConfirm={async () => {
+          if (!orgToDelete) return;
+          setIsDeletingOrg(true);
+          try {
+            await deleteOrganization(orgToDelete.id);
+            setOrgToDelete(null);
+          } catch (err) {
+            console.error("Failed to delete organization:", err);
+          } finally {
+            setIsDeletingOrg(false);
+          }
+        }}
+        onClose={() => {
+          if (!isDeletingOrg) setOrgToDelete(null);
+        }}
+      />
     </div>
   );
 }

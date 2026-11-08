@@ -10,6 +10,9 @@ import authRoutes from "./modules/auth/auth.routes";
 import adminRoutes from "./modules/admin/admin.routes";
 import userRoutes from "./modules/users/user.routes";
 import organizationRoutes from "./modules/organizations/organization.routes";
+import ticketRoutes from "./modules/tickets/ticket.routes";
+import uploadRoutes from "./modules/upload/upload.routes";
+import paymentRoutes from "./modules/payments/payment.routes";
 
 const app = express();
 
@@ -31,8 +34,8 @@ app.use(
 );
 
 // Body parsers
-app.use(express.json());
-app.use(express.urlencoded({ extended: true }));
+app.use(express.json({ limit: "20mb" }));
+app.use(express.urlencoded({ limit: "20mb", extended: true }));
 app.use(cookieParser());
 
 // Session configuration for OAuth handshake
@@ -70,6 +73,15 @@ app.use("/api/users", userRoutes);
 // Provider & Organization Routes
 app.use("/api/provider", organizationRoutes);
 app.use("/api/organizations", organizationRoutes);
+
+// Tickets & Offerings Routes
+app.use("/api/tickets", ticketRoutes);
+
+// File & Image Upload Routes (Cloudinary)
+app.use("/api/upload", uploadRoutes);
+
+// Payment & Checkout Routes (Chapa)
+app.use("/api/payments", paymentRoutes);
 
 // 404 Handler
 app.use((_req, res) => {

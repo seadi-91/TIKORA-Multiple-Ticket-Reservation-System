@@ -10,8 +10,9 @@ export class AuthController {
    */
   static async login(req: Request, res: Response): Promise<void> {
     try {
-      const { email, password } = req.body;
-      const result = await AuthService.login(email, password);
+      const identifier = req.body.identifier || req.body.email || req.body.phone;
+      const { password } = req.body;
+      const result = await AuthService.login(identifier, password);
 
       res.cookie("tikora_auth_token", result.token, {
         httpOnly: false, // Accessible to client-side scripts as well

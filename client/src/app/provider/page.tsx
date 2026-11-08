@@ -19,6 +19,7 @@ import {
   Users,
   CheckCircle2,
   AlertCircle,
+  AlertTriangle,
   Eye,
   Filter,
   Copy,
@@ -34,11 +35,21 @@ import { DashboardLineChart } from "@/components/charts/line-chart";
 import { DashboardPieChart } from "@/components/charts/pie-chart";
 import { DashboardBarChart } from "@/components/charts/bar-chart";
 import { ActionDropdown } from "@/components/ui/action-dropdown";
+import { TicketService } from "@/services/ticket.service";
 import { toast } from "sonner";
 
 export default function ProviderOverviewDashboard() {
-  const { organization, staffMembers, busRoutes, movieShowtimes } = useProviderStore();
+  const { organization, staffMembers, busRoutes, movieShowtimes, fetchOrganization } = useProviderStore();
   const [timeRange, setTimeRange] = useState<"7D" | "30D" | "90D">("30D");
+
+  React.useEffect(() => {
+    fetchOrganization();
+    TicketService.fetchCategories().catch(() => {});
+  }, [fetchOrganization]);
+
+  const isCategoryDeactivated =
+    organization.isCategoryActive === false ||
+    !TicketService.isCategoryActive(organization.category);
 
   // Dynamic inspectors list from real staff members
   const inspectorsList = useMemo(() => {
@@ -244,6 +255,39 @@ export default function ProviderOverviewDashboard() {
 
   return (
     <div className="space-y-5 sm:space-y-6">
+      {/* High-Priority Warning: Sector Category Deactivated by Platform Admin */}
+      {isCategoryDeactivated && (
+        <div className="rounded-2xl p-4 sm:p-5 bg-gradient-to-r from-amber-500/15 via-rose-500/10 to-amber-500/15 border-2 border-amber-500/40 dark:border-amber-500/30 text-foreground shadow-sm flex flex-col md:flex-row items-start md:items-center justify-between gap-4 animate-in fade-in slide-in-from-top-2 duration-200">
+          <div className="flex items-start gap-3.5">
+            <div className="w-10 h-10 rounded-xl bg-amber-500/20 text-amber-600 dark:text-amber-400 flex items-center justify-center shrink-0 border border-amber-500/30">
+              <AlertTriangle className="w-5 h-5 text-amber-600 dark:text-amber-400" />
+            </div>
+            <div className="space-y-1">
+              <div className="flex items-center gap-2 flex-wrap">
+                <h3 className="text-xs sm:text-sm font-extrabold text-amber-900 dark:text-amber-300">
+                  Operating Sector Category Deactivated by Platform Administrator
+                </h3>
+                <span className="px-2 py-0.5 rounded-full text-[9px] font-black uppercase tracking-wider bg-rose-500/15 text-rose-600 dark:text-rose-400 border border-rose-500/25">
+                  Sector Inactive
+                </span>
+              </div>
+              <p className="text-[11px] text-amber-800/90 dark:text-amber-200/80 leading-relaxed max-w-2xl">
+                Your operating sector (<strong>{organization.category}</strong>) has been deactivated by the platform admin. 
+                All ticket listings in this sector are temporarily hidden from customers and guest pages, and new online reservations cannot be placed until the category is reactivated.
+              </p>
+            </div>
+          </div>
+          <div className="shrink-0 flex items-center gap-2 self-stretch md:self-auto justify-end">
+            <Link
+              href="/provider/tickets"
+              className="px-3.5 py-1.5 rounded-xl bg-amber-600 hover:bg-amber-700 text-white text-[11px] font-bold transition-all shadow-xs"
+            >
+              View Affected Listings
+            </Link>
+          </div>
+        </div>
+      )}
+
       {/* Modern Welcome Hero Banner */}
       <div className="relative overflow-hidden rounded-2xl sm:rounded-3xl bg-gradient-to-br from-slate-900 via-slate-900 to-amber-950/40 text-white p-5 sm:p-7 shadow-sm border border-slate-800/80">
         <div className="absolute -top-16 -right-16 w-56 h-56 bg-amber-500/10 rounded-full blur-3xl pointer-events-none" />

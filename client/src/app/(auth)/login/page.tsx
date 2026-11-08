@@ -24,7 +24,7 @@ function LoginForm() {
   const searchParams = useSearchParams();
   const setAuth = useAuthStore((state) => state.setAuth);
 
-  const [email, setEmail] = useState("");
+  const [identifier, setIdentifier] = useState("");
   const [password, setPassword] = useState("");
   const [rememberMe, setRememberMe] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -117,14 +117,14 @@ function LoginForm() {
     window.location.href = authService.getOAuthUrl("github", "login");
   };
 
-  // Handle single unified login submission
+  // Handle single unified login submission (Email or Phone Number)
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setError(null);
     setSuccessMessage(null);
 
-    if (!email || !password) {
-      setError("Please enter both your email address and password.");
+    if (!identifier.trim() || !password) {
+      setError("Please enter your email or phone number and password.");
       return;
     }
 
@@ -132,7 +132,8 @@ function LoginForm() {
 
     try {
       const res = await authService.login({
-        email: email.trim(),
+        email: identifier.trim(),
+        identifier: identifier.trim(),
         password,
         rememberMe,
       });
@@ -226,7 +227,7 @@ function LoginForm() {
         <div className="relative flex py-1 items-center">
           <div className="flex-grow border-t border-slate-200/80 dark:border-white/10" />
           <span className="flex-shrink mx-3 text-[10px] uppercase tracking-wider text-slate-400 font-medium">
-            Or with email
+            Or with email / phone
           </span>
           <div className="flex-grow border-t border-slate-200/80 dark:border-white/10" />
         </div>
@@ -234,14 +235,14 @@ function LoginForm() {
 
       <form onSubmit={handleLogin} className="space-y-4">
         <FormInput
-          label="Email Address"
-          type="email"
-          name="email"
-          value={email}
-          onChange={(e) => setEmail(e.target.value)}
-          placeholder="your.email@example.com"
+          label="Email or Phone Number"
+          type="text"
+          name="identifier"
+          value={identifier}
+          onChange={(e) => setIdentifier(e.target.value)}
+          placeholder="your.email@example.com or 09... / +251..."
           leftIcon={<Mail className="w-4 h-4 text-slate-400" />}
-          autoComplete="email"
+          autoComplete="username"
           required
         />
 

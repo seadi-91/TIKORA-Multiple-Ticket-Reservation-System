@@ -46,7 +46,14 @@ export default function TicketScannerPage() {
     verifyTicket,
     scannerSoundEnabled,
     setScannerSound,
+    fetchOrganizationServices,
   } = useInspectorStore();
+
+  useEffect(() => {
+    if (assignments.length === 0) {
+      fetchOrganizationServices();
+    }
+  }, [assignments.length, fetchOrganizationServices]);
 
   const activeAssignment =
     assignments.find((a) => a.id === currentAssignmentId) || assignments[0] || {

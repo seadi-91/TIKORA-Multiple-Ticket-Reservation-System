@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import {
@@ -31,21 +31,39 @@ import { Header } from "@/components/layout/header";
 import { Footer } from "@/components/layout/footer";
 import { TicketCard } from "@/components/tickets/ticket-card";
 import { TicketService } from "@/services/ticket.service";
+import { TicketItem } from "@/types/ticket.types";
 import { ETHIOPIAN_CITIES, TicketCategory } from "@/lib/constants";
 
 export default function HomePage() {
   const router = useRouter();
+  const [mounted, setMounted] = useState(false);
   const [activeCategory, setActiveCategory] = useState<TicketCategory | "ALL">("ALL");
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedCity, setSelectedCity] = useState("Hawassa");
   const [selectedDate, setSelectedDate] = useState("2026-11-15");
+  const [tickets, setTickets] = useState<TicketItem[]>([]);
 
-  const allTickets = TicketService.getAllTickets();
+  useEffect(() => {
+    setMounted(true);
+    const cached = TicketService.getAllTickets();
+    if (cached && cached.length > 0) {
+      setTickets(cached);
+    }
+    TicketService.fetchTickets().then((data) => {
+      if (data && data.length > 0) {
+        setTickets(data);
+      }
+    });
+  }, []);
+
+  const isSelectedCategoryActive = activeCategory === "ALL" || TicketService.isCategoryActive(activeCategory);
 
   const filteredTickets =
     activeCategory === "ALL"
-      ? allTickets
-      : allTickets.filter((t) => t.category === activeCategory);
+      ? tickets.filter((t) => TicketService.isCategoryActive(t.category))
+      : !isSelectedCategoryActive
+      ? []
+      : tickets.filter((t) => t.category === activeCategory && TicketService.isCategoryActive(t.category));
 
   const handleHeroSearch = (e: React.FormEvent) => {
     e.preventDefault();
@@ -260,19 +278,30 @@ export default function HomePage() {
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-2.5 sm:gap-4">
           {categoryCards.map((card) => {
             const Icon = card.icon;
+            const isCatActive = TicketService.isCategoryActive(card.id);
             return (
               <div
                 key={card.id}
-                className="rounded-2xl p-3 sm:p-4 bg-white dark:bg-[#161922] border border-slate-200/90 dark:border-slate-800 hover:border-amber-500/40 dark:hover:border-amber-500/30 hover:shadow-md transition-all duration-300 flex flex-col justify-between"
+                className={`rounded-2xl p-3 sm:p-4 bg-white dark:bg-[#161922] border transition-all duration-300 flex flex-col justify-between ${
+                  isCatActive
+                    ? "border-slate-200/90 dark:border-slate-800 hover:border-amber-500/40 dark:hover:border-amber-500/30 hover:shadow-md"
+                    : "border-slate-200/50 dark:border-slate-800/50 opacity-75"
+                }`}
               >
                 <div className="space-y-2">
                   <div className="flex items-center justify-between gap-1.5">
                     <div className="w-8 h-8 sm:w-9 sm:h-9 rounded-xl bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/20 flex items-center justify-center shrink-0">
                       <Icon className="w-4 h-4 sm:w-4.5 sm:h-4.5" />
                     </div>
-                    <span className="text-[8px] sm:text-[9px] font-semibold px-2 py-0.5 rounded-full bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 border border-slate-200/60 dark:border-slate-700/60 truncate max-w-[120px]">
-                      {card.badge}
-                    </span>
+                    {isCatActive ? (
+                      <span className="text-[8px] sm:text-[9px] font-semibold px-2 py-0.5 rounded-full bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 border border-slate-200/60 dark:border-slate-700/60 truncate max-w-[120px]">
+                        {card.badge}
+                      </span>
+                    ) : (
+                      <span className="text-[8px] sm:text-[9px] font-bold px-2 py-0.5 rounded-full bg-rose-500/10 text-rose-600 dark:text-rose-400 border border-rose-500/20 truncate max-w-[120px]">
+                        Temporarily Off
+                      </span>
+                    )}
                   </div>
 
                   <div>
@@ -286,13 +315,19 @@ export default function HomePage() {
                 </div>
 
                 <div className="pt-2.5 border-t border-slate-100 dark:border-slate-800/80 mt-3">
-                  <Link
-                    href={card.link}
-                    className="inline-flex items-center gap-1 text-[11px] sm:text-xs font-semibold text-amber-600 dark:text-amber-400 hover:text-amber-700 group"
-                  >
-                    <span>{card.actionText}</span>
-                    <ArrowRight className="w-3 h-3 group-hover:translate-x-0.5 transition-transform shrink-0" />
-                  </Link>
+                  {isCatActive ? (
+                    <Link
+                      href={card.link}
+                      className="inline-flex items-center gap-1 text-[11px] sm:text-xs font-semibold text-amber-600 dark:text-amber-400 hover:text-amber-700 group"
+                    >
+                      <span>{card.actionText}</span>
+                      <ArrowRight className="w-3 h-3 group-hover:translate-x-0.5 transition-transform shrink-0" />
+                    </Link>
+                  ) : (
+                    <span className="inline-flex items-center gap-1 text-[11px] sm:text-xs font-semibold text-slate-400 cursor-not-allowed">
+                      <span>Sector Deactivated</span>
+                    </span>
+                  )}
                 </div>
               </div>
             );
@@ -333,13 +368,28 @@ export default function HomePage() {
           </div>
 
           {/* Compact Ticket Grid */}
-          {filteredTickets.length === 0 ? (
+          {!mounted ? (
+            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3">
+              {[1, 2, 3, 4, 5, 6, 7, 8].map((i) => (
+                <div
+                  key={i}
+                  className="rounded-2xl aspect-[4/3] bg-slate-100 dark:bg-slate-800/60 animate-pulse border border-slate-200/50 dark:border-slate-800/50 min-h-[220px]"
+                />
+              ))}
+            </div>
+          ) : filteredTickets.length === 0 ? (
             <div className="py-12 text-center rounded-2xl bg-slate-50 dark:bg-slate-900/40 border border-dashed border-slate-200 dark:border-slate-800 p-8 space-y-3">
               <Ticket className="w-10 h-10 text-muted-foreground/40 mx-auto" />
               <div className="space-y-1">
-                <h3 className="text-sm font-bold text-foreground">No passes currently published</h3>
+                <h3 className="text-sm font-bold text-foreground">
+                  {!isSelectedCategoryActive
+                    ? `${activeCategory} Sector Temporarily Deactivated`
+                    : "No passes currently published"}
+                </h3>
                 <p className="text-xs text-muted-foreground max-w-sm mx-auto">
-                  Tickets for intercity buses, cinema premieres, live concerts, and soccer derbies will appear here once listed by verified Ethiopian partners.
+                  {!isSelectedCategoryActive
+                    ? "This sector has been deactivated by platform administration. Passes in this category are temporarily hidden from public reservations."
+                    : "Tickets for intercity buses, cinema premieres, live concerts, and soccer derbies will appear here once listed by verified Ethiopian partners."}
                 </p>
               </div>
             </div>
@@ -351,13 +401,13 @@ export default function HomePage() {
             </div>
           )}
 
-          {allTickets.length > 0 && (
+          {mounted && tickets.length > 0 && (
             <div className="text-center pt-4">
               <Link
                 href="/search"
                 className="inline-flex items-center gap-2 px-6 py-3 rounded-2xl bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-foreground text-xs font-bold transition-all shadow-xs"
               >
-                <span>View All {allTickets.length} Passes</span>
+                <span>View All {tickets.length} Passes</span>
                 <ArrowRight className="w-4 h-4" />
               </Link>
             </div>

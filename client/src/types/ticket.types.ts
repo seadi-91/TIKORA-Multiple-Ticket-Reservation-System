@@ -2,6 +2,17 @@ export type TicketCategory = "BUS" | "CINEMA" | "EVENT" | "SPORTS";
 
 export type TicketStatus = "AVAILABLE" | "SELLING_FAST" | "SOLD_OUT";
 
+export interface PublicCategoryItem {
+  id: number | string;
+  name: string;
+  slug: string;
+  category: TicketCategory;
+  description?: string;
+  icon?: string;
+  isActive: boolean;
+  commissionRate?: number;
+}
+
 export interface TicketTier {
   id: string;
   name: string;
@@ -14,6 +25,8 @@ export interface TicketItem {
   id: string;
   title: string;
   category: TicketCategory;
+  categoryIsActive?: boolean;
+  isCategoryActive?: boolean;
   organizer: string;
   organizerVerified?: boolean;
   location: string;

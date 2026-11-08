@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, Suspense } from "react";
+import React, { useState, useEffect, Suspense } from "react";
 import { useSearchParams } from "next/navigation";
 import Link from "next/link";
 import {
@@ -21,6 +21,8 @@ import { Header } from "@/components/layout/header";
 import { Footer } from "@/components/layout/footer";
 import { TicketCard } from "@/components/tickets/ticket-card";
 import { BusService } from "@/services/bus.service";
+import { TicketService } from "@/services/ticket.service";
+import { TicketItem } from "@/types/ticket.types";
 import { formatCurrency } from "@/lib/format-currency";
 import { formatDate } from "@/lib/format-date";
 
@@ -30,10 +32,22 @@ function BusSearchContent() {
   const to = searchParams.get("to") || "Hawassa";
   const date = searchParams.get("date") || "2026-11-15";
 
-  const allBuses = BusService.getAllBuses();
+  const [mounted, setMounted] = useState(false);
+  const [buses, setBuses] = useState<TicketItem[]>([]);
   const [operatorFilter, setOperatorFilter] = useState("ALL");
 
-  const filteredBuses = allBuses.filter((b) => {
+  useEffect(() => {
+    setMounted(true);
+    const cached = BusService.getAllBuses();
+    if (cached && cached.length > 0) {
+      setBuses(cached);
+    }
+    TicketService.fetchTickets().then(() => {
+      setBuses(BusService.getAllBuses());
+    });
+  }, []);
+
+  const filteredBuses = buses.filter((b) => {
     if (operatorFilter !== "ALL" && b.organizer !== operatorFilter) return false;
     return true;
   });
@@ -90,16 +104,25 @@ function BusSearchContent() {
       </div>
 
       {/* Bus Cards Compact Grid */}
-      <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3">
-        {filteredBuses.map((bus) => (
-          <TicketCard key={bus.id} ticket={bus} />
-        ))}
-      </div>
-
-      {filteredBuses.length === 0 && (
+      {!mounted ? (
+        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3">
+          {[1, 2, 3, 4, 5].map((i) => (
+            <div
+              key={i}
+              className="rounded-2xl aspect-[4/3] bg-slate-100 dark:bg-slate-800/60 animate-pulse border border-slate-200/50 dark:border-slate-800/50 min-h-[220px]"
+            />
+          ))}
+        </div>
+      ) : filteredBuses.length === 0 ? (
         <div className="py-12 text-center rounded-2xl bg-white dark:bg-[#161922] border border-dashed border-slate-300 dark:border-slate-800 space-y-1">
           <p className="text-xs font-bold text-slate-800 dark:text-white">No buses found</p>
           <p className="text-[10px] text-slate-500">Try selecting another operator or reset filters.</p>
+        </div>
+      ) : (
+        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3">
+          {filteredBuses.map((bus) => (
+            <TicketCard key={bus.id} ticket={bus} />
+          ))}
         </div>
       )}
     </div>

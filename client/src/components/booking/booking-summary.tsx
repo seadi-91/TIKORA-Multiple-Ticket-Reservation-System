@@ -52,17 +52,19 @@ export function BookingSummary({
         )}
 
         <div className="flex justify-between text-[#64748B] dark:text-slate-400">
-          <span className="flex items-center gap-1">
-            <span>Service & Payment Platform Fee (5%)</span>
-            <Info className="w-3 h-3 text-[#64748B]" />
+          <span className="flex items-center gap-1.5">
+            <span>Platform Service Fee</span>
+            <span className="text-[9px] font-bold text-emerald-600 dark:text-emerald-400 bg-emerald-500/10 px-1.5 py-0.2 rounded-full border border-emerald-500/20">
+              0% (Covered by Provider)
+            </span>
           </span>
-          <span className="font-medium text-[#0F172A] dark:text-white">
-            {formatCurrency(pricing.serviceFee)}
+          <span className="font-semibold text-emerald-600 dark:text-emerald-400">
+            0.00 ETB
           </span>
         </div>
 
         <div className="flex justify-between text-[#64748B] dark:text-slate-400">
-          <span>VAT & Regional Tourism Tax (15%)</span>
+          <span>VAT (5%)</span>
           <span className="font-medium text-[#0F172A] dark:text-white">
             {formatCurrency(pricing.tax)}
           </span>

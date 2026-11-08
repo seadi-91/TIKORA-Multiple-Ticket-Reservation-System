@@ -1,0 +1,79 @@
+[
+  {
+    "id": "BKG-TIKORA-1794103497812-1767",
+    "bookingReference": "TIKORA-1794103497812-1767",
+    "ticketId": "8",
+    "ticket": {
+      "id": "8",
+      "title": "Football for welkite kenema with Jimma abajifar",
+      "category": "SPORTS",
+      "categoryIsActive": true,
+      "isCategoryActive": true,
+      "organizer": "Adiss Abeba Stadium",
+      "organizerVerified": true,
+      "location": "Addis Ababa, Stadium",
+      "city": "Addis Ababa",
+      "date": "2026-11-20",
+      "time": "03:00 PM",
+      "price": 500,
+      "currency": "ETB",
+      "availableSeats": 500,
+      "totalSeats": 500,
+      "status": "AVAILABLE",
+      "badge": "Derby Match",
+      "imageUrl": "https://images.unsplash.com/photo-1518091043644-c1d4457512c6?auto=format&fit=crop&w=800&q=80",
+      "description": "",
+      "amenities": [],
+      "providerId": 3,
+      "tiers": [
+        {
+          "id": "tier-9",
+          "name": "Standard",
+          "price": 500,
+          "available": 500,
+          "perks": [
+            "Standard comfortable allocated seating"
+          ]
+        }
+      ]
+    },
+    "category": "SPORTS",
+    "customerName": "Amina User",
+    "customerEmail": "aminamuhamed683@gmail.com",
+    "customerPhone": "0991826384",
+    "passengers": [
+      {
+        "fullName": "Amina User",
+        "phone": "0991826384",
+        "email": "aminamuhamed683@gmail.com",
+        "seatNumber": "Standard Gate Pass #1"
+      },
+      {
+        "fullName": "Supporter 2",
+        "phone": "0991826384",
+        "email": "aminamuhamed683@gmail.com",
+        "seatNumber": "Standard Gate Pass #2"
+      }
+    ],
+    "selectedSeats": [
+      "Standard (x2)"
+    ],
+    "selectedTier": "Standard",
+    "quantity": 2,
+    "pricing": {
+      "basePrice": 500,
+      "quantity": 2,
+      "subtotal": 1000,
+      "serviceFee": 0,
+      "tax": 50,
+      "discount": 0,
+      "total": 1050
+    },
+    "paymentMethod": "CHAPA",
+    "paymentStatus": "PAID",
+    "bookingStatus": "CONFIRMED",
+    "createdAt": "2026-11-08T02:04:58.659Z",
+    "qrCodeData": "TIKORA-PASS:TIKORA-1794103497812-1767:1050:PAID",
+    "updatedAt": "2026-11-08T02:05:10.731Z"
+  }
+]

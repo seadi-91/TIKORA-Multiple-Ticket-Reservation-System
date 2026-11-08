@@ -12,6 +12,11 @@ export const BusService = {
     return bus?.category === "BUS" ? bus : undefined;
   },
 
+  async fetchBusById(id: string): Promise<TicketItem | undefined> {
+    const bus = await TicketService.fetchTicketById(id);
+    return bus?.category === "BUS" ? bus : bus;
+  },
+
   // Generates 48-seat layout (12 rows x 4 seats: A, B (Left window/aisle), C, D (Right aisle/window))
   generateBusSeats(occupiedCount = 18): SeatInfo[] {
     const seats: SeatInfo[] = [];

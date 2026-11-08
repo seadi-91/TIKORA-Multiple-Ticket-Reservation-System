@@ -24,5 +24,16 @@ export const ENV = {
 
   SESSION_SECRET:
     process.env.SESSION_SECRET || "tikora-secure-session-secret-key-9992384729384",
+
+  CLOUDINARY_CLOUD_NAME: process.env.CLOUDINARY_CLOUD_NAME || "owvqdxdv",
+  CLOUDINARY_API_KEY: process.env.CLOUDINARY_API_KEY || "574239286367129",
+  CLOUDINARY_API_SECRET: process.env.CLOUDINARY_API_SECRET || "5WBNnY1ENBG1fAP92i9DHdu6xxM",
+
+  CHAPA_PUBLIC_KEY: process.env.CHAPA_PUBLIC_KEY || "CHAPUBK_TEST-53bWKGtffzavn55Ony3OtBDAgFeiNuUG",
+  CHAPA_SECRET_KEY: process.env.CHAPA_SECRET_KEY || "CHASECK_TEST-kWkkoI6YlIJm6m5zR6Z2ERwmuqKWanPQ",
+  CHAPA_ENCRYPTION_KEY: process.env.CHAPA_ENCRYPTION_KEY || "fQBLoqrzkev7ErY671d6xpdn",
+  CHAPA_BASE_URL: process.env.CHAPA_BASE_URL || "https://api.chapa.co/v1",
+  CHAPA_CALLBACK_URL:
+    process.env.CHAPA_CALLBACK_URL || "http://localhost:3000/payments/webhook/chapa",
 };
 

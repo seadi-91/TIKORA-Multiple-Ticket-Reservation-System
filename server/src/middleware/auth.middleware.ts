@@ -85,3 +85,27 @@ export function authorize(...roles: UserRoleType[]) {
     next();
   };
 }
+
+export async function optionalAuthenticate(
+  req: Request,
+  _res: Response,
+  next: NextFunction
+): Promise<void> {
+  try {
+    let token: string | undefined;
+    const authHeader = req.headers.authorization;
+    if (authHeader && authHeader.startsWith("Bearer ")) {
+      token = authHeader.split(" ")[1];
+    } else if (req.cookies && req.cookies.tikora_auth_token) {
+      token = req.cookies.tikora_auth_token;
+    }
+
+    if (token) {
+      const decoded = verifyToken(token);
+      if (decoded && decoded.id) {
+        req.user = decoded;
+      }
+    }
+  } catch {}
+  next();
+}

@@ -9,6 +9,9 @@ export interface ProviderOrganization {
   name: string;
   legalName: string;
   category: TicketCategory;
+  isCategoryActive?: boolean;
+  categoryStatus?: "ACTIVE" | "DEACTIVATED";
+  categoryDeactivated?: boolean;
   verified: boolean;
   approvalStatus: "APPROVED" | "PENDING_APPROVAL" | "REJECTED" | "SUSPENDED";
   tinNumber: string;
@@ -128,6 +131,24 @@ export interface ProviderNotification {
   linkHref?: string;
 }
 
+export interface ProviderBookingRecord {
+  id: string;
+  reference: string;
+  customerName: string;
+  customerPhone: string;
+  customerEmail: string;
+  serviceTitle: string;
+  category: TicketCategory;
+  travelDate: string;
+  departureTime: string;
+  seats: string[];
+  totalAmount: number;
+  paymentMethod: "TELEBIRR" | "CBE_BIRR" | "CHAPA";
+  paymentStatus: "PAID" | "PENDING" | "REFUNDED";
+  bookingStatus: "CONFIRMED" | "CHECKED_IN" | "CANCELLED";
+  createdAt: string;
+}
+
 interface ProviderStoreState {
   organization: ProviderOrganization;
   busRoutes: BusRouteItem[];
@@ -136,6 +157,8 @@ interface ProviderStoreState {
   staffMembers: ProviderStaffMember[];
   refunds: ProviderRefundItem[];
   notifications: ProviderNotification[];
+  bookings: ProviderBookingRecord[];
+  addBooking: (booking: ProviderBookingRecord) => void;
   // Actions
   fetchOrganization: () => Promise<ProviderOrganization | null>;
   updateOrganization: (data: Partial<ProviderOrganization>) => void;
@@ -197,6 +220,16 @@ export const getInitialStatsForCategory = (cat: TicketCategory) => ({
   availableSeats: 0,
 });
 
+const getInitialProviderBookings = (): ProviderBookingRecord[] => {
+  if (typeof window === "undefined") return [];
+  try {
+    const raw = localStorage.getItem("tikora_provider_bookings");
+    return raw ? JSON.parse(raw) : [];
+  } catch {
+    return [];
+  }
+};
+
 export const useProviderStore = create<ProviderStoreState>((set) => ({
   organization: {
     id: "org-provider-01",
@@ -234,6 +267,7 @@ export const useProviderStore = create<ProviderStoreState>((set) => ({
   staffMembers: [],
   refunds: [],
   notifications: [],
+  bookings: getInitialProviderBookings(),
 
   fetchOrganization: async () => {
     try {
@@ -360,6 +394,79 @@ export const useProviderStore = create<ProviderStoreState>((set) => ({
         },
       },
     })),
+
+  addBooking: (booking) => {
+    set((state) => {
+      // Provider displays purely the ticket base price (VAT excluded)
+      const seatsCount = booking.seats && booking.seats.length > 0 ? booking.seats.length : 1;
+      const baseTicketPrice = Math.round(booking.totalAmount / 1.05);
+      const sanitizedBooking: ProviderBookingRecord = {
+        ...booking,
+        totalAmount: baseTicketPrice, // Pure ticket base fare without VAT
+      };
+
+      const existingIdx = state.bookings.findIndex(
+        (b) => b.reference === sanitizedBooking.reference || b.id === sanitizedBooking.id
+      );
+      let newBookings: ProviderBookingRecord[];
+      if (existingIdx >= 0) {
+        newBookings = [...state.bookings];
+        newBookings[existingIdx] = { ...newBookings[existingIdx], ...sanitizedBooking };
+      } else {
+        newBookings = [sanitizedBooking, ...state.bookings];
+      }
+
+      if (typeof window !== "undefined") {
+        try {
+          localStorage.setItem("tikora_provider_bookings", JSON.stringify(newBookings));
+        } catch {}
+      }
+
+      const newGross = newBookings.reduce((sum, b) => sum + (b.totalAmount || 0), 0);
+      const commissionRate = state.organization.category === "CINEMA" ? 0.06 : state.organization.category === "BUS" ? 0.045 : 0.05;
+      const net = Math.round(newGross * (1 - commissionRate));
+
+      // Decrement seats on bus schedules
+      const updatedSchedules = state.busSchedules.map((s) => {
+        if (s.routeTitle.includes(booking.serviceTitle) || booking.serviceTitle.includes(s.routeTitle)) {
+          return {
+            ...s,
+            availableSeats: Math.max(0, s.availableSeats - seatsCount),
+          };
+        }
+        return s;
+      });
+
+      // Decrement seats on cinema showtimes
+      const updatedShowtimes = state.movieShowtimes.map((m) => {
+        if (m.movieTitle.includes(booking.serviceTitle) || booking.serviceTitle.includes(m.movieTitle)) {
+          return {
+            ...m,
+            bookedSeats: m.bookedSeats + seatsCount,
+          };
+        }
+        return m;
+      });
+
+      return {
+        bookings: newBookings,
+        busSchedules: updatedSchedules,
+        movieShowtimes: updatedShowtimes,
+        organization: {
+          ...state.organization,
+          stats: {
+            ...state.organization.stats,
+            totalBookings: newBookings.length,
+            grossSales: newGross, // Base ticket sales without VAT
+            totalRevenue: net,
+            availableBalance: net,
+            totalTicketsSold: newBookings.reduce((sum, b) => sum + (b.seats?.length || 1), 0),
+            availableSeats: Math.max(0, state.organization.stats.availableSeats - seatsCount),
+          },
+        },
+      };
+    });
+  },
 
   setOrganizationCategory: (category: TicketCategory) => {
     if (typeof window !== "undefined") {

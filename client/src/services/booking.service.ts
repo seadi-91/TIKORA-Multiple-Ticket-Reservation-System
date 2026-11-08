@@ -3,10 +3,13 @@ import { TicketItem } from "@/types/ticket.types";
 
 export const BookingService = {
   calculatePricing(basePrice: number, quantity: number, discount = 0): BookingPriceBreakdown {
-    const subtotal = basePrice * quantity;
-    const serviceFee = Math.round(subtotal * 0.05); // 5% platform charge
-    const tax = Math.round((subtotal + serviceFee) * 0.15); // 15% VAT
-    const total = subtotal + serviceFee + tax - discount;
+    const subtotal = Math.round(basePrice * quantity);
+    // Platform commission is deducted from the provider side (0% charged to customer)
+    const serviceFee = 0;
+    // VAT is strictly 5% calculated on subtotal
+    const tax = Math.round(subtotal * 0.05);
+    // Total price is subtotal + 5% VAT - discount
+    const total = subtotal + tax - discount;
 
     return {
       basePrice,

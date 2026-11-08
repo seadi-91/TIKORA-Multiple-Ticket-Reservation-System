@@ -12,6 +12,11 @@ export const CinemaService = {
     return movie?.category === "CINEMA" ? movie : undefined;
   },
 
+  async fetchMovieById(id: string): Promise<TicketItem | undefined> {
+    const movie = await TicketService.fetchTicketById(id);
+    return movie?.category === "CINEMA" ? movie : movie;
+  },
+
   // Generates cinema hall layout (Rows A to H, 12 seats per row)
   generateCinemaSeats(): SeatInfo[] {
     const seats: SeatInfo[] = [];

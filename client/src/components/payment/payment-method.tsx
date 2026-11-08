@@ -135,10 +135,13 @@ export function PaymentMethodSelector({
         )}
 
         {selectedMethod === "CHAPA" && (
-          <div className="text-xs text-[#64748B] dark:text-slate-400 space-y-1">
-            <p className="font-semibold text-[#0F172A] dark:text-white">Seamless Chapa Hosted Gateway</p>
-            <p className="text-[11px]">
-              Clicking proceed will simulate secure payment approval via Chapa&apos;s verified Ethiopian checkout engine.
+          <div className="text-xs text-[#64748B] dark:text-slate-400 space-y-1.5">
+            <div className="flex items-center gap-1.5 text-emerald-600 dark:text-emerald-400 font-bold">
+              <ShieldCheck className="w-4 h-4 shrink-0" />
+              <span>Official Chapa Ethiopian Payment Gateway</span>
+            </div>
+            <p className="text-[11px] text-slate-600 dark:text-slate-300">
+              You will be redirected securely to the official Chapa payment page where you can pay via Telebirr, CBE Birr, Awash Birr, or debit cards. Upon payment completion, you will be redirected back with your instant digital QR pass.
             </p>
           </div>
         )}

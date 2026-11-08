@@ -10,5 +10,10 @@ export const SportsService = {
     const match = TicketService.getTicketById(id);
     return match?.category === "SPORTS" ? match : undefined;
   },
+
+  async fetchMatchById(id: string): Promise<TicketItem | undefined> {
+    const match = await TicketService.fetchTicketById(id);
+    return match?.category === "SPORTS" ? match : match;
+  },
 };
 

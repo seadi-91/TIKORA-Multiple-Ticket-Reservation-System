@@ -19,7 +19,9 @@ export interface AuthUser {
 }
 
 export interface LoginCredentials {
-  email: string;
+  email?: string;
+  identifier?: string;
+  phone?: string;
   password: string;
   rememberMe?: boolean;
 }

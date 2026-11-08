@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import {
@@ -24,8 +24,12 @@ import { toast } from "sonner";
 
 export default function InspectorAssignedServicesPage() {
   const router = useRouter();
-  const { assignments, profile, setCurrentAssignment } = useInspectorStore();
+  const { assignments, profile, setCurrentAssignment, fetchOrganizationServices } = useInspectorStore();
   const [selectedService, setSelectedService] = useState<InspectorAssignment | null>(null);
+
+  useEffect(() => {
+    fetchOrganizationServices();
+  }, [fetchOrganizationServices]);
 
   const getCategoryIcon = (cat: TicketCategory) => {
     switch (cat) {

@@ -22,6 +22,7 @@ import {
 } from "lucide-react";
 import { useProviderStore } from "@/stores/provider.store";
 import { providerService } from "@/services/provider.service";
+import { TicketService } from "@/services/ticket.service";
 import { toast } from "sonner";
 
 export default function ProviderOrganizationPage() {
@@ -168,8 +169,27 @@ export default function ProviderOrganizationPage() {
     }
   };
 
+  const isCatActive =
+    organization.isCategoryActive !== false &&
+    TicketService.isCategoryActive(organization.category || "BUS");
+
   return (
     <div className="space-y-4 max-w-6xl mx-auto">
+      {/* Sector Category Deactivated Warning Banner */}
+      {!isCatActive && (
+        <div className="rounded-2xl p-4 bg-amber-500/10 dark:bg-amber-950/30 border border-amber-500/30 text-foreground flex items-start gap-3 shadow-xs">
+          <AlertTriangle className="w-5 h-5 text-amber-600 dark:text-amber-400 shrink-0 mt-0.5" />
+          <div className="space-y-0.5">
+            <h4 className="text-xs sm:text-sm font-bold text-amber-800 dark:text-amber-300">
+              Operating Sector Category Currently Deactivated
+            </h4>
+            <p className="text-[11px] text-amber-700/90 dark:text-amber-300/80 leading-relaxed">
+              Your registered sector (<strong>{organization.category}</strong>) has been deactivated by the platform admin. Your organization listings are currently hidden from customer and guest pages until reactivated.
+            </p>
+          </div>
+        </div>
+      )}
+
       {/* Page Header - Minimized Text */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-2 border-b border-slate-200/60 dark:border-slate-800/60">
         <div>
@@ -237,9 +257,20 @@ export default function ProviderOrganizationPage() {
               <span className="text-[10px] text-muted-foreground block truncate">
                 {organization.legalName || organization.name}
               </span>
-              <span className="inline-block mt-1 font-mono text-[9px] font-semibold px-2 py-0.5 rounded-md bg-amber-500/10 text-amber-700 dark:text-amber-300">
-                Category: {organization.category || "BUS"}
-              </span>
+              <div className="flex items-center justify-center gap-1.5 flex-wrap mt-1">
+                <span className="font-mono text-[9px] font-semibold px-2 py-0.5 rounded-md bg-amber-500/10 text-amber-700 dark:text-amber-300">
+                  Category: {organization.category || "BUS"}
+                </span>
+                {isCatActive ? (
+                  <span className="text-[9px] font-bold px-2 py-0.5 rounded-md bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20">
+                    Active
+                  </span>
+                ) : (
+                  <span className="text-[9px] font-bold px-2 py-0.5 rounded-md bg-rose-500/10 text-rose-600 dark:text-rose-400 border border-rose-500/20">
+                    Deactivated by Admin
+                  </span>
+                )}
+              </div>
             </div>
 
             {/* Live PostgreSQL Verification Status Badge */}

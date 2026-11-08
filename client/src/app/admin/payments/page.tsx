@@ -17,20 +17,35 @@ import {
   Check,
   X,
   FileText,
+  Ticket,
+  User,
+  ShieldCheck,
 } from "lucide-react";
 import { useAdminStore } from "@/stores/admin.store";
 import { ActionDropdown } from "@/components/ui/action-dropdown";
+import { formatCurrency } from "@/lib/format-currency";
 
 export default function AdminPaymentsPage() {
-  const { payouts, processPayout, stats } = useAdminStore();
+  const { payouts, processPayout, stats, bookings } = useAdminStore();
 
-  const [activeTab, setActiveTab] = useState<"PENDING" | "HISTORY">("PENDING");
+  const [activeTab, setActiveTab] = useState<"TICKET_PAYMENTS" | "PENDING" | "HISTORY">("TICKET_PAYMENTS");
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedPayout, setSelectedPayout] = useState<string | null>(null);
   const [payoutNotes, setPayoutNotes] = useState("");
 
   const pendingPayouts = payouts.filter((p) => p.status === "PENDING");
   const processedPayouts = payouts.filter((p) => p.status !== "PENDING");
+
+  const filteredTicketPayments = bookings.filter((b) => {
+    const q = searchQuery.toLowerCase();
+    return (
+      b.reference.toLowerCase().includes(q) ||
+      b.customerName.toLowerCase().includes(q) ||
+      b.providerName.toLowerCase().includes(q) ||
+      b.serviceTitle.toLowerCase().includes(q) ||
+      b.category.toLowerCase().includes(q)
+    );
+  });
 
   const filteredPayouts = (activeTab === "PENDING" ? pendingPayouts : processedPayouts).filter(
     (p) =>
@@ -54,117 +69,119 @@ export default function AdminPaymentsPage() {
   };
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-5">
       {/* Page Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
         <div>
           <h2 className="text-base sm:text-lg font-bold tracking-tight text-foreground">
-            Financial Oversight & Provider Disbursements
+            Financial Ledger &amp; Customer Settlements
           </h2>
           <p className="text-xs text-muted-foreground mt-0.5">
-            Audit Gross Merchandise Value (GMV), platform fee retention, and authorize bank payout settlements.
+            Audit Gross Merchandise Value (GMV with full VAT), customer payment settlements, and provider disbursements.
           </p>
         </div>
 
         <Link
           href="/admin/commissions"
-          className="px-3.5 py-2 text-xs font-semibold rounded-2xl bg-card border border-slate-200/60 dark:border-slate-800/60 hover:bg-muted text-foreground transition-all flex items-center gap-1.5 self-start sm:self-auto shadow-xs"
+          className="px-3 py-1.5 text-xs font-semibold rounded-xl bg-card border border-slate-200/60 dark:border-slate-800/60 hover:bg-muted text-foreground transition-all flex items-center gap-1.5 self-start sm:self-auto shadow-2xs"
         >
-          <Percent className="w-4 h-4 text-amber-600 dark:text-amber-400" />
+          <Percent className="w-3.5 h-3.5 text-amber-600 dark:text-amber-400" />
           <span>Commission Rules</span>
         </Link>
       </div>
 
-      {/* Financial KPI Cards - Multiple Column Display (4 Columns) */}
-      <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-4 gap-2.5 sm:gap-4">
-        <div className="p-3 sm:p-4 rounded-xl sm:rounded-2xl bg-card border border-slate-200/50 dark:border-slate-800/50 shadow-xs">
-          <div className="flex items-center justify-between text-muted-foreground mb-1.5 sm:mb-2">
-            <span className="text-[10px] sm:text-[11px] font-semibold uppercase tracking-wider truncate">Gross GMV</span>
-            <div className="p-1.5 sm:p-2 rounded-lg sm:rounded-xl bg-amber-500/10 text-amber-600 dark:text-amber-400 shrink-0">
+      {/* Financial KPI Cards */}
+      <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-4 gap-2.5 sm:gap-3.5">
+        <div className="p-3 sm:p-3.5 rounded-xl bg-card border border-slate-200/50 dark:border-slate-800/50 shadow-2xs">
+          <div className="flex items-center justify-between text-muted-foreground mb-1">
+            <span className="text-[10px] font-semibold uppercase tracking-wider truncate">Gross GMV (w/ VAT)</span>
+            <div className="p-1.5 rounded-lg bg-amber-500/10 text-amber-600 dark:text-amber-400 shrink-0">
               <DollarSign className="w-3.5 h-3.5" />
             </div>
           </div>
-          <p className="text-sm sm:text-base lg:text-lg font-bold text-foreground truncate">
-            {stats.totalGMV.toLocaleString()} <span className="text-[10px] sm:text-xs text-muted-foreground font-normal">ETB</span>
+          <p className="text-sm sm:text-base font-bold text-foreground truncate">
+            {stats.totalGMV.toLocaleString()} <span className="text-[10px] text-muted-foreground font-normal">ETB</span>
           </p>
-          <p className="text-[10px] text-muted-foreground mt-0.5 truncate">Platform gross sales</p>
+          <p className="text-[10px] text-muted-foreground mt-0.5 truncate">Customer total payments</p>
         </div>
 
-        <div className="p-3 sm:p-4 rounded-xl sm:rounded-2xl bg-card border border-slate-200/50 dark:border-slate-800/50 shadow-xs">
-          <div className="flex items-center justify-between text-muted-foreground mb-1.5 sm:mb-2">
-            <span className="text-[10px] sm:text-[11px] font-semibold uppercase tracking-wider truncate">Net Revenue</span>
-            <div className="p-1.5 sm:p-2 rounded-lg sm:rounded-xl bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 shrink-0">
+        <div className="p-3 sm:p-3.5 rounded-xl bg-card border border-slate-200/50 dark:border-slate-800/50 shadow-2xs">
+          <div className="flex items-center justify-between text-muted-foreground mb-1">
+            <span className="text-[10px] font-semibold uppercase tracking-wider truncate">Platform Revenue</span>
+            <div className="p-1.5 rounded-lg bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 shrink-0">
               <Percent className="w-3.5 h-3.5" />
             </div>
           </div>
-          <p className="text-sm sm:text-base lg:text-lg font-bold text-foreground truncate">
-            {stats.platformRevenue.toLocaleString()} <span className="text-[10px] sm:text-xs text-muted-foreground font-normal">ETB</span>
+          <p className="text-sm sm:text-base font-bold text-foreground truncate">
+            {stats.platformRevenue.toLocaleString()} <span className="text-[10px] text-muted-foreground font-normal">ETB</span>
           </p>
           <p className="text-[10px] text-emerald-600 dark:text-emerald-400 font-medium mt-0.5 truncate">
-            ~5.0% commission
+            5.0% provider commission
           </p>
         </div>
 
-        <div className="p-3 sm:p-4 rounded-xl sm:rounded-2xl bg-card border border-slate-200/50 dark:border-slate-800/50 shadow-xs">
-          <div className="flex items-center justify-between text-muted-foreground mb-1.5 sm:mb-2">
-            <span className="text-[10px] sm:text-[11px] font-semibold uppercase tracking-wider truncate">Pending Payouts</span>
-            <div className="p-1.5 sm:p-2 rounded-lg sm:rounded-xl bg-rose-500/10 text-rose-600 dark:text-rose-400 shrink-0">
+        <div className="p-3 sm:p-3.5 rounded-xl bg-card border border-slate-200/50 dark:border-slate-800/50 shadow-2xs">
+          <div className="flex items-center justify-between text-muted-foreground mb-1">
+            <span className="text-[10px] font-semibold uppercase tracking-wider truncate">Pending Payouts</span>
+            <div className="p-1.5 rounded-lg bg-rose-500/10 text-rose-600 dark:text-rose-400 shrink-0">
               <Clock className="w-3.5 h-3.5" />
             </div>
           </div>
-          <p className="text-sm sm:text-base lg:text-lg font-bold text-foreground truncate">
-            {totalPendingAmount.toLocaleString()} <span className="text-[10px] sm:text-xs text-muted-foreground font-normal">ETB</span>
+          <p className="text-sm sm:text-base font-bold text-foreground truncate">
+            {totalPendingAmount.toLocaleString()} <span className="text-[10px] text-muted-foreground font-normal">ETB</span>
           </p>
           <p className="text-[10px] text-rose-600 dark:text-rose-400 font-medium mt-0.5 truncate">
-            {pendingPayouts.length} pending
+            {pendingPayouts.length} queue requests
           </p>
         </div>
 
-        <div className="p-3 sm:p-4 rounded-xl sm:rounded-2xl bg-card border border-slate-200/50 dark:border-slate-800/50 shadow-xs">
-          <div className="flex items-center justify-between text-muted-foreground mb-1.5 sm:mb-2">
-            <span className="text-[10px] sm:text-[11px] font-semibold uppercase tracking-wider truncate">Settled to Providers</span>
-            <div className="p-1.5 sm:p-2 rounded-lg sm:rounded-xl bg-blue-500/10 text-blue-600 dark:text-blue-400 shrink-0">
+        <div className="p-3 sm:p-3.5 rounded-xl bg-card border border-slate-200/50 dark:border-slate-800/50 shadow-2xs">
+          <div className="flex items-center justify-between text-muted-foreground mb-1">
+            <span className="text-[10px] font-semibold uppercase tracking-wider truncate">Customer Payments</span>
+            <div className="p-1.5 rounded-lg bg-blue-500/10 text-blue-600 dark:text-blue-400 shrink-0">
               <CreditCard className="w-3.5 h-3.5" />
             </div>
           </div>
-          <p className="text-sm sm:text-base lg:text-lg font-bold text-foreground truncate">
-            {(stats.totalGMV - stats.platformRevenue - totalPendingAmount).toLocaleString()}{" "}
-            <span className="text-[10px] sm:text-xs text-muted-foreground font-normal">ETB</span>
+          <p className="text-sm sm:text-base font-bold text-foreground truncate">
+            {bookings.length} <span className="text-[10px] text-muted-foreground font-normal">Transactions</span>
           </p>
-          <p className="text-[10px] text-muted-foreground mt-0.5 truncate">Disbursed via CBE & Telebirr</p>
+          <p className="text-[10px] text-muted-foreground mt-0.5 truncate">Settled via Chapa &amp; Banks</p>
         </div>
       </div>
 
-      {/* Tabs: Pending Queue vs Processed History (Mobile-First Responsive) */}
+      {/* Tabs & Search Controls */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-200/50 dark:border-slate-800/50 pb-3">
-        {/* Mobile View: Dropdown Switcher */}
-        <div className="block sm:hidden w-full">
-          <label className="text-[11px] font-bold text-muted-foreground uppercase tracking-wider block mb-1.5">
-            Settlement View
-          </label>
-          <select
-            value={activeTab}
-            onChange={(e) => setActiveTab(e.target.value as "PENDING" | "HISTORY")}
-            className="w-full h-8 px-2.5 text-[11px] rounded-lg bg-card border border-slate-200/60 dark:border-slate-800/60 text-foreground font-medium focus:outline-none focus:ring-1 focus:ring-amber-500/30 shadow-2xs"
+        {/* Tab Buttons */}
+        <div className="flex items-center gap-1.5 overflow-x-auto no-scrollbar">
+          <button
+            onClick={() => setActiveTab("TICKET_PAYMENTS")}
+            className={`px-3 py-1.5 text-xs font-semibold rounded-lg transition-all shrink-0 flex items-center gap-1.5 cursor-pointer ${
+              activeTab === "TICKET_PAYMENTS"
+                ? "bg-amber-600 text-white shadow-2xs"
+                : "bg-slate-100 dark:bg-slate-800/60 hover:bg-slate-200 dark:hover:bg-slate-800 text-muted-foreground hover:text-foreground"
+            }`}
           >
-            <option value="PENDING">Pending Payouts Queue ({pendingPayouts.length})</option>
-            <option value="HISTORY">Settlement History ({processedPayouts.length})</option>
-          </select>
-        </div>
+            <span>Customer Ticket Payments (የትኬት ገቢ ክፍያዎች)</span>
+            <span
+              className={`px-1.5 py-0.2 rounded-full text-[10px] font-bold ${
+                activeTab === "TICKET_PAYMENTS" ? "bg-white/20 text-white" : "bg-muted-foreground/15 text-muted-foreground"
+              }`}
+            >
+              {bookings.length}
+            </span>
+          </button>
 
-        {/* Desktop View: Tabs */}
-        <div className="hidden sm:flex items-center gap-1.5 overflow-x-auto no-scrollbar pb-1 sm:pb-0">
           <button
             onClick={() => setActiveTab("PENDING")}
-            className={`px-2 py-0.5 text-micro font-medium rounded-md transition-all shrink-0 flex items-center gap-1 cursor-pointer ${
+            className={`px-3 py-1.5 text-xs font-semibold rounded-lg transition-all shrink-0 flex items-center gap-1.5 cursor-pointer ${
               activeTab === "PENDING"
-                ? "bg-amber-600 text-white shadow-xs font-semibold"
+                ? "bg-amber-600 text-white shadow-2xs"
                 : "bg-slate-100 dark:bg-slate-800/60 hover:bg-slate-200 dark:hover:bg-slate-800 text-muted-foreground hover:text-foreground"
             }`}
           >
             <span>Pending Payouts Queue</span>
             <span
-              className={`px-1.5 py-0.2 rounded-full text-nano font-bold ${
+              className={`px-1.5 py-0.2 rounded-full text-[10px] font-bold ${
                 activeTab === "PENDING" ? "bg-white/20 text-white" : "bg-muted-foreground/15 text-muted-foreground"
               }`}
             >
@@ -174,15 +191,15 @@ export default function AdminPaymentsPage() {
 
           <button
             onClick={() => setActiveTab("HISTORY")}
-            className={`px-2 py-0.5 text-micro font-medium rounded-md transition-all shrink-0 flex items-center gap-1 cursor-pointer ${
+            className={`px-3 py-1.5 text-xs font-semibold rounded-lg transition-all shrink-0 flex items-center gap-1.5 cursor-pointer ${
               activeTab === "HISTORY"
-                ? "bg-amber-600 text-white shadow-xs font-semibold"
+                ? "bg-amber-600 text-white shadow-2xs"
                 : "bg-slate-100 dark:bg-slate-800/60 hover:bg-slate-200 dark:hover:bg-slate-800 text-muted-foreground hover:text-foreground"
             }`}
           >
             <span>Settlement History</span>
             <span
-              className={`px-1.5 py-0.2 rounded-full text-nano font-bold ${
+              className={`px-1.5 py-0.2 rounded-full text-[10px] font-bold ${
                 activeTab === "HISTORY" ? "bg-white/20 text-white" : "bg-muted-foreground/15 text-muted-foreground"
               }`}
             >
@@ -193,278 +210,196 @@ export default function AdminPaymentsPage() {
 
         {/* Search */}
         <div className="relative w-full sm:w-64">
-          <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3 h-3 text-muted-foreground pointer-events-none" />
+          <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-muted-foreground pointer-events-none" />
           <input
             type="text"
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            placeholder="Search provider, bank account..."
-            className="w-full h-7.5 pl-7.5 pr-2.5 text-micro rounded-md bg-card border border-slate-200/50 dark:border-slate-800/50 placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-amber-500/30 focus:border-amber-500 transition-all shadow-xs"
+            placeholder="Search reference, customer, provider..."
+            className="w-full h-8 pl-8 pr-2.5 text-xs rounded-lg bg-card border border-slate-200/60 dark:border-slate-800/60 placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-amber-500/30 focus:border-amber-500 transition-all shadow-2xs"
           />
         </div>
       </div>
 
-      {/* Mobile View: High-Clarity Elevated Cards */}
-      <div className="block sm:hidden space-y-3.5">
-        {filteredPayouts.length === 0 ? (
-          <div className="p-8 text-center text-muted-foreground text-xs rounded-2xl bg-card border border-slate-200/60 dark:border-slate-800/60 shadow-xs">
-            No payouts found matching your filter criteria.
-          </div>
-        ) : (
-          filteredPayouts.map((pay) => (
-            <div
-              key={pay.id}
-              className="rounded-2xl bg-card border border-slate-200/70 dark:border-slate-800/70 shadow-xs hover:border-amber-500/30 transition-all p-4 space-y-3.5"
-            >
-              {/* Card Header: Reference, Provider Name & Status */}
-              <div className="flex items-start justify-between gap-2.5">
-                <div className="flex items-start gap-3 min-w-0 flex-1">
-                  <div className="w-10 h-10 rounded-xl bg-gradient-to-tr from-amber-500/15 to-amber-500/5 text-amber-600 dark:text-amber-400 flex items-center justify-center shrink-0 font-extrabold text-sm shadow-xs border border-amber-500/20 mt-0.5">
-                    <CreditCard className="w-5 h-5 text-amber-500" />
-                  </div>
-                  <div className="min-w-0 flex-1">
-                    <div className="flex items-center gap-2">
-                      <span className="font-mono font-bold text-sm text-amber-600 dark:text-amber-400">
-                        {pay.reference}
-                      </span>
-                    </div>
-                    <Link
-                      href={`/admin/providers/${pay.providerId}`}
-                      className="font-bold text-foreground hover:text-amber-600 dark:hover:text-amber-400 transition-colors truncate block text-xs mt-0.5"
-                    >
-                      {pay.providerName}
-                    </Link>
-                    <p className="text-[10px] text-muted-foreground font-mono mt-0.5">
-                      Requested: {pay.requestedAt}
-                    </p>
-                  </div>
-                </div>
-
-                <div className="flex items-center gap-1.5 shrink-0">
-                  {pay.status === "PENDING" ? (
-                    <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-500/10 text-amber-600 dark:text-amber-400 ring-1 ring-inset ring-amber-500/20">
-                      <Clock className="w-3 h-3" /> Pending
-                    </span>
-                  ) : pay.status === "PROCESSED" ? (
-                    <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 ring-1 ring-inset ring-emerald-500/20">
-                      <CheckCircle2 className="w-3 h-3" /> Disbursed
-                    </span>
-                  ) : (
-                    <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-rose-500/10 text-rose-600 dark:text-rose-400 ring-1 ring-inset ring-rose-500/20">
-                      <XCircle className="w-3 h-3" /> Declined
-                    </span>
-                  )}
-
-                  <ActionDropdown
-                    items={[
-                      ...(pay.status === "PENDING"
-                        ? [
-                            {
-                              label: "Disburse Settlement",
-                              icon: <Check className="w-4 h-4" />,
-                              variant: "success" as const,
-                              onClick: () => handleApprove(pay.id),
-                            },
-                            {
-                              label: "Decline Payout",
-                              icon: <X className="w-4 h-4" />,
-                              variant: "danger" as const,
-                              onClick: () => handleReject(pay.id),
-                            },
-                          ]
-                        : []),
-                      {
-                        label: "View Operator Organization",
-                        icon: <Building2 className="w-4 h-4" />,
-                        href: `/admin/providers/${pay.providerId}`,
-                      },
-                      {
-                        label: "Audited Ledger Documents",
-                        icon: <FileText className="w-4 h-4" />,
-                        href: `/admin/reports`,
-                      },
-                    ]}
-                  />
-                </div>
-              </div>
-
-              {/* Gateway & Account Strip */}
-              <div className="p-2.5 rounded-xl bg-slate-50 dark:bg-slate-800/40 border border-slate-200/40 dark:border-slate-800/50 space-y-1 text-xs">
-                <div className="flex items-center justify-between">
-                  <span className="text-[10px] uppercase font-bold text-muted-foreground tracking-wider">
-                    Bank / Settlement Account
-                  </span>
-                  <span className="inline-flex items-center gap-1 font-semibold text-[11px] text-foreground bg-muted/60 px-2 py-0.5 rounded">
-                    {pay.payoutMethod.replace(/_/g, " ")}
-                  </span>
-                </div>
-                <div className="flex items-center justify-between text-[11px] pt-1">
-                  <span className="font-mono text-muted-foreground">{pay.accountNumber}</span>
-                  <span className="font-medium text-foreground truncate max-w-[170px]">{pay.accountName}</span>
-                </div>
-              </div>
-
-              {/* 3-Column Financial Grid */}
-              <div className="grid grid-cols-3 gap-2 p-2.5 rounded-xl bg-amber-500/[0.04] dark:bg-amber-500/[0.07] border border-amber-500/15 text-center">
-                <div>
-                  <span className="text-[9px] uppercase font-bold text-muted-foreground tracking-wider block">
-                    Gross Sales
-                  </span>
-                  <span className="text-xs font-black text-foreground font-mono mt-0.5 block truncate">
-                    {pay.amount.toLocaleString()} <span className="text-[9px] text-muted-foreground font-normal">ETB</span>
-                  </span>
-                </div>
-                <div className="border-x border-amber-500/15">
-                  <span className="text-[9px] uppercase font-bold text-muted-foreground tracking-wider block">
-                    Fee Retained
-                  </span>
-                  <span className="text-xs font-black text-emerald-600 dark:text-emerald-400 font-mono mt-0.5 block truncate">
-                    -{pay.fee.toLocaleString()} <span className="text-[9px] font-normal">ETB</span>
-                  </span>
-                </div>
-                <div>
-                  <span className="text-[9px] uppercase font-bold text-muted-foreground tracking-wider block">
-                    Net Payout
-                  </span>
-                  <span className="text-xs font-black text-amber-600 dark:text-amber-400 font-mono mt-0.5 block truncate">
-                    {pay.netAmount.toLocaleString()} <span className="text-[9px] font-normal">ETB</span>
-                  </span>
-                </div>
-              </div>
-
-              {/* Quick Action Buttons for Pending Payouts */}
-              {pay.status === "PENDING" && (
-                <div className="flex items-center gap-2 pt-0.5">
-                  <button
-                    type="button"
-                    onClick={() => handleApprove(pay.id)}
-                    className="flex-1 py-2 px-3 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs flex items-center justify-center gap-1.5 transition-colors shadow-xs cursor-pointer"
-                  >
-                    <Check className="w-3.5 h-3.5" />
-                    <span>Disburse Settlement</span>
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => handleReject(pay.id)}
-                    className="py-2 px-3 rounded-xl bg-rose-50 hover:bg-rose-100 dark:bg-rose-950/30 dark:hover:bg-rose-900/40 text-rose-600 dark:text-rose-400 font-bold text-xs flex items-center justify-center gap-1 transition-colors border border-rose-200/60 dark:border-rose-900/50 cursor-pointer"
-                  >
-                    <X className="w-3.5 h-3.5" />
-                    <span>Decline</span>
-                  </button>
-                </div>
-              )}
+      {/* 1. View: Customer Ticket Payments (FULL AMOUNT WITH VAT) */}
+      {activeTab === "TICKET_PAYMENTS" && (
+        <div className="rounded-2xl bg-card border border-slate-200/50 dark:border-slate-800/50 shadow-2xs overflow-hidden">
+          <div className="p-3.5 border-b border-border/40 flex items-center justify-between">
+            <div>
+              <h3 className="text-xs font-bold text-foreground">Customer Payments Ledger</h3>
+              <p className="text-[11px] text-muted-foreground">
+                Displaying full customer paid amount (Base fare + 5% VAT) settled via Chapa.
+              </p>
             </div>
-          ))
-        )}
-      </div>
+            <span className="text-[10px] font-semibold text-emerald-600 dark:text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded">
+              Full Gross Amount (Mulu Yegenzeb Meten)
+            </span>
+          </div>
 
-      {/* Desktop View: Payouts Table with Spacious Columns & Horizontal Scroll */}
-      <div className="hidden sm:block rounded-3xl bg-card border border-slate-200/50 dark:border-slate-800/50 shadow-sm overflow-hidden">
-        <div className="overflow-x-auto">
-          <table className="w-full text-xs text-left min-w-[1020px]">
-            <thead className="bg-slate-50/60 dark:bg-slate-800/40 text-muted-foreground uppercase text-[10px] font-bold tracking-wider">
-              <tr>
-                <th className="px-5 py-3.5 whitespace-nowrap min-w-[140px]">Reference</th>
-                <th className="px-4 py-3.5 whitespace-nowrap min-w-[180px]">Provider Organization</th>
-                <th className="px-4 py-3.5 whitespace-nowrap min-w-[130px]">Gross / Fee</th>
-                <th className="px-4 py-3.5 whitespace-nowrap min-w-[140px]">Net Disbursement</th>
-                <th className="px-4 py-3.5 whitespace-nowrap min-w-[190px]">Payout Gateway & Account</th>
-                <th className="px-4 py-3.5 whitespace-nowrap min-w-[110px]">Date Requested</th>
-                <th className="px-4 py-3.5 whitespace-nowrap min-w-[100px]">Status</th>
-                <th className="px-4 py-3.5 text-right w-12 shrink-0">Actions</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-slate-100 dark:divide-slate-800/40">
-              {filteredPayouts.map((pay) => (
-                <tr key={pay.id} className="hover:bg-amber-500/[0.03] dark:hover:bg-amber-500/[0.06] transition-colors">
-                  <td className="px-5 py-3.5 font-mono font-bold text-amber-600 dark:text-amber-400 whitespace-nowrap">
-                    {pay.reference}
-                  </td>
-                  <td className="px-4 py-3.5 font-semibold text-foreground whitespace-nowrap">{pay.providerName}</td>
-                  <td className="px-4 py-3.5 whitespace-nowrap">
-                    <div>
-                      <p className="text-foreground">{pay.amount.toLocaleString()} ETB</p>
-                      <p className="text-[10px] text-muted-foreground font-mono">
-                        Fee: -{pay.fee.toLocaleString()} ETB
-                      </p>
-                    </div>
-                  </td>
-                  <td className="px-4 py-3.5 font-bold text-foreground text-sm whitespace-nowrap">
-                    {pay.netAmount.toLocaleString()}{" "}
-                    <span className="text-[10px] text-muted-foreground font-normal">ETB</span>
-                  </td>
-                  <td className="px-4 py-3.5 whitespace-nowrap">
-                    <div>
-                      <p className="font-semibold text-foreground flex items-center gap-1">
-                        <CreditCard className="w-3.5 h-3.5 text-amber-600" />
-                        <span>{pay.payoutMethod.replace(/_/g, " ")}</span>
-                      </p>
-                      <p className="text-[10px] font-mono text-muted-foreground">{pay.accountNumber}</p>
-                      <p className="text-[10px] text-muted-foreground truncate">{pay.accountName}</p>
-                    </div>
-                  </td>
-                  <td className="px-4 py-3.5 font-mono text-muted-foreground">{pay.requestedAt}</td>
-                  <td className="px-4 py-3.5">
-                    {pay.status === "PENDING" ? (
-                      <span className="inline-flex items-center gap-1 text-amber-600 dark:text-amber-400 font-semibold text-[11px]">
-                        <Clock className="w-3 h-3" /> Pending Review
-                      </span>
-                    ) : pay.status === "PROCESSED" ? (
-                      <span className="inline-flex items-center gap-1 text-emerald-600 dark:text-emerald-400 font-semibold text-[11px]">
-                        <CheckCircle2 className="w-3 h-3" /> Disbursed
-                      </span>
-                    ) : (
-                      <span className="inline-flex items-center gap-1 text-rose-600 dark:text-rose-400 font-semibold text-[11px]">
-                        <XCircle className="w-3 h-3" /> Declined
-                      </span>
-                    )}
-                  </td>
-                  <td className="px-5 py-3.5 text-right">
-                    <ActionDropdown
-                      items={[
-                        ...(pay.status === "PENDING"
-                          ? [
-                              {
-                                label: "Disburse Settlement",
-                                icon: <Check className="w-4 h-4" />,
-                                variant: "success" as const,
-                                onClick: () => handleApprove(pay.id),
-                              },
-                              {
-                                label: "Decline Payout",
-                                icon: <X className="w-4 h-4" />,
-                                variant: "danger" as const,
-                                onClick: () => handleReject(pay.id),
-                              },
-                            ]
-                          : []),
-                        {
-                          label: "View Organization",
-                          icon: <Building2 className="w-4 h-4" />,
-                          href: `/admin/providers/${pay.providerId}`,
-                        },
-                        {
-                          label: "Commission Settings",
-                          icon: <Percent className="w-4 h-4" />,
-                          href: `/admin/commissions`,
-                        },
-                      ]}
-                    />
-                  </td>
-                </tr>
-              ))}
-
-              {filteredPayouts.length === 0 && (
+          <div className="overflow-x-auto">
+            <table className="w-full text-left border-collapse text-xs">
+              <thead className="bg-slate-50/80 dark:bg-slate-800/50 text-muted-foreground uppercase text-[10px] font-bold tracking-wider border-b border-border/40">
                 <tr>
-                  <td colSpan={8} className="px-5 py-12 text-center text-muted-foreground">
-                    No payouts matching criteria.
-                  </td>
+                  <th className="py-2.5 px-4">Tx Reference</th>
+                  <th className="py-2.5 px-4">Customer Details</th>
+                  <th className="py-2.5 px-4">Provider / Organizer</th>
+                  <th className="py-2.5 px-4">Ticket / Service</th>
+                  <th className="py-2.5 px-4 text-right">Total Paid (w/ 5% VAT)</th>
+                  <th className="py-2.5 px-4 text-center">Gateway</th>
+                  <th className="py-2.5 px-4 text-center">Status</th>
+                  <th className="py-2.5 px-4 text-right">Date</th>
                 </tr>
-              )}
-            </tbody>
-          </table>
+              </thead>
+              <tbody className="divide-y divide-border/30">
+                {filteredTicketPayments.map((b) => {
+                  const baseFare = Math.round(b.totalAmount / 1.05);
+                  const vatAmount = b.totalAmount - baseFare;
+                  return (
+                    <tr key={b.id} className="hover:bg-muted/20 transition-colors">
+                      <td className="py-3 px-4 font-mono font-bold text-amber-600 dark:text-amber-400">
+                        {b.reference}
+                      </td>
+                      <td className="py-3 px-4">
+                        <span className="font-semibold text-foreground block">{b.customerName}</span>
+                        <span className="text-[10px] text-muted-foreground">{b.customerEmail}</span>
+                      </td>
+                      <td className="py-3 px-4">
+                        <span className="font-medium text-foreground">{b.providerName}</span>
+                      </td>
+                      <td className="py-3 px-4">
+                        <span className="font-semibold text-foreground block line-clamp-1">{b.serviceTitle}</span>
+                        <span className="text-[10px] text-amber-600">{b.category} &bull; {b.quantity || 1} Tickets</span>
+                      </td>
+                      <td className="py-3 px-4 text-right">
+                        <span className="font-mono font-bold text-emerald-600 dark:text-emerald-400 block text-xs">
+                          {b.totalAmount.toLocaleString()} ETB
+                        </span>
+                        <span className="text-[9px] text-muted-foreground">
+                          Base: {baseFare.toLocaleString()} + VAT: {vatAmount.toLocaleString()} ETB
+                        </span>
+                      </td>
+                      <td className="py-3 px-4 text-center font-medium">
+                        <span className="px-2 py-0.5 rounded text-[10px] bg-slate-100 dark:bg-slate-800 font-mono">
+                          {b.paymentMethod || "CHAPA"}
+                        </span>
+                      </td>
+                      <td className="py-3 px-4 text-center">
+                        <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-500/10 text-emerald-600 dark:text-emerald-400">
+                          <CheckCircle2 className="w-3 h-3" /> PAID
+                        </span>
+                      </td>
+                      <td className="py-3 px-4 text-right font-mono text-[10px] text-muted-foreground">
+                        {b.bookingDate}
+                      </td>
+                    </tr>
+                  );
+                })}
+
+                {filteredTicketPayments.length === 0 && (
+                  <tr>
+                    <td colSpan={8} className="py-10 text-center text-muted-foreground text-xs">
+                      No customer ticket payments recorded yet.
+                    </td>
+                  </tr>
+                )}
+              </tbody>
+            </table>
+          </div>
         </div>
-      </div>
+      )}
+
+      {/* 2. View: Provider Payouts (PENDING / HISTORY) */}
+      {activeTab !== "TICKET_PAYMENTS" && (
+        <div className="rounded-2xl bg-card border border-slate-200/50 dark:border-slate-800/50 shadow-2xs overflow-hidden">
+          <div className="overflow-x-auto">
+            <table className="w-full text-xs text-left min-w-[980px]">
+              <thead className="bg-slate-50/60 dark:bg-slate-800/40 text-muted-foreground uppercase text-[10px] font-bold tracking-wider">
+                <tr>
+                  <th className="px-4 py-3">Reference</th>
+                  <th className="px-4 py-3">Provider Organization</th>
+                  <th className="px-4 py-3">Gross / Fee</th>
+                  <th className="px-4 py-3">Net Disbursement</th>
+                  <th className="px-4 py-3">Settlement Account</th>
+                  <th className="px-4 py-3">Date</th>
+                  <th className="px-4 py-3">Status</th>
+                  <th className="px-4 py-3 text-right">Actions</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-border/30">
+                {filteredPayouts.map((pay) => (
+                  <tr key={pay.id} className="hover:bg-muted/20 transition-colors">
+                    <td className="px-4 py-3 font-mono font-bold text-amber-600 dark:text-amber-400">
+                      {pay.reference}
+                    </td>
+                    <td className="px-4 py-3 font-semibold text-foreground">{pay.providerName}</td>
+                    <td className="px-4 py-3">
+                      <div>
+                        <p className="text-foreground">{pay.amount.toLocaleString()} ETB</p>
+                        <p className="text-[10px] text-muted-foreground font-mono">
+                          Fee: -{pay.fee.toLocaleString()} ETB
+                        </p>
+                      </div>
+                    </td>
+                    <td className="px-4 py-3 font-bold text-foreground font-mono">
+                      {pay.netAmount.toLocaleString()} ETB
+                    </td>
+                    <td className="px-4 py-3">
+                      <p className="font-semibold text-foreground">{pay.payoutMethod.replace(/_/g, " ")}</p>
+                      <p className="text-[10px] font-mono text-muted-foreground">{pay.accountNumber}</p>
+                    </td>
+                    <td className="px-4 py-3 font-mono text-muted-foreground text-[11px]">{pay.requestedAt}</td>
+                    <td className="px-4 py-3">
+                      {pay.status === "PENDING" ? (
+                        <span className="inline-flex items-center gap-1 text-amber-600 font-semibold text-[11px]">
+                          <Clock className="w-3 h-3" /> Pending Review
+                        </span>
+                      ) : pay.status === "PROCESSED" ? (
+                        <span className="inline-flex items-center gap-1 text-emerald-600 font-semibold text-[11px]">
+                          <CheckCircle2 className="w-3 h-3" /> Disbursed
+                        </span>
+                      ) : (
+                        <span className="inline-flex items-center gap-1 text-rose-600 font-semibold text-[11px]">
+                          <XCircle className="w-3 h-3" /> Declined
+                        </span>
+                      )}
+                    </td>
+                    <td className="px-4 py-3 text-right">
+                      {pay.status === "PENDING" ? (
+                        <div className="flex items-center justify-end gap-1.5">
+                          <button
+                            type="button"
+                            onClick={() => handleApprove(pay.id)}
+                            className="px-2.5 py-1 rounded bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-[10px] cursor-pointer"
+                          >
+                            Approve
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => handleReject(pay.id)}
+                            className="px-2 py-1 rounded bg-rose-50 text-rose-600 dark:bg-rose-950/40 text-[10px] font-bold cursor-pointer"
+                          >
+                            Decline
+                          </button>
+                        </div>
+                      ) : (
+                        <span className="text-[10px] text-muted-foreground font-mono">Completed</span>
+                      )}
+                    </td>
+                  </tr>
+                ))}
+
+                {filteredPayouts.length === 0 && (
+                  <tr>
+                    <td colSpan={8} className="px-4 py-10 text-center text-muted-foreground text-xs">
+                      No payouts matching criteria.
+                    </td>
+                  </tr>
+                )}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

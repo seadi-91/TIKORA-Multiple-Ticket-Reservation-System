@@ -42,18 +42,60 @@ export interface ProviderBookingRecord {
 export const INITIAL_BOOKINGS: ProviderBookingRecord[] = [];
 
 export default function ProviderBookingsPage() {
-  const { organization } = useProviderStore();
-  const sectorBookings = INITIAL_BOOKINGS.filter((b) => b.category === organization.category);
-  const [bookings, setBookings] = useState<ProviderBookingRecord[]>(sectorBookings);
+  const { organization, bookings: storeBookings } = useProviderStore();
+  const [localBookings, setLocalBookings] = useState<ProviderBookingRecord[]>([]);
   const [searchQuery, setSearchQuery] = useState("");
   const [paymentFilter, setPaymentFilter] = useState<string>("ALL");
   const [statusFilter, setStatusFilter] = useState<string>("ALL");
 
   useEffect(() => {
-    setBookings(INITIAL_BOOKINGS.filter((b) => b.category === organization.category));
-  }, [organization.category]);
+    let list: ProviderBookingRecord[] = [];
+    if (storeBookings && storeBookings.length > 0) {
+      list = storeBookings;
+    } else if (typeof window !== "undefined") {
+      try {
+        const raw = localStorage.getItem("tikora_provider_bookings");
+        if (raw) {
+          list = JSON.parse(raw);
+        }
+      } catch {}
+    }
 
-  const filteredBookings = bookings.filter((b) => {
+    if (list.length > 0) {
+      const filtered = organization.category
+        ? list.filter((b) => !b.category || b.category === organization.category || list.length <= 2)
+        : list;
+      setLocalBookings(filtered.length > 0 ? filtered : list);
+    } else {
+      fetch("/api/bookings")
+        .then((res) => res.json())
+        .then((data) => {
+          if (data.success && data.bookings && data.bookings.length > 0) {
+            const mapped: ProviderBookingRecord[] = data.bookings.map((b: any) => ({
+              id: b.id,
+              reference: b.bookingReference || b.id,
+              customerName: b.customerName,
+              customerPhone: b.customerPhone || "+251 91 100 0000",
+              customerEmail: b.customerEmail || "customer@tikora.et",
+              serviceTitle: b.ticket?.title || b.serviceTitle || "TIKORA Experience Pass",
+              category: b.category || organization.category || "BUS",
+              travelDate: b.ticket?.date || new Date().toISOString().split("T")[0],
+              departureTime: b.ticket?.time || "Flexible",
+              seats: b.selectedSeats || [b.selectedTier || "Pass"],
+              totalAmount: b.pricing?.subtotal || Math.round((b.pricing?.total || 525) / 1.05),
+              paymentMethod: b.paymentMethod || "CHAPA",
+              paymentStatus: b.paymentStatus || "PAID",
+              bookingStatus: b.bookingStatus || "CONFIRMED",
+              createdAt: b.createdAt || new Date().toISOString(),
+            }));
+            setLocalBookings(mapped);
+          }
+        })
+        .catch(() => {});
+    }
+  }, [storeBookings, organization.category]);
+
+  const filteredBookings = localBookings.filter((b) => {
     const matchesPayment = paymentFilter === "ALL" || b.paymentStatus === paymentFilter;
     const matchesStatus = statusFilter === "ALL" || b.bookingStatus === statusFilter;
     const q = searchQuery.toLowerCase().trim();
@@ -67,7 +109,7 @@ export default function ProviderBookingsPage() {
     return matchesPayment && matchesStatus && matchesSearch;
   });
 
-  const totalGrossRevenue = bookings
+  const totalGrossRevenue = localBookings
     .filter((b) => b.paymentStatus === "PAID")
     .reduce((acc, b) => acc + b.totalAmount, 0);
 
@@ -94,7 +136,7 @@ export default function ProviderBookingsPage() {
   };
 
   const handleQuickCheckIn = (id: string) => {
-    setBookings((prev) =>
+    setLocalBookings((prev) =>
       prev.map((b) =>
         b.id === id
           ? {
@@ -121,65 +163,66 @@ export default function ProviderBookingsPage() {
   };
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4">
       {/* Page Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 border-b border-border/60 pb-5">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2.5 border-b border-border/50 pb-3">
         <div>
-          <div className="flex items-center gap-2 mb-1">
-            <span className="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full bg-amber-500/10 text-amber-600 border border-amber-500/20">
+          <div className="flex items-center gap-1.5 mb-0.5">
+            <span className="text-[9px] font-bold uppercase tracking-wider px-1.5 py-0.2 rounded-full bg-amber-500/10 text-amber-600 border border-amber-500/20">
               {organization.category} Orders
             </span>
-            <span className="text-xs text-muted-foreground">{organization.name}</span>
+            <span className="text-[11px] text-muted-foreground">{organization.name}</span>
           </div>
-          <h1 className="text-base sm:text-lg font-bold tracking-tight text-foreground">
-            Customer Bookings & Orders
+          <h1 className="text-sm sm:text-base font-bold tracking-tight text-foreground">
+            Customer Bookings &amp; Orders
           </h1>
-          <p className="text-xs text-muted-foreground">
-            Monitor confirmed reservations, admissions, and ticket check-ins for {organization.name}.
+          <p className="text-[11px] text-muted-foreground">
+            Confirmed reservations and admissions. Ticket base revenue shown with 5% VAT excluded.
           </p>
         </div>
 
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-1.5">
           <button
             type="button"
             onClick={handleExportCSV}
-            className="inline-flex items-center gap-1.5 px-3 py-2 text-xs font-medium rounded-lg border border-border/70 bg-card hover:bg-muted text-foreground transition-colors"
+            className="inline-flex items-center gap-1 px-2.5 py-1.5 text-[11px] font-medium rounded-lg border border-border/70 bg-card hover:bg-muted text-foreground transition-colors cursor-pointer"
           >
-            <Download className="w-3.5 h-3.5" /> Export Bookings CSV
+            <Download className="w-3 h-3" />
+            <span>Export CSV</span>
           </button>
         </div>
       </div>
 
-      {/* KPI Cards */}
-      <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
-        <div className="bg-card border border-border/60 rounded-xl p-4 shadow-xs">
-          <span className="text-muted-foreground text-xs block mb-1">Total Bookings</span>
-          <div className="text-sm sm:text-base font-bold text-foreground">{bookings.length}</div>
-          <span className="text-[11px] text-muted-foreground">Live order ledger</span>
+      {/* KPI Cards - Compact */}
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5 sm:gap-3">
+        <div className="bg-card border border-border/60 rounded-xl p-3 shadow-2xs">
+          <span className="text-muted-foreground text-[10px] uppercase font-semibold block mb-0.5">Total Bookings</span>
+          <div className="text-xs sm:text-sm font-bold text-foreground">{localBookings.length}</div>
+          <span className="text-[9px] text-muted-foreground">Order ledger count</span>
         </div>
 
-        <div className="bg-card border border-border/60 rounded-xl p-4 shadow-xs">
-          <span className="text-muted-foreground text-xs block mb-1">Verified Boarded</span>
-          <div className="text-sm sm:text-base font-bold text-emerald-600">
-            {bookings.filter((b) => b.bookingStatus === "CHECKED_IN").length}
+        <div className="bg-card border border-border/60 rounded-xl p-3 shadow-2xs">
+          <span className="text-muted-foreground text-[10px] uppercase font-semibold block mb-0.5">Verified Boarded</span>
+          <div className="text-xs sm:text-sm font-bold text-emerald-600">
+            {localBookings.filter((b) => b.bookingStatus === "CHECKED_IN").length}
           </div>
-          <span className="text-[11px] text-muted-foreground">Scanned at boarding gates</span>
+          <span className="text-[9px] text-muted-foreground">Gate turnstile scanned</span>
         </div>
 
-        <div className="bg-card border border-border/60 rounded-xl p-4 shadow-xs">
-          <span className="text-muted-foreground text-xs block mb-1">Cancelled / Refunded</span>
-          <div className="text-sm sm:text-base font-bold text-rose-600">
-            {bookings.filter((b) => b.bookingStatus === "CANCELLED").length}
+        <div className="bg-card border border-border/60 rounded-xl p-3 shadow-2xs">
+          <span className="text-muted-foreground text-[10px] uppercase font-semibold block mb-0.5">Cancelled</span>
+          <div className="text-xs sm:text-sm font-bold text-rose-600">
+            {localBookings.filter((b) => b.bookingStatus === "CANCELLED").length}
           </div>
-          <span className="text-[11px] text-muted-foreground">Refund disputes processed</span>
+          <span className="text-[9px] text-muted-foreground">Refund disputes</span>
         </div>
 
-        <div className="bg-card border border-border/60 rounded-xl p-4 shadow-xs">
-          <span className="text-muted-foreground text-xs block mb-1">Total Sales Captured</span>
-          <div className="text-sm sm:text-base font-bold text-amber-600">
+        <div className="bg-card border border-border/60 rounded-xl p-3 shadow-2xs">
+          <span className="text-muted-foreground text-[10px] uppercase font-semibold block mb-0.5">Ticket Sales (No VAT)</span>
+          <div className="text-xs sm:text-sm font-bold text-amber-600">
             {formatCurrency(totalGrossRevenue)}
           </div>
-          <span className="text-[11px] text-muted-foreground">Telebirr, CBE & Chapa</span>
+          <span className="text-[9px] text-muted-foreground">Base fare &bull; VAT excluded</span>
         </div>
       </div>
 

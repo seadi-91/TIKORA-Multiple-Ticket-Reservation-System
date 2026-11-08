@@ -61,19 +61,59 @@ export class AuthService {
   }
 
   /**
-   * Login with email and password
+   * Login with email or phone number and password
    */
-  static async login(email: string, password: string):Promise<AuthResponseDto> {
-    if (!email || !password) {
-      throw new Error("Email and password are required.");
+  static async login(identifier: string, password: string): Promise<AuthResponseDto> {
+    if (!identifier || !password) {
+      throw new Error("Email or phone number and password are required.");
     }
 
-    const normalizedEmail = email.toLowerCase().trim();
+    const trimmed = identifier.trim();
+    let user: any = null;
 
-    // Find user by email
-    const user = await db.orm.public.User.where({ email: normalizedEmail }).first();
+    if (trimmed.includes("@")) {
+      const normalizedEmail = trimmed.toLowerCase();
+      user = await db.orm.public.User.where({ email: normalizedEmail }).first();
+    } else {
+      // Phone number or username lookup
+      const cleanPhone = trimmed.replace(/[\s\-\(\)]/g, "");
+
+      // 1. Direct match with entered phone
+      user = await db.orm.public.User.where({ phone: trimmed }).first();
+      if (!user && cleanPhone !== trimmed) {
+        user = await db.orm.public.User.where({ phone: cleanPhone }).first();
+      }
+
+      // 2. Ethiopian phone variations (+251..., 09..., 9..., 07..., 251...)
+      if (!user) {
+        const variants: string[] = [];
+        if (cleanPhone.startsWith("+251")) {
+          const rest = cleanPhone.slice(4);
+          variants.push("0" + rest, rest, "251" + rest);
+        } else if (cleanPhone.startsWith("251")) {
+          const rest = cleanPhone.slice(3);
+          variants.push("+" + cleanPhone, "0" + rest, rest);
+        } else if (cleanPhone.startsWith("0")) {
+          const rest = cleanPhone.slice(1);
+          variants.push("+251" + rest, "251" + rest, rest);
+        } else if (cleanPhone.startsWith("9") || cleanPhone.startsWith("7")) {
+          variants.push("0" + cleanPhone, "+251" + cleanPhone, "251" + cleanPhone);
+        }
+
+        for (const variant of variants) {
+          user = await db.orm.public.User.where({ phone: variant }).first();
+          if (user) break;
+        }
+      }
+
+      // 3. Fallback to username
+      if (!user) {
+        user = await db.orm.public.User.where({ username: trimmed }).first();
+      }
+    }
+
     if (!user) {
-      throw new Error("Account not registered. Please create an account first.");
+      throw new Error("Account not registered with this email or phone number. Please register first.");
     }
 
     if (!user.isActive) {

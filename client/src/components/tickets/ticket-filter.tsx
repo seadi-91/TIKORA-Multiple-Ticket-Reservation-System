@@ -4,6 +4,7 @@ import React from "react";
 import { Search, MapPin, SlidersHorizontal, LayoutGrid, List, RotateCcw } from "lucide-react";
 import { TicketCategory, TicketFilterState } from "@/types/ticket.types";
 import { ETHIOPIAN_CITIES } from "@/lib/constants";
+import { TicketService } from "@/services/ticket.service";
 
 interface TicketFilterProps {
   filters: TicketFilterState;
@@ -25,19 +26,23 @@ export function TicketFilter({ filters, onFilterChange, onResetFilters }: Ticket
       {/* Category Pills */}
       <div className="flex items-center gap-1 overflow-x-auto pb-1 no-scrollbar">
         {categories.map((cat) => {
-          const isActive = filters.category === cat.id;
+          const isSelected = filters.category === cat.id;
+          const isSectorActive = cat.id === "ALL" || TicketService.isCategoryActive(cat.id);
           return (
             <button
               key={cat.id}
               type="button"
               onClick={() => onFilterChange({ category: cat.id })}
               className={`px-2.5 py-1 rounded-lg text-[10px] font-bold tracking-wide transition-all shrink-0 cursor-pointer ${
-                isActive
+                isSelected
                   ? "bg-amber-600 text-white shadow-xs font-black"
+                  : !isSectorActive
+                  ? "bg-rose-500/10 text-rose-500/80 hover:bg-rose-500/20"
                   : "bg-slate-100 dark:bg-slate-800 text-muted-foreground hover:text-foreground hover:bg-slate-200 dark:hover:bg-slate-700"
               }`}
             >
-              {cat.label}
+              <span>{cat.label}</span>
+              {!isSectorActive && <span className="ml-1 text-[8px] opacity-75">(Off)</span>}
             </button>
           );
         })}

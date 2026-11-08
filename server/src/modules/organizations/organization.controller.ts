@@ -57,11 +57,21 @@ export class OrganizationController {
         return;
       }
 
+      const catSlug = (provider.providerType || "BUS").toLowerCase();
+      let ticketCategory = await db.orm.public.TicketCategory.where({ slug: catSlug }).first();
+      if (!ticketCategory) {
+        ticketCategory = await db.orm.public.TicketCategory.where({ name: provider.providerType }).first();
+      }
+      const isCategoryActive = ticketCategory ? ticketCategory.isActive !== false : true;
+
       const mappedOrg = {
         id: String(provider.id),
         name: provider.name,
         legalName: provider.legalName || provider.name,
         category: provider.providerType,
+        isCategoryActive,
+        categoryStatus: isCategoryActive ? "ACTIVE" : "DEACTIVATED",
+        categoryDeactivated: !isCategoryActive,
         verified: provider.verificationStatus === "APPROVED",
         approvalStatus: provider.verificationStatus,
         tinNumber: provider.tinNumber || "",

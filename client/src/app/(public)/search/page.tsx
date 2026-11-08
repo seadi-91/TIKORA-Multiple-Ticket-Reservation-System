@@ -7,11 +7,13 @@ import { Footer } from "@/components/layout/footer";
 import { TicketFilter } from "@/components/tickets/ticket-filter";
 import { TicketList } from "@/components/tickets/ticket-list";
 import { TicketService } from "@/services/ticket.service";
-import { TicketFilterState } from "@/types/ticket.types";
+import { TicketFilterState, TicketItem } from "@/types/ticket.types";
 import { Sparkles, Compass } from "lucide-react";
 
 function SearchContent() {
   const searchParams = useSearchParams();
+  const [mounted, setMounted] = useState(false);
+  const [tickets, setTickets] = useState<TicketItem[]>([]);
 
   const [filters, setFilters] = useState<TicketFilterState>({
     category: (searchParams.get("category") as any) || "ALL",
@@ -21,6 +23,19 @@ function SearchContent() {
     sortBy: "POPULAR",
     viewMode: "grid",
   });
+
+  useEffect(() => {
+    setMounted(true);
+    const cached = TicketService.getAllTickets();
+    if (cached && cached.length > 0) {
+      setTickets(cached);
+    }
+    TicketService.fetchTickets().then((data) => {
+      if (data && data.length > 0) {
+        setTickets(data);
+      }
+    });
+  }, []);
 
   useEffect(() => {
     const cat = searchParams.get("category");
@@ -75,7 +90,7 @@ function SearchContent() {
 
         <div className="flex items-center gap-2 self-start sm:self-auto shrink-0">
           <div className="px-4 py-2 rounded-2xl bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 shadow-xs text-xs font-bold text-foreground">
-            <span className="text-amber-600 dark:text-amber-400 font-black">{results.length}</span> Active Passes
+            <span className="text-amber-600 dark:text-amber-400 font-black">{mounted ? results.length : 0}</span> Active Passes
           </div>
         </div>
       </div>
@@ -88,11 +103,22 @@ function SearchContent() {
       />
 
       {/* Ticket Results Grid */}
-      <TicketList
-        tickets={results}
-        viewMode={filters.viewMode}
-        onResetFilters={handleResetFilters}
-      />
+      {!mounted ? (
+        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3">
+          {[1, 2, 3, 4, 5, 6, 7, 8].map((i) => (
+            <div
+              key={i}
+              className="rounded-2xl aspect-[4/3] bg-slate-100 dark:bg-slate-800/60 animate-pulse border border-slate-200/50 dark:border-slate-800/50 min-h-[220px]"
+            />
+          ))}
+        </div>
+      ) : (
+        <TicketList
+          tickets={results}
+          viewMode={filters.viewMode}
+          onResetFilters={handleResetFilters}
+        />
+      )}
     </div>
   );
 }
