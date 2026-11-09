@@ -5,6 +5,7 @@ import { TicketItem } from "@/types/ticket.types";
 import { TicketCard } from "./ticket-card";
 import { EmptyState } from "@/components/feedback/empty-state";
 import { Ticket as TicketIcon } from "lucide-react";
+import { useLanguage } from "@/providers/language-provider";
 
 interface TicketListProps {
   tickets: TicketItem[];
@@ -19,13 +20,15 @@ export function TicketList({
   onBookClick,
   onResetFilters,
 }: TicketListProps) {
+  const { t } = useLanguage();
+
   if (tickets.length === 0) {
     return (
       <EmptyState
         icon={TicketIcon}
-        title="No matching tickets found"
-        description="We couldn't find any tickets matching your selected criteria. Try adjusting your search query, destination city, or category filter."
-        actionLabel="Reset Search Filters"
+        title={t("No matching tickets found")}
+        description={t("We couldn't find any tickets matching your selected criteria. Try adjusting your search query, destination city, or category filter.")}
+        actionLabel={t("Reset Search Filters")}
         onActionClick={onResetFilters}
       />
     );

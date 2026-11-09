@@ -44,6 +44,9 @@ interface UnifiedBookingView {
   seats: string[];
   totalAmount: number; // Pure ticket base fare without VAT
   customerPaidWithVat: number; // Full customer amount with VAT
+  vatRate: number;
+  vatAmount: number;
+  commissionRate: number;
   platformFee: number;
   netPayout: number;
   paymentMethod: string;
@@ -120,10 +123,13 @@ export default function BookingDetailPage() {
     }
 
     if (matchProvider) {
-      const baseFare = matchProvider.totalAmount || 0;
-      const fee = Math.round(baseFare * 0.05);
-      const net = baseFare - fee;
-      const fullCustomerPaid = Math.round(baseFare * 1.05);
+      const vatRate = (matchProvider as any).vatRate ?? 5;
+      const commissionRate = (matchProvider as any).commissionRate ?? (organization as any)?.commissionRate ?? 5;
+      const fullCustomerPaid = (matchProvider as any).customerPaid ?? matchProvider.totalAmount ?? 0;
+      const vatAmount = (matchProvider as any).vatAmount ?? Math.round(((fullCustomerPaid * vatRate) / (100 + vatRate)) * 100) / 100;
+      const baseFare = Math.max(0, Math.round((fullCustomerPaid - vatAmount) * 100) / 100);
+      const fee = (matchProvider as any).platformFee ?? Math.round(baseFare * (commissionRate / 100) * 100) / 100;
+      const net = (matchProvider as any).providerNet ?? Math.max(0, Math.round((baseFare - fee) * 100) / 100);
 
       setBooking({
         id: matchProvider.id,
@@ -139,6 +145,9 @@ export default function BookingDetailPage() {
         seats: matchProvider.seats && matchProvider.seats.length > 0 ? matchProvider.seats : ["Standard Pass"],
         totalAmount: baseFare, // Pure ticket price without VAT
         customerPaidWithVat: fullCustomerPaid,
+        vatRate,
+        vatAmount,
+        commissionRate,
         platformFee: fee,
         netPayout: net,
         paymentMethod: matchProvider.paymentMethod || "CHAPA",
@@ -153,10 +162,13 @@ export default function BookingDetailPage() {
     }
 
     if (matchCustomer) {
-      const fullGross = matchCustomer.pricing?.total || 525;
-      const baseFare = matchCustomer.pricing?.subtotal || Math.round(fullGross / 1.05);
-      const fee = Math.round(baseFare * 0.05);
-      const net = baseFare - fee;
+      const fullGross = matchCustomer.pricing?.total ?? (matchCustomer as any).totalAmount ?? 525;
+      const vatRate = Number(matchCustomer.pricing?.vatRate ?? (matchCustomer as any).vatRate ?? 5);
+      const commissionRate = Number(matchCustomer.pricing?.commissionRate ?? (matchCustomer as any).commissionRate ?? (organization as any)?.commissionRate ?? 5);
+      const vatAmount = Number(matchCustomer.pricing?.vatAmount ?? (matchCustomer as any).vatAmount ?? Math.round(((fullGross * vatRate) / (100 + vatRate)) * 100) / 100);
+      const baseFare = Number(matchCustomer.pricing?.subtotal ?? Math.max(0, Math.round((fullGross - vatAmount) * 100) / 100));
+      const fee = Number(matchCustomer.pricing?.platformFee ?? (matchCustomer as any).platformFee ?? Math.round(baseFare * (commissionRate / 100) * 100) / 100);
+      const net = Number(matchCustomer.pricing?.providerNet ?? (matchCustomer as any).providerNet ?? Math.max(0, Math.round((baseFare - fee) * 100) / 100));
       const seatList =
         matchCustomer.selectedSeats && matchCustomer.selectedSeats.length > 0
           ? matchCustomer.selectedSeats
@@ -176,6 +188,9 @@ export default function BookingDetailPage() {
         seats: seatList,
         totalAmount: baseFare, // Pure ticket base fare without VAT
         customerPaidWithVat: fullGross,
+        vatRate,
+        vatAmount,
+        commissionRate,
         platformFee: fee,
         netPayout: net,
         paymentMethod: matchCustomer.paymentMethod || "CHAPA",
@@ -196,9 +211,13 @@ export default function BookingDetailPage() {
         .then((data) => {
           if (data.success && data.booking) {
             const b = data.booking;
-            const fullGross = b.pricing?.total || b.totalAmount || 525;
-            const baseFare = b.pricing?.subtotal || Math.round(fullGross / 1.05);
-            const fee = Math.round(baseFare * 0.05);
+            const fullGross = Number(b.pricing?.total || b.customerPaid || b.totalAmount || 525);
+            const vatRate = Number(b.pricing?.vatRate ?? b.vatRate ?? 5);
+            const commissionRate = Number(b.pricing?.commissionRate ?? b.commissionRate ?? (organization?.commissionRate || 5));
+            const vatAmount = Number(b.pricing?.vatAmount ?? b.vatAmount ?? Math.round(((fullGross * vatRate) / (100 + vatRate)) * 100) / 100);
+            const baseFare = Number(b.pricing?.subtotal ?? b.subtotal ?? Math.max(0, Math.round((fullGross - vatAmount) * 100) / 100));
+            const fee = Number(b.pricing?.platformFee ?? b.platformFee ?? Math.round(baseFare * (commissionRate / 100) * 100) / 100);
+            const net = Number(b.pricing?.providerNet ?? b.providerNet ?? Math.max(0, Math.round((baseFare - fee) * 100) / 100));
             setBooking({
               id: b.id || `BKG-${targetId}`,
               reference: b.bookingReference || targetId,
@@ -213,8 +232,11 @@ export default function BookingDetailPage() {
               seats: b.selectedSeats || [b.selectedTier || "Pass"],
               totalAmount: baseFare,
               customerPaidWithVat: fullGross,
+              vatRate,
+              vatAmount,
+              commissionRate,
               platformFee: fee,
-              netPayout: baseFare - fee,
+              netPayout: net,
               paymentMethod: b.paymentMethod || "CHAPA",
               paymentStatus: b.paymentStatus || "PAID",
               bookingStatus: b.bookingStatus || "CONFIRMED",
@@ -586,7 +608,7 @@ export default function BookingDetailPage() {
               </div>
 
               <div className="flex justify-between py-0.5 text-muted-foreground">
-                <span>Platform Commission (5%):</span>
+                <span>Platform Commission ({booking.commissionRate}%):</span>
                 <span className="text-rose-600 font-mono">
                   -{formatCurrency(booking.platformFee)}
                 </span>
@@ -601,11 +623,11 @@ export default function BookingDetailPage() {
 
               <div className="p-2 rounded-lg bg-muted/40 text-[9px] text-muted-foreground border border-border/40 space-y-0.5 mt-1">
                 <div className="flex justify-between">
-                  <span>Customer Paid Total (w/ 5% VAT):</span>
+                  <span>Customer Paid Total (w/ {booking.vatRate}% VAT):</span>
                   <span className="font-mono font-medium text-foreground">{formatCurrency(booking.customerPaidWithVat)}</span>
                 </div>
                 <div className="text-[8px] text-muted-foreground/80 italic">
-                  * Customer 5% VAT is platform/tax revenue and excluded from provider settlement.
+                  * Customer {booking.vatRate}% VAT ({formatCurrency(booking.vatAmount)}) is statutory tax revenue and excluded from provider settlement.
                 </div>
               </div>
             </div>

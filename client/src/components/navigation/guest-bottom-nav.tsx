@@ -12,11 +12,13 @@ import {
 } from "lucide-react";
 import { useBookingStore } from "@/stores/booking.store";
 import { useAuthStore } from "@/stores/auth.store";
+import { useLanguage } from "@/providers/language-provider";
 
 export function GuestBottomNav() {
   const pathname = usePathname();
   const { favorites } = useBookingStore();
   const { isAuthenticated, user } = useAuthStore();
+  const { t } = useLanguage();
   const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
@@ -49,28 +51,28 @@ export function GuestBottomNav() {
   const navItems = [
     {
       id: "home",
-      label: "Home",
+      label: t("nav.home", "Home"),
       href: "/",
       icon: Ticket,
       isActive: pathname === "/",
     },
     {
       id: "explore",
-      label: "Explore",
+      label: t("nav.tickets", "Explore"),
       href: "/search",
       icon: Compass,
       isActive: pathname.startsWith("/search"),
     },
     {
       id: "passes",
-      label: "My Passes",
+      label: t("customer.digitalPasses", "My Passes"),
       href: isAuth ? "/customer/tickets" : "/login",
       icon: QrCode,
       isActive: pathname === "/customer/tickets",
     },
     {
       id: "saved",
-      label: "Saved",
+      label: t("nav.wishlist", "Saved"),
       href: isAuth ? "/customer/favorites" : "/login",
       icon: Heart,
       badge: mounted && favorites.length > 0 ? favorites.length : undefined,
@@ -78,7 +80,7 @@ export function GuestBottomNav() {
     },
     {
       id: "account",
-      label: isAuth ? "Account" : "Sign In",
+      label: isAuth ? t("nav.dashboard", "Account") : t("nav.signIn", "Sign In"),
       href: accountHref,
       icon: User,
       isActive: pathname === "/login" || pathname === "/register" || pathname.startsWith("/customer"),

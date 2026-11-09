@@ -1,6 +1,8 @@
 import type { Metadata, Viewport } from "next";
 import "./globals.css";
 import { ThemeProvider } from "@/providers/theme-provider";
+import { LanguageProvider } from "@/providers/language-provider";
+import { PlatformSettingsProvider } from "@/providers/platform-settings-provider";
 import { GuestBottomNav } from "@/components/navigation/guest-bottom-nav";
 
 export const metadata: Metadata = {
@@ -27,8 +29,12 @@ export default function RootLayout({
     <html lang="en" suppressHydrationWarning className="h-full antialiased dark">
       <body className="min-h-full min-h-[100dvh] flex flex-col font-sans transition-colors duration-200">
         <ThemeProvider>
-          {children}
-          <GuestBottomNav />
+          <LanguageProvider>
+            <PlatformSettingsProvider>
+              {children}
+              <GuestBottomNav />
+            </PlatformSettingsProvider>
+          </LanguageProvider>
         </ThemeProvider>
       </body>
     </html>

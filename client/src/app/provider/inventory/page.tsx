@@ -27,6 +27,7 @@ import { formatCurrency } from "@/lib/format-currency";
 import { toast } from "sonner";
 import { ActionDropdown } from "@/components/ui/action-dropdown";
 import { useProviderStore } from "@/stores/provider.store";
+import { useLanguage } from "@/providers/language-provider";
 
 interface InventoryRow {
   id: string;
@@ -46,6 +47,7 @@ interface InventoryRow {
 
 export default function InventoryManagementPage() {
   const { organization } = useProviderStore();
+  const { t } = useLanguage();
   const [inventory, setInventory] = useState<InventoryRow[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
@@ -65,23 +67,39 @@ export default function InventoryManagementPage() {
     const targetTickets = filteredTickets.length > 0 ? filteredTickets : ticketsList;
 
     const rows: InventoryRow[] = targetTickets.map((t) => {
-      // Find matching bookings for this ticket from database
-      const ticketBookings = bookingsList.filter(
-        (b) =>
-          String(b.ticketId) === String(t.id) ||
-          b.serviceTitle === t.title ||
-          (b.ticket?.id && String(b.ticket.id) === String(t.id))
-      );
+      // Find matching confirmed bookings for this ticket
+      const ticketBookings = bookingsList.filter((b) => {
+        if (b.bookingStatus === "CANCELLED" || b.status === "CANCELLED") return false;
+        const matchTitle = b.serviceTitle && (
+          b.serviceTitle.toLowerCase().trim() === t.title.toLowerCase().trim() ||
+          t.title.toLowerCase().includes(b.serviceTitle.toLowerCase()) ||
+          b.serviceTitle.toLowerCase().includes(t.title.toLowerCase())
+        );
+        const matchId =
+          (b.ticketId && String(b.ticketId) === String(t.id)) ||
+          (b.ticket?.id && String(b.ticket.id) === String(t.id)) ||
+          (b.id && String(b.id) === String(t.id));
+
+        return matchTitle || matchId;
+      });
 
       const bookedCountFromBookings = ticketBookings.reduce(
-        (sum, b) => sum + (b.quantity || b.seats?.length || b.selectedSeats?.length || 1),
+        (sum, b) =>
+          sum +
+          (Number(b.quantity) ||
+            (Array.isArray(b.seats)
+              ? b.seats.length
+              : Array.isArray(b.seatNumbers)
+              ? b.seatNumbers.length
+              : 1)),
         0
       );
 
       const totalCap = Math.max(1, Number(t.totalSeats || 50));
-      const ticketAvailable = Number(t.availableSeats !== undefined ? t.availableSeats : totalCap);
-      const ticketSoldFromDiff = Math.max(0, totalCap - ticketAvailable);
-      const effectiveSold = Math.min(totalCap, Math.max(ticketSoldFromDiff, bookedCountFromBookings));
+      const effectiveSold =
+        bookedCountFromBookings > 0
+          ? bookedCountFromBookings
+          : Math.max(0, totalCap - (t.availableSeats ?? totalCap));
       const effectiveAvailable = Math.max(0, totalCap - effectiveSold);
       const revenue = effectiveSold * (t.price || 0);
 
@@ -134,15 +152,25 @@ export default function InventoryManagementPage() {
       let bookings: any[] = [];
       try {
         const res = await fetch("/api/bookings");
-        const data = await res.json();
-        if (data.success && data.bookings) {
-          bookings = data.bookings;
+        if (res.ok) {
+          const data = await res.json();
+          if (data.success && Array.isArray(data.bookings) && data.bookings.length > 0) {
+            bookings = data.bookings;
+          }
         }
       } catch {}
+
+      if (bookings.length === 0) {
+        const storeB = useProviderStore.getState().bookings;
+        bookings = storeB && storeB.length > 0 ? storeB : [];
+      }
+
       syncInventoryFromData(tickets, bookings);
     } catch {
       const localTickets = TicketService.getAllTickets(true);
-      syncInventoryFromData(localTickets, []);
+      const storeB = useProviderStore.getState().bookings;
+      const bookings = storeB && storeB.length > 0 ? storeB : [];
+      syncInventoryFromData(localTickets, bookings);
     }
   };
 
@@ -293,10 +321,10 @@ export default function InventoryManagementPage() {
             <span className="text-xs font-semibold text-muted-foreground">{organization.name}</span>
           </div>
           <h1 className="text-base sm:text-lg font-bold tracking-tight text-foreground">
-            Seat Inventory &amp; Capacity Allocation
+            {t("Seat Inventory & Capacity Allocation")}
           </h1>
           <p className="text-xs text-muted-foreground">
-            Real-time seat capacity, sold tickets, available stock, accurate fill rates, and captured sales revenue.
+            {t("Real-time seat capacity, sold tickets, available stock, accurate fill rates, and captured sales revenue.")}
           </p>
         </div>
 
@@ -308,14 +336,14 @@ export default function InventoryManagementPage() {
             className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-xl border border-border/70 bg-card hover:bg-muted text-foreground transition-colors cursor-pointer disabled:opacity-60"
           >
             <RefreshCw className={`w-3.5 h-3.5 ${refreshing ? "animate-spin text-amber-600" : ""}`} />
-            <span>{refreshing ? "Syncing..." : "Refresh Sync"}</span>
+            <span>{refreshing ? t("Syncing...") : t("Refresh Sync")}</span>
           </button>
           <Link
             href="/provider/tickets/create"
             className="inline-flex items-center gap-1.5 px-3.5 py-1.5 text-xs font-semibold rounded-xl bg-amber-600 hover:bg-amber-700 text-white shadow-xs transition-colors"
           >
             <Plus className="w-3.5 h-3.5" />
-            <span>Add Listing</span>
+            <span>{t("Add Listing")}</span>
           </Link>
         </div>
       </div>
@@ -325,7 +353,7 @@ export default function InventoryManagementPage() {
         {/* Total Capacity */}
         <div className="bg-card border border-border/60 rounded-xl p-3 shadow-xs">
           <div className="flex items-center justify-between text-muted-foreground text-xs mb-1">
-            <span className="text-[10px] sm:text-xs truncate font-medium">Total Capacity</span>
+            <span className="text-[10px] sm:text-xs truncate font-medium">{t("Total Capacity")}</span>
             <Layers className="w-3.5 h-3.5 text-amber-600 shrink-0" />
           </div>
           <div className="text-sm sm:text-base font-bold text-foreground font-mono">{totalCapacity.toLocaleString()}</div>
@@ -335,43 +363,43 @@ export default function InventoryManagementPage() {
         {/* Sold Seats */}
         <div className="bg-card border border-border/60 rounded-xl p-3 shadow-xs">
           <div className="flex items-center justify-between text-muted-foreground text-xs mb-1">
-            <span className="text-[10px] sm:text-xs truncate font-medium">Sold / Reserved</span>
+            <span className="text-[10px] sm:text-xs truncate font-medium">{t("Sold / Reserved")}</span>
             <Users className="w-3.5 h-3.5 text-blue-600 shrink-0" />
           </div>
           <div className="text-sm sm:text-base font-bold text-blue-600 font-mono">{totalSold.toLocaleString()}</div>
-          <p className="text-[10px] text-muted-foreground mt-0.5 truncate">Confirmed passes</p>
+          <p className="text-[10px] text-muted-foreground mt-0.5 truncate">{t("Verified passes", "Confirmed passes")}</p>
         </div>
 
         {/* Available Seats Left */}
         <div className="bg-card border border-border/60 rounded-xl p-3 shadow-xs">
           <div className="flex items-center justify-between text-muted-foreground text-xs mb-1">
-            <span className="text-[10px] sm:text-xs truncate font-medium">Seats Left (Available)</span>
+            <span className="text-[10px] sm:text-xs truncate font-medium">{t("Seats Left (Available)")}</span>
             <Ticket className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
           </div>
-          <div className="text-sm sm:text-base font-bold text-emerald-600 font-mono">{totalAvailable.toLocaleString()} left</div>
-          <p className="text-[10px] text-muted-foreground mt-0.5 truncate">In stock &amp; open for booking</p>
+          <div className="text-sm sm:text-base font-bold text-emerald-600 font-mono">{totalAvailable.toLocaleString()} {t("left")}</div>
+          <p className="text-[10px] text-muted-foreground mt-0.5 truncate">{t("Available inventory")}</p>
         </div>
 
         {/* Gross Revenue */}
         <div className="bg-card border border-border/60 rounded-xl p-3 shadow-xs">
           <div className="flex items-center justify-between text-muted-foreground text-xs mb-1">
-            <span className="text-[10px] sm:text-xs truncate font-medium">Captured Revenue</span>
+            <span className="text-[10px] sm:text-xs truncate font-medium">{t("Captured Revenue")}</span>
             <TrendingUp className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
           </div>
           <div className="text-sm sm:text-base font-bold text-foreground font-mono truncate">{formatCurrency(totalRevenue)}</div>
-          <p className="text-[10px] text-muted-foreground mt-0.5 truncate">From sold seats</p>
+          <p className="text-[10px] text-muted-foreground mt-0.5 truncate">{t("From sold seats")}</p>
         </div>
 
         {/* Fill Rate */}
         <div className="bg-card border border-border/60 rounded-xl p-3 shadow-xs col-span-2 sm:col-span-1">
           <div className="flex items-center justify-between text-muted-foreground text-xs mb-1">
-            <span className="text-[10px] sm:text-xs truncate font-medium">Fill Rate</span>
+            <span className="text-[10px] sm:text-xs truncate font-medium">{t("Fill Rate")}</span>
             <AlertTriangle className="w-3.5 h-3.5 text-amber-600 shrink-0" />
           </div>
           <div className="text-sm sm:text-base font-bold text-foreground font-mono">{overallOccupancy}%</div>
           <div className="flex items-center gap-1 text-[10px] text-muted-foreground mt-0.5">
             <span className="w-1.5 h-1.5 rounded-full bg-amber-500" />
-            <span>{lowStockCount} low stock listings</span>
+            <span>{lowStockCount} {t("low stock listings")}</span>
           </div>
         </div>
       </div>
@@ -380,7 +408,7 @@ export default function InventoryManagementPage() {
       <div className="bg-card border border-border/60 rounded-xl p-3 shadow-xs flex flex-col sm:flex-row gap-2.5 items-stretch sm:items-center justify-between">
         <div className="flex items-center gap-2">
           <span className="text-xs font-bold text-foreground">
-            Listings Inventory ({filteredInventory.length})
+            {t("Listings Inventory")} ({filteredInventory.length})
           </span>
         </div>
 
@@ -391,7 +419,7 @@ export default function InventoryManagementPage() {
               type="text"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              placeholder="Search by title or venue..."
+              placeholder={t("hero.searchPlaceholder", "Search by title or venue...")}
               className="w-full pl-8 pr-3 py-1.5 text-xs rounded-lg border border-border/70 bg-card text-foreground focus:outline-none focus:ring-1 focus:ring-amber-500"
             />
           </div>
@@ -401,10 +429,10 @@ export default function InventoryManagementPage() {
             onChange={(e) => setStatusFilter(e.target.value)}
             className="px-2.5 py-1.5 text-xs font-medium rounded-lg border border-border/70 bg-card text-foreground focus:outline-none focus:ring-1 focus:ring-amber-500"
           >
-            <option value="ALL">All Stock Levels</option>
-            <option value="NORMAL">Optimal Stock</option>
-            <option value="LOW_STOCK">Low Stock (&lt;20%)</option>
-            <option value="SOLD_OUT">Sold Out</option>
+            <option value="ALL">{t("All Stock Levels")}</option>
+            <option value="NORMAL">{t("Optimal Stock")}</option>
+            <option value="LOW_STOCK">{t("Low Stock (<20%)")}</option>
+            <option value="SOLD_OUT">{t("status.soldOut", "Sold Out")}</option>
           </select>
         </div>
       </div>
@@ -415,16 +443,16 @@ export default function InventoryManagementPage() {
           <table className="w-full text-left border-collapse text-xs">
             <thead>
               <tr className="bg-muted/40 text-muted-foreground uppercase text-[10px] font-bold tracking-wider border-b border-border/60">
-                <th className="py-2.5 px-3.5 min-w-[200px]">Service &amp; Venue</th>
-                <th className="py-2.5 px-3 min-w-[130px]">Schedule</th>
-                <th className="py-2.5 px-3 text-right">Unit Price</th>
-                <th className="py-2.5 px-3 text-center">Total Capacity</th>
-                <th className="py-2.5 px-3 text-center">Sold</th>
-                <th className="py-2.5 px-3 text-center min-w-[100px]">Seats Left</th>
-                <th className="py-2.5 px-3 text-right">Captured Revenue</th>
-                <th className="py-2.5 px-3 min-w-[150px]">Fill Rate</th>
-                <th className="py-2.5 px-3 text-center">Status</th>
-                <th className="py-2.5 px-3.5 text-right">Actions</th>
+                <th className="py-2.5 px-3.5 min-w-[200px]">{t("Service & Venue")}</th>
+                <th className="py-2.5 px-3 min-w-[130px]">{t("Schedule")}</th>
+                <th className="py-2.5 px-3 text-right">{t("Unit Price")}</th>
+                <th className="py-2.5 px-3 text-center">{t("Total Capacity")}</th>
+                <th className="py-2.5 px-3 text-center">{t("Sold")}</th>
+                <th className="py-2.5 px-3 text-center min-w-[100px]">{t("Seats Left")}</th>
+                <th className="py-2.5 px-3 text-right">{t("Captured Revenue")}</th>
+                <th className="py-2.5 px-3 min-w-[150px]">{t("Fill Rate")}</th>
+                <th className="py-2.5 px-3 text-center">{t("Status")}</th>
+                <th className="py-2.5 px-3.5 text-right">{t("Actions")}</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-border/40">
@@ -480,8 +508,17 @@ export default function InventoryManagementPage() {
                     </td>
 
                     {/* Sold Seats */}
-                    <td className="py-2.5 px-3 text-center font-mono font-bold text-blue-600">
-                      {item.soldSeats}
+                    <td className="py-2.5 px-3 text-center">
+                      <Link
+                        href={`/provider/tickets/${item.id}`}
+                        className="font-mono font-bold text-amber-600 dark:text-amber-400 hover:underline block"
+                        title="View booked passengers"
+                      >
+                        {item.soldSeats} sold
+                      </Link>
+                      <span className="text-[10px] text-muted-foreground block font-mono">
+                        {item.fillPercentage}% fill
+                      </span>
                     </td>
 
                     {/* Available Seats Left */}
@@ -546,6 +583,11 @@ export default function InventoryManagementPage() {
                       <div className="flex items-center justify-end">
                         <ActionDropdown
                           items={[
+                            {
+                              label: "View Passenger Manifest",
+                              icon: <Users className="w-3.5 h-3.5" />,
+                              href: `/provider/tickets/${item.id}`,
+                            },
                             {
                               label: "Adjust Seat Allocation",
                               icon: <SlidersHorizontal className="w-3.5 h-3.5" />,

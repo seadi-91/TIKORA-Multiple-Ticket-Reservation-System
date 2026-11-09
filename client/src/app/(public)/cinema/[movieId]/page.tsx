@@ -154,7 +154,7 @@ export default function MovieDetailPage({ params }: { params: Promise<{ movieId:
   }, 0);
 
   const averagePrice = Math.round(baseTotal / selectedSeatIds.length);
-  const pricing = BookingService.calculatePricing(averagePrice, selectedSeatIds.length);
+  const pricing = BookingService.calculatePricing(averagePrice, selectedSeatIds.length, 0, "CINEMA");
 
   const handleProceedToPayment = (e: React.FormEvent) => {
     e.preventDefault();
@@ -215,6 +215,14 @@ export default function MovieDetailPage({ params }: { params: Promise<{ movieId:
             selectedSeats: selectedSeatIds,
             quantity: selectedSeatIds.length,
             pricing,
+            subtotal: pricing.subtotal,
+            customerPaid: pricing.total,
+            totalAmount: pricing.total,
+            vatAmount: pricing.tax,
+            vatRate: pricing.vatRate,
+            commissionRate: pricing.commissionRate,
+            platformFee: pricing.platformCommission,
+            providerNet: pricing.providerNet,
             paymentMethod: "CHAPA",
             paymentStatus: "PENDING",
             bookingStatus: "PENDING",
@@ -270,6 +278,14 @@ export default function MovieDetailPage({ params }: { params: Promise<{ movieId:
       selectedSeats: selectedSeatIds,
       quantity: selectedSeatIds.length,
       pricing,
+      subtotal: pricing.subtotal,
+      customerPaid: pricing.total,
+      totalAmount: pricing.total,
+      vatAmount: pricing.tax,
+      vatRate: pricing.vatRate,
+      commissionRate: pricing.commissionRate,
+      platformFee: pricing.platformCommission,
+      providerNet: pricing.providerNet,
       paymentMethod,
       paymentStatus: "PAID",
       bookingStatus: "CONFIRMED",

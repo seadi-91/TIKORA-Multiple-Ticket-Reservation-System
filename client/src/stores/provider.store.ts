@@ -9,6 +9,7 @@ export interface ProviderOrganization {
   name: string;
   legalName: string;
   category: TicketCategory;
+  commissionRate?: number;
   isCategoryActive?: boolean;
   categoryStatus?: "ACTIVE" | "DEACTIVATED";
   categoryDeactivated?: boolean;
@@ -143,6 +144,13 @@ export interface ProviderBookingRecord {
   departureTime: string;
   seats: string[];
   totalAmount: number;
+  subtotal?: number;
+  customerPaid?: number;
+  vatAmount?: number;
+  vatRate?: number;
+  commissionRate?: number;
+  platformFee?: number;
+  providerNet?: number;
   paymentMethod: "TELEBIRR" | "CBE_BIRR" | "CHAPA";
   paymentStatus: "PAID" | "PENDING" | "REFUNDED";
   bookingStatus: "CONFIRMED" | "CHECKED_IN" | "CANCELLED";
@@ -208,7 +216,7 @@ export const getInitialRefundsForCategory = (cat: TicketCategory): ProviderRefun
 
 export const getInitialNotificationsForCategory = (cat: TicketCategory): ProviderNotification[] => [];
 
-export const getInitialStatsForCategory = (cat: TicketCategory) => ({
+export const getInitialStatsForCategory = (_cat: TicketCategory) => ({
   totalRevenue: 0,
   grossSales: 0,
   platformCommission: 0,
@@ -218,14 +226,26 @@ export const getInitialStatsForCategory = (cat: TicketCategory) => ({
   totalTicketsSold: 0,
   activeServices: 0,
   pendingBookings: 0,
-  availableSeats: cat === "BUS" ? 46 : cat === "CINEMA" ? 66 : cat === "SPORTS" ? 420 : 185,
+  availableSeats: 0,
 });
 
 const getInitialProviderBookings = (): ProviderBookingRecord[] => {
   if (typeof window === "undefined") return [];
   try {
     const raw = localStorage.getItem("tikora_provider_bookings");
-    return raw ? JSON.parse(raw) : [];
+    if (raw) {
+      const parsed = JSON.parse(raw);
+      if (Array.isArray(parsed)) {
+        const realBookings = parsed.filter(
+          (b: any) =>
+            !String(b.id || "").startsWith("bkg-") &&
+            !String(b.reference || "").startsWith("TIKORA-BKG-10")
+        );
+        localStorage.setItem("tikora_provider_bookings", JSON.stringify(realBookings));
+        return realBookings;
+      }
+    }
+    return [];
   } catch {
     return [];
   }
@@ -447,10 +467,30 @@ export const useProviderStore = create<ProviderStoreState>((set, get) => ({
     set((state) => {
       // Provider displays purely the ticket base price (VAT excluded)
       const seatsCount = booking.seats && booking.seats.length > 0 ? booking.seats.length : 1;
-      const baseTicketPrice = Math.round(booking.totalAmount / 1.05);
+      const snapVatRate = typeof booking.vatRate === "number" ? booking.vatRate : 5.0;
+      const baseTicketPrice = typeof booking.totalAmount === "number" && booking.customerPaid
+        ? booking.totalAmount
+        : Math.round(booking.totalAmount / (1 + snapVatRate / 100));
+
+      const snapCommissionRate = typeof booking.commissionRate === "number"
+        ? booking.commissionRate
+        : (state.organization.commissionRate || 5.0);
+
+      const snapPlatformFee = typeof booking.platformFee === "number"
+        ? booking.platformFee
+        : Math.round(baseTicketPrice * (snapCommissionRate / 100) * 100) / 100;
+
+      const snapProviderNet = typeof booking.providerNet === "number"
+        ? booking.providerNet
+        : Math.max(0, baseTicketPrice - snapPlatformFee);
+
       const sanitizedBooking: ProviderBookingRecord = {
         ...booking,
         totalAmount: baseTicketPrice, // Pure ticket base fare without VAT
+        vatRate: snapVatRate,
+        commissionRate: snapCommissionRate,
+        platformFee: snapPlatformFee,
+        providerNet: snapProviderNet,
       };
 
       const existingIdx = state.bookings.findIndex(
@@ -471,8 +511,11 @@ export const useProviderStore = create<ProviderStoreState>((set, get) => ({
       }
 
       const newGross = newBookings.reduce((sum, b) => sum + (b.totalAmount || 0), 0);
-      const commissionRate = state.organization.category === "CINEMA" ? 0.06 : state.organization.category === "BUS" ? 0.045 : 0.05;
-      const net = Math.round(newGross * (1 - commissionRate));
+      const totalFees = newBookings.reduce(
+        (sum, b) => sum + (b.platformFee ?? Math.round((b.totalAmount || 0) * ((b.commissionRate ?? 5) / 100))),
+        0
+      );
+      const net = Math.max(0, newGross - totalFees);
 
       // Decrement seats on bus schedules
       const updatedSchedules = state.busSchedules.map((s) => {

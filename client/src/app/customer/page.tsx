@@ -31,10 +31,12 @@ import { useBookingStore } from "@/stores/booking.store";
 import { useAuthStore } from "@/stores/auth.store";
 import { formatCurrency } from "@/lib/format-currency";
 import { formatDate } from "@/lib/format-date";
+import { useLanguage } from "@/providers/language-provider";
 
 export default function CustomerDashboardOverview() {
   const { bookings, favorites, payments } = useBookingStore();
   const { user } = useAuthStore();
+  const { t } = useLanguage();
 
   const customerName = user?.name || "Customer";
 
@@ -67,31 +69,31 @@ export default function CustomerDashboardOverview() {
 
   const stats = [
     {
-      label: "Active Bookings",
+      label: t("customer.activeBookings", "Active Bookings"),
       value: confirmedBookings.length,
-      subtext: "Ready for travel",
+      subtext: t("customer.readyForTravel", "Ready for travel"),
       icon: Ticket,
       color: "text-amber-600 bg-amber-500/10 dark:text-amber-400",
       href: "/customer/bookings",
     },
     {
-      label: "Digital QR Passes",
+      label: t("customer.digitalPasses", "Digital QR Passes"),
       value: confirmedBookings.length,
-      subtext: "Offline wallet ready",
+      subtext: t("customer.offlineWallet", "Offline wallet ready"),
       icon: QrCode,
       color: "text-blue-600 bg-blue-500/10 dark:text-blue-400",
       href: "/customer/tickets",
     },
     {
-      label: "Saved Wishlist",
+      label: t("customer.savedWishlist", "Saved Wishlist"),
       value: favorites.length,
-      subtext: "Saved events & routes",
+      subtext: t("nav.wishlist", "Saved events & routes"),
       icon: Heart,
       color: "text-rose-600 bg-rose-500/10 dark:text-rose-400",
       href: "/customer/favorites",
     },
     {
-      label: "Total Spent",
+      label: t("customer.totalSpent", "Total Spent"),
       value: formatCurrency(totalSpent),
       subtext: `${payments.length} transactions`,
       icon: CreditCard,
@@ -120,7 +122,7 @@ export default function CustomerDashboardOverview() {
             </div>
 
             <h1 className="text-xl sm:text-2xl font-black tracking-tight text-foreground">
-              Welcome back, {customerName}!
+              {t("auth.redirecting", "Welcome back")}, {customerName}!
             </h1>
 
             <p className="text-xs text-muted-foreground">

@@ -515,18 +515,36 @@ export default function AdminBookingsPage() {
               <div className="border-t border-slate-200/40 dark:border-slate-800/40 pt-3 space-y-2">
                 <div className="flex justify-between">
                   <span className="text-muted-foreground">Total Customer Payment</span>
-                  <span className="font-extrabold text-foreground text-sm">{selectedBooking.totalAmount} ETB</span>
+                  <span className="font-extrabold text-foreground text-sm">
+                    {(selectedBooking.customerPaid ?? selectedBooking.totalAmount).toLocaleString()} ETB
+                  </span>
                 </div>
                 <div className="flex justify-between">
-                  <span className="text-muted-foreground">Platform Commission Fee</span>
+                  <span className="text-muted-foreground">
+                    Statutory VAT ({selectedBooking.vatRate ?? 5}%)
+                  </span>
+                  <span className="font-bold text-rose-600 dark:text-rose-400">
+                    -{(selectedBooking.vatAmount ?? Math.round(((selectedBooking.customerPaid ?? selectedBooking.totalAmount) * (selectedBooking.vatRate ?? 5)) / (100 + (selectedBooking.vatRate ?? 5)))).toLocaleString()} ETB
+                  </span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-muted-foreground">Pre-Tax Base Fare</span>
+                  <span className="font-semibold text-foreground">
+                    {((selectedBooking.customerPaid ?? selectedBooking.totalAmount) - (selectedBooking.vatAmount ?? Math.round(((selectedBooking.customerPaid ?? selectedBooking.totalAmount) * (selectedBooking.vatRate ?? 5)) / (100 + (selectedBooking.vatRate ?? 5))))).toLocaleString()} ETB
+                  </span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-muted-foreground">
+                    Platform Commission ({selectedBooking.commissionRate ?? 5}%)
+                  </span>
                   <span className="font-bold text-emerald-600 dark:text-emerald-400">
-                    +{selectedBooking.platformFee} ETB
+                    +{selectedBooking.platformFee.toLocaleString()} ETB
                   </span>
                 </div>
                 <div className="flex justify-between">
                   <span className="text-muted-foreground">Provider Net Settlement</span>
-                  <span className="font-bold text-foreground">
-                    {(selectedBooking.totalAmount - selectedBooking.platformFee).toFixed(2)} ETB
+                  <span className="font-bold text-blue-600 dark:text-blue-400">
+                    {(selectedBooking.providerNet ?? Math.max(0, (selectedBooking.totalAmount - (selectedBooking.vatAmount ?? 0) - selectedBooking.platformFee))).toLocaleString()} ETB
                   </span>
                 </div>
                 <div className="flex justify-between">

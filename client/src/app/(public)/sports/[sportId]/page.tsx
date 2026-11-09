@@ -149,7 +149,7 @@ export default function SportDetailPage({ params }: { params: Promise<{ sportId:
     );
   }
 
-  const pricing = BookingService.calculatePricing(activeTier.price, quantity);
+  const pricing = BookingService.calculatePricing(activeTier.price, quantity, 0, "SPORTS");
 
   const handleProceedToPayment = (e: React.FormEvent) => {
     e.preventDefault();
@@ -211,6 +211,14 @@ export default function SportDetailPage({ params }: { params: Promise<{ sportId:
             selectedTier: activeTier.name,
             quantity,
             pricing,
+            subtotal: pricing.subtotal,
+            customerPaid: pricing.total,
+            totalAmount: pricing.total,
+            vatAmount: pricing.tax,
+            vatRate: pricing.vatRate,
+            commissionRate: pricing.commissionRate,
+            platformFee: pricing.platformCommission,
+            providerNet: pricing.providerNet,
             paymentMethod: "CHAPA",
             paymentStatus: "PENDING",
             bookingStatus: "PENDING",
@@ -267,6 +275,14 @@ export default function SportDetailPage({ params }: { params: Promise<{ sportId:
       selectedTier: activeTier.name,
       quantity,
       pricing,
+      subtotal: pricing.subtotal,
+      customerPaid: pricing.total,
+      totalAmount: pricing.total,
+      vatAmount: pricing.tax,
+      vatRate: pricing.vatRate,
+      commissionRate: pricing.commissionRate,
+      platformFee: pricing.platformCommission,
+      providerNet: pricing.providerNet,
       paymentMethod,
       paymentStatus: "PAID",
       bookingStatus: "CONFIRMED",

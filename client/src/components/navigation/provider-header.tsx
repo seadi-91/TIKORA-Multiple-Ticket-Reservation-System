@@ -28,6 +28,8 @@ import {
 import { useProviderStore } from "@/stores/provider.store";
 import { useAuthStore } from "@/stores/auth.store";
 import { useTheme } from "@/providers/theme-provider";
+import { useLanguage } from "@/providers/language-provider";
+import { LanguageSelector } from "@/components/navigation/language-selector";
 import { TicketCategory } from "@/types/ticket.types";
 import { toast } from "sonner";
 
@@ -44,6 +46,7 @@ const SECTORS: { id: TicketCategory; label: string; orgName: string; icon: any }
 
 export function ProviderHeader({ onToggleMobileMenu }: ProviderHeaderProps) {
   const router = useRouter();
+  const { t } = useLanguage();
   const {
     organization,
     notifications,
@@ -235,7 +238,7 @@ export function ProviderHeader({ onToggleMobileMenu }: ProviderHeaderProps) {
           <Search className="w-3.5 h-3.5 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" />
           <input
             type="text"
-            placeholder={`Search ${organization.category.toLowerCase()} bookings, tickets, listings...`}
+            placeholder={t("Search bookings, tickets, listings...")}
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             className="w-full pl-9 pr-3 py-1.5 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-[#0F1117] text-xs text-[#0F172A] dark:text-white placeholder:text-slate-400 focus:outline-none focus:border-[#B45309] dark:focus:border-amber-400 focus:bg-white dark:focus:bg-[#161922] transition-all"
@@ -251,12 +254,12 @@ export function ProviderHeader({ onToggleMobileMenu }: ProviderHeaderProps) {
             type="button"
             onClick={() => setShowSectorMenu(!showSectorMenu)}
             className="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl border border-amber-500/30 bg-amber-500/10 hover:bg-amber-500/20 text-amber-800 dark:text-amber-300 text-xs font-bold transition-all cursor-pointer shadow-xs"
-            title="Switch Provider Sector"
+            title={t("Switch Provider Sector")}
           >
             {getSectorIcon(organization.category)}
             <span className="uppercase text-[11px] font-black">{organization.category}</span>
             <span className="text-[10px] text-muted-foreground font-normal hidden md:inline">
-              (Switch)
+              ({t("Switch")})
             </span>
             <ChevronDown className="w-3 h-3 text-amber-600" />
           </button>
@@ -265,10 +268,10 @@ export function ProviderHeader({ onToggleMobileMenu }: ProviderHeaderProps) {
             <div className="absolute right-0 mt-2 w-64 rounded-2xl bg-white dark:bg-[#161922] border border-[#E2E8F0] dark:border-slate-800 shadow-xl p-2 z-50 space-y-1 animate-in fade-in-50 zoom-in-95">
               <div className="px-2.5 py-1.5 border-b border-slate-100 dark:border-slate-800">
                 <span className="text-[10px] uppercase font-bold tracking-wider text-slate-400 block">
-                  Switch Provider Sector
+                  {t("Switch Provider Sector")}
                 </span>
                 <span className="text-[11px] text-slate-500 dark:text-slate-400 block">
-                  Isolated reports, analytics & catalog
+                  {t("Isolated reports, analytics & catalog")}
                 </span>
               </div>
 
@@ -297,7 +300,7 @@ export function ProviderHeader({ onToggleMobileMenu }: ProviderHeaderProps) {
                         <Icon className="w-3.5 h-3.5 text-amber-600" />
                       </div>
                       <div>
-                        <span className="block text-xs font-bold leading-tight">{s.label}</span>
+                        <span className="block text-xs font-bold leading-tight">{t(s.label)}</span>
                         <span className="text-[10px] text-muted-foreground block truncate max-w-[130px]">
                           {s.orgName}
                         </span>
@@ -314,7 +317,7 @@ export function ProviderHeader({ onToggleMobileMenu }: ProviderHeaderProps) {
         {/* Verification Status Pill */}
         <div className="hidden lg:flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-800/40 text-[11px] font-bold text-emerald-700 dark:text-emerald-300">
           <ShieldCheck className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" />
-          <span>Verified Merchant</span>
+          <span>{t("Verified Merchant")}</span>
         </div>
 
         {/* Quick Create Dropdown - Strictly Sector Isolated */}
@@ -324,14 +327,14 @@ export function ProviderHeader({ onToggleMobileMenu }: ProviderHeaderProps) {
             className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-[#B45309] hover:bg-[#92400E] text-white font-bold text-xs shadow-xs active:scale-95 transition-all cursor-pointer"
           >
             <Plus className="w-3.5 h-3.5 stroke-[2.5]" />
-            <span className="hidden sm:inline">Add Service</span>
+            <span className="hidden sm:inline">{t("Add Service")}</span>
             <ChevronDown className="w-3 h-3 text-white/80" />
           </button>
 
           {showQuickCreate && (
             <div className="absolute right-0 mt-2 w-60 rounded-2xl bg-white dark:bg-[#161922] border border-[#E2E8F0] dark:border-slate-800 shadow-xl p-1.5 z-40 space-y-1 animate-in fade-in-50 zoom-in-95">
               <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400 px-2.5 py-1 block">
-                {organization.category} Service Actions
+                {organization.category} {t("Service Actions")}
               </span>
 
               {getSectorQuickActions().map((action, idx) => {
@@ -349,8 +352,8 @@ export function ProviderHeader({ onToggleMobileMenu }: ProviderHeaderProps) {
                       <Icon className="w-3.5 h-3.5" />
                     </div>
                     <div>
-                      <span className="block font-bold">{action.label}</span>
-                      <span className="text-[10px] text-slate-400 font-normal">{action.desc}</span>
+                      <span className="block font-bold">{t(action.label)}</span>
+                      <span className="text-[10px] text-slate-400 font-normal">{t(action.desc)}</span>
                     </div>
                   </Link>
                 );
@@ -358,6 +361,9 @@ export function ProviderHeader({ onToggleMobileMenu }: ProviderHeaderProps) {
             </div>
           )}
         </div>
+
+        {/* Multi-Language Dropdown */}
+        <LanguageSelector variant="navbar" />
 
         {/* Theme Mode Toggle Dropdown */}
         <div className="relative" ref={themeRef}>
@@ -429,10 +435,10 @@ export function ProviderHeader({ onToggleMobileMenu }: ProviderHeaderProps) {
               <div className="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-2">
                 <div>
                   <h4 className="text-xs font-bold text-[#0F172A] dark:text-white">
-                    Operations Dispatch Alerts
+                    {t("Operations Dispatch Alerts")}
                   </h4>
                   <span className="text-[10px] text-slate-400">
-                    {unreadNotifs.length} unread updates
+                    {unreadNotifs.length} {t("unread updates")}
                   </span>
                 </div>
                 {unreadNotifs.length > 0 && (
@@ -440,7 +446,7 @@ export function ProviderHeader({ onToggleMobileMenu }: ProviderHeaderProps) {
                     onClick={markAllNotificationsAsRead}
                     className="text-[10px] font-bold text-[#B45309] dark:text-amber-400 hover:underline cursor-pointer"
                   >
-                    Mark all read
+                    {t("Mark all read")}
                   </button>
                 )}
               </div>
@@ -513,7 +519,7 @@ export function ProviderHeader({ onToggleMobileMenu }: ProviderHeaderProps) {
                 className="flex items-center gap-2 px-2.5 py-1.5 rounded-lg text-xs font-medium text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors"
               >
                 <Building2 className="w-3.5 h-3.5 text-slate-400" />
-                <span>Organization Details</span>
+                <span>{t("Organization Profile", "Organization Details")}</span>
               </Link>
 
               <Link
@@ -522,7 +528,7 @@ export function ProviderHeader({ onToggleMobileMenu }: ProviderHeaderProps) {
                 className="flex items-center gap-2 px-2.5 py-1.5 rounded-lg text-xs font-medium text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors"
               >
                 <Settings className="w-3.5 h-3.5 text-slate-400" />
-                <span>Account Settings</span>
+                <span>{t("Account Settings")}</span>
               </Link>
 
               <div className="pt-1 border-t border-slate-100 dark:border-slate-800">
@@ -537,7 +543,7 @@ export function ProviderHeader({ onToggleMobileMenu }: ProviderHeaderProps) {
                   className="w-full flex items-center gap-2 px-2.5 py-1.5 rounded-lg text-xs font-semibold text-rose-600 dark:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-950/40 transition-colors cursor-pointer"
                 >
                   <LogOut className="w-3.5 h-3.5" />
-                  <span>Sign Out</span>
+                  <span>{t("nav.logout", "Sign Out")}</span>
                 </button>
               </div>
             </div>

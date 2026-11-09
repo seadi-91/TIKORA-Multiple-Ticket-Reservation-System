@@ -9,7 +9,7 @@ export interface CreateTicketDto {
   location: string;
   city: string;
   date: string;
-  time: string; // Showtime / Starts At (የሚጀምርበት ሰዓት) or Departure Time
+  time: string; // Showtime / Starts At or Departure Time
   price: number;
   currency?: string;
   availableSeats?: number;
@@ -88,213 +88,7 @@ export class TicketService {
   static async seedInitialOfferings() {
     try {
       await this.ensureCategories();
-      const allOfferings = await db.orm.public.TicketOffering.all();
-      if (allOfferings.length > 0) return;
-
-      console.log("Seeding initial platform tickets in PostgreSQL database...");
-
-      // Ensure default providers exist for each domain
-      const busCat = await db.orm.public.TicketCategory.where({ slug: "bus" }).first();
-      const cinemaCat = await db.orm.public.TicketCategory.where({ slug: "cinema" }).first();
-      const eventCat = await db.orm.public.TicketCategory.where({ slug: "event" }).first();
-      const sportsCat = await db.orm.public.TicketCategory.where({ slug: "sports" }).first();
-
-      let selamBus = await db.orm.public.Provider.where({ slug: "selam-bus-express" }).first();
-      if (!selamBus) {
-        selamBus = await db.orm.public.Provider.create({
-          name: "Selam Bus Express",
-          slug: "selam-bus-express",
-          providerType: "BUS",
-          email: "support@selambus.et",
-          phone: "+251911223344",
-          city: "Addis Ababa",
-          verificationStatus: "APPROVED",
-          isActive: true,
-        });
-      }
-
-      let centuryCinema = await db.orm.public.Provider.where({ slug: "century-cinema" }).first();
-      if (!centuryCinema) {
-        centuryCinema = await db.orm.public.Provider.create({
-          name: "Century Cinema Addis",
-          slug: "century-cinema",
-          providerType: "CINEMA",
-          email: "info@centurycinema.et",
-          phone: "+251911556677",
-          city: "Addis Ababa",
-          verificationStatus: "APPROVED",
-          isActive: true,
-        });
-      }
-
-      let millenniumHall = await db.orm.public.Provider.where({ slug: "millennium-hall" }).first();
-      if (!millenniumHall) {
-        millenniumHall = await db.orm.public.Provider.create({
-          name: "Millennium Hall Addis",
-          slug: "millennium-hall",
-          providerType: "EVENT",
-          email: "events@millenniumhall.et",
-          phone: "+251911889900",
-          city: "Addis Ababa",
-          verificationStatus: "APPROVED",
-          isActive: true,
-        });
-      }
-
-      let stGeorge = await db.orm.public.Provider.where({ slug: "st-george-fc" }).first();
-      if (!stGeorge) {
-        stGeorge = await db.orm.public.Provider.create({
-          name: "St. George FC & EPL",
-          slug: "st-george-fc",
-          providerType: "SPORTS",
-          email: "tickets@stgeorge.et",
-          phone: "+251911332211",
-          city: "Addis Ababa",
-          verificationStatus: "APPROVED",
-          isActive: true,
-        });
-      }
-
-      // Initial cinema showtime ticket
-      if (cinemaCat && centuryCinema) {
-        const cinemaTicket = await db.orm.public.TicketOffering.create({
-          providerId: centuryCinema.id,
-          categoryId: cinemaCat.id,
-          title: "Dune: Part Two (Laser 4K Atmos)",
-          description: "Epic sci-fi masterpiece with Dolby Atmos audio and laser projection in VIP Auditorium.",
-          image: FIXED_CATEGORY_IMAGES.CINEMA,
-          location: "Century Mall, 4th Floor, Addis Ababa",
-          city: "Addis Ababa",
-          badge: "Now Showing",
-          rating: 4.9,
-          reviewCount: 38,
-          amenities: JSON.stringify(["Dolby Atmos", "Laser 4K", "VIP Recliner Seating", "Popcorn & Soda Included"]),
-          gateTime: "05:30 PM", // Showtime / Starts At (የሚጀምርበት ሰዓት)
-          duration: "2h 46m",
-          ageRestriction: "PG-13",
-          status: "ACTIVE",
-          startDate: new Date(),
-        });
-        await db.orm.public.TicketPrice.create({
-          offeringId: cinemaTicket.id,
-          name: "Standard Seat",
-          price: 300,
-          currency: "ETB",
-        });
-        await db.orm.public.TicketPrice.create({
-          offeringId: cinemaTicket.id,
-          name: "VIP Couple Lounger",
-          price: 600,
-          currency: "ETB",
-        });
-        await db.orm.public.TicketInventory.create({
-          offeringId: cinemaTicket.id,
-          totalQuantity: 120,
-          availableQuantity: 104,
-          soldQuantity: 16,
-        });
-      }
-
-      // Initial bus trip ticket
-      if (busCat && selamBus) {
-        const busTicket = await db.orm.public.TicketOffering.create({
-          providerId: selamBus.id,
-          categoryId: busCat.id,
-          title: "Addis Ababa to Hawassa Luxury Express",
-          description: "High-speed modern coach service with AC, WiFi, and recliner comfort.",
-          image: FIXED_CATEGORY_IMAGES.BUS,
-          location: "Autobus Tera Gate 3, Addis Ababa",
-          city: "Hawassa",
-          badge: "Popular Route",
-          rating: 4.8,
-          reviewCount: 42,
-          amenities: JSON.stringify(["Free WiFi", "AC", "USB Charging", "Reclining Seats"]),
-          gateTime: "06:00 AM", // Departure Time (የሚነሳበት ሰዓት)
-          duration: "4h 30m",
-          status: "ACTIVE",
-          startDate: new Date(),
-        });
-        await db.orm.public.TicketPrice.create({
-          offeringId: busTicket.id,
-          name: "Standard Coach",
-          price: 650,
-          currency: "ETB",
-        });
-        await db.orm.public.TicketInventory.create({
-          offeringId: busTicket.id,
-          totalQuantity: 48,
-          availableQuantity: 39,
-          soldQuantity: 9,
-        });
-      }
-
-      // Initial event ticket
-      if (eventCat && millenniumHall) {
-        const eventTicket = await db.orm.public.TicketOffering.create({
-          providerId: millenniumHall.id,
-          categoryId: eventCat.id,
-          title: "Addis Afro-Jazz & Cultural Night",
-          description: "Live musical festival featuring top Ethiopian jazz artists and cultural performances.",
-          image: FIXED_CATEGORY_IMAGES.EVENT,
-          location: "Millennium Hall Grand Auditorium",
-          city: "Addis Ababa",
-          badge: "Live Concert",
-          rating: 5.0,
-          reviewCount: 29,
-          amenities: JSON.stringify(["Live Sound Stage", "Food Village", "VIP Lounge", "Secured Parking"]),
-          gateTime: "06:00 PM",
-          duration: "5h 00m",
-          status: "ACTIVE",
-          startDate: new Date(),
-        });
-        await db.orm.public.TicketPrice.create({
-          offeringId: eventTicket.id,
-          name: "General Admission",
-          price: 850,
-          currency: "ETB",
-        });
-        await db.orm.public.TicketInventory.create({
-          offeringId: eventTicket.id,
-          totalQuantity: 500,
-          availableQuantity: 410,
-          soldQuantity: 90,
-        });
-      }
-
-      // Initial sports match ticket
-      if (sportsCat && stGeorge) {
-        const sportTicket = await db.orm.public.TicketOffering.create({
-          providerId: stGeorge.id,
-          categoryId: sportsCat.id,
-          title: "Sheger Derby: St. George FC vs Ethiopia Coffee SC",
-          description: "The biggest football clash in Ethiopian Premier League history at Addis Ababa Stadium.",
-          image: FIXED_CATEGORY_IMAGES.SPORTS,
-          location: "Addis Ababa National Stadium",
-          city: "Addis Ababa",
-          badge: "EPL Derby",
-          rating: 4.9,
-          reviewCount: 65,
-          amenities: JSON.stringify(["Tribune Seating", "Live Screen", "Team Merchandise"]),
-          gateTime: "03:00 PM",
-          duration: "2h 00m",
-          status: "ACTIVE",
-          startDate: new Date(),
-        });
-        await db.orm.public.TicketPrice.create({
-          offeringId: sportTicket.id,
-          name: "Standard Tribune",
-          price: 250,
-          currency: "ETB",
-        });
-        await db.orm.public.TicketInventory.create({
-          offeringId: sportTicket.id,
-          totalQuantity: 1500,
-          availableQuantity: 1200,
-          soldQuantity: 300,
-        });
-      }
-
-      console.log("Initial platform tickets seeded successfully!");
+      // Zero default tickets: offerings strictly reflect real tickets published by verified providers
     } catch (err) {
       console.error("Failed to seed initial offerings:", err);
     }
@@ -379,7 +173,7 @@ export class TicketService {
       amenities: dto.amenities ? JSON.stringify(dto.amenities) : null,
       duration: dto.duration || null,
       performer: dto.performer || null,
-      gateTime: dto.time, // Showtime / Starts At (የሚጀምርበት ሰዓት) or Departure Time
+      gateTime: dto.time, // Showtime / Starts At or Departure Time
       ageRestriction: dto.ageRestriction || null,
       status: "ACTIVE",
       startDate: dto.date ? new Date(dto.date) : new Date(),
@@ -499,6 +293,21 @@ export class TicketService {
           .include("inventory")
           .all();
 
+    // Query booking items to accurately aggregate confirmed sold counts per offering
+    let allBookingItems: any[] = [];
+    try {
+      allBookingItems = await db.orm.public.BookingItem.all();
+    } catch {
+      allBookingItems = [];
+    }
+
+    const bookedCountMap = new Map<number, number>();
+    for (const item of allBookingItems) {
+      const offId = Number(item.offeringId);
+      const qty = Number(item.quantity) || 1;
+      bookedCountMap.set(offId, (bookedCountMap.get(offId) || 0) + qty);
+    }
+
     let mapped = offerings.map((offering) => {
       const provName = offering.provider?.name || "Verified Operator";
       const catSlug = (offering.category?.slug?.toUpperCase() || "CINEMA") as "BUS" | "CINEMA" | "EVENT" | "SPORTS";
@@ -506,8 +315,12 @@ export class TicketService {
       const prices = offering.prices || [];
       const inv = offering.inventory?.[0];
       const basePrice = prices[0]?.price || 300;
-      const totalSeats = inv?.totalQuantity || 100;
-      const availableSeats = inv?.availableQuantity || totalSeats;
+      const totalSeats = Number(inv?.totalQuantity) || 100;
+      const bookedFromDb = bookedCountMap.get(offering.id);
+      const bookedCount = bookedFromDb !== undefined && bookedFromDb > 0 ? bookedFromDb : 0;
+      const totalSold = bookedCount;
+      const remainingCapacity = Math.max(0, totalSeats - totalSold);
+      const availableSeats = remainingCapacity;
 
       let amenitiesArr: string[] = [];
       if (offering.amenities) {
@@ -533,11 +346,15 @@ export class TicketService {
         location: offering.location || "Addis Ababa",
         city: offering.city || "Addis Ababa",
         date: dateStr,
-        time: offering.gateTime || "05:30 PM", // Showtime / Starts At (የሚጀምርበት ሰዓት) or Departure Time
+        time: offering.gateTime || "05:30 PM", // Showtime / Starts At or Departure Time
         price: basePrice,
         currency: "ETB",
-        availableSeats,
+        totalSold,
+        soldQuantity: totalSold,
+        capacity: totalSeats,
         totalSeats,
+        availableSeats,
+        remainingCapacity,
         status: offering.status === "ACTIVE" ? "AVAILABLE" : offering.status,
         badge: offering.badge || "Verified Pass",
         imageUrl: offering.image || FIXED_CATEGORY_IMAGES[catSlug] || FIXED_CATEGORY_IMAGES.CINEMA,

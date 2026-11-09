@@ -4,6 +4,7 @@ import { db } from "../../config/database";
 import { UserRoleType } from "../../types/auth.types";
 import { AuditService } from "./audit.service";
 import { TicketService } from "../tickets/ticket.service";
+import { SettingsService } from "./settings.service";
 
 export class AdminController {
   /**
@@ -450,11 +451,51 @@ export class AdminController {
       const providerMap = new Map<number, any>();
       providers.forEach((p) => providerMap.set(p.id, p));
 
+      const platformSettings = SettingsService.getSettings();
+      const defaultVatRate = Number(platformSettings.vatTaxRate) || 5.0;
+
       const mappedBookings = bookings.map((b) => {
         const prov = b.providerId ? providerMap.get(b.providerId) : null;
         const totalAmount = Number(b.totalAmount) || 0;
-        const platformFee = Number(b.serviceFee) || Math.round(totalAmount * 0.05);
-        const providerPayout = Math.max(0, totalAmount - platformFee);
+        const customerPaid = totalAmount;
+
+        // Preserve snapshotted historical VAT rate, or fall back to platform setting at calculation time
+        const vatRate =
+          (b as any).vatRate !== undefined && (b as any).vatRate !== null
+            ? Number((b as any).vatRate)
+            : defaultVatRate;
+        let subtotal = Number(b.subtotal);
+        let vatAmount = 0;
+
+        if (subtotal > 0 && subtotal <= totalAmount) {
+          vatAmount = Math.round((totalAmount - subtotal) * 100) / 100;
+        } else {
+          // Compute pre-tax base fare from gross customer payment (e.g., 1050 -> base 1000, vat 50)
+          subtotal = Math.round((totalAmount / (1 + vatRate / 100)) * 100) / 100;
+          vatAmount = Math.max(0, Math.round((totalAmount - subtotal) * 100) / 100);
+        }
+
+        // Platform commission is deducted from pre-tax base (customerPaid - vat)
+        // Preserve snapshotted rate if available; otherwise use category/provider/platform default
+        const provCategory = (prov?.category as string)?.toUpperCase();
+        const categoryCommission =
+          provCategory === "BUS"
+            ? platformSettings.busCommissionRate
+            : provCategory === "CINEMA"
+            ? platformSettings.cinemaCommissionRate
+            : provCategory === "EVENT"
+            ? platformSettings.eventCommissionRate
+            : provCategory === "SPORTS"
+            ? platformSettings.sportsCommissionRate
+            : platformSettings.defaultCommissionRate;
+
+        const commissionRate =
+          (b as any).commissionRate !== undefined && (b as any).commissionRate !== null
+            ? Number((b as any).commissionRate)
+            : prov?.commissionRate || categoryCommission || platformSettings.defaultCommissionRate || 5.0;
+
+        const platformFee = Math.round(subtotal * (commissionRate / 100) * 100) / 100;
+        const providerPayout = Math.max(0, Math.round((subtotal - platformFee) * 100) / 100);
 
         let parsedSeats: string[] = [];
         try {
@@ -481,8 +522,15 @@ export class AdminController {
           seatNumbers: parsedSeats,
           seats: parsedSeats,
           totalAmount,
+          customerPaid,
+          subtotal,
+          baseFare: subtotal,
+          vatAmount,
+          vatRate,
+          commissionRate,
           platformFee,
           providerPayout,
+          providerNet: providerPayout,
           paymentMethod: (b.paymentMethod as any) || "CHAPA",
           paymentStatus: (b.paymentStatus as any) || "PAID",
           bookingStatus: (b.status as any) || "CONFIRMED",

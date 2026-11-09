@@ -25,14 +25,15 @@ import {
   Info,
   Star,
   Trash2,
+  Users,
 } from "lucide-react";
-import { useAdminStore, AdminService } from "@/stores/admin.store";
+import { useAdminStore, AdminService, AdminBooking } from "@/stores/admin.store";
 import { ActionDropdown } from "@/components/ui/action-dropdown";
 import { formatCurrency } from "@/lib/format-currency";
 import { ConfirmDeleteModal } from "@/components/ui/confirm-delete-modal";
 
 export default function AdminTicketsPage() {
-  const { services, toggleServiceStatus, deleteService, fetchPlatformData } = useAdminStore();
+  const { services, bookings, toggleServiceStatus, deleteService, fetchPlatformData } = useAdminStore();
 
   useEffect(() => {
     fetchPlatformData();
@@ -44,6 +45,43 @@ export default function AdminTicketsPage() {
   const [selectedDetailTicket, setSelectedDetailTicket] = useState<AdminService | null>(null);
   const [ticketToDelete, setTicketToDelete] = useState<AdminService | null>(null);
   const [isDeletingTicket, setIsDeletingTicket] = useState(false);
+
+  // Accurately compute customer bookings, booked quantity, total stock, and remaining capacity
+  const getTicketMetrics = React.useCallback(
+    (srv: AdminService) => {
+      const totalStock = Number(srv.capacity || 100);
+      const customerBookings: AdminBooking[] = [];
+      let bookedCount = 0;
+
+      for (const b of bookings) {
+        if (b.bookingStatus === "CANCELLED" || (b as any).status === "CANCELLED") continue;
+        const matchTitle =
+          b.serviceTitle &&
+          (b.serviceTitle.toLowerCase().trim() === srv.title.toLowerCase().trim() ||
+           srv.title.toLowerCase().includes(b.serviceTitle.toLowerCase()) ||
+           b.serviceTitle.toLowerCase().includes(srv.title.toLowerCase()));
+        const matchId = (b as any).ticketId ? String((b as any).ticketId) === String(srv.id) : b.id === srv.id;
+
+        if (matchTitle || matchId) {
+          customerBookings.push(b);
+          const qty = Number(b.quantity) || (Array.isArray(b.seatNumbers) ? b.seatNumbers.length : 1);
+          bookedCount += qty;
+        }
+      }
+
+      const remainingStock = Math.max(0, totalStock - bookedCount);
+      const occupancyRate = totalStock > 0 ? Math.round((bookedCount / totalStock) * 100) : 0;
+
+      return {
+        totalStock,
+        soldCount: bookedCount,
+        remainingStock,
+        occupancyRate,
+        customerBookings,
+      };
+    },
+    [bookings]
+  );
 
   const filteredServices = services.filter((srv) => {
     const matchesSearch =
@@ -264,32 +302,43 @@ export default function AdminTicketsPage() {
               </div>
 
               {/* 3-Column Performance Micro-Grid */}
-              <div className="grid grid-cols-3 gap-2 p-2.5 rounded-xl bg-amber-500/[0.04] dark:bg-amber-500/[0.07] border border-amber-500/15 text-center">
-                <div>
-                  <span className="text-[9px] uppercase font-bold text-muted-foreground tracking-wider block">
-                    Base Fare
-                  </span>
-                  <span className="text-xs font-black text-amber-600 dark:text-amber-400 font-mono mt-0.5 block truncate">
-                    {srv.price} <span className="text-[9px] font-normal">ETB</span>
-                  </span>
-                </div>
-                <div className="border-x border-amber-500/15">
-                  <span className="text-[9px] uppercase font-bold text-muted-foreground tracking-wider block">
-                    Sold Passes
-                  </span>
-                  <span className="text-xs font-extrabold text-foreground mt-0.5 block">
-                    {srv.totalSold.toLocaleString()}
-                  </span>
-                </div>
-                <div>
-                  <span className="text-[9px] uppercase font-bold text-muted-foreground tracking-wider block">
-                    Total Capacity
-                  </span>
-                  <span className="text-xs font-extrabold text-foreground font-mono mt-0.5 block">
-                    {srv.capacity}
-                  </span>
-                </div>
-              </div>
+              {(() => {
+                const m = getTicketMetrics(srv);
+                return (
+                  <div className="grid grid-cols-3 gap-2 p-2.5 rounded-xl bg-amber-500/[0.04] dark:bg-amber-500/[0.07] border border-amber-500/15 text-center">
+                    <div>
+                      <span className="text-[9px] uppercase font-bold text-muted-foreground tracking-wider block">
+                        Base Fare
+                      </span>
+                      <span className="text-xs font-black text-amber-600 dark:text-amber-400 font-mono mt-0.5 block truncate">
+                        {srv.price} <span className="text-[9px] font-normal">ETB</span>
+                      </span>
+                    </div>
+                    <div className="border-x border-amber-500/15">
+                      <span className="text-[9px] uppercase font-bold text-muted-foreground tracking-wider block">
+                        Sold Passes
+                      </span>
+                      <span className="text-xs font-extrabold text-foreground mt-0.5 block">
+                        {m.soldCount.toLocaleString()}
+                      </span>
+                      <span className="text-[9px] text-muted-foreground block">
+                        {m.occupancyRate}% sold
+                      </span>
+                    </div>
+                    <div>
+                      <span className="text-[9px] uppercase font-bold text-emerald-600 dark:text-emerald-400 tracking-wider block">
+                        Remaining
+                      </span>
+                      <span className="text-xs font-extrabold text-emerald-600 dark:text-emerald-400 font-mono mt-0.5 block">
+                        {m.remainingStock.toLocaleString()}
+                      </span>
+                      <span className="text-[9px] text-muted-foreground block">
+                        of {m.totalStock} total stock
+                      </span>
+                    </div>
+                  </div>
+                );
+              })()}
 
               {/* Quick Actions Footer */}
               <div className="flex items-center gap-2 pt-0.5">
@@ -338,45 +387,60 @@ export default function AdminTicketsPage() {
                 <th className="px-4 py-3.5 whitespace-nowrap min-w-[110px]">Category</th>
                 <th className="px-4 py-3.5 whitespace-nowrap min-w-[160px]">Provider Operator</th>
                 <th className="px-4 py-3.5 whitespace-nowrap min-w-[110px]">Base Fare / Price</th>
-                <th className="px-4 py-3.5 whitespace-nowrap min-w-[130px]">Tickets Sold</th>
+                <th className="px-4 py-3.5 whitespace-nowrap min-w-[120px]">Tickets Sold</th>
+                <th className="px-4 py-3.5 whitespace-nowrap min-w-[140px]">Remaining Capacity</th>
                 <th className="px-4 py-3.5 whitespace-nowrap min-w-[100px]">Status</th>
                 <th className="px-5 py-3.5 text-right w-28 shrink-0">Actions</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100 dark:divide-slate-800/40">
-              {filteredServices.map((srv) => (
-                <tr key={srv.id} className="hover:bg-amber-500/[0.03] dark:hover:bg-amber-500/[0.06] transition-colors">
-                  <td className="px-5 py-3.5 min-w-[200px]">
-                    <div>
-                      <p className="font-bold text-foreground text-xs">{srv.title}</p>
-                      <p className="text-[11px] text-muted-foreground flex items-center gap-1 mt-0.5">
-                        <MapPin className="w-3 h-3 text-amber-600 dark:text-amber-400" />
-                        <span>{srv.location}</span>
-                      </p>
-                    </div>
-                  </td>
-                  <td className="px-4 py-3.5 whitespace-nowrap">
-                    <span className="text-xs font-bold text-foreground uppercase tracking-wider">
-                      {srv.category}
-                    </span>
-                  </td>
-                  <td className="px-4 py-3.5 whitespace-nowrap">
-                    <Link
-                      href={`/admin/providers/${srv.providerId}`}
-                      className="font-bold text-foreground hover:text-amber-600 dark:hover:text-amber-400 transition-colors"
-                    >
-                      {srv.providerName}
-                    </Link>
-                  </td>
-                  <td className="px-4 py-3.5 whitespace-nowrap font-extrabold text-foreground">
-                    {srv.price} <span className="text-[10px] text-muted-foreground font-normal">ETB</span>
-                  </td>
-                  <td className="px-4 py-3.5 whitespace-nowrap">
-                    <div>
-                      <p className="font-bold text-foreground">{srv.totalSold.toLocaleString()} tickets</p>
-                      <p className="text-[10px] text-muted-foreground font-mono">Capacity: {srv.capacity}</p>
-                    </div>
-                  </td>
+              {filteredServices.map((srv) => {
+                const m = getTicketMetrics(srv);
+                return (
+                  <tr key={srv.id} className="hover:bg-amber-500/[0.03] dark:hover:bg-amber-500/[0.06] transition-colors">
+                    <td className="px-5 py-3.5 min-w-[200px]">
+                      <div>
+                        <p className="font-bold text-foreground text-xs">{srv.title}</p>
+                        <p className="text-[11px] text-muted-foreground flex items-center gap-1 mt-0.5">
+                          <MapPin className="w-3 h-3 text-amber-600 dark:text-amber-400" />
+                          <span>{srv.location}</span>
+                        </p>
+                      </div>
+                    </td>
+                    <td className="px-4 py-3.5 whitespace-nowrap">
+                      <span className="text-xs font-bold text-foreground uppercase tracking-wider">
+                        {srv.category}
+                      </span>
+                    </td>
+                    <td className="px-4 py-3.5 whitespace-nowrap">
+                      <Link
+                        href={`/admin/providers/${srv.providerId}`}
+                        className="font-bold text-foreground hover:text-amber-600 dark:hover:text-amber-400 transition-colors"
+                      >
+                        {srv.providerName}
+                      </Link>
+                    </td>
+                    <td className="px-4 py-3.5 whitespace-nowrap font-extrabold text-foreground">
+                      {srv.price} <span className="text-[10px] text-muted-foreground font-normal">ETB</span>
+                    </td>
+                    <td className="px-4 py-3.5 whitespace-nowrap">
+                      <div>
+                        <span className="font-extrabold text-foreground text-xs">{m.soldCount.toLocaleString()} sold</span>
+                        <p className="text-[10px] text-muted-foreground font-mono">
+                          {m.occupancyRate}% occupancy
+                        </p>
+                      </div>
+                    </td>
+                    <td className="px-4 py-3.5 whitespace-nowrap">
+                      <div>
+                        <span className="inline-flex items-center gap-1 font-extrabold text-emerald-600 dark:text-emerald-400 text-xs">
+                          {m.remainingStock.toLocaleString()} seats
+                        </span>
+                        <p className="text-[10px] text-muted-foreground font-mono">
+                          of {m.totalStock} total stock
+                        </p>
+                      </div>
+                    </td>
                   <td className="px-4 py-3.5 whitespace-nowrap">
                     {srv.status === "ACTIVE" ? (
                       <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 ring-1 ring-inset ring-emerald-500/20">
@@ -424,7 +488,8 @@ export default function AdminTicketsPage() {
                     </div>
                   </td>
                 </tr>
-              ))}
+              );
+            })}
 
               {filteredServices.length === 0 && (
                 <tr>
@@ -439,176 +504,178 @@ export default function AdminTicketsPage() {
       </div>
 
       {/* Admin Ticket Detail Modal */}
-      {selectedDetailTicket && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-slate-950/75 backdrop-blur-xs animate-in fade-in duration-150">
-          <div className="bg-card border border-slate-200 dark:border-slate-800 rounded-3xl max-w-3xl w-full shadow-2xl overflow-hidden max-h-[92vh] flex flex-col">
-            {/* Modal Header */}
-            <div className="px-5 py-4 border-b border-slate-200/60 dark:border-slate-800/60 flex items-center justify-between gap-3 bg-muted/20 shrink-0">
-              <div className="min-w-0">
-                <div className="flex items-center gap-2">
-                  <h3 className="font-bold text-foreground text-base sm:text-lg leading-tight truncate">
-                    Ticket Listing & Inventory Audit
-                  </h3>
-                  <span className="text-[11px] font-bold uppercase tracking-wider text-muted-foreground font-mono">
-                    #{selectedDetailTicket.id}
-                  </span>
+      {selectedDetailTicket && (() => {
+        const modalM = getTicketMetrics(selectedDetailTicket);
+        return (
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-slate-950/75 backdrop-blur-xs animate-in fade-in duration-150">
+            <div className="bg-card border border-slate-200 dark:border-slate-800 rounded-3xl max-w-3xl w-full shadow-2xl overflow-hidden max-h-[92vh] flex flex-col">
+              {/* Modal Header */}
+              <div className="px-5 py-4 border-b border-slate-200/60 dark:border-slate-800/60 flex items-center justify-between gap-3 bg-muted/20 shrink-0">
+                <div className="min-w-0">
+                  <div className="flex items-center gap-2">
+                    <h3 className="font-bold text-foreground text-base sm:text-lg leading-tight truncate">
+                      Ticket Listing & Inventory Audit
+                    </h3>
+                    <span className="text-[11px] font-bold uppercase tracking-wider text-muted-foreground font-mono">
+                      #{selectedDetailTicket.id}
+                    </span>
+                  </div>
+                  <p className="text-xs text-muted-foreground mt-0.5">
+                    Complete service specifications, admission tiers, and live inventory allocation
+                  </p>
                 </div>
-                <p className="text-xs text-muted-foreground mt-0.5">
-                  Complete service specifications, admission tiers, and live inventory allocation
-                </p>
+
+                <button
+                  type="button"
+                  onClick={() => setSelectedDetailTicket(null)}
+                  className="w-8 h-8 rounded-xl bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-muted-foreground hover:text-foreground flex items-center justify-center transition-colors cursor-pointer shrink-0"
+                >
+                  <X className="w-4 h-4" />
+                </button>
               </div>
 
-              <button
-                type="button"
-                onClick={() => setSelectedDetailTicket(null)}
-                className="w-8 h-8 rounded-xl bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-muted-foreground hover:text-foreground flex items-center justify-center transition-colors cursor-pointer shrink-0"
-              >
-                <X className="w-4 h-4" />
-              </button>
-            </div>
+              {/* Modal Body: Scrollable */}
+              <div className="p-5 sm:p-6 space-y-5 overflow-y-auto">
+                {/* Cover Image Banner */}
+                {selectedDetailTicket.imageUrl && (
+                  <div className="relative w-full h-52 sm:h-60 rounded-2xl overflow-hidden border border-slate-200/60 dark:border-slate-800/60 shadow-sm bg-slate-900 shrink-0">
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img
+                      src={selectedDetailTicket.imageUrl}
+                      alt={selectedDetailTicket.title}
+                      className="w-full h-full object-cover"
+                    />
+                    <div className="absolute inset-0 bg-gradient-to-t from-slate-950/90 via-slate-950/40 to-transparent" />
 
-            {/* Modal Body: Scrollable */}
-            <div className="p-5 sm:p-6 space-y-5 overflow-y-auto">
-              {/* Cover Image Banner */}
-              {selectedDetailTicket.imageUrl && (
-                <div className="relative w-full h-52 sm:h-60 rounded-2xl overflow-hidden border border-slate-200/60 dark:border-slate-800/60 shadow-sm bg-slate-900 shrink-0">
-                  {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img
-                    src={selectedDetailTicket.imageUrl}
-                    alt={selectedDetailTicket.title}
-                    className="w-full h-full object-cover"
-                  />
-                  <div className="absolute inset-0 bg-gradient-to-t from-slate-950/90 via-slate-950/40 to-transparent" />
+                    {/* Top Overlay Badges */}
+                    <div className="absolute top-3 left-3 right-3 flex items-center justify-between gap-2">
+                      <span className="text-xs font-black tracking-wider uppercase text-amber-400 drop-shadow-[0_2px_4px_rgba(0,0,0,0.9)]">
+                        {selectedDetailTicket.category}
+                      </span>
 
-                  {/* Top Overlay Badges */}
-                  <div className="absolute top-3 left-3 right-3 flex items-center justify-between gap-2">
-                    <span className="text-xs font-black tracking-wider uppercase text-amber-400 drop-shadow-[0_2px_4px_rgba(0,0,0,0.9)]">
-                      {selectedDetailTicket.category}
-                    </span>
-
-                    {selectedDetailTicket.status === "ACTIVE" ? (
-                      <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-emerald-500 text-white shadow-md">
-                        <CheckCircle2 className="w-3.5 h-3.5" /> Active Listing
-                      </span>
-                    ) : (
-                      <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-rose-600 text-white shadow-md">
-                        <XCircle className="w-3.5 h-3.5" /> Inactive / Paused
-                      </span>
-                    )}
-                  </div>
-
-                  {/* Bottom Overlay Title & Details */}
-                  <div className="absolute bottom-3 left-3 right-3 space-y-1">
-                    {selectedDetailTicket.badge && (
-                      <span className="inline-flex items-center gap-1 text-[10px] font-bold px-2 py-0.5 rounded-md bg-amber-500/90 text-slate-950 shadow-xs">
-                        <Sparkles className="w-3 h-3" />
-                        {selectedDetailTicket.badge}
-                      </span>
-                    )}
-                    <h4 className="text-white font-black text-lg sm:text-xl drop-shadow-sm line-clamp-2">
-                      {selectedDetailTicket.title}
-                    </h4>
-                    <div className="flex items-center gap-3 text-xs text-slate-200 flex-wrap">
-                      <span className="flex items-center gap-1 font-semibold">
-                        <Building2 className="w-3.5 h-3.5 text-amber-400" />
-                        {selectedDetailTicket.providerName}
-                      </span>
-                      <span>•</span>
-                      <span className="flex items-center gap-1">
-                        <MapPin className="w-3.5 h-3.5 text-amber-400" />
-                        {selectedDetailTicket.city || "Ethiopia"}
-                      </span>
-                      {selectedDetailTicket.rating && (
-                        <>
-                          <span>•</span>
-                          <span className="flex items-center gap-1 text-amber-300 font-bold">
-                            <Star className="w-3.5 h-3.5 fill-amber-400 text-amber-400" />
-                            {selectedDetailTicket.rating.toFixed(1)}
-                            {selectedDetailTicket.reviewCount ? ` (${selectedDetailTicket.reviewCount} reviews)` : ""}
-                          </span>
-                        </>
+                      {selectedDetailTicket.status === "ACTIVE" ? (
+                        <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-emerald-500 text-white shadow-md">
+                          <CheckCircle2 className="w-3.5 h-3.5" /> Active Listing
+                        </span>
+                      ) : (
+                        <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-rose-600 text-white shadow-md">
+                          <XCircle className="w-3.5 h-3.5" /> Inactive / Paused
+                        </span>
                       )}
                     </div>
+
+                    {/* Bottom Overlay Title & Details */}
+                    <div className="absolute bottom-3 left-3 right-3 space-y-1">
+                      {selectedDetailTicket.badge && (
+                        <span className="inline-flex items-center gap-1 text-[10px] font-bold px-2 py-0.5 rounded-md bg-amber-500/90 text-slate-950 shadow-xs">
+                          <Sparkles className="w-3 h-3" />
+                          {selectedDetailTicket.badge}
+                        </span>
+                      )}
+                      <h4 className="text-white font-black text-lg sm:text-xl drop-shadow-sm line-clamp-2">
+                        {selectedDetailTicket.title}
+                      </h4>
+                      <div className="flex items-center gap-3 text-xs text-slate-200 flex-wrap">
+                        <span className="flex items-center gap-1 font-semibold">
+                          <Building2 className="w-3.5 h-3.5 text-amber-400" />
+                          {selectedDetailTicket.providerName}
+                        </span>
+                        <span>•</span>
+                        <span className="flex items-center gap-1">
+                          <MapPin className="w-3.5 h-3.5 text-amber-400" />
+                          {selectedDetailTicket.city || "Ethiopia"}
+                        </span>
+                        {selectedDetailTicket.rating && (
+                          <>
+                            <span>•</span>
+                            <span className="flex items-center gap-1 text-amber-300 font-bold">
+                              <Star className="w-3.5 h-3.5 fill-amber-400 text-amber-400" />
+                              {selectedDetailTicket.rating.toFixed(1)}
+                              {selectedDetailTicket.reviewCount ? ` (${selectedDetailTicket.reviewCount} reviews)` : ""}
+                            </span>
+                          </>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                {/* 5-Column Financial & Inventory Metrics */}
+                <div className="grid grid-cols-2 sm:grid-cols-5 gap-2.5">
+                  <div className="p-3 rounded-2xl bg-amber-500/[0.04] border border-amber-500/15 text-center">
+                    <span className="text-[10px] uppercase font-bold text-muted-foreground block">
+                      Base Price
+                    </span>
+                    <span className="text-sm sm:text-base font-black text-amber-600 dark:text-amber-400 mt-0.5 block">
+                      {formatCurrency(selectedDetailTicket.price)}
+                    </span>
+                    <span className="text-[10px] text-muted-foreground">Standard Fare</span>
+                  </div>
+
+                  <div className="p-3 rounded-2xl bg-slate-50 dark:bg-slate-800/40 border border-slate-200/50 dark:border-slate-800/60 text-center">
+                    <span className="text-[10px] uppercase font-bold text-muted-foreground block">
+                      Passes Sold
+                    </span>
+                    <span className="text-sm sm:text-base font-extrabold text-foreground mt-0.5 block">
+                      {modalM.soldCount.toLocaleString()}
+                    </span>
+                    <span className="text-[10px] text-muted-foreground">Confirmed</span>
+                  </div>
+
+                  <div className="p-3 rounded-2xl bg-emerald-500/[0.05] border border-emerald-500/20 text-center">
+                    <span className="text-[10px] uppercase font-bold text-emerald-600 dark:text-emerald-400 block">
+                      Remaining
+                    </span>
+                    <span className="text-sm sm:text-base font-black text-emerald-600 dark:text-emerald-400 mt-0.5 block">
+                      {modalM.remainingStock.toLocaleString()}
+                    </span>
+                    <span className="text-[10px] text-emerald-600/70 dark:text-emerald-400/70">Seats Open</span>
+                  </div>
+
+                  <div className="p-3 rounded-2xl bg-slate-50 dark:bg-slate-800/40 border border-slate-200/50 dark:border-slate-800/60 text-center">
+                    <span className="text-[10px] uppercase font-bold text-muted-foreground block">
+                      Total Capacity
+                    </span>
+                    <span className="text-sm sm:text-base font-extrabold text-foreground mt-0.5 block font-mono">
+                      {modalM.totalStock}
+                    </span>
+                    <span className="text-[10px] text-muted-foreground">Max Inventory</span>
+                  </div>
+
+                  <div className="p-3 rounded-2xl bg-blue-500/[0.05] border border-blue-500/20 text-center col-span-2 sm:col-span-1">
+                    <span className="text-[10px] uppercase font-bold text-blue-600 dark:text-blue-400 block">
+                      Gross GMV
+                    </span>
+                    <span className="text-sm sm:text-base font-black text-blue-600 dark:text-blue-400 mt-0.5 block">
+                      {(modalM.soldCount * selectedDetailTicket.price).toLocaleString()} ETB
+                    </span>
+                    <span className="text-[10px] text-blue-600/70 dark:text-blue-400/70">Revenue</span>
                   </div>
                 </div>
-              )}
 
-              {/* 5-Column Financial & Inventory Metrics */}
-              <div className="grid grid-cols-2 sm:grid-cols-5 gap-2.5">
-                <div className="p-3 rounded-2xl bg-amber-500/[0.04] border border-amber-500/15 text-center">
-                  <span className="text-[10px] uppercase font-bold text-muted-foreground block">
-                    Base Price
-                  </span>
-                  <span className="text-sm sm:text-base font-black text-amber-600 dark:text-amber-400 mt-0.5 block">
-                    {formatCurrency(selectedDetailTicket.price)}
-                  </span>
-                  <span className="text-[10px] text-muted-foreground">Standard Fare</span>
-                </div>
-
-                <div className="p-3 rounded-2xl bg-slate-50 dark:bg-slate-800/40 border border-slate-200/50 dark:border-slate-800/60 text-center">
-                  <span className="text-[10px] uppercase font-bold text-muted-foreground block">
-                    Passes Sold
-                  </span>
-                  <span className="text-sm sm:text-base font-extrabold text-foreground mt-0.5 block">
-                    {selectedDetailTicket.totalSold.toLocaleString()}
-                  </span>
-                  <span className="text-[10px] text-muted-foreground">Confirmed</span>
-                </div>
-
-                <div className="p-3 rounded-2xl bg-emerald-500/[0.05] border border-emerald-500/20 text-center">
-                  <span className="text-[10px] uppercase font-bold text-emerald-600 dark:text-emerald-400 block">
-                    Remaining
-                  </span>
-                  <span className="text-sm sm:text-base font-black text-emerald-600 dark:text-emerald-400 mt-0.5 block">
-                    {(selectedDetailTicket.availableSeats ?? Math.max(0, selectedDetailTicket.capacity - selectedDetailTicket.totalSold)).toLocaleString()}
-                  </span>
-                  <span className="text-[10px] text-emerald-600/70 dark:text-emerald-400/70">Seats Open</span>
-                </div>
-
-                <div className="p-3 rounded-2xl bg-slate-50 dark:bg-slate-800/40 border border-slate-200/50 dark:border-slate-800/60 text-center">
-                  <span className="text-[10px] uppercase font-bold text-muted-foreground block">
-                    Total Capacity
-                  </span>
-                  <span className="text-sm sm:text-base font-extrabold text-foreground mt-0.5 block font-mono">
-                    {selectedDetailTicket.capacity}
-                  </span>
-                  <span className="text-[10px] text-muted-foreground">Max Inventory</span>
-                </div>
-
-                <div className="p-3 rounded-2xl bg-blue-500/[0.05] border border-blue-500/20 text-center col-span-2 sm:col-span-1">
-                  <span className="text-[10px] uppercase font-bold text-blue-600 dark:text-blue-400 block">
-                    Gross GMV
-                  </span>
-                  <span className="text-sm sm:text-base font-black text-blue-600 dark:text-blue-400 mt-0.5 block">
-                    {(selectedDetailTicket.totalSold * selectedDetailTicket.price).toLocaleString()} ETB
-                  </span>
-                  <span className="text-[10px] text-blue-600/70 dark:text-blue-400/70">Revenue</span>
-                </div>
-              </div>
-
-              {/* Occupancy Progress Bar */}
-              <div className="p-3.5 rounded-2xl bg-slate-50 dark:bg-slate-800/30 border border-slate-200/50 dark:border-slate-800/50 space-y-2">
-                <div className="flex items-center justify-between text-xs font-bold">
-                  <span className="text-muted-foreground flex items-center gap-1.5">
-                    <TrendingUp className="w-3.5 h-3.5 text-amber-500" />
-                    <span>Inventory Occupancy Rate</span>
-                  </span>
-                  <span className="text-foreground">
-                    {Math.round((selectedDetailTicket.totalSold / (selectedDetailTicket.capacity || 1)) * 100)}% Occupied
-                    <span className="text-muted-foreground font-normal ml-1">
-                      ({selectedDetailTicket.totalSold} / {selectedDetailTicket.capacity})
+                {/* Occupancy Progress Bar */}
+                <div className="p-3.5 rounded-2xl bg-slate-50 dark:bg-slate-800/30 border border-slate-200/50 dark:border-slate-800/50 space-y-2">
+                  <div className="flex items-center justify-between text-xs font-bold">
+                    <span className="text-muted-foreground flex items-center gap-1.5">
+                      <TrendingUp className="w-3.5 h-3.5 text-amber-500" />
+                      <span>Inventory Occupancy Rate</span>
                     </span>
-                  </span>
+                    <span className="text-foreground">
+                      {modalM.occupancyRate}% Occupied
+                      <span className="text-muted-foreground font-normal ml-1">
+                        ({modalM.soldCount} / {modalM.totalStock})
+                      </span>
+                    </span>
+                  </div>
+                  <div className="w-full h-2.5 rounded-full bg-slate-200 dark:bg-slate-700 overflow-hidden">
+                    <div
+                      className="h-full bg-gradient-to-r from-amber-500 to-emerald-500 rounded-full transition-all"
+                      style={{
+                        width: `${Math.min(100, modalM.occupancyRate)}%`,
+                      }}
+                    />
+                  </div>
                 </div>
-                <div className="w-full h-2.5 rounded-full bg-slate-200 dark:bg-slate-700 overflow-hidden">
-                  <div
-                    className="h-full bg-gradient-to-r from-amber-500 to-emerald-500 rounded-full transition-all"
-                    style={{
-                      width: `${Math.min(100, Math.round((selectedDetailTicket.totalSold / (selectedDetailTicket.capacity || 1)) * 100))}%`,
-                    }}
-                  />
-                </div>
-              </div>
 
               {/* Schedule, Departure & Venue Information */}
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
@@ -733,6 +800,110 @@ export default function AdminTicketsPage() {
                 </div>
               )}
 
+              {/* Verified Booked Customers & Passenger Manifest */}
+              <div className="p-4 rounded-2xl bg-card border border-slate-200/60 dark:border-slate-800/60 space-y-3">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-slate-100 dark:border-slate-800/60 pb-2.5">
+                  <div>
+                    <h5 className="text-xs font-bold uppercase tracking-wider text-muted-foreground flex items-center gap-1.5">
+                      <Users className="w-3.5 h-3.5 text-amber-500" />
+                      <span>Booked Customers & Passenger Manifest ({modalM.customerBookings.length} Bookings)</span>
+                    </h5>
+                    <p className="text-[11px] text-muted-foreground mt-0.5">
+                      Actual customers who purchased tickets, seat allocations, and payment verification records
+                    </p>
+                  </div>
+                  <span className="text-[11px] font-mono font-bold text-amber-600 dark:text-amber-400 bg-amber-500/10 px-2 py-0.5 rounded-md border border-amber-500/20 self-start sm:self-auto">
+                    {modalM.soldCount} passes booked / {modalM.remainingStock} available
+                  </span>
+                </div>
+
+                {modalM.customerBookings.length === 0 ? (
+                  <div className="py-8 text-center text-muted-foreground">
+                    <Ticket className="w-8 h-8 mx-auto mb-1.5 opacity-40 text-amber-500" />
+                    <p className="text-xs font-bold text-foreground">No customer bookings yet</p>
+                    <p className="text-[11px] text-muted-foreground mt-0.5">
+                      All {modalM.totalStock} seats are open and available for public booking.
+                    </p>
+                  </div>
+                ) : (
+                  <div className="overflow-x-auto">
+                    <table className="w-full text-left text-xs border-collapse">
+                      <thead>
+                        <tr className="border-b border-slate-100 dark:border-slate-800/60 bg-muted/20 text-[10px] uppercase font-bold text-muted-foreground">
+                          <th className="py-2 px-3">Customer</th>
+                          <th className="py-2 px-3">Reference</th>
+                          <th className="py-2 px-3">Seats / Passes</th>
+                          <th className="py-2 px-3">Phone</th>
+                          <th className="py-2 px-3 text-right">Customer Paid</th>
+                          <th className="py-2 px-3 text-right">Commission Fee</th>
+                          <th className="py-2 px-3 text-right">Provider Net</th>
+                          <th className="py-2 px-3 text-center">Status</th>
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y divide-slate-100 dark:divide-slate-800/40">
+                        {modalM.customerBookings.map((b) => {
+                          const seatsText =
+                            b.seatNumbers && b.seatNumbers.length > 0
+                              ? b.seatNumbers.join(", ")
+                              : b.seats && b.seats.length > 0
+                              ? b.seats.join(", ")
+                              : `${b.quantity} pass${b.quantity > 1 ? "es" : ""}`;
+                          const cPaid = b.customerPaid ?? b.totalAmount;
+                          const cVatRate = b.vatRate ?? 5;
+                          const cVatAmount = b.vatAmount ?? Math.round((cPaid * cVatRate) / (100 + cVatRate));
+                          const cCommRate = b.commissionRate ?? 5;
+                          const cFee = b.platformFee ?? Math.round((cPaid - cVatAmount) * (cCommRate / 100));
+                          const cNet = b.providerNet ?? Math.max(0, cPaid - cVatAmount - cFee);
+                          return (
+                            <tr key={b.id} className="hover:bg-muted/30 transition-colors">
+                              <td className="py-2.5 px-3">
+                                <span className="font-bold text-foreground block">{b.customerName}</span>
+                                <span className="text-[10px] text-muted-foreground font-mono">{b.customerEmail}</span>
+                              </td>
+                              <td className="py-2.5 px-3 font-mono text-[11px] font-semibold text-amber-600 dark:text-amber-400">
+                                {b.reference}
+                              </td>
+                              <td className="py-2.5 px-3">
+                                <span className="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold bg-amber-500/10 text-amber-700 dark:text-amber-300 border border-amber-500/20 font-mono">
+                                  {seatsText}
+                                </span>
+                              </td>
+                              <td className="py-2.5 px-3 text-muted-foreground font-mono text-[11px]">
+                                {b.customerPhone}
+                              </td>
+                              <td className="py-2.5 px-3 text-right font-mono">
+                                <span className="font-black text-foreground block">
+                                  {cPaid.toLocaleString()} ETB
+                                </span>
+                                <span className="text-[10px] text-muted-foreground">
+                                  Inc. {cVatRate}% VAT ({cVatAmount.toLocaleString()} ETB)
+                                </span>
+                              </td>
+                              <td className="py-2.5 px-3 text-right font-mono">
+                                <span className="font-bold text-amber-600 dark:text-amber-400 block">
+                                  -{cFee.toLocaleString()} ETB
+                                </span>
+                                <span className="text-[10px] text-muted-foreground">
+                                  {cCommRate}% rate
+                                </span>
+                              </td>
+                              <td className="py-2.5 px-3 text-right font-mono font-bold text-emerald-600 dark:text-emerald-400">
+                                {cNet.toLocaleString()} ETB
+                              </td>
+                              <td className="py-2.5 px-3 text-center">
+                                <span className="inline-flex items-center px-2 py-0.5 rounded text-[9px] font-bold uppercase tracking-wider bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20">
+                                  {b.paymentStatus || "PAID"}
+                                </span>
+                              </td>
+                            </tr>
+                          );
+                        })}
+                      </tbody>
+                    </table>
+                  </div>
+                )}
+              </div>
+
               {/* Public Description & Overview */}
               {selectedDetailTicket.description && (
                 <div className="p-4 rounded-2xl bg-card border border-slate-200/60 dark:border-slate-800/60 space-y-1.5">
@@ -807,7 +978,8 @@ export default function AdminTicketsPage() {
             </div>
           </div>
         </div>
-      )}
+        );
+      })()}
       {/* Confirm Delete Ticket Modal */}
       <ConfirmDeleteModal
         isOpen={!!ticketToDelete}

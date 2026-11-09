@@ -23,6 +23,7 @@ import { toast } from "sonner";
 import { ActionDropdown } from "@/components/ui/action-dropdown";
 import { useProviderStore } from "@/stores/provider.store";
 import { TicketService } from "@/services/ticket.service";
+import { useLanguage } from "@/providers/language-provider";
 
 export interface ProviderBookingRecord {
   id: string;
@@ -46,6 +47,7 @@ export const INITIAL_BOOKINGS: ProviderBookingRecord[] = [];
 
 export default function ProviderBookingsPage() {
   const { organization, bookings: storeBookings } = useProviderStore();
+  const { t } = useLanguage();
   const [localBookings, setLocalBookings] = useState<ProviderBookingRecord[]>([]);
   const [searchQuery, setSearchQuery] = useState("");
   const [paymentFilter, setPaymentFilter] = useState<string>("ALL");
@@ -96,33 +98,61 @@ export default function ProviderBookingsPage() {
       } catch {}
     }
 
-    if (list.length > 0) {
+    const cleanList = list.filter(
+      (b) =>
+        !String(b.id || "").startsWith("bkg-") &&
+        !String(b.reference || "").startsWith("TIKORA-BKG-10")
+    );
+
+    if (cleanList.length > 0) {
       const filtered = organization.category
-        ? list.filter((b) => !b.category || b.category === organization.category || list.length <= 2)
-        : list;
-      setLocalBookings(filtered.length > 0 ? filtered : list);
+        ? cleanList.filter((b) => b.category === organization.category)
+        : cleanList;
+      setLocalBookings(filtered);
     } else {
       fetch("/api/bookings")
         .then((res) => res.json())
         .then((data) => {
           if (data.success && data.bookings && data.bookings.length > 0) {
-            const mapped: ProviderBookingRecord[] = data.bookings.map((b: any) => ({
-              id: b.id,
-              reference: b.bookingReference || b.id,
-              customerName: b.customerName,
-              customerPhone: b.customerPhone || "+251 91 100 0000",
-              customerEmail: b.customerEmail || "customer@tikora.et",
-              serviceTitle: b.ticket?.title || b.serviceTitle || "TIKORA Experience Pass",
-              category: b.category || organization.category || "BUS",
-              travelDate: b.ticket?.date || new Date().toISOString().split("T")[0],
-              departureTime: b.ticket?.time || "Flexible",
-              seats: b.selectedSeats || [b.selectedTier || "Pass"],
-              totalAmount: b.pricing?.subtotal || Math.round((b.pricing?.total || 525) / 1.05),
-              paymentMethod: b.paymentMethod || "CHAPA",
-              paymentStatus: b.paymentStatus || "PAID",
-              bookingStatus: b.bookingStatus || "CONFIRMED",
-              createdAt: b.createdAt || new Date().toISOString(),
-            }));
+            const cleanData = data.bookings.filter(
+              (b: any) =>
+                !String(b.id || "").startsWith("bkg-") &&
+                !String(b.reference || "").startsWith("TIKORA-BKG-10") &&
+                (!organization.category || b.category === organization.category)
+            );
+            const mapped: ProviderBookingRecord[] = cleanData.map((b: any) => {
+              const cPaid = Number(b.customerPaid ?? b.pricing?.total ?? b.totalAmount ?? 500);
+              const vRate = Number(b.vatRate ?? b.pricing?.vatRate ?? 5.0);
+              const vAmount = Number(b.vatAmount ?? b.pricing?.vatAmount ?? Math.round(((cPaid * vRate) / (100 + vRate)) * 100) / 100);
+              const baseFare = Number(b.pricing?.subtotal ?? b.subtotal ?? Math.max(0, Math.round((cPaid - vAmount) * 100) / 100));
+              const commRate = Number(b.commissionRate ?? b.pricing?.commissionRate ?? (organization?.commissionRate || 5.0));
+              const pFee = Number(b.platformFee ?? b.pricing?.platformFee ?? Math.round(baseFare * (commRate / 100) * 100) / 100);
+              const pNet = Number(b.providerNet ?? b.pricing?.providerNet ?? Math.max(0, Math.round((baseFare - pFee) * 100) / 100));
+
+              return {
+                id: b.id,
+                reference: b.bookingReference || b.id,
+                customerName: b.customerName,
+                customerPhone: b.customerPhone || "+251 91 100 0000",
+                customerEmail: b.customerEmail || "customer@tikora.et",
+                serviceTitle: b.ticket?.title || b.serviceTitle || "TIKORA Experience Pass",
+                category: b.category || organization.category || "BUS",
+                travelDate: b.ticket?.date || new Date().toISOString().split("T")[0],
+                departureTime: b.ticket?.time || "Flexible",
+                seats: b.selectedSeats || [b.selectedTier || "Pass"],
+                totalAmount: baseFare,
+                customerPaid: cPaid,
+                vatRate: vRate,
+                vatAmount: vAmount,
+                commissionRate: commRate,
+                platformFee: pFee,
+                providerNet: pNet,
+                paymentMethod: b.paymentMethod || "CHAPA",
+                paymentStatus: b.paymentStatus || "PAID",
+                bookingStatus: b.bookingStatus || "CONFIRMED",
+                createdAt: b.createdAt || new Date().toISOString(),
+              };
+            });
             setLocalBookings(mapped);
           }
         })
@@ -209,15 +239,15 @@ export default function ProviderBookingsPage() {
         <div>
           <div className="flex items-center gap-1.5 mb-0.5">
             <span className="text-[9px] font-bold uppercase tracking-wider px-1.5 py-0.2 rounded-full bg-emerald-500/10 text-emerald-600 border border-emerald-500/20">
-              Live Customer Orders
+              {t("Live Customer Orders")}
             </span>
             <span className="text-[11px] text-muted-foreground">{organization.name}</span>
           </div>
           <h1 className="text-sm sm:text-base font-bold tracking-tight text-foreground">
-            Customer Bookings &amp; Orders
+            {t("Customer Bookings & Orders")}
           </h1>
           <p className="text-[11px] text-muted-foreground">
-            Confirmed reservations, seat allocations, and boarding status. Ticket base revenue shown with 5% VAT excluded.
+            {t("Confirmed reservations, seat allocations, and boarding status. Ticket base revenue shown with statutory VAT excluded.")}
           </p>
         </div>
 
@@ -228,7 +258,7 @@ export default function ProviderBookingsPage() {
             className="inline-flex items-center gap-1 px-2.5 py-1.5 text-[11px] font-medium rounded-lg border border-border/70 bg-card hover:bg-muted text-foreground transition-colors cursor-pointer"
           >
             <Download className="w-3 h-3" />
-            <span>Export CSV</span>
+            <span>{t("Export CSV")}</span>
           </button>
         </div>
       </div>
@@ -236,41 +266,41 @@ export default function ProviderBookingsPage() {
       {/* KPI Cards - 5 Metrics including Seats Left */}
       <div className="grid grid-cols-2 sm:grid-cols-5 gap-2.5 sm:gap-3">
         <div className="bg-card border border-border/60 rounded-xl p-3 shadow-2xs">
-          <span className="text-muted-foreground text-[10px] uppercase font-semibold block mb-0.5">Total Orders</span>
+          <span className="text-muted-foreground text-[10px] uppercase font-semibold block mb-0.5">{t("Total Orders")}</span>
           <div className="text-xs sm:text-sm font-bold text-foreground font-mono">{localBookings.length}</div>
-          <span className="text-[9px] text-muted-foreground">Confirmed bookings</span>
+          <span className="text-[9px] text-muted-foreground">{t("Verified passes", "Confirmed bookings")}</span>
         </div>
 
         <div className="bg-card border border-border/60 rounded-xl p-3 shadow-2xs">
-          <span className="text-muted-foreground text-[10px] uppercase font-semibold block mb-0.5">Seats Booked</span>
+          <span className="text-muted-foreground text-[10px] uppercase font-semibold block mb-0.5">{t("Seats Booked")}</span>
           <div className="text-xs sm:text-sm font-bold text-blue-600 font-mono">
-            {totalBookedSeats} seats
+            {totalBookedSeats} {t("Seats", "seats")}
           </div>
-          <span className="text-[9px] text-muted-foreground">Reserved passes</span>
+          <span className="text-[9px] text-muted-foreground">{t("Verified passes", "Reserved passes")}</span>
         </div>
 
         <div className="bg-card border border-border/60 rounded-xl p-3 shadow-2xs">
-          <span className="text-muted-foreground text-[10px] uppercase font-semibold block mb-0.5">Seats Left (Stock)</span>
+          <span className="text-muted-foreground text-[10px] uppercase font-semibold block mb-0.5">{t("Seats Left (Stock)")}</span>
           <div className="text-xs sm:text-sm font-bold text-emerald-600 font-mono">
-            {liveAvailableSeats} left
+            {liveAvailableSeats} {t("left")}
           </div>
-          <span className="text-[9px] text-muted-foreground">Available to book</span>
+          <span className="text-[9px] text-muted-foreground">{t("Available to book")}</span>
         </div>
 
         <div className="bg-card border border-border/60 rounded-xl p-3 shadow-2xs">
-          <span className="text-muted-foreground text-[10px] uppercase font-semibold block mb-0.5">Boarded Gate</span>
+          <span className="text-muted-foreground text-[10px] uppercase font-semibold block mb-0.5">{t("Boarded Gate")}</span>
           <div className="text-xs sm:text-sm font-bold text-emerald-600 font-mono">
             {localBookings.filter((b) => b.bookingStatus === "CHECKED_IN").length}
           </div>
-          <span className="text-[9px] text-muted-foreground">Scanned turnstiles</span>
+          <span className="text-[9px] text-muted-foreground">{t("Scanned turnstiles")}</span>
         </div>
 
         <div className="bg-card border border-border/60 rounded-xl p-3 shadow-2xs col-span-2 sm:col-span-1">
-          <span className="text-muted-foreground text-[10px] uppercase font-semibold block mb-0.5">Ticket Sales (No VAT)</span>
+          <span className="text-muted-foreground text-[10px] uppercase font-semibold block mb-0.5">{t("Ticket Sales (No VAT)")}</span>
           <div className="text-xs sm:text-sm font-bold text-amber-600 font-mono">
             {formatCurrency(totalGrossRevenue)}
           </div>
-          <span className="text-[9px] text-muted-foreground">Base fare &bull; VAT excluded</span>
+          <span className="text-[9px] text-muted-foreground">{t("Base fare revenue", "Base fare • VAT excluded")}</span>
         </div>
       </div>
 
@@ -279,13 +309,13 @@ export default function ProviderBookingsPage() {
         <div className="flex flex-col sm:flex-row gap-3 items-stretch sm:items-center justify-between">
           <div className="flex items-center gap-2">
             <span className="px-3.5 py-1.5 rounded-xl text-xs font-semibold bg-amber-600 text-white shadow-sm inline-flex items-center gap-1.5">
-              <span>Customer Bookings</span>
+              <span>{t("Customer Bookings")}</span>
               <span className="px-1.5 py-0.2 rounded-full bg-white/20 text-[10px] font-mono">
                 {filteredBookings.length}
               </span>
             </span>
             <span className="text-xs text-muted-foreground hidden sm:inline">
-              Manage passenger reservations and seat allocations
+              {t("Manage passenger reservations and seat allocations")}
             </span>
           </div>
 
@@ -296,7 +326,7 @@ export default function ProviderBookingsPage() {
               type="text"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              placeholder="Search ref, customer, phone..."
+              placeholder={t("hero.searchPlaceholder", "Search ref, customer, phone...")}
               className="w-full pl-9 pr-3 py-2 text-xs rounded-xl border border-slate-200/60 dark:border-slate-800/60 bg-card text-foreground focus:outline-none focus:ring-2 focus:ring-amber-500/30"
             />
           </div>
@@ -305,7 +335,7 @@ export default function ProviderBookingsPage() {
         {/* Status Dropdowns */}
         <div className="flex flex-wrap items-center gap-2 pt-3 border-t border-slate-200/40 dark:border-slate-800/40">
           <span className="text-[11px] font-semibold text-muted-foreground flex items-center gap-1">
-            <Filter className="w-3 h-3" /> Filters:
+            <Filter className="w-3 h-3" /> {t("common.filter", "Filters")}:
           </span>
 
           <select
@@ -313,10 +343,10 @@ export default function ProviderBookingsPage() {
             onChange={(e) => setPaymentFilter(e.target.value)}
             className="px-3 py-1.5 text-xs font-medium rounded-xl border border-slate-200/60 dark:border-slate-800/60 bg-card text-foreground focus:outline-none focus:ring-2 focus:ring-amber-500/30"
           >
-            <option value="ALL">All Payment Statuses</option>
-            <option value="PAID">Paid</option>
-            <option value="PENDING">Pending</option>
-            <option value="REFUNDED">Refunded</option>
+            <option value="ALL">{t("All Payment Statuses")}</option>
+            <option value="PAID">{t("status.paid", "Paid")}</option>
+            <option value="PENDING">{t("status.pending", "Pending")}</option>
+            <option value="REFUNDED">{t("status.refunded", "Refunded")}</option>
           </select>
 
           <select
@@ -324,10 +354,10 @@ export default function ProviderBookingsPage() {
             onChange={(e) => setStatusFilter(e.target.value)}
             className="px-3 py-1.5 text-xs font-medium rounded-xl border border-slate-200/60 dark:border-slate-800/60 bg-card text-foreground focus:outline-none focus:ring-2 focus:ring-amber-500/30"
           >
-            <option value="ALL">All Boarding Statuses</option>
-            <option value="CONFIRMED">Confirmed</option>
-            <option value="CHECKED_IN">Checked-in (Boarded)</option>
-            <option value="CANCELLED">Cancelled</option>
+            <option value="ALL">{t("All Boarding Statuses")}</option>
+            <option value="CONFIRMED">{t("status.confirmed", "Confirmed")}</option>
+            <option value="CHECKED_IN">{t("status.checkedIn", "Checked-in (Boarded)")}</option>
+            <option value="CANCELLED">{t("status.cancelled", "Cancelled")}</option>
           </select>
 
           {(paymentFilter !== "ALL" ||
@@ -342,7 +372,7 @@ export default function ProviderBookingsPage() {
               }}
               className="text-[11px] font-semibold text-amber-600 hover:underline px-1"
             >
-              Reset Filters
+              {t("Reset Filters")}
             </button>
           )}
         </div>
@@ -455,22 +485,22 @@ export default function ProviderBookingsPage() {
           <table className="w-full text-left border-collapse min-w-[1450px] text-xs sm:text-[13px]">
             <thead>
               <tr className="bg-slate-50/80 dark:bg-slate-800/50 text-muted-foreground uppercase text-[10px] font-bold tracking-wider border-b border-slate-100 dark:border-slate-800">
-                <th className="py-4.5 px-6 min-w-[200px]">Reference</th>
-                <th className="py-4.5 px-6 min-w-[260px]">Customer & Contact</th>
-                <th className="py-4.5 px-6 min-w-[300px]">Service & Route</th>
-                <th className="py-4.5 px-6 min-w-[160px]">Schedule Date</th>
-                <th className="py-4.5 px-6 text-center min-w-[160px]">Seats</th>
-                <th className="py-4.5 px-6 text-right min-w-[150px]">Amount (ETB)</th>
-                <th className="py-4.5 px-6 text-center min-w-[140px]">Payment</th>
-                <th className="py-4.5 px-6 text-center min-w-[150px]">Boarding</th>
-                <th className="py-4.5 px-6 text-right min-w-[120px]">Actions</th>
+                <th className="py-4.5 px-6 min-w-[200px]">{t("Reference")}</th>
+                <th className="py-4.5 px-6 min-w-[260px]">{t("Customer & Contact")}</th>
+                <th className="py-4.5 px-6 min-w-[300px]">{t("Service & Route")}</th>
+                <th className="py-4.5 px-6 min-w-[160px]">{t("Schedule Date")}</th>
+                <th className="py-4.5 px-6 text-center min-w-[160px]">{t("Seats")}</th>
+                <th className="py-4.5 px-6 text-right min-w-[150px]">{t("Amount (ETB)")}</th>
+                <th className="py-4.5 px-6 text-center min-w-[140px]">{t("Payment")}</th>
+                <th className="py-4.5 px-6 text-center min-w-[150px]">{t("Boarding")}</th>
+                <th className="py-4.5 px-6 text-right min-w-[120px]">{t("Actions")}</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100 dark:divide-slate-800/40">
               {filteredBookings.length === 0 ? (
                 <tr>
                   <td colSpan={9} className="py-16 text-center text-muted-foreground">
-                    No bookings found matching your search criteria.
+                    {t("No bookings found matching your search criteria.")}
                   </td>
                 </tr>
               ) : (

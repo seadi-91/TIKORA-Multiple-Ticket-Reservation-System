@@ -30,10 +30,12 @@ import { TicketService } from "@/services/ticket.service";
 import { formatCurrency } from "@/lib/format-currency";
 import { TicketItem } from "@/types/ticket.types";
 import { toast } from "sonner";
+import { useProviderStore } from "@/stores/provider.store";
 
 export default function ProviderTicketDetailPage() {
   const params = useParams();
   const ticketId = (params?.ticketId as string) || "";
+  const { bookings: storeBookings } = useProviderStore();
 
   const [ticket, setTicket] = useState<TicketItem | null>(() => TicketService.getTicketById(ticketId) || null);
   const [loading, setLoading] = useState(!ticket);
@@ -65,9 +67,86 @@ export default function ProviderTicketDetailPage() {
       bookingRef: string;
       status: string;
       paid: boolean;
+      paidAmount: number;
+      vatRate: number;
+      commissionRate: number;
+      platformFee: number;
+      providerNet: number;
       time: string;
     }>
   >([]);
+
+  useEffect(() => {
+    if (!ticket) return;
+    const allBookings = storeBookings || [];
+
+    const matchingBookings = allBookings.filter((b: any) => {
+      if (b.bookingStatus === "CANCELLED" || b.status === "CANCELLED") return false;
+      const matchId = b.ticketId ? String(b.ticketId) === String(ticket.id) : b.id === ticket.id;
+      const matchTitle = b.serviceTitle && (
+        b.serviceTitle.toLowerCase().trim() === ticket.title.toLowerCase().trim() ||
+        ticket.title.toLowerCase().includes(b.serviceTitle.toLowerCase()) ||
+        b.serviceTitle.toLowerCase().includes(ticket.title.toLowerCase())
+      );
+      return matchId || matchTitle;
+    });
+
+    const generatedManifest: Array<{
+      id: string;
+      name: string;
+      seat: string;
+      phone: string;
+      bookingRef: string;
+      status: string;
+      paid: boolean;
+      paidAmount: number;
+      vatRate: number;
+      commissionRate: number;
+      platformFee: number;
+      providerNet: number;
+      time: string;
+    }> = [];
+
+    matchingBookings.forEach((b: any, bIdx: number) => {
+      const seatsList = (b.seats && b.seats.length > 0)
+        ? b.seats
+        : (b.seatNumbers && b.seatNumbers.length > 0)
+        ? b.seatNumbers
+        : [`Pass #${bIdx + 1}`];
+
+      const seatCount = seatsList.length;
+      const bCustomerPaid = Number(b.customerPaid ?? b.totalAmount ?? ticket.price * 1.05);
+      const bVatRate = Number(b.vatRate ?? 5.0);
+      const bCommRate = Number(b.commissionRate ?? 5.0);
+      const bBase = Number(b.subtotal ?? b.baseFare ?? Math.round(bCustomerPaid / (1 + bVatRate / 100)));
+      const bFee = Number(b.platformFee ?? Math.round(bBase * (bCommRate / 100) * 100) / 100);
+      const bNet = Number(b.providerNet ?? b.providerPayout ?? Math.max(0, bBase - bFee));
+
+      const perSeatPaid = Math.round((bCustomerPaid / seatCount) * 100) / 100;
+      const perSeatFee = Math.round((bFee / seatCount) * 100) / 100;
+      const perSeatNet = Math.round((bNet / seatCount) * 100) / 100;
+
+      seatsList.forEach((st: string, sIdx: number) => {
+        generatedManifest.push({
+          id: `${b.id || b.reference}-seat-${sIdx}`,
+          name: b.customerName,
+          seat: st,
+          phone: b.customerPhone || "N/A",
+          bookingRef: b.reference || b.id,
+          status: b.bookingStatus === "CHECKED_IN" ? "CHECKED_IN" : "PENDING_BOARDING",
+          paid: b.paymentStatus === "PAID",
+          paidAmount: perSeatPaid,
+          vatRate: bVatRate,
+          commissionRate: bCommRate,
+          platformFee: perSeatFee,
+          providerNet: perSeatNet,
+          time: b.createdAt ? new Date(b.createdAt).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }) : "10:30 AM",
+        });
+      });
+    });
+
+    setManifest(generatedManifest);
+  }, [ticket, storeBookings]);
 
   if (loading && !ticket) {
     return (
@@ -94,9 +173,13 @@ export default function ProviderTicketDetailPage() {
     );
   }
 
-  const bookedSeats = ticket.totalSeats - ticket.availableSeats;
-  const occupancyRate = Math.round((bookedSeats / (ticket.totalSeats || 1)) * 100);
-  const totalGrossRevenue = bookedSeats * ticket.price;
+  const totalStock = Number(ticket.totalSeats || 100);
+  const bookedSeats = manifest.length;
+  const remainingSeats = Math.max(0, totalStock - bookedSeats);
+  const occupancyRate = totalStock > 0 ? Math.round((bookedSeats / totalStock) * 100) : 0;
+  const totalGrossRevenue = manifest.reduce((sum, m) => sum + (m.paidAmount || ticket.price), 0);
+  const totalCommissionDeducted = manifest.reduce((sum, m) => sum + (m.platformFee || Math.round(ticket.price * 0.05)), 0);
+  const totalProviderNet = manifest.reduce((sum, m) => sum + (m.providerNet || Math.round(ticket.price * 0.95)), 0);
 
   const handleToggleSales = () => {
     setIsActive(!isActive);
@@ -108,6 +191,44 @@ export default function ProviderTicketDetailPage() {
   };
 
   const handleExportCSV = () => {
+    if (manifest.length === 0) {
+      toast.error("No passenger bookings to export.");
+      return;
+    }
+    const headers = [
+      "Seat",
+      "Passenger Name",
+      "Booking Ref",
+      "Phone",
+      "Customer Paid (ETB)",
+      "VAT Rate (%)",
+      "Platform Fee (ETB)",
+      "Commission Rate (%)",
+      "Provider Net (ETB)",
+      "Boarding Status",
+      "Payment Status",
+    ];
+    const rows = manifest.map((m) => [
+      m.seat,
+      `"${m.name}"`,
+      m.bookingRef,
+      m.phone,
+      m.paidAmount,
+      `${m.vatRate}%`,
+      m.platformFee,
+      `${m.commissionRate}%`,
+      m.providerNet,
+      m.status,
+      m.paid ? "PAID" : "PENDING",
+    ]);
+    const csvContent = "data:text/csv;charset=utf-8," + [headers.join(","), ...rows.map((e) => e.join(","))].join("\n");
+    const encodedUri = encodeURI(csvContent);
+    const link = document.createElement("a");
+    link.setAttribute("href", encodedUri);
+    link.setAttribute("download", `manifest-${ticket.id}.csv`);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
     toast.success("Passenger manifest CSV exported successfully.");
   };
 
@@ -277,7 +398,7 @@ export default function ProviderTicketDetailPage() {
       )}
 
       {/* KPI Overview Cards */}
-      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3.5">
+      <div className="grid grid-cols-2 sm:grid-cols-5 gap-3.5">
         <div className="bg-card border border-slate-200/60 dark:border-slate-800/60 rounded-2xl p-4 shadow-xs">
           <div className="flex items-center justify-between text-muted-foreground text-xs mb-1">
             <span className="font-semibold">Starting Price</span>
@@ -291,48 +412,51 @@ export default function ProviderTicketDetailPage() {
 
         <div className="bg-card border border-slate-200/60 dark:border-slate-800/60 rounded-2xl p-4 shadow-xs">
           <div className="flex items-center justify-between text-muted-foreground text-xs mb-1">
-            <span className="font-semibold">Occupancy Rate</span>
-            <Users className="w-4 h-4 text-emerald-600" />
-          </div>
-          <div className="text-base sm:text-lg font-black text-foreground">{occupancyRate}%</div>
-          <div className="w-full bg-slate-100 dark:bg-slate-800 rounded-full h-1.5 mt-2 overflow-hidden">
-            <div
-              className={`h-full rounded-full ${occupancyRate >= 80
-                  ? "bg-rose-500"
-                  : occupancyRate >= 50
-                    ? "bg-amber-500"
-                    : "bg-emerald-500"
-                }`}
-              style={{ width: `${occupancyRate}%` }}
-            />
-          </div>
-        </div>
-
-        <div className="bg-card border border-slate-200/60 dark:border-slate-800/60 rounded-2xl p-4 shadow-xs">
-          <div className="flex items-center justify-between text-muted-foreground text-xs mb-1">
             <span className="font-semibold">Seats Reserved</span>
             <Ticket className="w-4 h-4 text-blue-600" />
           </div>
           <div className="text-base sm:text-lg font-black text-foreground">
             {bookedSeats}{" "}
             <span className="text-xs font-normal text-muted-foreground">
-              / {ticket.totalSeats}
+              / {totalStock}
             </span>
           </div>
           <p className="text-[11px] text-muted-foreground mt-0.5">
-            {ticket.availableSeats} remaining seats
+            {remainingSeats} seats available ({occupancyRate}% occupancy)
           </p>
         </div>
 
         <div className="bg-card border border-slate-200/60 dark:border-slate-800/60 rounded-2xl p-4 shadow-xs">
           <div className="flex items-center justify-between text-muted-foreground text-xs mb-1">
-            <span className="font-semibold">Gross Revenue</span>
-            <ShieldCheck className="w-4 h-4 text-amber-600" />
+            <span className="font-semibold">Customer Gross</span>
+            <Users className="w-4 h-4 text-amber-600" />
           </div>
-          <div className="text-base sm:text-lg font-black text-emerald-600 dark:text-emerald-400">
+          <div className="text-base sm:text-lg font-black text-foreground">
             {formatCurrency(totalGrossRevenue)}
           </div>
-          <p className="text-[11px] text-muted-foreground mt-0.5">Direct ticket bookings</p>
+          <p className="text-[11px] text-muted-foreground mt-0.5">Total collected inc. VAT</p>
+        </div>
+
+        <div className="bg-card border border-slate-200/60 dark:border-slate-800/60 rounded-2xl p-4 shadow-xs">
+          <div className="flex items-center justify-between text-muted-foreground text-xs mb-1">
+            <span className="font-semibold">Platform Fee</span>
+            <ShieldCheck className="w-4 h-4 text-rose-600" />
+          </div>
+          <div className="text-base sm:text-lg font-black text-rose-600 dark:text-rose-400">
+            -{formatCurrency(totalCommissionDeducted)}
+          </div>
+          <p className="text-[11px] text-muted-foreground mt-0.5">Historical commission fee</p>
+        </div>
+
+        <div className="bg-card border border-slate-200/60 dark:border-slate-800/60 rounded-2xl p-4 shadow-xs col-span-2 sm:col-span-1">
+          <div className="flex items-center justify-between text-muted-foreground text-xs mb-1">
+            <span className="font-semibold">Provider Net</span>
+            <CheckCircle2 className="w-4 h-4 text-emerald-600" />
+          </div>
+          <div className="text-base sm:text-lg font-black text-emerald-600 dark:text-emerald-400">
+            {formatCurrency(totalProviderNet)}
+          </div>
+          <p className="text-[11px] text-muted-foreground mt-0.5">Net provider payout</p>
         </div>
       </div>
 
@@ -475,7 +599,7 @@ export default function ProviderTicketDetailPage() {
                 </p>
               </div>
               <span className="text-xs font-semibold text-muted-foreground">
-                Showing {manifest.length} of {bookedSeats} booked
+                Showing {manifest.length} passenger{manifest.length === 1 ? "" : "s"} ({manifest.length} of {totalStock} seats booked)
               </span>
             </div>
 
@@ -486,7 +610,9 @@ export default function ProviderTicketDetailPage() {
                     <th className="py-2.5 px-3">Seat</th>
                     <th className="py-2.5 px-3">Passenger</th>
                     <th className="py-2.5 px-3">Booking Ref</th>
-                    <th className="py-2.5 px-3">Phone</th>
+                    <th className="py-2.5 px-3 text-right">Customer Paid</th>
+                    <th className="py-2.5 px-3 text-right">Commission Fee</th>
+                    <th className="py-2.5 px-3 text-right">Provider Net</th>
                     <th className="py-2.5 px-3">Boarding Status</th>
                     <th className="py-2.5 px-3 text-right">Actions</th>
                   </tr>
@@ -494,10 +620,10 @@ export default function ProviderTicketDetailPage() {
                 <tbody className="divide-y divide-border/40">
                   {manifest.length === 0 ? (
                     <tr>
-                      <td colSpan={6} className="py-12 px-3 text-center text-muted-foreground text-xs">
+                      <td colSpan={8} className="py-12 px-3 text-center text-muted-foreground text-xs">
                         <Users className="w-8 h-8 mx-auto mb-2 text-muted-foreground/40" />
-                        <p className="font-semibold text-foreground">No passengers checked in yet</p>
-                        <p className="text-[11px] mt-0.5">Passenger boarding records will appear as tickets are scanned by gate inspectors.</p>
+                        <p className="font-semibold text-foreground">No bookings recorded yet</p>
+                        <p className="text-[11px] mt-0.5">All {totalStock} seats are available for booking. Confirmed passenger records will appear here.</p>
                       </td>
                     </tr>
                   ) : (
@@ -508,12 +634,30 @@ export default function ProviderTicketDetailPage() {
                         </td>
                         <td className="py-3 px-3">
                           <span className="font-semibold text-foreground block">{item.name}</span>
-                          <span className="text-[10px] text-muted-foreground">Checked {item.time}</span>
+                          <span className="text-[10px] text-muted-foreground font-mono">{item.phone}</span>
                         </td>
                         <td className="py-3 px-3 font-mono text-[11px] text-foreground">
                           {item.bookingRef}
                         </td>
-                        <td className="py-3 px-3 text-muted-foreground">{item.phone}</td>
+                        <td className="py-3 px-3 text-right font-mono">
+                          <span className="font-bold text-foreground block">
+                            {formatCurrency(item.paidAmount)}
+                          </span>
+                          <span className="text-[10px] text-muted-foreground">
+                            {item.vatRate}% VAT
+                          </span>
+                        </td>
+                        <td className="py-3 px-3 text-right font-mono">
+                          <span className="font-semibold text-rose-600 dark:text-rose-400 block">
+                            -{formatCurrency(item.platformFee)}
+                          </span>
+                          <span className="text-[10px] text-muted-foreground">
+                            {item.commissionRate}% comm.
+                          </span>
+                        </td>
+                        <td className="py-3 px-3 text-right font-mono font-bold text-emerald-600 dark:text-emerald-400">
+                          {formatCurrency(item.providerNet)}
+                        </td>
                         <td className="py-3 px-3">
                           <span
                             className={`inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-semibold border ${item.status === "CHECKED_IN"

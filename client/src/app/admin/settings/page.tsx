@@ -204,7 +204,7 @@ export default function AdminSettingsPage() {
       cinemaCommissionRate: 6.0,
       eventCommissionRate: 7.5,
       sportsCommissionRate: 5.0,
-      vatTaxRate: 15.0,
+      vatTaxRate: 5.0,
       platformServiceFeeETB: 10,
       cartHoldDurationMinutes: 10,
       maxTicketsPerBooking: 8,

@@ -23,6 +23,8 @@ import {
 import { useInspectorStore } from "@/stores/inspector.store";
 import { useAuthStore } from "@/stores/auth.store";
 import { useTheme } from "@/providers/theme-provider";
+import { useLanguage } from "@/providers/language-provider";
+import { LanguageSelector } from "@/components/navigation/language-selector";
 import { TicketCategory } from "@/types/ticket.types";
 import { toast } from "sonner";
 
@@ -42,6 +44,7 @@ export function InspectorHeader({ onToggleMobileMenu }: InspectorHeaderProps = {
   } = useInspectorStore();
   const { logout } = useAuthStore();
   const { theme, setTheme } = useTheme();
+  const { t } = useLanguage();
 
   const [showNotifications, setShowNotifications] = useState(false);
   const [showProfileMenu, setShowProfileMenu] = useState(false);
@@ -146,7 +149,7 @@ export function InspectorHeader({ onToggleMobileMenu }: InspectorHeaderProps = {
         )}
         <div className="truncate">
           <h1 className="text-xs sm:text-sm font-extrabold text-slate-900 dark:text-white tracking-tight truncate">
-            {getPageTitle()}
+            {t(getPageTitle(), getPageTitle())}
           </h1>
           <div className="flex items-center gap-1.5 text-[11px] text-slate-500 dark:text-slate-400 truncate">
             <span className="font-bold text-amber-600 dark:text-amber-400 truncate">
@@ -255,14 +258,14 @@ export function InspectorHeader({ onToggleMobileMenu }: InspectorHeaderProps = {
           {showNotifications && (
             <div className="absolute right-0 mt-2 w-80 rounded-2xl bg-white dark:bg-[#161922] border border-slate-200 dark:border-slate-800 shadow-2xl py-2 z-50">
               <div className="flex items-center justify-between px-3 py-1.5 border-b border-slate-100 dark:border-slate-800">
-                <span className="text-xs font-bold text-slate-900 dark:text-white">Notifications</span>
+                <span className="text-xs font-bold text-slate-900 dark:text-white">{t("Notifications", "Notifications")}</span>
                 {unreadNotifs.length > 0 && (
                   <button
                     type="button"
                     onClick={markAllNotificationsAsRead}
                     className="text-[10px] text-amber-600 dark:text-amber-400 font-semibold hover:underline"
                   >
-                    Mark all read
+                    {t("Mark all read", "Mark all read")}
                   </button>
                 )}
               </div>
@@ -279,6 +282,9 @@ export function InspectorHeader({ onToggleMobileMenu }: InspectorHeaderProps = {
             </div>
           )}
         </div>
+
+        {/* Multi-Language Dropdown */}
+        <LanguageSelector variant="navbar" />
 
         {/* Theme Toggle Button */}
         <div className="relative" ref={themeRef}>
@@ -301,7 +307,7 @@ export function InspectorHeader({ onToggleMobileMenu }: InspectorHeaderProps = {
                 }}
                 className="w-full text-left px-3 py-1.5 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors"
               >
-                Light
+                {t("Light", "Light")}
               </button>
               <button
                 type="button"
@@ -311,7 +317,7 @@ export function InspectorHeader({ onToggleMobileMenu }: InspectorHeaderProps = {
                 }}
                 className="w-full text-left px-3 py-1.5 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors"
               >
-                Dark
+                {t("Dark", "Dark")}
               </button>
               <button
                 type="button"
@@ -321,7 +327,7 @@ export function InspectorHeader({ onToggleMobileMenu }: InspectorHeaderProps = {
                 }}
                 className="w-full text-left px-3 py-1.5 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors"
               >
-                System
+                {t("System", "System")}
               </button>
             </div>
           )}
@@ -363,7 +369,7 @@ export function InspectorHeader({ onToggleMobileMenu }: InspectorHeaderProps = {
                   className="flex items-center gap-2 px-3 py-2 text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors"
                 >
                   <User className="w-3.5 h-3.5" />
-                  <span>Personnel Profile</span>
+                  <span>{t("Personnel Profile", "Personnel Profile")}</span>
                 </Link>
 
                 <Link
@@ -372,7 +378,7 @@ export function InspectorHeader({ onToggleMobileMenu }: InspectorHeaderProps = {
                   className="flex items-center gap-2 px-3 py-2 text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors"
                 >
                   <Settings className="w-3.5 h-3.5" />
-                  <span>Scanner Settings</span>
+                  <span>{t("Scanner Settings", "Scanner Settings")}</span>
                 </Link>
 
                 <div className="my-1 border-t border-slate-100 dark:border-slate-800" />
@@ -388,7 +394,7 @@ export function InspectorHeader({ onToggleMobileMenu }: InspectorHeaderProps = {
                   className="w-full flex items-center gap-2 px-3 py-2 text-xs font-semibold text-rose-600 dark:text-rose-400 hover:bg-rose-500/10 transition-colors cursor-pointer"
                 >
                   <LogOut className="w-3.5 h-3.5" />
-                  <span>Sign Out</span>
+                  <span>{t("Sign Out", "Sign Out")}</span>
                 </button>
               </div>
             </div>

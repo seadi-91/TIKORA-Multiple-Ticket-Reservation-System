@@ -27,6 +27,7 @@ import { useProviderStore, ProviderBookingRecord } from "@/stores/provider.store
 import { formatCurrency } from "@/lib/format-currency";
 import { toast } from "sonner";
 import { ActionDropdown } from "@/components/ui/action-dropdown";
+import { useLanguage } from "@/providers/language-provider";
 import {
   SettlementReceiptCard,
   SettlementReceiptData,
@@ -38,6 +39,7 @@ export const INITIAL_TRANSACTIONS: PayoutTransaction[] = [];
 
 export default function ProviderPaymentsPage() {
   const { organization, bookings: storeBookings, requestPayout } = useProviderStore();
+  const { t } = useLanguage();
   const [activeTab, setActiveTab] = useState<"TICKET_SALES" | "DISBURSEMENTS">("TICKET_SALES");
   const [transactions, setTransactions] = useState<PayoutTransaction[]>(INITIAL_TRANSACTIONS);
   const [ticketSales, setTicketSales] = useState<ProviderBookingRecord[]>([]);
@@ -61,16 +63,36 @@ export default function ProviderPaymentsPage() {
         }
       } catch {}
     }
-    setTicketSales(sales);
+    const cleanSales = sales.filter(
+      (s) =>
+        !String(s.id || "").startsWith("bkg-") &&
+        !String(s.reference || "").startsWith("TIKORA-BKG-10")
+    );
+    setTicketSales(cleanSales);
   }, [storeBookings]);
 
-  // Compute live revenue numbers based ONLY on ticket base prices (excluding VAT)
+  // Compute live revenue numbers based on each booking's snapshotted base price and commission rate
   const totalBaseSales = ticketSales
     .filter((s) => s.paymentStatus === "PAID")
-    .reduce((sum, s) => sum + (s.totalAmount || 0), 0);
+    .reduce((sum, s) => sum + (s.totalAmount || s.subtotal || 0), 0);
 
-  const totalCommission = Math.round(totalBaseSales * 0.05);
-  const netEarnings = totalBaseSales - totalCommission;
+  const totalCommission = ticketSales
+    .filter((s) => s.paymentStatus === "PAID")
+    .reduce((sum, s) => {
+      if (typeof s.platformFee === "number") return sum + s.platformFee;
+      const rate = typeof s.commissionRate === "number" ? s.commissionRate : 5.0;
+      return sum + Math.round((s.totalAmount || 0) * (rate / 100) * 100) / 100;
+    }, 0);
+
+  const netEarnings = ticketSales
+    .filter((s) => s.paymentStatus === "PAID")
+    .reduce((sum, s) => {
+      if (typeof s.providerNet === "number") return sum + s.providerNet;
+      const base = s.totalAmount || 0;
+      const rate = typeof s.commissionRate === "number" ? s.commissionRate : 5.0;
+      const fee = Math.round(base * (rate / 100) * 100) / 100;
+      return sum + Math.max(0, base - fee);
+    }, 0);
 
   const totalDisbursed = transactions
     .filter((t) => t.status === "COMPLETED")
@@ -136,8 +158,8 @@ export default function ProviderPaymentsPage() {
         fee: 0,
         netPayout: payoutAmount,
         status: "PROCESSING",
-        grossSales: Math.round(payoutAmount * 1.05),
-        commission: Math.round(payoutAmount * 0.05),
+        grossSales: payoutAmount,
+        commission: Math.round(payoutAmount * (((organization as any)?.commissionRate || 5) / 100)),
         transactionRef: `FT26310${Math.floor(100000 + Math.random() * 900000)}`,
         period: "Current Settlement Cycle",
       };
@@ -190,10 +212,10 @@ export default function ProviderPaymentsPage() {
             <span className="text-xs text-muted-foreground">{organization.name}</span>
           </div>
           <h1 className="text-base sm:text-lg font-bold tracking-tight text-foreground">
-            Revenue &amp; Payout Settlements
+            {t("Revenue & Payout Settlements")}
           </h1>
           <p className="text-xs text-muted-foreground">
-            View incoming ticket sales (VAT-excluded base fares), platform commissions, and bank disbursements.
+            {t("View incoming ticket sales (VAT-excluded base fares), platform commissions, and bank disbursements.")}
           </p>
         </div>
 
@@ -203,14 +225,14 @@ export default function ProviderPaymentsPage() {
             onClick={handleExportStatement}
             className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-xl border border-slate-200 dark:border-slate-800 bg-card hover:bg-slate-100 dark:hover:bg-slate-800 text-foreground transition-colors cursor-pointer"
           >
-            <Download className="w-3.5 h-3.5" /> Statement
+            <Download className="w-3.5 h-3.5" /> {t("Statement")}
           </button>
           <button
             type="button"
             onClick={handleOpenPayoutModal}
             className="inline-flex items-center gap-1.5 px-3.5 py-1.5 text-xs font-semibold rounded-xl bg-amber-600 hover:bg-amber-700 text-white shadow-xs transition-colors cursor-pointer"
           >
-            <Wallet className="w-3.5 h-3.5" /> Request Bank Payout
+            <Wallet className="w-3.5 h-3.5" /> {t("Request Bank Payout")}
           </button>
         </div>
       </div>
@@ -220,49 +242,49 @@ export default function ProviderPaymentsPage() {
         {/* Ticket Sales (Base Fare, No VAT) */}
         <div className="bg-card border border-border/60 rounded-xl p-3 shadow-xs">
           <div className="flex items-center justify-between text-muted-foreground text-xs mb-1">
-            <span className="text-[10px] sm:text-xs truncate font-medium">Ticket Sales (No VAT)</span>
+            <span className="text-[10px] sm:text-xs truncate font-medium">{t("Ticket Sales (No VAT)")}</span>
             <TrendingUp className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
           </div>
           <div className="text-sm sm:text-base font-bold text-foreground truncate font-mono">
             {formatCurrency(totalBaseSales)}
           </div>
-          <span className="text-[10px] text-muted-foreground truncate block">Base fare revenue</span>
+          <span className="text-[10px] text-muted-foreground truncate block">{t("Base fare revenue")}</span>
         </div>
 
-        {/* Platform Commission (5%) */}
+        {/* Platform Commission */}
         <div className="bg-card border border-border/60 rounded-xl p-3 shadow-xs">
           <div className="flex items-center justify-between text-muted-foreground text-xs mb-1">
-            <span className="text-[10px] sm:text-xs truncate font-medium">Commission (5%)</span>
+            <span className="text-[10px] sm:text-xs truncate font-medium">{t("analysis.platformCommission", "Platform Commission")}</span>
             <DollarSign className="w-3.5 h-3.5 text-amber-600 shrink-0" />
           </div>
           <div className="text-sm sm:text-base font-bold text-foreground truncate font-mono">
             {formatCurrency(totalCommission)}
           </div>
-          <span className="text-[10px] text-muted-foreground truncate block">Platform service fee</span>
+          <span className="text-[10px] text-muted-foreground truncate block">{t("Platform service fees")}</span>
         </div>
 
         {/* Net Provider Earnings */}
         <div className="bg-card border border-border/60 rounded-xl p-3 shadow-xs">
           <div className="flex items-center justify-between text-muted-foreground text-xs mb-1">
-            <span className="text-[10px] sm:text-xs truncate font-medium">Net Earnings</span>
+            <span className="text-[10px] sm:text-xs truncate font-medium">{t("Net Earnings")}</span>
             <CheckCircle2 className="w-3.5 h-3.5 text-blue-600 shrink-0" />
           </div>
           <div className="text-sm sm:text-base font-bold text-blue-600 truncate font-mono">
             {formatCurrency(netEarnings)}
           </div>
-          <span className="text-[10px] text-muted-foreground truncate block">Pure provider payout</span>
+          <span className="text-[10px] text-muted-foreground truncate block">{t("Pure provider payout")}</span>
         </div>
 
         {/* Available for Withdrawal */}
         <div className="bg-card border border-amber-600/30 bg-amber-500/5 rounded-xl p-3 shadow-xs">
           <div className="flex items-center justify-between text-amber-700 dark:text-amber-300 text-xs mb-1 font-semibold">
-            <span className="text-[10px] sm:text-xs truncate font-medium">Available Balance</span>
+            <span className="text-[10px] sm:text-xs truncate font-medium">{t("Available Balance")}</span>
             <Wallet className="w-3.5 h-3.5 text-amber-600 shrink-0" />
           </div>
           <div className="text-sm sm:text-base font-bold text-amber-700 dark:text-amber-400 truncate font-mono">
             {formatCurrency(availableBalance)}
           </div>
-          <span className="text-[10px] text-muted-foreground truncate block">Ready to withdraw</span>
+          <span className="text-[10px] text-muted-foreground truncate block">{t("Ready to withdraw")}</span>
         </div>
       </div>
 
@@ -270,7 +292,7 @@ export default function ProviderPaymentsPage() {
       <div className="p-3 rounded-xl bg-amber-500/5 border border-amber-500/20 text-xs flex items-start gap-2.5">
         <ShieldCheck className="w-4 h-4 text-amber-600 shrink-0 mt-0.5" />
         <div className="space-y-0.5">
-          <span className="font-semibold text-foreground">Ethiopian VAT (5%) Separation Policy</span>
+          <span className="font-semibold text-foreground">{t("Ethiopian VAT (5%) Separation Policy")}</span>
           <p className="text-[11px] text-muted-foreground leading-relaxed">
             The 5% Value Added Tax paid by customers is collected for the Ethiopian Ministry of Revenue and recorded
             in the platform Admin Ledger. Your provider earnings are computed strictly from the pure ticket base fare,
@@ -291,7 +313,7 @@ export default function ProviderPaymentsPage() {
                 {organization.payoutAccount.bankName}
               </h3>
               <span className="inline-flex items-center px-1.5 py-0.2 rounded text-[9px] font-semibold bg-emerald-500/10 text-emerald-600 border border-emerald-500/20">
-                Verified Settlement Account
+                {t("Verified Settlement Account")}
               </span>
             </div>
             <p className="text-[11px] text-muted-foreground">
@@ -304,7 +326,7 @@ export default function ProviderPaymentsPage() {
           href="/provider/organization"
           className="text-xs text-amber-600 hover:text-amber-700 font-semibold hover:underline"
         >
-          Manage Payout Accounts &rarr;
+          {t("Manage Payout Accounts")} &rarr;
         </Link>
       </div>
 
@@ -319,7 +341,7 @@ export default function ProviderPaymentsPage() {
           }`}
         >
           <Ticket className="w-3.5 h-3.5" />
-          <span>Ticket Sales Revenue</span>
+          <span>{t("Ticket Sales Revenue")}</span>
           <span className="ml-1 px-1.5 py-0.2 rounded-full text-[10px] bg-amber-500/10 text-amber-600">
             {ticketSales.length}
           </span>
@@ -334,7 +356,7 @@ export default function ProviderPaymentsPage() {
           }`}
         >
           <Receipt className="w-3.5 h-3.5" />
-          <span>Disbursements &amp; Payouts</span>
+          <span>{t("Disbursements & Payouts")}</span>
           <span className="ml-1 px-1.5 py-0.2 rounded-full text-[10px] bg-slate-100 dark:bg-slate-800 text-muted-foreground">
             {transactions.length}
           </span>
@@ -366,8 +388,8 @@ export default function ProviderPaymentsPage() {
           {filteredTicketSales.length === 0 ? (
             <div className="py-12 text-center text-xs text-muted-foreground space-y-2">
               <Ticket className="w-8 h-8 mx-auto text-muted-foreground/50" />
-              <p className="font-semibold text-foreground">No ticket sales recorded yet.</p>
-              <p className="text-[11px]">When customers book and pay via Chapa, their ticket payments will appear here.</p>
+              <p className="font-semibold text-foreground">{t("No ticket sales recorded yet.")}</p>
+              <p className="text-[11px]">{t("When customers book and pay via Chapa, their ticket payments will appear here.")}</p>
             </div>
           ) : (
             <>
@@ -376,21 +398,26 @@ export default function ProviderPaymentsPage() {
                 <table className="w-full text-left border-collapse text-xs">
                   <thead>
                     <tr className="bg-muted/40 text-muted-foreground uppercase text-[10px] font-bold tracking-wider border-b border-border/60">
-                      <th className="py-2.5 px-3.5">Reference / Pass</th>
-                      <th className="py-2.5 px-3">Customer Info</th>
-                      <th className="py-2.5 px-3">Service &amp; Seats</th>
-                      <th className="py-2.5 px-3 text-right">Base Fare (No VAT)</th>
-                      <th className="py-2.5 px-3 text-right">Commission (5%)</th>
-                      <th className="py-2.5 px-3 text-right">Net Payout</th>
-                      <th className="py-2.5 px-3 text-center">Status</th>
-                      <th className="py-2.5 px-3.5 text-right">Actions</th>
+                      <th className="py-2.5 px-3.5">{t("Reference / Pass")}</th>
+                      <th className="py-2.5 px-3">{t("Customer Info")}</th>
+                      <th className="py-2.5 px-3">{t("Service & Seats")}</th>
+                      <th className="py-2.5 px-3 text-right">{t("Base Fare (No VAT)")}</th>
+                      <th className="py-2.5 px-3 text-right">{t("Commission Fee")}</th>
+                      <th className="py-2.5 px-3 text-right">{t("Net Payout")}</th>
+                      <th className="py-2.5 px-3 text-center">{t("Status")}</th>
+                      <th className="py-2.5 px-3.5 text-right">{t("Actions")}</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-border/40">
                     {filteredTicketSales.map((sale) => {
-                      const basePrice = sale.totalAmount || 0;
-                      const comm = Math.round(basePrice * 0.05);
-                      const net = basePrice - comm;
+                      const basePrice = sale.totalAmount || sale.subtotal || 0;
+                      const commRate = typeof sale.commissionRate === "number" ? sale.commissionRate : 5.0;
+                      const comm = typeof sale.platformFee === "number"
+                        ? sale.platformFee
+                        : Math.round(basePrice * (commRate / 100) * 100) / 100;
+                      const net = typeof sale.providerNet === "number"
+                        ? sale.providerNet
+                        : Math.max(0, basePrice - comm);
 
                       return (
                         <tr key={sale.id} className="hover:bg-amber-500/[0.02] transition-colors">
@@ -419,8 +446,13 @@ export default function ProviderPaymentsPage() {
                             {formatCurrency(basePrice)}
                             <span className="text-[9px] text-muted-foreground block font-normal">VAT Excluded</span>
                           </td>
-                          <td className="py-2.5 px-3 text-right font-mono text-muted-foreground">
-                            -{formatCurrency(comm)}
+                          <td className="py-2.5 px-3 text-right">
+                            <span className="font-mono text-rose-600 dark:text-rose-400 font-semibold block">
+                              -{formatCurrency(comm)}
+                            </span>
+                            <span className="text-[10px] text-muted-foreground font-mono">
+                              ({commRate}%)
+                            </span>
                           </td>
                           <td className="py-2.5 px-3 text-right font-mono font-bold text-emerald-600">
                             {formatCurrency(net)}
@@ -464,9 +496,12 @@ export default function ProviderPaymentsPage() {
               {/* Mobile View: Compact Cards */}
               <div className="block md:hidden p-2.5 space-y-2">
                 {filteredTicketSales.map((sale) => {
-                  const basePrice = sale.totalAmount || 0;
-                  const comm = Math.round(basePrice * 0.05);
-                  const net = basePrice - comm;
+                  const basePrice = (sale as any).customerPaid ?? sale.totalAmount ?? 0;
+                  const vatRate = (sale as any).vatRate ?? 5;
+                  const vatAmount = (sale as any).vatAmount ?? Math.round((basePrice * vatRate) / (100 + vatRate));
+                  const commRate = (sale as any).commissionRate ?? 5;
+                  const comm = (sale as any).platformFee ?? Math.round((basePrice - vatAmount) * (commRate / 100));
+                  const net = (sale as any).providerNet ?? Math.max(0, basePrice - vatAmount - comm);
 
                   return (
                     <div
@@ -492,12 +527,14 @@ export default function ProviderPaymentsPage() {
 
                       <div className="flex items-center justify-between pt-1.5 border-t border-border/40 font-mono">
                         <div>
-                          <span className="text-[10px] text-muted-foreground block">Base Ticket Price:</span>
+                          <span className="text-[10px] text-muted-foreground block">Customer Paid:</span>
                           <span className="font-bold text-foreground">{formatCurrency(basePrice)}</span>
+                          <span className="text-[9px] text-muted-foreground block">{vatRate}% VAT</span>
                         </div>
                         <div className="text-right">
-                          <span className="text-[10px] text-muted-foreground block">Net Payout (5% comm):</span>
+                          <span className="text-[10px] text-muted-foreground block">Net Payout ({commRate}% comm):</span>
                           <span className="font-bold text-emerald-600">{formatCurrency(net)}</span>
+                          <span className="text-[9px] text-rose-500 block">-{formatCurrency(comm)} fee</span>
                         </div>
                       </div>
 

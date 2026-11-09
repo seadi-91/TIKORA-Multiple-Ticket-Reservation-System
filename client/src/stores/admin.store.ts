@@ -138,6 +138,7 @@ export interface AdminService {
   city?: string;
   description?: string;
   availableSeats?: number;
+  remainingCapacity?: number;
   tiers?: any[];
   amenities?: string[];
   badge?: string;
@@ -174,13 +175,20 @@ export interface AdminBooking {
   seats?: string[];
   providerId?: string;
   providerPayout?: number;
+  providerNet?: number;
   travelDate?: string;
   departureTime?: string;
   totalAmount: number;
+  customerPaid?: number;
+  subtotal?: number;
+  baseFare?: number;
+  vatAmount?: number;
+  vatRate?: number;
+  commissionRate?: number;
   platformFee: number;
   paymentMethod: "TELEBIRR" | "CBE_BIRR" | "CHAPA" | "CASH";
   paymentStatus: "PAID" | "PENDING" | "REFUNDED" | "FAILED";
-  bookingStatus: "CONFIRMED" | "CANCELLED" | "COMPLETED";
+  bookingStatus: "CONFIRMED" | "CANCELLED" | "COMPLETED" | "CHECKED_IN";
   bookingDate: string;
 }
 
@@ -393,6 +401,7 @@ interface AdminState {
   addBooking: (booking: AdminBooking) => void;
 
   updateSettings: (newSettings: Partial<AdminSettings>) => void;
+  fetchPublicSettings: () => Promise<void>;
   addAuditLog: (entry: Omit<AdminAuditLog, "id" | "timestamp">) => void;
   deleteAuditLogs: (ids: string[]) => Promise<void>;
   clearAllAuditLogs: () => Promise<void>;
@@ -401,14 +410,114 @@ interface AdminState {
   fetchPlatformData: () => Promise<void>;
 }
 
+const DEFAULT_INITIAL_SETTINGS: AdminSettings = {
+  platformName: "TIKORA",
+  siteName: "TIKORA",
+  logoUrl: "",
+  tagline: "Ethiopia's Unified Smart Ticket & Transit Hub",
+  supportEmail: "support@tikora.et",
+  supportPhone: "+251 11 667 8900",
+  headquartersAddress: "Edna Mall Tower, Bole Sub-City, Addis Ababa, Ethiopia",
+  footerEmail: "support@tikora.et",
+  footerPhone: "+251 11 667 8900",
+  footerLocation: "Edna Mall Tower, Bole Sub-City, Addis Ababa, Ethiopia",
+  copyrightText: "© 2026 TIKORA Technologies Inc. All Rights Reserved.",
+  operatingRegion: "Federal Democratic Republic of Ethiopia",
+  defaultTimezone: "Africa/Addis_Ababa (UTC+3)",
+  defaultLanguage: "en",
+  maintenanceMode: false,
+  maintenanceNotice: "System upgrade in progress. Public bookings will resume shortly.",
+  allowNewRegistrations: true,
+  allowGuestCheckout: true,
+  currency: "ETB",
+  defaultCommissionRate: 5.0,
+  busCommissionRate: 5.0,
+  cinemaCommissionRate: 5.0,
+  eventCommissionRate: 5.0,
+  sportsCommissionRate: 5.0,
+  vatTaxRate: 5.0,
+  platformServiceFeeETB: 10,
+  cartHoldDurationMinutes: 10,
+  maxTicketsPerBooking: 8,
+  telebirrEnabled: true,
+  telebirrMerchantId: "TB-ET-994821",
+  telebirrAutoSettle: true,
+  cbeBirrEnabled: true,
+  cbeBirrMerchantCode: "CBE-BIRR-44018",
+  chapaEnabled: true,
+  chapaMode: "LIVE",
+  minPayoutThresholdETB: 1000,
+  payoutSchedule: "DAILY",
+  payoutProcessingFeeETB: 25,
+  autoApproveRefundThreshold: 300,
+  busCancellationCutoffHours: 4,
+  cinemaCancellationCutoffHours: 2,
+  eventCancellationCutoffHours: 24,
+  sportsCancellationCutoffHours: 6,
+  cancellationPenaltyRate: 10.0,
+  disputeAutoEscalateHours: 48,
+  twoFactorRequiredForAdmins: true,
+  twoFactorRequiredForProviders: false,
+  sessionTimeoutMinutes: 60,
+  maxFailedLoginsLockout: 5,
+  lockoutDurationMinutes: 15,
+  enforcePasswordComplexity: true,
+  ipWhitelistingEnabled: false,
+  whitelistedAdminIPs: "197.156.103.0/24, 197.156.104.0/24",
+  auditLogRetentionDays: 90,
+  qrSignatureAlgorithm: "HMAC_SHA256",
+  qrDynamicRotationEnabled: true,
+  qrRotationIntervalSeconds: 30,
+  offlineScanWindowHours: 12,
+  allowDuplicateCheckInOverride: false,
+  smsGatewayProvider: "ETHIO_TELECOM",
+  smsSenderId: "TIKORA",
+  smsTicketReceiptsEnabled: true,
+  emailReceiptsEnabled: true,
+  highValueTransactionAlertETB: 20000,
+  systemAlertEmail: "security-alerts@tikora.et",
+};
+
+const getInitialAdminSettings = (): AdminSettings => {
+  return DEFAULT_INITIAL_SETTINGS;
+};
+
 const getInitialAdminBookings = (): AdminBooking[] => {
-  if (typeof window === "undefined") return [];
+  return [];
+};
+
+export const rehydrateAdminStore = () => {
+  if (typeof window === "undefined") return;
   try {
-    const raw = localStorage.getItem("tikora_admin_bookings");
-    return raw ? JSON.parse(raw) : [];
-  } catch {
-    return [];
-  }
+    const raw = localStorage.getItem("tikora_platform_settings");
+    if (raw) {
+      const parsed = JSON.parse(raw);
+      if (parsed && typeof parsed === "object") {
+        useAdminStore.setState((prev) => ({
+          settings: { ...prev.settings, ...parsed },
+        }));
+      }
+    }
+  } catch {}
+
+  try {
+    const rawBookings = localStorage.getItem("tikora_admin_bookings");
+    if (rawBookings) {
+      const parsedBookings = JSON.parse(rawBookings);
+      if (Array.isArray(parsedBookings)) {
+        // Exclude legacy mock default bookings (bkg-101 .. bkg-108)
+        const realOnly = parsedBookings.filter(
+          (b: any) =>
+            !String(b.id || "").startsWith("bkg-") &&
+            !String(b.reference || "").startsWith("TIKORA-BKG-10")
+        );
+        localStorage.setItem("tikora_admin_bookings", JSON.stringify(realOnly));
+        useAdminStore.setState({ bookings: realOnly });
+      }
+    } else {
+      useAdminStore.setState({ bookings: [] });
+    }
+  } catch {}
 };
 
 export const useAdminStore = create<AdminState>((set, get) => ({
@@ -445,9 +554,66 @@ export const useAdminStore = create<AdminState>((set, get) => ({
         adminService.getSettings().catch(() => null),
       ]);
 
-      const computedGMV = bookingsList.reduce((sum: number, b: any) => sum + (Number(b.totalAmount) || 0), 0);
-      const computedRev = bookingsList.reduce((sum: number, b: any) => sum + (Number(b.platformFee) || 0), 0);
+      let localBookingsList: AdminBooking[] = [];
+      if (typeof window !== "undefined") {
+        try {
+          const raw = localStorage.getItem("tikora_admin_bookings");
+          if (raw) {
+            const parsed = JSON.parse(raw);
+            if (Array.isArray(parsed)) {
+              localBookingsList = parsed.filter(
+                (b: any) =>
+                  !String(b.id || "").startsWith("bkg-") &&
+                  !String(b.reference || "").startsWith("TIKORA-BKG-10")
+              );
+            }
+          }
+        } catch {}
+      }
+
+      const cleanBackendBookings = (bookingsList || []).filter(
+        (b: any) =>
+          !String(b.id || "").startsWith("bkg-") &&
+          !String(b.reference || "").startsWith("TIKORA-BKG-10")
+      );
+
+      const finalBookings = cleanBackendBookings.length > 0 ? cleanBackendBookings : localBookingsList;
+
+      const computedGMV = finalBookings.reduce((sum: number, b: any) => sum + (Number(b.totalAmount) || 0), 0);
+      const computedRev = finalBookings.reduce((sum: number, b: any) => sum + (Number(b.platformFee) || 0), 0);
       const computedRefunds = refundsList.filter((r: any) => r.status === "PENDING").length;
+
+      // Accurately reconcile booked counts per service from confirmed bookings
+      const bookingCountsByTitle = new Map<string, number>();
+      const bookingCountsById = new Map<string, number>();
+
+      for (const b of finalBookings) {
+        if (b.bookingStatus === "CANCELLED" || (b as any).status === "CANCELLED") continue;
+        const qty = Number(b.quantity) || (Array.isArray(b.seatNumbers) ? b.seatNumbers.length : 1);
+        if (b.serviceTitle) {
+          const tKey = b.serviceTitle.toLowerCase().trim();
+          bookingCountsByTitle.set(tKey, (bookingCountsByTitle.get(tKey) || 0) + qty);
+        }
+        if ((b as any).ticketId) {
+          bookingCountsById.set(String((b as any).ticketId), (bookingCountsById.get(String((b as any).ticketId)) || 0) + qty);
+        }
+      }
+
+      const reconciledServices = services.map((s) => {
+        const titleKey = s.title.toLowerCase().trim();
+        const bookedByTitle = bookingCountsByTitle.get(titleKey) || 0;
+        const bookedById = bookingCountsById.get(String(s.id)) || 0;
+        const totalSold = Math.max(bookedByTitle, bookedById);
+        const capacity = Number(s.capacity || 100);
+        const remainingCapacity = Math.max(0, capacity - totalSold);
+        return {
+          ...s,
+          totalSold,
+          remainingCapacity,
+          availableSeats: remainingCapacity,
+          status: remainingCapacity === 0 ? ("SOLD_OUT" as const) : s.status,
+        };
+      });
 
       set((state) => ({
         users: users.length > 0 ? users : state.users,
@@ -456,23 +622,32 @@ export const useAdminStore = create<AdminState>((set, get) => ({
         stats: {
           ...state.stats,
           ...(stats || {}),
-          totalBookings: Math.max(bookingsList.length, stats?.totalBookings || 0),
+          totalBookings: Math.max(finalBookings.length, stats?.totalBookings || 0),
           totalGMV: Math.max(computedGMV, stats?.totalGMV || 0),
           platformRevenue: Math.max(computedRev, stats?.platformRevenue || 0),
           refundsRequested: Math.max(computedRefunds, stats?.refundsRequested || 0),
           totalUsers: users.length > 0 ? users.length : state.stats.totalUsers,
           activeProviders: providers.filter((p: any) => p.status === "APPROVED").length || state.stats.activeProviders,
           pendingApprovals: providers.filter((p: any) => p.status === "PENDING").length || state.stats.pendingApprovals,
-          activeTickets: services.length > 0 ? services.length : state.stats.activeTickets,
+          activeTickets: reconciledServices.length > 0 ? reconciledServices.length : state.stats.activeTickets,
           activeInspectors: inspectors.filter((i: any) => i.status === "ACTIVE").length || state.stats.activeInspectors,
         },
         auditLogs: auditLogs.length > 0 ? auditLogs : state.auditLogs,
-        services: services.length > 0 ? services : state.services,
+        services: reconciledServices.length > 0 ? reconciledServices : state.services,
         categories: categories.length > 0 ? categories : state.categories,
-        bookings: bookingsList.length > 0 ? bookingsList : state.bookings,
+        bookings: finalBookings,
         refunds: refundsList.length > 0 ? refundsList : state.refunds,
         supportTickets: supportList.length > 0 ? supportList : state.supportTickets,
-        settings: settingsData ? { ...state.settings, ...settingsData } : state.settings,
+        settings: (() => {
+          const s = settingsData ? { ...state.settings, ...settingsData } : state.settings;
+          if (typeof window !== "undefined" && settingsData) {
+            try {
+              localStorage.setItem("tikora_platform_settings", JSON.stringify(s));
+              window.dispatchEvent(new CustomEvent("tikora_settings_updated", { detail: s }));
+            } catch {}
+          }
+          return s;
+        })(),
         isLoading: false,
       }));
     } catch (error) {
@@ -551,86 +726,7 @@ export const useAdminStore = create<AdminState>((set, get) => ({
   supportTickets: [],
   auditLogs: [],
 
-  settings: {
-    // General & Branding
-    platformName: "TIKORA Ethiopia",
-    siteName: "TIKORA",
-    logoUrl: "",
-    tagline: "Ethiopia's Unified Smart Ticket & Transit Hub",
-    supportEmail: "support@tikora.et",
-    supportPhone: "+251 11 667 8900",
-    headquartersAddress: "Edna Mall Tower, Bole Sub-City, Addis Ababa, Ethiopia",
-    footerEmail: "support@tikora.et",
-    footerPhone: "+251 11 667 8900",
-    footerLocation: "Edna Mall Tower, Bole Sub-City, Addis Ababa, Ethiopia",
-    copyrightText: "© 2026 TIKORA Technologies Inc. All Rights Reserved.",
-    operatingRegion: "Federal Democratic Republic of Ethiopia",
-    defaultTimezone: "Africa/Addis_Ababa (UTC+3)",
-    defaultLanguage: "en",
-    maintenanceMode: false,
-    maintenanceNotice: "System upgrade in progress. Public bookings will resume shortly.",
-    allowNewRegistrations: true,
-    allowGuestCheckout: true,
-
-    // Financial & Commissions
-    currency: "ETB",
-    defaultCommissionRate: 5.0,
-    busCommissionRate: 4.5,
-    cinemaCommissionRate: 6.0,
-    eventCommissionRate: 7.5,
-    sportsCommissionRate: 5.0,
-    vatTaxRate: 15.0,
-    platformServiceFeeETB: 10,
-    cartHoldDurationMinutes: 10,
-    maxTicketsPerBooking: 8,
-
-    // Payments & Payouts
-    telebirrEnabled: true,
-    telebirrMerchantId: "TB-ET-994821",
-    telebirrAutoSettle: true,
-    cbeBirrEnabled: true,
-    cbeBirrMerchantCode: "CBE-BIRR-44018",
-    chapaEnabled: true,
-    chapaMode: "LIVE",
-    minPayoutThresholdETB: 1000,
-    payoutSchedule: "DAILY",
-    payoutProcessingFeeETB: 25,
-
-    // Refunds & Disputes
-    autoApproveRefundThreshold: 300,
-    busCancellationCutoffHours: 4,
-    cinemaCancellationCutoffHours: 2,
-    eventCancellationCutoffHours: 24,
-    sportsCancellationCutoffHours: 6,
-    cancellationPenaltyRate: 10.0,
-    disputeAutoEscalateHours: 48,
-
-    // Security & Authentication
-    twoFactorRequiredForAdmins: true,
-    twoFactorRequiredForProviders: false,
-    sessionTimeoutMinutes: 60,
-    maxFailedLoginsLockout: 5,
-    lockoutDurationMinutes: 30,
-    enforcePasswordComplexity: true,
-    ipWhitelistingEnabled: false,
-    whitelistedAdminIPs: "197.156.104.22, 196.188.241.10",
-    auditLogRetentionDays: 90,
-
-    // QR Code & Gate Verification
-    qrSignatureAlgorithm: "HMAC_SHA256",
-    qrDynamicRotationEnabled: true,
-    qrRotationIntervalSeconds: 60,
-    offlineScanWindowHours: 12,
-    allowDuplicateCheckInOverride: false,
-
-    // Notifications & Gateway Integration
-    smsGatewayProvider: "ETHIO_TELECOM",
-    smsSenderId: "TIKORA",
-    smsTicketReceiptsEnabled: true,
-    emailReceiptsEnabled: true,
-    highValueTransactionAlertETB: 50000,
-    systemAlertEmail: "security-ops@tikora.et",
-  },
+  settings: getInitialAdminSettings(),
 
   approveOrganization: (id: string) => {
     const org = get().organizations.find((o) => o.id === id);
@@ -1279,27 +1375,67 @@ export const useAdminStore = create<AdminState>((set, get) => ({
   },
 
   addBooking: (booking: AdminBooking) => {
+    const currentSettings = get().settings;
+    const catObj = get().categories.find((c) => c.category === booking.category);
+    let defaultCatRate = currentSettings.defaultCommissionRate ?? 5.0;
+    if (booking.category === "BUS") defaultCatRate = currentSettings.busCommissionRate ?? defaultCatRate;
+    else if (booking.category === "CINEMA") defaultCatRate = currentSettings.cinemaCommissionRate ?? defaultCatRate;
+    else if (booking.category === "EVENT") defaultCatRate = currentSettings.eventCommissionRate ?? defaultCatRate;
+    else if (booking.category === "SPORTS") defaultCatRate = currentSettings.sportsCommissionRate ?? defaultCatRate;
+
+    const snapVatRate = Number(booking.vatRate ?? currentSettings.vatTaxRate ?? 5.0);
+    const snapCommissionRate = Number(booking.commissionRate ?? catObj?.commissionRate ?? defaultCatRate);
+    const customerPaid = Number(booking.customerPaid ?? booking.totalAmount) || 0;
+
+    let vatAmount = Number(booking.vatAmount);
+    if (!vatAmount && customerPaid > 0) {
+      if (booking.subtotal && booking.subtotal < customerPaid) {
+        vatAmount = Math.round((customerPaid - booking.subtotal) * 100) / 100;
+      } else {
+        const computedBase = Math.round((customerPaid / (1 + snapVatRate / 100)) * 100) / 100;
+        vatAmount = Math.max(0, Math.round((customerPaid - computedBase) * 100) / 100);
+      }
+    }
+
+    const preTaxBase = Math.max(0, Math.round((customerPaid - vatAmount) * 100) / 100);
+    const platformFee = Number(booking.platformFee ?? Math.round(preTaxBase * (snapCommissionRate / 100) * 100) / 100);
+    const providerNet = Number(booking.providerNet ?? booking.providerPayout ?? Math.max(0, Math.round((preTaxBase - platformFee) * 100) / 100));
+
+    const snapshottedBooking: AdminBooking = {
+      ...booking,
+      customerPaid,
+      totalAmount: customerPaid,
+      subtotal: preTaxBase,
+      baseFare: preTaxBase,
+      vatAmount,
+      vatRate: snapVatRate,
+      commissionRate: snapCommissionRate,
+      platformFee,
+      providerNet,
+      providerPayout: providerNet,
+    };
+
     set((state) => {
       const existingIdx = state.bookings.findIndex(
-        (b) => b.reference === booking.reference || b.id === booking.id
+        (b) => b.reference === snapshottedBooking.reference || b.id === snapshottedBooking.id
       );
       let updatedBookings: AdminBooking[];
       if (existingIdx >= 0) {
         updatedBookings = [...state.bookings];
-        updatedBookings[existingIdx] = { ...updatedBookings[existingIdx], ...booking };
+        updatedBookings[existingIdx] = { ...updatedBookings[existingIdx], ...snapshottedBooking };
       } else {
-        updatedBookings = [booking, ...state.bookings];
+        updatedBookings = [snapshottedBooking, ...state.bookings];
       }
 
       // Automatically decrement available seats and increment totalSold for matching ticket service
       const updatedServices = state.services.map((s) => {
-        if (s.title === booking.serviceTitle || (booking.id && s.id === booking.id)) {
+        if (s.title === snapshottedBooking.serviceTitle || (snapshottedBooking.id && s.id === snapshottedBooking.id)) {
           const currentAvailable = Number(s.availableSeats ?? 50);
-          const newAvailable = Math.max(0, currentAvailable - (booking.quantity || 1));
+          const newAvailable = Math.max(0, currentAvailable - (snapshottedBooking.quantity || 1));
           return {
             ...s,
             availableSeats: newAvailable,
-            totalSold: (s.totalSold || 0) + (booking.quantity || 1),
+            totalSold: (s.totalSold || 0) + (snapshottedBooking.quantity || 1),
             status: newAvailable === 0 ? ("SOLD_OUT" as const) : s.status,
           };
         }
@@ -1325,8 +1461,33 @@ export const useAdminStore = create<AdminState>((set, get) => ({
   },
 
   updateSettings: (newSettings) => {
-    set((state) => ({
-      settings: { ...state.settings, ...newSettings },
+    const updated = { ...get().settings, ...newSettings };
+    const updatedCategories = get().categories.map((c) => {
+      if (c.category === "BUS" && newSettings.busCommissionRate !== undefined) {
+        return { ...c, commissionRate: Number(newSettings.busCommissionRate) };
+      }
+      if (c.category === "CINEMA" && newSettings.cinemaCommissionRate !== undefined) {
+        return { ...c, commissionRate: Number(newSettings.cinemaCommissionRate) };
+      }
+      if (c.category === "EVENT" && newSettings.eventCommissionRate !== undefined) {
+        return { ...c, commissionRate: Number(newSettings.eventCommissionRate) };
+      }
+      if (c.category === "SPORTS" && newSettings.sportsCommissionRate !== undefined) {
+        return { ...c, commissionRate: Number(newSettings.sportsCommissionRate) };
+      }
+      return c;
+    });
+
+    if (typeof window !== "undefined") {
+      try {
+        localStorage.setItem("tikora_platform_settings", JSON.stringify(updated));
+        window.dispatchEvent(new CustomEvent("tikora_settings_updated", { detail: updated }));
+      } catch {}
+    }
+
+    set(() => ({
+      settings: updated,
+      categories: updatedCategories,
     }));
 
     // Asynchronously persist to backend API & PostgreSQL audit ledger
@@ -1343,6 +1504,24 @@ export const useAdminStore = create<AdminState>((set, get) => ({
       ipAddress: "197.156.104.22",
       severity: "WARNING",
     });
+  },
+
+  fetchPublicSettings: async () => {
+    try {
+      const data = await adminService.getPublicSettings();
+      if (data && Object.keys(data).length > 0) {
+        const merged = { ...get().settings, ...data };
+        if (typeof window !== "undefined") {
+          try {
+            localStorage.setItem("tikora_platform_settings", JSON.stringify(merged));
+            window.dispatchEvent(new CustomEvent("tikora_settings_updated", { detail: merged }));
+          } catch {}
+        }
+        set({ settings: merged });
+      }
+    } catch (e) {
+      console.warn("Failed to fetch public settings:", e);
+    }
   },
 
   addAuditLog: (entry) => {

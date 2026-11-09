@@ -141,6 +141,30 @@ function PaymentCallbackContent() {
       addBooking(confirmedBooking);
       updateBookingStatus(confirmedBooking.id, "CONFIRMED", "PAID");
 
+      // Compute exact snapshot rates at the point of confirmed transaction
+      const snapVatRate = Number(confirmedBooking.vatRate ?? confirmedBooking.pricing?.vatRate ?? 5.0);
+      const snapCommRate = Number(confirmedBooking.commissionRate ?? confirmedBooking.pricing?.commissionRate ?? 5.0);
+      const snapSubtotal = Number(
+        confirmedBooking.subtotal ??
+        confirmedBooking.pricing?.subtotal ??
+        Math.round(confirmedBooking.pricing.total / (1 + snapVatRate / 100))
+      );
+      const snapVatAmount = Number(
+        confirmedBooking.vatAmount ??
+        confirmedBooking.pricing?.tax ??
+        Math.max(0, confirmedBooking.pricing.total - snapSubtotal)
+      );
+      const snapPlatformFee = Number(
+        confirmedBooking.platformFee ??
+        confirmedBooking.pricing?.platformCommission ??
+        Math.round(snapSubtotal * (snapCommRate / 100) * 100) / 100
+      );
+      const snapProviderNet = Number(
+        confirmedBooking.providerNet ??
+        confirmedBooking.pricing?.providerNet ??
+        Math.max(0, snapSubtotal - snapPlatformFee)
+      );
+
       // 2. Admin Store (persists to localStorage & updates platform stats with FULL CUSTOMER PAID AMOUNT including VAT)
       addAdminBooking({
         id: confirmedBooking.id,
@@ -158,8 +182,16 @@ function PaymentCallbackContent() {
           confirmedBooking.selectedSeats && confirmedBooking.selectedSeats.length > 0
             ? confirmedBooking.selectedSeats
             : [confirmedBooking.selectedTier || "Standard Pass"],
-        totalAmount: confirmedBooking.pricing.total, // Full customer payment with 5% VAT
-        platformFee: 0,
+        totalAmount: confirmedBooking.pricing.total, // Full customer payment with statutory VAT
+        customerPaid: confirmedBooking.pricing.total,
+        subtotal: snapSubtotal,
+        baseFare: snapSubtotal,
+        vatAmount: snapVatAmount,
+        vatRate: snapVatRate,
+        commissionRate: snapCommRate,
+        platformFee: snapPlatformFee,
+        providerNet: snapProviderNet,
+        providerPayout: snapProviderNet,
         paymentMethod: "CHAPA",
         paymentStatus: "PAID",
         bookingStatus: "CONFIRMED",
@@ -167,9 +199,6 @@ function PaymentCallbackContent() {
       });
 
       // 3. Provider Store (persists to localStorage & updates provider sales - PURE TICKET PRICE WITHOUT VAT)
-      const providerBaseFare =
-        confirmedBooking.pricing.subtotal || Math.round(confirmedBooking.pricing.total / 1.05);
-
       addProviderBooking({
         id: confirmedBooking.id,
         reference: confirmedBooking.bookingReference,
@@ -184,7 +213,13 @@ function PaymentCallbackContent() {
           confirmedBooking.selectedSeats && confirmedBooking.selectedSeats.length > 0
             ? confirmedBooking.selectedSeats
             : [confirmedBooking.selectedTier || "Pass-1"],
-        totalAmount: providerBaseFare, // Pure ticket base price without VAT
+        totalAmount: snapSubtotal, // Pure ticket base price without VAT
+        customerPaid: confirmedBooking.pricing.total,
+        vatAmount: snapVatAmount,
+        vatRate: snapVatRate,
+        commissionRate: snapCommRate,
+        platformFee: snapPlatformFee,
+        providerNet: snapProviderNet,
         paymentMethod: "CHAPA",
         paymentStatus: "PAID",
         bookingStatus: "CONFIRMED",

@@ -29,6 +29,7 @@ import {
 } from "lucide-react";
 import { useAdminStore } from "@/stores/admin.store";
 import { useAuthStore } from "@/stores/auth.store";
+import { useLanguage } from "@/providers/language-provider";
 import { toast } from "sonner";
 
 interface AdminSidebarProps {
@@ -73,6 +74,7 @@ export function AdminSidebar({
   } = useAdminStore();
   const brandName = settings?.siteName || settings?.platformName || "TIKORA";
   const { logout } = useAuthStore();
+  const { t } = useLanguage();
   const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
@@ -250,11 +252,11 @@ export function AdminSidebar({
           )}
           {!collapsed && (
             <div className="flex flex-col min-w-0">
-              <span className="font-bold text-sm tracking-tight text-[#0F172A] dark:text-white truncate group-hover:text-amber-600 dark:group-hover:text-amber-400 transition-colors">
+              <span suppressHydrationWarning className="font-bold text-sm tracking-tight text-[#0F172A] dark:text-white truncate group-hover:text-amber-600 dark:group-hover:text-amber-400 transition-colors">
                 {brandName}
               </span>
               <span className="text-[10px] font-semibold uppercase tracking-wider text-amber-600 dark:text-amber-400 flex items-center gap-1">
-                <Sparkles className="w-2.5 h-2.5" /> Super Admin
+                <Sparkles className="w-2.5 h-2.5" /> {t("Super Admin", "Super Admin")}
               </span>
             </div>
           )}
@@ -277,7 +279,7 @@ export function AdminSidebar({
           <div key={groupIdx} className="space-y-1">
             {!collapsed && (
               <p className="px-3 text-[10px] font-bold tracking-wider text-slate-400 dark:text-slate-500 uppercase mb-1">
-                {group.group}
+                {t(group.group, group.group)}
               </p>
             )}
 
@@ -290,7 +292,7 @@ export function AdminSidebar({
                   key={item.href}
                   href={item.href}
                   onClick={onCloseMobile}
-                  title={collapsed ? item.label : undefined}
+                  title={collapsed ? t(item.label, item.label) : undefined}
                   className={`group relative flex items-center gap-3 px-3 py-2 text-xs font-medium rounded-xl transition-all duration-150 ${
                     active
                       ? "bg-amber-500/10 text-amber-700 dark:text-amber-300 font-bold shadow-xs"
@@ -304,7 +306,7 @@ export function AdminSidebar({
                         : "text-slate-400 group-hover:text-slate-600 dark:group-hover:text-slate-200"
                     }`}
                   />
-                  {!collapsed && <span className="truncate">{item.label}</span>}
+                  {!collapsed && <span className="truncate">{t(item.label, item.label)}</span>}
 
                   {!collapsed && item.badge !== undefined && (
                     <span
@@ -333,10 +335,10 @@ export function AdminSidebar({
           className={`flex items-center gap-2.5 px-3 py-2 text-xs font-medium text-slate-500 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800/60 rounded-xl transition-colors ${
             collapsed ? "justify-center px-2" : ""
           }`}
-          title="Open Customer Portal"
+          title={t("Customer Portal", "Customer Portal")}
         >
           <ExternalLink className="w-4 h-4 shrink-0 text-slate-400" />
-          {!collapsed && <span>Customer Portal</span>}
+          {!collapsed && <span>{t("Customer Portal", "Customer Portal")}</span>}
         </Link>
 
         {/* Sign Out Button */}
@@ -351,10 +353,10 @@ export function AdminSidebar({
           className={`w-full flex items-center gap-2.5 px-3 py-2 text-xs font-semibold text-rose-600 dark:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-950/40 rounded-xl transition-colors cursor-pointer ${
             collapsed ? "justify-center px-2" : ""
           }`}
-          title="Sign Out"
+          title={t("Sign Out", "Sign Out")}
         >
           <LogOut className="w-4 h-4 shrink-0" />
-          {!collapsed && <span>Sign Out</span>}
+          {!collapsed && <span>{t("Sign Out", "Sign Out")}</span>}
         </button>
 
         {/* Toggle Collapse Button for Desktop */}
@@ -363,7 +365,7 @@ export function AdminSidebar({
             <div className="flex items-center gap-2 px-2">
               <div className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
               <span className="text-[11px] font-medium text-slate-500 dark:text-slate-400">
-                Root Active
+                {t("Operational", "Root Active")}
               </span>
             </div>
           ) : (

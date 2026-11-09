@@ -7,9 +7,11 @@ import { PageContainer } from "@/components/layout/page-container";
 import { BookingCard } from "@/components/booking/booking-card";
 import { EmptyState } from "@/components/feedback/empty-state";
 import { useBookingStore } from "@/stores/booking.store";
+import { useLanguage } from "@/providers/language-provider";
 
 export default function CustomerBookingsPage() {
   const { bookings } = useBookingStore();
+  const { t } = useLanguage();
   const [activeTab, setActiveTab] = useState<"ALL" | "CONFIRMED" | "COMPLETED" | "CANCELLED">("ALL");
   const [searchQuery, setSearchQuery] = useState("");
 
@@ -28,9 +30,9 @@ export default function CustomerBookingsPage() {
 
   return (
     <PageContainer
-      title="My Bookings Hub"
-      subtitle="Manage all your active reservations, digital passes, past trips, and receipts."
-      breadcrumbs={[{ label: "Customer Dashboard", href: "/customer" }, { label: "My Bookings" }]}
+      title={t("orders.title", "My Bookings Hub")}
+      subtitle={t("orders.subtitle", "Manage all your active reservations, digital passes, past trips, and receipts.")}
+      breadcrumbs={[{ label: t("nav.dashboard", "Customer Dashboard"), href: "/customer" }, { label: t("nav.myBookings", "My Bookings") }]}
     >
       <div className="space-y-4">
         {/* Search & Tabs Controls */}
@@ -39,20 +41,20 @@ export default function CustomerBookingsPage() {
             {/* Status Tabs */}
             <div className="inline-flex items-center gap-0.5 bg-slate-100 dark:bg-slate-800/60 p-0.5 rounded-lg overflow-x-auto scrollbar-none">
               {[
-                { id: "ALL", label: "All", count: bookings.length },
+                { id: "ALL", label: t("common.all", "All"), count: bookings.length },
                 {
                   id: "CONFIRMED",
-                  label: "Upcoming",
+                  label: t("orders.upcoming", "Upcoming"),
                   count: bookings.filter((b) => b.bookingStatus === "CONFIRMED").length,
                 },
                 {
                   id: "COMPLETED",
-                  label: "Completed",
+                  label: t("orders.completed", "Completed"),
                   count: bookings.filter((b) => b.bookingStatus === "COMPLETED").length,
                 },
                 {
                   id: "CANCELLED",
-                  label: "Cancelled",
+                  label: t("orders.cancelled", "Cancelled"),
                   count: bookings.filter((b) => b.bookingStatus === "CANCELLED").length,
                 },
               ].map((tab) => (
@@ -77,7 +79,7 @@ export default function CustomerBookingsPage() {
               <Search className="w-3.5 h-3.5 text-muted-foreground absolute left-3 top-1/2 -translate-y-1/2" />
               <input
                 type="text"
-                placeholder="Search reference or event..."
+                placeholder={t("hero.searchPlaceholder", "Search reference or event...")}
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 className="w-full pl-8 pr-3 py-1.5 rounded-lg border border-slate-200/80 dark:border-slate-800 bg-slate-50 dark:bg-slate-900/50 text-foreground text-xs focus:outline-none focus:ring-1 focus:ring-amber-500/30"
@@ -90,9 +92,9 @@ export default function CustomerBookingsPage() {
         {filteredBookings.length === 0 ? (
           <EmptyState
             icon={Ticket}
-            title="No bookings found"
-            description="You don't have any reservations matching this status filter. Explore tickets to plan your next experience!"
-            actionLabel="Discover Tickets"
+            title={t("orders.emptyTitle", "No bookings found")}
+            description={t("orders.emptyDesc", "You don't have any reservations matching this status filter. Explore tickets to plan your next experience!")}
+            actionLabel={t("orders.exploreCatalog", "Discover Tickets")}
             actionHref="/search"
           />
         ) : (

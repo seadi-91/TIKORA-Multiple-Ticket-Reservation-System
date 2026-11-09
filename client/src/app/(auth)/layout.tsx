@@ -16,12 +16,18 @@ import {
   ArrowLeft,
 } from "lucide-react";
 import { ThemeToggle } from "@/components/ui/theme-toggle";
+import { useAdminStore } from "@/stores/admin.store";
+import { useLanguage } from "@/providers/language-provider";
+import { LanguageSelector } from "@/components/navigation/language-selector";
 
 export default function AuthLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
+  const { settings } = useAdminStore();
+  const { t } = useLanguage();
+  const brandName = settings?.siteName || settings?.platformName || "TIKORA";
   return (
     <div className="min-h-screen flex flex-col lg:flex-row bg-slate-50 dark:bg-[#0A0C10] text-slate-900 dark:text-[#F8FAFC] font-sans selection:bg-amber-600 selection:text-white transition-colors duration-200 relative overflow-hidden">
       {/* =========================================================================
@@ -40,15 +46,23 @@ export default function AuthLayout({
         {/* Top: Logo & Platform Identity */}
         <div className="relative z-10 space-y-6">
           <Link href="/" className="inline-flex items-center gap-3 group">
-            <div className="w-11 h-11 rounded-2xl bg-slate-900 text-white dark:bg-white dark:text-slate-950 flex items-center justify-center shadow-md ring-1 ring-black/5 dark:ring-white/20 group-hover:scale-105 transition-all duration-300">
-              <Ticket className="w-5 h-5 transform -rotate-12" />
-            </div>
+            {settings?.logoUrl ? (
+              <img
+                src={settings.logoUrl}
+                alt={brandName}
+                className="w-11 h-11 rounded-2xl object-contain bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-1 shadow-md ring-1 ring-black/5 dark:ring-white/20 group-hover:scale-105 transition-all duration-300 shrink-0"
+              />
+            ) : (
+              <div className="w-11 h-11 rounded-2xl bg-slate-900 text-white dark:bg-white dark:text-slate-950 flex items-center justify-center shadow-md ring-1 ring-black/5 dark:ring-white/20 group-hover:scale-105 transition-all duration-300 shrink-0">
+                <Ticket className="w-5 h-5 transform -rotate-12" />
+              </div>
+            )}
             <div>
-              <span className="text-2xl font-black tracking-tight text-slate-900 dark:text-white flex items-center gap-1">
-                TIK<span className="text-amber-600 dark:text-amber-500">ORA</span>
+              <span suppressHydrationWarning className="text-2xl font-black tracking-tight text-slate-900 dark:text-white flex items-center gap-1">
+                {brandName}
               </span>
-              <span className="block text-[10px] uppercase tracking-widest text-slate-500 dark:text-slate-400 font-bold">
-                Ethiopian Multi-Category Reservation
+              <span suppressHydrationWarning className="block text-[10px] uppercase tracking-widest text-slate-500 dark:text-slate-400 font-bold">
+                {settings?.tagline || "Ethiopian Multi-Category Reservation"}
               </span>
             </div>
           </Link>
@@ -56,16 +70,16 @@ export default function AuthLayout({
           <div className="space-y-3 max-w-lg">
             <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full backdrop-blur-md bg-white/80 dark:bg-white/[0.05] border border-slate-200 dark:border-white/10 text-slate-700 dark:text-slate-300 text-xs font-semibold shadow-2xs">
               <Sparkles className="w-3.5 h-3.5 text-amber-600 dark:text-amber-400" />
-              <span>Unified Ticketing Platform</span>
+              <span>{t("Unified Ticketing Platform")}</span>
             </div>
             <h1 className="text-3xl xl:text-4xl 2xl:text-5xl font-black tracking-tight leading-[1.15] text-slate-900 dark:text-white">
-              Every ticket you need, <br />
+              {t("Every ticket you need,")} <br />
               <span className="text-slate-600 dark:text-slate-300">
-                instant, verified & digital.
+                {t("instant, verified & digital.")}
               </span>
             </h1>
             <p className="text-slate-600 dark:text-slate-400 text-xs xl:text-sm leading-relaxed max-w-md">
-              Automated seat allocation for intercity buses, cinema halls, concert arenas, and stadium sports with instant Telebirr digital QR passes.
+              {t("Automated seat allocation for intercity buses, cinema halls, concert arenas, and stadium sports with instant Telebirr digital QR passes.")}
             </p>
           </div>
         </div>
@@ -84,16 +98,16 @@ export default function AuthLayout({
                 </div>
                 <div>
                   <span className="block text-xs font-bold text-slate-900 dark:text-white tracking-wide">
-                    TIKORA VIP PASS
+                    {t("TIKORA VIP PASS")}
                   </span>
                   <span className="block text-[10px] text-slate-500 dark:text-slate-400">
-                    Intercity Express Bus • Selam Fleet
+                    {t("Intercity Express Bus • Selam Fleet")}
                   </span>
                 </div>
               </div>
               <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-emerald-700 dark:text-emerald-400 text-[10px] font-bold">
                 <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
-                <span>ACTIVE VERIFIED</span>
+                <span>{t("ACTIVE VERIFIED")}</span>
               </div>
             </div>
 
@@ -101,13 +115,13 @@ export default function AuthLayout({
             <div className="py-3.5 flex items-center justify-between gap-3">
               <div>
                 <span className="block text-[10px] text-slate-500 dark:text-slate-400 uppercase tracking-wider font-semibold">
-                  Boarding Terminal
+                  {t("Boarding Terminal")}
                 </span>
                 <span className="text-sm font-black text-slate-900 dark:text-white">
-                  Addis Ababa
+                  {t("Addis Ababa")}
                 </span>
                 <span className="block text-[10px] text-slate-600 dark:text-slate-400 font-medium">
-                  Meskel Sq Terminal
+                  {t("Meskel Sq Terminal")}
                 </span>
               </div>
 
@@ -121,18 +135,18 @@ export default function AuthLayout({
                   <div className="flex-1 h-px bg-slate-300 dark:bg-slate-700 border-t border-dashed border-slate-300 dark:border-slate-600" />
                   <div className="w-2 h-2 rounded-full bg-slate-800 dark:bg-white" />
                 </div>
-                <span className="text-[9px] text-slate-500 dark:text-slate-400 mt-1 font-mono">06:30 AM DEPARTURE</span>
+                <span className="text-[9px] text-slate-500 dark:text-slate-400 mt-1 font-mono">06:30 AM {t("DEPARTURE")}</span>
               </div>
 
               <div className="text-right">
                 <span className="block text-[10px] text-slate-500 dark:text-slate-400 uppercase tracking-wider font-semibold">
-                  Destination
+                  {t("Destination")}
                 </span>
                 <span className="text-sm font-black text-slate-900 dark:text-white">
-                  Hawassa
+                  {t("Hawassa")}
                 </span>
                 <span className="block text-[10px] text-slate-600 dark:text-slate-400 font-medium">
-                  Lake View Park
+                  {t("Lake View Park")}
                 </span>
               </div>
             </div>
@@ -148,15 +162,15 @@ export default function AuthLayout({
             <div className="pt-2 flex items-center justify-between">
               <div className="grid grid-cols-3 gap-3 text-left">
                 <div>
-                  <span className="block text-[9px] text-slate-500 dark:text-slate-400 uppercase">Seat</span>
+                  <span className="block text-[9px] text-slate-500 dark:text-slate-400 uppercase">{t("Seat")}</span>
                   <span className="text-xs font-bold text-slate-900 dark:text-white">14A (VIP)</span>
                 </div>
                 <div>
-                  <span className="block text-[9px] text-slate-500 dark:text-slate-400 uppercase">Gate</span>
+                  <span className="block text-[9px] text-slate-500 dark:text-slate-400 uppercase">{t("Gate")}</span>
                   <span className="text-xs font-bold text-slate-900 dark:text-white">Gate 02</span>
                 </div>
                 <div>
-                  <span className="block text-[9px] text-slate-500 dark:text-slate-400 uppercase">Pass Ref</span>
+                  <span className="block text-[9px] text-slate-500 dark:text-slate-400 uppercase">{t("Pass Ref")}</span>
                   <span className="text-xs font-bold text-slate-700 dark:text-slate-300 font-mono">TK-8941</span>
                 </div>
               </div>
@@ -167,10 +181,10 @@ export default function AuthLayout({
                 </div>
                 <div className="text-right">
                   <span className="block text-[8px] uppercase tracking-wider text-emerald-600 dark:text-emerald-400 font-bold">
-                    Telebirr Paid
+                    {t("Telebirr Paid")}
                   </span>
                   <span className="block text-[8px] text-slate-500 dark:text-slate-400">
-                    Offline Valid
+                    {t("Offline Valid")}
                   </span>
                 </div>
               </div>
@@ -184,10 +198,10 @@ export default function AuthLayout({
                 <div className="w-6 h-6 rounded-lg bg-slate-100 dark:bg-white/10 text-slate-700 dark:text-slate-300 flex items-center justify-center">
                   <Bus className="w-3.5 h-3.5" />
                 </div>
-                <span>Intercity Buses</span>
+                <span>{t("Intercity Buses")}</span>
               </div>
               <p className="text-[10px] text-slate-500 dark:text-slate-400 leading-tight">
-                Selam, Abay & Golden Bus fleets with seat matrices.
+                {t("categories.busDesc", "Selam, Abay & Golden Bus fleets with seat matrices.")}
               </p>
             </div>
 
@@ -196,10 +210,10 @@ export default function AuthLayout({
                 <div className="w-6 h-6 rounded-lg bg-slate-100 dark:bg-white/10 text-slate-700 dark:text-slate-300 flex items-center justify-center">
                   <Film className="w-3.5 h-3.5" />
                 </div>
-                <span>Cinema & IMAX</span>
+                <span>{t("Cinema & IMAX")}</span>
               </div>
               <p className="text-[10px] text-slate-500 dark:text-slate-400 leading-tight">
-                Century & Edna Mall premier halls with Dolby Atmos.
+                {t("categories.cinemaDesc", "Century & Edna Mall premier halls with Dolby Atmos.")}
               </p>
             </div>
 
@@ -208,10 +222,10 @@ export default function AuthLayout({
                 <div className="w-6 h-6 rounded-lg bg-slate-100 dark:bg-white/10 text-slate-700 dark:text-slate-300 flex items-center justify-center">
                   <Calendar className="w-3.5 h-3.5" />
                 </div>
-                <span>Concerts & Events</span>
+                <span>{t("Concerts & Events")}</span>
               </div>
               <p className="text-[10px] text-slate-500 dark:text-slate-400 leading-tight">
-                Addis Jazz festivals, comedy nights & conventions.
+                {t("categories.eventDesc", "Addis Jazz festivals, comedy nights & conventions.")}
               </p>
             </div>
 
@@ -220,10 +234,10 @@ export default function AuthLayout({
                 <div className="w-6 h-6 rounded-lg bg-slate-100 dark:bg-white/10 text-slate-700 dark:text-slate-300 flex items-center justify-center">
                   <Trophy className="w-3.5 h-3.5" />
                 </div>
-                <span>Stadium Sports</span>
+                <span>{t("Stadium Sports")}</span>
               </div>
               <p className="text-[10px] text-slate-500 dark:text-slate-400 leading-tight">
-                Sheger Derby & Premier League digital turnstiles.
+                {t("categories.sportsDesc", "Sheger Derby & Premier League digital turnstiles.")}
               </p>
             </div>
           </div>
@@ -233,15 +247,15 @@ export default function AuthLayout({
         <div className="relative z-10 pt-4 border-t border-slate-200/80 dark:border-white/10 flex items-center justify-between text-[11px] text-slate-500 dark:text-slate-400">
           <div className="flex items-center gap-2">
             <ShieldCheck className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
-            <span>100% Certified Ticketing</span>
+            <span>{t("100% Certified Ticketing")}</span>
           </div>
           <div className="flex items-center gap-2">
             <Zap className="w-4 h-4 text-slate-700 dark:text-slate-300" />
-            <span>Telebirr & CBE Birr</span>
+            <span>{t("Telebirr & CBE Birr")}</span>
           </div>
           <div className="flex items-center gap-2">
             <QrCode className="w-4 h-4 text-slate-700 dark:text-slate-300" />
-            <span>Encrypted Pass</span>
+            <span>{t("Encrypted Pass")}</span>
           </div>
         </div>
       </aside>
@@ -251,7 +265,7 @@ export default function AuthLayout({
           Supports Light, Dark, System Modes with Top Navigation Bar
           ========================================================================= */}
       <main className="flex-1 flex flex-col justify-center items-center p-4 pt-20 sm:p-8 sm:pt-24 lg:p-12 xl:p-16 relative bg-slate-50/60 dark:bg-[#0F1117] transition-colors duration-200 overflow-hidden">
-        {/* Top Navigation Bar: Home Link on Left, Theme Dropdown on Right */}
+        {/* Top Navigation Bar: Home Link on Left, Language Dropdown & Theme on Right */}
         <div className="absolute top-4 inset-x-4 sm:top-6 sm:inset-x-8 lg:inset-x-12 flex items-center justify-between z-20">
           <Link
             href="/"
@@ -260,10 +274,13 @@ export default function AuthLayout({
           >
             <ArrowLeft className="w-3.5 h-3.5 group-hover:-translate-x-0.5 transition-transform" />
             <Home className="w-3.5 h-3.5" />
-            <span>Home</span>
+            <span>{t("nav.home", "Home")}</span>
           </Link>
 
-          <ThemeToggle />
+          <div className="flex items-center gap-2">
+            <LanguageSelector variant="navbar" />
+            <ThemeToggle />
+          </div>
         </div>
 
         {/* Ambient Subtle Background Lights */}
@@ -275,11 +292,19 @@ export default function AuthLayout({
           {/* Mobile Logo Header */}
           <div className="lg:hidden text-center space-y-2 mb-4">
             <Link href="/" className="inline-flex items-center gap-2.5">
-              <div className="w-10 h-10 rounded-xl bg-slate-900 text-white dark:bg-white dark:text-slate-950 flex items-center justify-center shadow-md ring-1 ring-black/5 dark:ring-white/20">
-                <Ticket className="w-5 h-5 transform -rotate-12" />
-              </div>
-              <span className="text-xl font-black text-slate-900 dark:text-white">
-                TIK<span className="text-amber-600 dark:text-amber-500">ORA</span>
+              {settings?.logoUrl ? (
+                <img
+                  src={settings.logoUrl}
+                  alt={brandName}
+                  className="w-10 h-10 rounded-xl object-contain bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-1 shadow-md ring-1 ring-black/5 dark:ring-white/20 shrink-0"
+                />
+              ) : (
+                <div className="w-10 h-10 rounded-xl bg-slate-900 text-white dark:bg-white dark:text-slate-950 flex items-center justify-center shadow-md ring-1 ring-black/5 dark:ring-white/20">
+                  <Ticket className="w-5 h-5 transform -rotate-12" />
+                </div>
+              )}
+              <span suppressHydrationWarning className="text-xl font-black text-slate-900 dark:text-white">
+                {brandName}
               </span>
             </Link>
           </div>

@@ -74,142 +74,10 @@ export const CATEGORY_DEFAULT_IMAGES: Record<TicketCategory, DefaultImageOption[
   ],
 };
 
-export const DEFAULT_TICKETS: TicketItem[] = [
-  {
-    id: "bus-1",
-    title: "Addis Ababa to Hawassa Luxury Express",
-    category: "BUS",
-    organizer: "Selam Bus Express",
-    organizerVerified: true,
-    location: "Autobus Tera Gate 3, Addis Ababa",
-    city: "Hawassa",
-    date: "2026-11-20",
-    time: "06:00 AM",
-    price: 650,
-    currency: "ETB",
-    totalSeats: 48,
-    availableSeats: 32, // 16 sold, 33% fill rate
-    status: "AVAILABLE",
-    badge: "Popular Route",
-    imageUrl: FIXED_CATEGORY_IMAGES.BUS,
-    description: "High-speed modern coach service with AC, WiFi, and recliner comfort.",
-    amenities: ["Free WiFi", "AC", "USB Charging", "Reclining Seats"],
-    rating: 4.8,
-    reviewCount: 42,
-  },
-  {
-    id: "bus-2",
-    title: "Addis Ababa to Bahir Dar Premium Coach",
-    category: "BUS",
-    organizer: "Selam Bus Express",
-    organizerVerified: true,
-    location: "Lam Beret Terminal, Addis Ababa",
-    city: "Bahir Dar",
-    date: "2026-11-21",
-    time: "05:30 AM",
-    price: 950,
-    currency: "ETB",
-    totalSeats: 52,
-    availableSeats: 14, // 38 sold, 73% fill rate
-    status: "AVAILABLE",
-    badge: "Executive Class",
-    imageUrl: FIXED_CATEGORY_IMAGES.BUS,
-    description: "Cross-regional executive coach with personal entertainment screens.",
-    amenities: ["Snack Pack", "AC", "Reclining Seats"],
-    rating: 4.9,
-    reviewCount: 31,
-  },
-  {
-    id: "cinema-1",
-    title: "Dune: Part Two (Laser 4K Atmos)",
-    category: "CINEMA",
-    organizer: "Century Cinema Addis",
-    organizerVerified: true,
-    location: "Century Mall, 4th Floor, Addis Ababa",
-    city: "Addis Ababa",
-    date: "2026-11-20",
-    time: "05:30 PM",
-    price: 300,
-    currency: "ETB",
-    totalSeats: 120,
-    availableSeats: 48, // 72 sold, 60% fill rate
-    status: "AVAILABLE",
-    badge: "Now Showing",
-    imageUrl: FIXED_CATEGORY_IMAGES.CINEMA,
-    description: "Epic sci-fi with Dolby Atmos audio and laser projection in VIP Auditorium.",
-    amenities: ["Dolby Atmos", "Laser 4K", "VIP Recliner Seating"],
-    rating: 4.9,
-    reviewCount: 38,
-  },
-  {
-    id: "cinema-2",
-    title: "Gladiator II (Premiere 3D)",
-    category: "CINEMA",
-    organizer: "Century Cinema Addis",
-    organizerVerified: true,
-    location: "Century Mall, Cinema Hall 1, Addis Ababa",
-    city: "Addis Ababa",
-    date: "2026-11-20",
-    time: "08:15 PM",
-    price: 350,
-    currency: "ETB",
-    totalSeats: 150,
-    availableSeats: 18, // 132 sold, 88% fill rate
-    status: "AVAILABLE",
-    badge: "Premiere Screen",
-    imageUrl: FIXED_CATEGORY_IMAGES.CINEMA,
-    description: "Experience the monumental sequel in stunning real 3D visuals.",
-    amenities: ["Real 3D", "Surround Sound", "Concessions Bar"],
-    rating: 4.7,
-    reviewCount: 25,
-  },
-  {
-    id: "event-1",
-    title: "Addis Afro-Jazz & Cultural Night",
-    category: "EVENT",
-    organizer: "Millennium Hall Addis",
-    organizerVerified: true,
-    location: "Millennium Hall Grand Auditorium",
-    city: "Addis Ababa",
-    date: "2026-11-25",
-    time: "06:00 PM",
-    price: 500,
-    currency: "ETB",
-    totalSeats: 500,
-    availableSeats: 185, // 315 sold, 63% fill rate
-    status: "AVAILABLE",
-    badge: "Live Concert",
-    imageUrl: FIXED_CATEGORY_IMAGES.EVENT,
-    description: "Live musical festival featuring top Ethiopian jazz artists and cultural performances.",
-    amenities: ["Live Sound Stage", "Food Village", "VIP Lounge", "Secured Parking"],
-    rating: 5.0,
-    reviewCount: 29,
-  },
-  {
-    id: "sports-1",
-    title: "St. George vs Ethiopia Coffee (Sheger Derby)",
-    category: "SPORTS",
-    organizer: "St. George FC & EPL",
-    organizerVerified: true,
-    location: "Addis Ababa National Stadium",
-    city: "Addis Ababa",
-    date: "2026-11-22",
-    time: "03:00 PM",
-    price: 250,
-    currency: "ETB",
-    totalSeats: 1500,
-    availableSeats: 420, // 1080 sold, 72% fill rate
-    status: "AVAILABLE",
-    badge: "EPL Derby",
-    imageUrl: FIXED_CATEGORY_IMAGES.SPORTS,
-    description: "The biggest football clash in Ethiopian Premier League history at Addis Ababa Stadium.",
-    amenities: ["Tribune Seating", "Live Screen", "Team Merchandise"],
-    rating: 4.9,
-    reviewCount: 65,
-  },
-];
+// Zero default tickets: only real listings published by verified providers appear in the catalog
+export const DEFAULT_TICKETS: TicketItem[] = [];
 
-export let MOCK_TICKETS: TicketItem[] = DEFAULT_TICKETS;
+export let MOCK_TICKETS: TicketItem[] = [];
 export let MOCK_CATEGORIES: PublicCategoryItem[] = [];
 
 function saveToLocalStorage(tickets: TicketItem[]) {
@@ -321,9 +189,11 @@ export const TicketService = {
       if (res.ok) {
         const data = await res.json();
         if (data.tickets && Array.isArray(data.tickets)) {
-          MOCK_TICKETS = data.tickets;
+          const legacyIds = new Set(["bus-1", "bus-2", "cinema-1", "cinema-2", "event-1", "event-2", "sports-1"]);
+          const providerOnly = data.tickets.filter((t: any) => !legacyIds.has(t.id));
+          MOCK_TICKETS = providerOnly;
           saveToLocalStorage(MOCK_TICKETS);
-          return data.tickets;
+          return providerOnly;
         }
       }
     } catch (error) {
@@ -338,7 +208,13 @@ export const TicketService = {
       try {
         const saved = localStorage.getItem("tikora_tickets_cache");
         if (saved) {
-          MOCK_TICKETS = JSON.parse(saved);
+          const parsed = JSON.parse(saved);
+          if (Array.isArray(parsed)) {
+            const legacyIds = new Set(["bus-1", "bus-2", "cinema-1", "cinema-2", "event-1", "event-2", "sports-1"]);
+            const providerOnly = parsed.filter((t: any) => !legacyIds.has(t.id));
+            MOCK_TICKETS = providerOnly;
+            saveToLocalStorage(providerOnly);
+          }
         }
       } catch {}
       this.fetchTickets(includeInactive).catch(() => {});

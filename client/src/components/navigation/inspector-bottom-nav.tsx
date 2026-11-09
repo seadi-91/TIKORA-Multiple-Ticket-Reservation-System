@@ -11,9 +11,11 @@ import {
   User,
 } from "lucide-react";
 import { useInspectorStore } from "@/stores/inspector.store";
+import { useLanguage } from "@/providers/language-provider";
 
 export function InspectorBottomNav() {
   const pathname = usePathname();
+  const { t } = useLanguage();
   const { assignments, verificationHistory } = useInspectorStore();
 
   const activeAssignments = assignments.filter((a) => a.status === "ACTIVE_NOW").length;
@@ -34,7 +36,7 @@ export function InspectorBottomNav() {
           }`}
         >
           <LayoutDashboard className={`w-5 h-5 ${pathname === "/inspector" ? "stroke-[2.5]" : "stroke-[1.8]"}`} />
-          <span className="text-[10px] tracking-tight mt-0.5 leading-none">Home</span>
+          <span className="text-[10px] tracking-tight mt-0.5 leading-none">{t("Home", "Home")}</span>
         </Link>
 
         {/* Gate Posts */}
@@ -54,7 +56,7 @@ export function InspectorBottomNav() {
               </span>
             )}
           </div>
-          <span className="text-[10px] tracking-tight mt-0.5 leading-none">Gate Posts</span>
+          <span className="text-[10px] tracking-tight mt-0.5 leading-none">{t("Gate Posts", "Gate Posts")}</span>
         </Link>
 
         {/* Prominent Center Scanner Launch Button */}
@@ -62,11 +64,11 @@ export function InspectorBottomNav() {
           <Link
             href="/inspector/scanner"
             className="flex flex-col items-center justify-center w-13 h-13 rounded-2xl bg-amber-600 hover:bg-amber-700 text-white shadow-lg shadow-amber-600/30 active:scale-95 transition-all touch-manipulation ring-4 ring-white dark:ring-[#0F1117]"
-            title="Open Live Ticket Scanner"
+            title={t("Open Live Ticket Scanner", "Open Live Ticket Scanner")}
           >
             <QrCode className="w-6 h-6 stroke-[2.5]" />
           </Link>
-          <span className="block text-center text-[9px] font-bold text-amber-600 dark:text-amber-400 mt-0.5">Scan</span>
+          <span className="block text-center text-[9px] font-bold text-amber-600 dark:text-amber-400 mt-0.5">{t("Scan", "Scan")}</span>
         </div>
 
         {/* Scan History */}
@@ -86,7 +88,7 @@ export function InspectorBottomNav() {
               </span>
             )}
           </div>
-          <span className="text-[10px] tracking-tight mt-0.5 leading-none">History</span>
+          <span className="text-[10px] tracking-tight mt-0.5 leading-none">{t("History", "History")}</span>
         </Link>
 
         {/* Profile */}
@@ -99,7 +101,7 @@ export function InspectorBottomNav() {
           }`}
         >
           <User className={`w-5 h-5 ${pathname.startsWith("/inspector/profile") ? "stroke-[2.5]" : "stroke-[1.8]"}`} />
-          <span className="text-[10px] tracking-tight mt-0.5 leading-none">Profile</span>
+          <span className="text-[10px] tracking-tight mt-0.5 leading-none">{t("Profile", "Profile")}</span>
         </Link>
       </div>
     </nav>

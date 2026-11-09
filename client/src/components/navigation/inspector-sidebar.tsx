@@ -25,7 +25,9 @@ import {
   Ticket,
 } from "lucide-react";
 import { useInspectorStore } from "@/stores/inspector.store";
+import { useAdminStore } from "@/stores/admin.store";
 import { useAuthStore } from "@/stores/auth.store";
+import { useLanguage } from "@/providers/language-provider";
 import { toast } from "sonner";
 
 interface NavItem {
@@ -50,6 +52,9 @@ export function InspectorSidebar({
   onCloseMobile,
 }: InspectorSidebarProps = {}) {
   const pathname = usePathname();
+  const { t } = useLanguage();
+  const { settings } = useAdminStore();
+  const brandName = settings?.siteName || settings?.platformName || "TIKORA";
   const [internalCollapsed, setInternalCollapsed] = useState(false);
   const [internalMobileOpen, setInternalMobileOpen] = useState(false);
   const [mounted, setMounted] = useState(false);
@@ -225,13 +230,21 @@ export function InspectorSidebar({
           className="flex items-center gap-2.5 truncate"
           onClick={handleCloseMobile}
         >
-          <div className="w-9 h-9 rounded-2xl bg-amber-600 hover:bg-amber-500 text-white flex items-center justify-center font-bold text-xs shrink-0 shadow-xs">
-            {getBrandIcon()}
-          </div>
+          {settings?.logoUrl ? (
+            <img
+              src={settings.logoUrl}
+              alt={brandName}
+              className="w-9 h-9 rounded-2xl object-contain bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-0.5 shadow-xs shrink-0"
+            />
+          ) : (
+            <div className="w-9 h-9 rounded-2xl bg-amber-600 hover:bg-amber-500 text-white flex items-center justify-center font-bold text-xs shrink-0 shadow-xs">
+              {getBrandIcon()}
+            </div>
+          )}
           {!collapsed && (
             <div className="truncate">
-              <p className="text-sm font-black text-[#0F172A] dark:text-white tracking-tight leading-none">
-                TIKORA
+              <p suppressHydrationWarning className="text-sm font-black text-[#0F172A] dark:text-white tracking-tight leading-none">
+                {brandName}
               </p>
               <p className="text-[10px] text-amber-600 dark:text-amber-400 font-extrabold uppercase tracking-wider mt-1 truncate">
                 {getSubtitle()}
@@ -316,7 +329,7 @@ export function InspectorSidebar({
                     : "text-slate-400"
                 }`}
               />
-              {!collapsed && <span className="truncate">{item.label}</span>}
+              {!collapsed && <span className="truncate">{t(item.label)}</span>}
               {!collapsed && item.badge && (
                 <span
                   className={`ml-auto text-[9px] px-2 py-0.5 rounded-full font-bold ${
@@ -341,7 +354,7 @@ export function InspectorSidebar({
               <Shield className="w-3.5 h-3.5 text-amber-600 shrink-0" />
               <span className="truncate font-mono">{profile.inspectorId}</span>
             </div>
-            <span className="text-[9px] font-bold text-emerald-600">Active</span>
+            <span className="text-[9px] font-bold text-emerald-600">{t("status.active", "Active")}</span>
           </div>
         )}
 
@@ -351,10 +364,10 @@ export function InspectorSidebar({
           className={`w-full flex items-center gap-2.5 px-3 py-2 text-xs font-semibold text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-950/20 rounded-xl transition-all cursor-pointer ${
             collapsed ? "justify-center px-2" : ""
           }`}
-          title={collapsed ? "Sign Out" : undefined}
+          title={collapsed ? t("nav.logout", "Sign Out") : undefined}
         >
           <LogOut className="w-4 h-4 shrink-0" />
-          {!collapsed && <span>Sign Out</span>}
+          {!collapsed && <span>{t("nav.logout", "Sign Out")}</span>}
         </button>
       </div>
     </div>

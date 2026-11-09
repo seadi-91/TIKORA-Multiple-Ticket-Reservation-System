@@ -5,6 +5,7 @@ import { Search, MapPin, SlidersHorizontal, LayoutGrid, List, RotateCcw } from "
 import { TicketCategory, TicketFilterState } from "@/types/ticket.types";
 import { ETHIOPIAN_CITIES } from "@/lib/constants";
 import { TicketService } from "@/services/ticket.service";
+import { useLanguage } from "@/providers/language-provider";
 
 interface TicketFilterProps {
   filters: TicketFilterState;
@@ -13,12 +14,13 @@ interface TicketFilterProps {
 }
 
 export function TicketFilter({ filters, onFilterChange, onResetFilters }: TicketFilterProps) {
+  const { t, getCategoryName } = useLanguage();
   const categories: { id: TicketCategory | "ALL"; label: string }[] = [
-    { id: "ALL", label: "All Passes" },
-    { id: "BUS", label: "BUS" },
-    { id: "CINEMA", label: "CINEMA" },
-    { id: "EVENT", label: "EVENT" },
-    { id: "SPORTS", label: "SPORTS" },
+    { id: "ALL", label: t("home.allPasses", "All Passes") },
+    { id: "BUS", label: getCategoryName("BUS") },
+    { id: "CINEMA", label: getCategoryName("CINEMA") },
+    { id: "EVENT", label: getCategoryName("EVENT") },
+    { id: "SPORTS", label: getCategoryName("SPORTS") },
   ];
 
   return (
@@ -42,7 +44,7 @@ export function TicketFilter({ filters, onFilterChange, onResetFilters }: Ticket
               }`}
             >
               <span>{cat.label}</span>
-              {!isSectorActive && <span className="ml-1 text-[8px] opacity-75">(Off)</span>}
+              {!isSectorActive && <span className="ml-1 text-[8px] opacity-75">({t("home.temporarilyOff", "Off")})</span>}
             </button>
           );
         })}
@@ -55,7 +57,7 @@ export function TicketFilter({ filters, onFilterChange, onResetFilters }: Ticket
           <Search className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" />
           <input
             type="text"
-            placeholder="Search passes, bus fleets, movies, derbies..."
+            placeholder={t("hero.searchPlaceholder", "Search passes, bus fleets, movies, derbies...")}
             value={filters.searchQuery}
             onChange={(e) => onFilterChange({ searchQuery: e.target.value })}
             className="w-full pl-9 pr-3 py-2 text-xs rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-900/50 text-foreground placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-amber-500/30 transition-all"
@@ -70,7 +72,7 @@ export function TicketFilter({ filters, onFilterChange, onResetFilters }: Ticket
             onChange={(e) => onFilterChange({ city: e.target.value })}
             className="w-full pl-9 pr-3 py-2 text-xs rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-900/50 text-foreground focus:outline-none focus:ring-2 focus:ring-amber-500/30 transition-all appearance-none cursor-pointer"
           >
-            <option value="">All Regions</option>
+            <option value="">{t("hero.allCategories", "All Regions")}</option>
             {ETHIOPIAN_CITIES.map((city) => (
               <option key={city} value={city}>
                 {city}
@@ -87,10 +89,10 @@ export function TicketFilter({ filters, onFilterChange, onResetFilters }: Ticket
             onChange={(e) => onFilterChange({ sortBy: e.target.value as any })}
             className="w-full pl-8 pr-3 py-2 text-xs rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-900/50 text-foreground focus:outline-none focus:ring-2 focus:ring-amber-500/30 transition-all appearance-none cursor-pointer"
           >
-            <option value="POPULAR">Most Popular</option>
-            <option value="LATEST">Latest Added</option>
-            <option value="PRICE_ASC">Price: Low to High</option>
-            <option value="PRICE_DESC">Price: High to Low</option>
+            <option value="POPULAR">{t("common.popular", "Most Popular")}</option>
+            <option value="LATEST">{t("common.latest", "Latest Added")}</option>
+            <option value="PRICE_ASC">{t("common.priceAsc", "Price: Low to High")}</option>
+            <option value="PRICE_DESC">{t("common.priceDesc", "Price: High to Low")}</option>
           </select>
         </div>
 

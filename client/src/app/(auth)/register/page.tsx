@@ -33,10 +33,12 @@ import { useProviderStore } from "@/stores/provider.store";
 import { authService } from "@/services/auth.service";
 import { OrganizationCategory } from "@/types/auth.types";
 import { toast } from "sonner";
+import { useTranslation } from "@/providers/language-provider";
 
 function RegisterWizardContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
+  const { t } = useTranslation();
 
   // If URL has ?type=..., start at step 2 with that type
   const queryType = searchParams.get("type");
@@ -321,13 +323,13 @@ function RegisterWizardContent() {
       <div className="space-y-2">
         <div className="flex items-center justify-between text-[11px]">
           <span className="font-bold text-slate-900 dark:text-white">
-            Step {step} of {totalSteps}
+            {t("common.step", "Step")} {step} {t("common.of", "of")} {totalSteps}
           </span>
           <span className="font-semibold text-slate-600 dark:text-slate-400">
-            {step === 1 && "Account Type"}
-            {step === 2 && (accountType === "customer" ? "Personal Details" : "Business Details")}
-            {step === 3 && (accountType === "customer" ? "Security & Password" : "Contact & Settlement")}
-            {step === 4 && "Security & Password"}
+            {step === 1 && t("auth.accountType", "Account Type")}
+            {step === 2 && (accountType === "customer" ? t("auth.personalDetails", "Personal Details") : t("auth.businessDetails", "Business Details"))}
+            {step === 3 && (accountType === "customer" ? t("auth.securityPassword", "Security & Password") : t("auth.contactSettlement", "Contact & Settlement"))}
+            {step === 4 && t("auth.securityPassword", "Security & Password")}
           </span>
         </div>
 
@@ -361,10 +363,10 @@ function RegisterWizardContent() {
         <div className="space-y-4">
           <div className="space-y-1 text-center sm:text-left">
             <h1 className="text-base sm:text-lg font-bold text-slate-900 dark:text-white tracking-tight">
-              Create Your Account
+              {t("auth.registerTitle", "Create Your Account")}
             </h1>
             <p className="text-xs text-slate-500 dark:text-slate-400">
-              Select how you will be using {APP_NAME} to continue.
+              {t("auth.registerSubtitle", "Select how you will be using TIKORA to continue.")}
             </p>
           </div>
 
@@ -392,10 +394,10 @@ function RegisterWizardContent() {
                   <div>
                     <div className="flex items-center gap-2">
                       <span className="text-xs font-bold text-slate-900 dark:text-white">
-                        Customer Account
+                        {t("auth.customerRegister", "Customer Account")}
                       </span>
                       <span className="text-[9px] font-bold px-2 py-0.5 rounded-full bg-slate-100 dark:bg-white/10 text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-white/10">
-                        Individual
+                        {t("auth.individual", "Individual")}
                       </span>
                     </div>
                     <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5 leading-relaxed">
@@ -439,10 +441,10 @@ function RegisterWizardContent() {
                   <div>
                     <div className="flex items-center gap-2">
                       <span className="text-xs font-bold text-slate-900 dark:text-white">
-                        Provider Partner
+                        {t("auth.providerRegister", "Provider Partner")}
                       </span>
                       <span className="text-[9px] font-bold px-2 py-0.5 rounded-full bg-slate-100 dark:bg-white/10 text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-white/10">
-                        Business
+                        {t("auth.business", "Business")}
                       </span>
                     </div>
                     <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5 leading-relaxed">
@@ -478,7 +480,7 @@ function RegisterWizardContent() {
                 ) : (
                   <GoogleIcon className="w-4 h-4 shrink-0" />
                 )}
-                <span>Continue with Google</span>
+                <span>{t("auth.continueGoogle", "Continue with Google")}</span>
               </button>
 
               <button
@@ -492,13 +494,13 @@ function RegisterWizardContent() {
                 ) : (
                   <GithubIcon className="w-4 h-4 shrink-0 text-slate-900 dark:text-white" />
                 )}
-                <span>Continue with GitHub</span>
+                <span>{t("auth.continueGithub", "Continue with GitHub")}</span>
               </button>
 
               <div className="relative flex py-1 items-center">
                 <div className="flex-grow border-t border-slate-200/80 dark:border-white/10" />
                 <span className="flex-shrink mx-3 text-[10px] uppercase tracking-wider text-slate-400 font-medium">
-                  Or manual registration
+                  {t("auth.orDivider", "Or manual registration")}
                 </span>
                 <div className="flex-grow border-t border-slate-200/80 dark:border-white/10" />
               </div>
@@ -511,18 +513,18 @@ function RegisterWizardContent() {
             onClick={handleNextFromStep1}
             className="w-full py-2.5 px-4 rounded-xl bg-slate-900 hover:bg-black text-white dark:bg-white dark:text-slate-950 dark:hover:bg-slate-100 text-xs font-bold shadow-sm active:scale-98 transition-all flex items-center justify-center gap-1.5 cursor-pointer"
           >
-            <span>Next</span>
+            <span>{t("common.next", "Next")}</span>
             <ArrowRight className="w-3.5 h-3.5" />
           </button>
 
           {/* Sign In Link */}
           <div className="pt-3 border-t border-slate-100 dark:border-white/10 text-center text-[11px] text-slate-500 dark:text-slate-400">
-            Already have an account?{" "}
+            {t("auth.alreadyRegistered", "Already have an account?")}{" "}
             <Link
               href={AUTH_ROUTES.LOGIN}
               className="font-bold text-slate-900 dark:text-white hover:text-amber-600 dark:hover:text-amber-400 hover:underline"
             >
-              Sign In
+              {t("nav.signIn", "Sign In")}
             </Link>
           </div>
         </div>

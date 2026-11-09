@@ -21,6 +21,7 @@ import { BookingStatusBadge } from "./booking-status";
 import { formatCurrency } from "@/lib/format-currency";
 import { formatDate } from "@/lib/format-date";
 import { useBookingStore } from "@/stores/booking.store";
+import { useLanguage } from "@/providers/language-provider";
 import { toast } from "sonner";
 
 interface BookingCardProps {
@@ -30,6 +31,7 @@ interface BookingCardProps {
 
 export function BookingCard({ booking, onViewTicket }: BookingCardProps) {
   const { cancelBooking } = useBookingStore();
+  const { t } = useLanguage();
   const [showCancelDialog, setShowCancelDialog] = useState(false);
 
   const getCategoryMeta = () => {
@@ -126,7 +128,7 @@ export function BookingCard({ booking, onViewTicket }: BookingCardProps) {
             className="text-xs font-bold text-muted-foreground hover:text-amber-600 inline-flex items-center gap-1.5 transition-colors"
           >
             <FileText className="w-3.5 h-3.5" />
-            <span>Details & Tax E-Receipt</span>
+            <span>{t("orders.viewDetails", "Details & Tax E-Receipt")}</span>
           </Link>
 
           <div className="flex items-center gap-2">
@@ -137,14 +139,14 @@ export function BookingCard({ booking, onViewTicket }: BookingCardProps) {
                   className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl bg-amber-600 hover:bg-amber-700 text-white text-xs font-bold transition-all shadow-xs active:scale-95 touch-manipulation min-h-[34px]"
                 >
                   <QrCode className="w-3.5 h-3.5" />
-                  <span>Show QR Pass</span>
+                  <span>{t("orders.showQr", "Show QR Pass")}</span>
                 </Link>
 
                 <button
                   type="button"
                   onClick={handleDownload}
                   className="p-2 rounded-xl border border-slate-200 dark:border-slate-800 text-muted-foreground hover:text-foreground hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors cursor-pointer min-w-[34px] min-h-[34px] flex items-center justify-center touch-manipulation"
-                  title="Download PDF Pass"
+                  title={t("orders.downloadPass", "Download PDF Pass")}
                 >
                   <Download className="w-3.5 h-3.5" />
                 </button>

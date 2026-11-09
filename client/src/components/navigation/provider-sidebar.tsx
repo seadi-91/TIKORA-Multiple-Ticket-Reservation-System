@@ -32,8 +32,10 @@ import {
   MapPin,
 } from "lucide-react";
 import { useProviderStore } from "@/stores/provider.store";
+import { useAdminStore } from "@/stores/admin.store";
 import { useAuthStore } from "@/stores/auth.store";
 import { TicketService } from "@/services/ticket.service";
+import { useLanguage } from "@/providers/language-provider";
 import { toast } from "sonner";
 
 interface ProviderSidebarProps {
@@ -51,7 +53,10 @@ export function ProviderSidebar({
 }: ProviderSidebarProps) {
   const pathname = usePathname();
   const { organization, notifications, refunds, bookings: storeBookings } = useProviderStore();
+  const { settings } = useAdminStore();
+  const brandName = settings?.siteName || settings?.platformName || "TIKORA";
   const { logout } = useAuthStore();
+  const { t } = useLanguage();
   const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
@@ -168,23 +173,23 @@ export function ProviderSidebar({
       case "CINEMA":
         return [
           {
-            label: "Cinema Operations",
+            label: t("Cinema Operations"),
             href: "/provider/cinema",
             icon: Film,
             hasSubmenu: true,
             isExpanded: cinemaExpanded,
             onToggle: () => setCinemaExpanded(!cinemaExpanded),
             subItems: [
-              { label: "Screenings Hub", href: "/provider/cinema", exact: true },
-              { label: "Movie Catalog", href: "/provider/cinema/movies" },
-              { label: "Showtimes", href: "/provider/cinema/showtimes" },
+              { label: t("Screenings Hub"), href: "/provider/cinema", exact: true },
+              { label: t("Movie Catalog"), href: "/provider/cinema/movies" },
+              { label: t("Showtimes"), href: "/provider/cinema/showtimes" },
             ],
           },
         ];
       case "EVENT":
         return [
           {
-            label: "Events & Concerts",
+            label: t("Events & Concerts"),
             href: "/provider/events",
             icon: Calendar,
           },
@@ -192,7 +197,7 @@ export function ProviderSidebar({
       case "SPORTS":
         return [
           {
-            label: "Stadium Sports",
+            label: t("Stadium Sports"),
             href: "/provider/sports",
             icon: Trophy,
           },
@@ -201,17 +206,17 @@ export function ProviderSidebar({
       default:
         return [
           {
-            label: "Bus Operations",
+            label: t("Bus Operations"),
             href: "/provider/bus",
             icon: Bus,
             hasSubmenu: true,
             isExpanded: busExpanded,
             onToggle: () => setBusExpanded(!busExpanded),
             subItems: [
-              { label: "Fleet Hub", href: "/provider/bus", exact: true },
-              { label: "Routes & Fares", href: "/provider/bus/routes" },
-              { label: "Schedules", href: "/provider/bus/schedules" },
-              { label: "Daily Trips", href: "/provider/bus/trips" },
+              { label: t("Fleet Hub"), href: "/provider/bus", exact: true },
+              { label: t("Routes & Fares"), href: "/provider/bus/routes" },
+              { label: t("Schedules"), href: "/provider/bus/schedules" },
+              { label: t("Daily Trips"), href: "/provider/bus/trips" },
             ],
           },
         ];
@@ -220,19 +225,19 @@ export function ProviderSidebar({
 
   const navGroups = [
     {
-      group: "MAIN",
+      group: t("MAIN"),
       items: [
         {
-          label: "Overview",
+          label: t("nav.dashboard", "Overview"),
           href: "/provider",
           exact: true,
           icon: LayoutDashboard,
         },
         {
-          label: "Organization Profile",
+          label: t("provider.settings", "Organization Profile"),
           href: "/provider/organization",
           icon: Building2,
-          badge: organization.verified ? "Verified" : "Pending",
+          badge: organization.verified ? t("status.confirmed", "Verified") : t("status.pending", "Pending"),
           badgeColor: organization.verified
             ? "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/20"
             : "bg-amber-500/10 text-amber-600 dark:text-amber-400 border-amber-500/20",
@@ -240,41 +245,41 @@ export function ProviderSidebar({
       ],
     },
     {
-      group: `${organization.category} OPERATIONS`,
+      group: t(`${organization.category} OPERATIONS`),
       items: getSectorServiceItems(),
     },
     {
-      group: "INVENTORY & SALES",
+      group: t("INVENTORY & SALES"),
       items: [
         {
-          label: "Tickets Management",
+          label: t("provider.tickets", "Tickets Management"),
           href: "/provider/tickets",
           icon: Ticket,
         },
         {
-          label: "Seat Inventory",
+          label: t("provider.inventory", "Seat Inventory"),
           href: "/provider/inventory",
           icon: Boxes,
-          badge: `${liveAvailableSeats} left`,
+          badge: `${liveAvailableSeats} ${t("left")}`,
         },
         {
-          label: "Customer Bookings",
+          label: t("provider.bookings", "Customer Bookings"),
           href: "/provider/bookings",
           icon: ShoppingBag,
-          badge: `${liveBookingsCount} bookings`,
+          badge: `${liveBookingsCount} ${t("bookings")}`,
         },
       ],
     },
     {
-      group: "FINANCIALS",
+      group: t("FINANCIALS"),
       items: [
         {
-          label: "Sales & Revenue",
+          label: t("provider.payments", "Sales & Revenue"),
           href: "/provider/payments",
           icon: CreditCard,
         },
         {
-          label: "Refund Requests",
+          label: t("Refund Requests"),
           href: "/provider/refunds",
           icon: RotateCcw,
           badge: pendingRefunds > 0 ? `${pendingRefunds}` : undefined,
@@ -283,25 +288,25 @@ export function ProviderSidebar({
       ],
     },
     {
-      group: "TEAM & GATE CONTROL",
+      group: t("TEAM & GATE CONTROL"),
       items: [
         {
-          label: "Staff & Inspectors",
+          label: t("Staff & Inspectors"),
           href: "/provider/staff",
           icon: Users,
         },
       ],
     },
     {
-      group: "ANALYTICS & SETTINGS",
+      group: t("ANALYTICS & SETTINGS"),
       items: [
         {
-          label: "Reports & Insights",
+          label: t("Reports & Insights"),
           href: "/provider/reports",
           icon: BarChart3,
         },
         {
-          label: "Provider Settings",
+          label: t("Provider Settings"),
           href: "/provider/settings",
           icon: Settings,
         },
@@ -316,14 +321,22 @@ export function ProviderSidebar({
       {/* Brand Header */}
       <div className="h-16 px-4 flex items-center justify-between border-b border-[#E2E8F0] dark:border-slate-800 shrink-0">
         <Link href="/provider" className="flex items-center gap-2.5 group">
-          <div className="w-8 h-8 rounded-xl bg-[#B45309] flex items-center justify-center text-white shadow-xs group-hover:scale-105 transition-transform shrink-0">
-            <Ticket className="w-4 h-4 fill-white" />
-          </div>
+          {settings?.logoUrl ? (
+            <img
+              src={settings.logoUrl}
+              alt={brandName}
+              className="w-8 h-8 rounded-xl object-contain bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-0.5 shadow-xs shrink-0 group-hover:scale-105 transition-transform"
+            />
+          ) : (
+            <div className="w-8 h-8 rounded-xl bg-[#B45309] flex items-center justify-center text-white shadow-xs group-hover:scale-105 transition-transform shrink-0">
+              <Ticket className="w-4 h-4 fill-white" />
+            </div>
+          )}
           {!collapsed && (
             <div>
               <div className="flex items-center gap-1.5">
-                <span className="font-black text-sm tracking-tight text-[#0F172A] dark:text-white">
-                  TIKORA
+                <span suppressHydrationWarning className="font-black text-sm tracking-tight text-[#0F172A] dark:text-white">
+                  {brandName}
                 </span>
                 <span className="text-[9px] uppercase font-extrabold tracking-widest px-1.5 py-0.5 rounded-md bg-[#B45309]/10 text-[#B45309] dark:text-amber-400">
                   {organization.category}
@@ -370,7 +383,7 @@ export function ProviderSidebar({
               <div className="flex items-center gap-1 mt-0.5">
                 <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 shrink-0" />
                 <span className="text-[10px] font-semibold text-emerald-600 dark:text-emerald-400">
-                  {organization.approvalStatus === "APPROVED" ? "Approved Provider" : "Pending Review"}
+                  {organization.approvalStatus === "APPROVED" ? t("Approved Provider") : t("Pending Review")}
                 </span>
               </div>
             </div>
@@ -384,7 +397,7 @@ export function ProviderSidebar({
           <div key={gIdx} className="space-y-1">
             {!collapsed && (
               <span className="px-2 text-[9px] font-extrabold uppercase tracking-widest text-slate-400 dark:text-slate-500 block">
-                {group.group}
+                {t(group.group)}
               </span>
             )}
 
@@ -474,7 +487,7 @@ export function ProviderSidebar({
           className="flex items-center gap-2.5 px-2.5 py-1.5 rounded-xl text-xs font-medium text-slate-500 hover:text-[#0F172A] dark:text-slate-400 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
         >
           <ExternalLink className="w-3.5 h-3.5 text-slate-400" />
-          {!collapsed && <span>View Customer Site</span>}
+          {!collapsed && <span>{t("View Customer Site")}</span>}
         </Link>
 
         <button
@@ -488,7 +501,7 @@ export function ProviderSidebar({
           className="w-full flex items-center gap-2.5 px-2.5 py-1.5 rounded-xl text-xs font-semibold text-rose-600 dark:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-950/40 transition-colors cursor-pointer"
         >
           <LogOut className="w-3.5 h-3.5" />
-          {!collapsed && <span>Sign Out</span>}
+          {!collapsed && <span>{t("nav.logout", "Sign Out")}</span>}
         </button>
       </div>
     </div>

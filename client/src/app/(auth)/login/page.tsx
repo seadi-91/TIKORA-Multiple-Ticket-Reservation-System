@@ -18,11 +18,13 @@ import { FormError } from "@/components/forms/form-error";
 import { useAuthStore } from "@/stores/auth.store";
 import { authService } from "@/services/auth.service";
 import { AUTH_ROUTES } from "@/lib/constants";
+import { useLanguage } from "@/providers/language-provider";
 
 function LoginForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const setAuth = useAuthStore((state) => state.setAuth);
+  const { t } = useLanguage();
 
   const [identifier, setIdentifier] = useState("");
   const [password, setPassword] = useState("");
@@ -167,13 +169,13 @@ function LoginForm() {
       <div className="space-y-1.5 text-center sm:text-left">
         <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-slate-100 dark:bg-white/[0.06] border border-slate-200 dark:border-white/10 text-slate-700 dark:text-slate-300 text-[10px] font-bold uppercase tracking-wider mb-1">
           <Sparkles className="w-3 h-3 text-amber-600 dark:text-amber-400" />
-          <span>Unified Access</span>
+          <span>{t("auth.unifiedAccess", "Unified Access")}</span>
         </div>
         <h2 className="text-2xl font-black tracking-tight text-slate-900 dark:text-white">
-          Sign In to TIKORA
+          {t("auth.signInTitle", "Sign In to TIKORA")}
         </h2>
         <p className="text-xs text-slate-500 dark:text-slate-400">
-          Access your digital ticket wallet, bookings, or operator portal.
+          {t("auth.signInSubtitle", "Access your digital ticket wallet, bookings, or operator portal.")}
         </p>
       </div>
 
@@ -182,12 +184,12 @@ function LoginForm() {
           <FormError message={error} onDismiss={() => setError(null)} />
           {(error.includes("not registered") || searchParams.get("error") === "AccountNotRegistered") && (
             <div className="p-3 rounded-xl bg-amber-500/10 border border-amber-500/20 text-xs text-amber-800 dark:text-amber-300 flex items-center justify-between gap-2">
-              <span>Don&apos;t have an account yet?</span>
+              <span>{t("auth.noAccount", "Don't have an account yet?")}</span>
               <Link
                 href="/register?type=customer"
                 className="font-bold underline text-amber-900 dark:text-amber-200 hover:opacity-80 shrink-0"
               >
-                Register Now &rarr;
+                {t("auth.registerNow", "Register Now")} &rarr;
               </Link>
             </div>
           )}
@@ -207,7 +209,7 @@ function LoginForm() {
           ) : (
             <GoogleIcon className="w-4 h-4 shrink-0" />
           )}
-          <span>Continue with Google</span>
+          <span>{t("auth.continueGoogle", "Continue with Google")}</span>
         </button>
 
         <button
@@ -221,13 +223,13 @@ function LoginForm() {
           ) : (
             <GithubIcon className="w-4 h-4 shrink-0 text-slate-900 dark:text-white" />
           )}
-          <span>Continue with GitHub</span>
+          <span>{t("auth.continueGithub", "Continue with GitHub")}</span>
         </button>
 
         <div className="relative flex py-1 items-center">
           <div className="flex-grow border-t border-slate-200/80 dark:border-white/10" />
           <span className="flex-shrink mx-3 text-[10px] uppercase tracking-wider text-slate-400 font-medium">
-            Or with email / phone
+            {t("auth.orDivider", "Or with email / phone")}
           </span>
           <div className="flex-grow border-t border-slate-200/80 dark:border-white/10" />
         </div>
@@ -235,12 +237,12 @@ function LoginForm() {
 
       <form onSubmit={handleLogin} className="space-y-4">
         <FormInput
-          label="Email or Phone Number"
+          label={t("auth.emailOrPhone", "Email or Phone Number")}
           type="text"
           name="identifier"
           value={identifier}
           onChange={(e) => setIdentifier(e.target.value)}
-          placeholder="your.email@example.com or 09... / +251..."
+          placeholder={t("auth.emailOrPhonePlaceholder", "your.email@example.com or 09... / +251...")}
           leftIcon={<Mail className="w-4 h-4 text-slate-400" />}
           autoComplete="username"
           required
@@ -248,7 +250,7 @@ function LoginForm() {
 
         <div className="space-y-1">
           <FormInput
-            label="Password"
+            label={t("auth.password", "Password")}
             type="password"
             name="password"
             value={password}
@@ -267,14 +269,14 @@ function LoginForm() {
                 onChange={(e) => setRememberMe(e.target.checked)}
                 className="w-4 h-4 rounded text-slate-900 dark:text-slate-100 focus:ring-slate-900 dark:focus:ring-white border-slate-300 dark:border-slate-700"
               />
-              <span>Remember me</span>
+              <span>{t("auth.rememberMe", "Remember me")}</span>
             </label>
 
             <Link
               href={AUTH_ROUTES.FORGOT_PASSWORD}
               className="font-medium text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:underline"
             >
-              Forgot password?
+              {t("auth.forgotPassword", "Forgot password?")}
             </Link>
           </div>
         </div>
@@ -291,17 +293,17 @@ function LoginForm() {
           {isSuccess ? (
             <>
               <CheckCircle2 className="w-4 h-4 text-white animate-bounce" />
-              <span>Login Successful!</span>
+              <span>{t("auth.loginSuccess", "Login Successful!")}</span>
             </>
           ) : loading ? (
             <span className="flex items-center gap-2">
               <span className="w-4 h-4 border-2 border-white/30 border-t-white dark:border-slate-950/30 dark:border-t-slate-950 rounded-full animate-spin" />
-              <span>Verifying credentials...</span>
+              <span>{t("auth.verifying", "Verifying credentials...")}</span>
             </span>
           ) : (
             <>
               <LogIn className="w-4 h-4" />
-              <span>Sign In</span>
+              <span>{t("nav.signIn", "Sign In")}</span>
               <ArrowRight className="w-4 h-4 ml-auto" />
             </>
           )}
@@ -318,10 +320,10 @@ function LoginForm() {
             </div>
             <div className="flex flex-col min-w-0">
               <span className="font-bold text-xs sm:text-sm text-emerald-900 dark:text-emerald-100">
-                Login Successful!
+                {t("auth.loginSuccess", "Login Successful!")}
               </span>
               <span className="text-[11px] font-medium text-emerald-700 dark:text-emerald-300 truncate">
-                Welcome back! Redirecting to your dashboard...
+                {t("auth.redirecting", "Welcome back! Redirecting to your dashboard...")}
               </span>
             </div>
           </div>
@@ -330,12 +332,12 @@ function LoginForm() {
 
       {/* Footer Register Link */}
       <div className="text-center text-xs text-slate-500 dark:text-slate-400 pt-1">
-        <span>Don&apos;t have an account yet? </span>
+        <span>{t("auth.noAccount", "Don't have an account yet?")} </span>
         <Link
           href={AUTH_ROUTES.REGISTER_CUSTOMER}
           className="font-bold text-slate-900 dark:text-white hover:text-amber-600 dark:hover:text-amber-400 hover:underline"
         >
-          Create Customer Account
+          {t("auth.createCustomerAccount", "Create Customer Account")}
         </Link>
       </div>
     </div>

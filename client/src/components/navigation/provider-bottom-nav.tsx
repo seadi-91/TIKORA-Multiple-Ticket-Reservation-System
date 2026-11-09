@@ -11,6 +11,7 @@ import {
   Menu,
 } from "lucide-react";
 import { useProviderStore } from "@/stores/provider.store";
+import { useLanguage } from "@/providers/language-provider";
 
 interface ProviderBottomNavProps {
   onOpenMenu?: () => void;
@@ -19,31 +20,32 @@ interface ProviderBottomNavProps {
 export function ProviderBottomNav({ onOpenMenu }: ProviderBottomNavProps) {
   const pathname = usePathname();
   const { refunds, staffMembers } = useProviderStore();
+  const { t } = useLanguage();
 
   const pendingRefunds = refunds.filter((r) => r.status === "PENDING").length;
 
   const navItems = [
     {
-      label: "Overview",
+      label: t("nav.dashboard", "Overview"),
       href: "/provider",
       icon: LayoutDashboard,
       isActive: pathname === "/provider",
     },
     {
-      label: "Bookings",
+      label: t("nav.myBookings", "Bookings"),
       href: "/provider/bookings",
       icon: ShoppingBag,
       isActive: pathname.startsWith("/provider/bookings"),
     },
     {
-      label: "Inventory",
+      label: t("provider.inventory", "Inventory"),
       href: "/provider/inventory",
       icon: Boxes,
       badge: pendingRefunds > 0 ? `${pendingRefunds}` : undefined,
       isActive: pathname.startsWith("/provider/inventory") || pathname.startsWith("/provider/tickets"),
     },
     {
-      label: "Staff",
+      label: t("provider.staff", "Staff"),
       href: "/provider/staff",
       icon: Users,
       badge: staffMembers.length > 0 ? `${staffMembers.length}` : undefined,

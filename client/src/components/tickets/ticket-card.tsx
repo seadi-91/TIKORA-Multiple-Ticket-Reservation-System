@@ -7,6 +7,7 @@ import { TicketItem, TicketCategory } from "@/types/ticket.types";
 import { formatCurrency } from "@/lib/format-currency";
 import { useBookingStore } from "@/stores/booking.store";
 import { useAuthStore } from "@/stores/auth.store";
+import { useLanguage } from "@/providers/language-provider";
 
 interface TicketCardProps {
   ticket: TicketItem;
@@ -24,28 +25,29 @@ export const FIXED_CATEGORY_IMAGES: Record<TicketCategory, string> = {
 
 export function TicketCard({ ticket, viewMode = "grid" }: TicketCardProps) {
   const { toggleFavorite, isFavorite } = useBookingStore();
+  const { t, getCategoryName } = useLanguage();
   const favorited = isFavorite(ticket.id);
 
   const getCategoryMeta = () => {
     switch (ticket.category) {
       case "BUS":
         return {
-          label: "Bus",
+          label: getCategoryName("BUS"),
           linkHref: `/bus/${ticket.id}`,
         };
       case "CINEMA":
         return {
-          label: "Cinema",
+          label: getCategoryName("CINEMA"),
           linkHref: `/cinema/${ticket.id}`,
         };
       case "EVENT":
         return {
-          label: "Event",
+          label: getCategoryName("EVENT"),
           linkHref: `/events/${ticket.id}`,
         };
       case "SPORTS":
         return {
-          label: "Sports",
+          label: getCategoryName("SPORTS"),
           linkHref: `/sports/${ticket.id}`,
         };
     }
@@ -159,7 +161,7 @@ export function TicketCard({ ticket, viewMode = "grid" }: TicketCardProps) {
           <div className="flex items-center justify-between gap-2 pt-2.5 border-t border-dashed border-slate-200 dark:border-slate-800/80 mt-2">
             <div>
               <span className="text-[8px] sm:text-[9px] uppercase font-bold text-slate-400 dark:text-slate-500 block leading-none tracking-wider">
-                From
+                {t("ticket.startingFrom", "From")}
               </span>
               <span className="text-xs sm:text-sm font-extrabold text-slate-900 dark:text-white font-mono mt-0.5 block">
                 {formatCurrency(ticket.price)}
@@ -179,8 +181,8 @@ export function TicketCard({ ticket, viewMode = "grid" }: TicketCardProps) {
                 href={bookHref}
                 className="px-3.5 py-1.5 rounded-xl bg-amber-600 hover:bg-amber-500 active:bg-amber-700 text-white font-bold text-xs transition-all shadow-xs hover:shadow-amber-600/20 active:scale-95 flex items-center gap-1.5"
               >
-                <span>Book</span>
-                <ArrowRight className="w-3 h-3" />
+                <span>{t("ticket.bookNow", "Book")}</span>
+                <ArrowRight className="w-3 h-3 group-hover:translate-x-0.5 transition-transform" />
               </Link>
             </div>
           </div>
@@ -289,7 +291,7 @@ export function TicketCard({ ticket, viewMode = "grid" }: TicketCardProps) {
         <div className="pt-2.5 border-t border-dashed border-slate-200 dark:border-slate-800 flex items-center justify-between gap-1.5">
           <div className="min-w-0">
             <span className="text-[8px] sm:text-[9px] uppercase font-bold text-slate-400 dark:text-slate-500 block leading-tight tracking-wider">
-              From
+              {t("ticket.startingFrom", "From")}
             </span>
             <span className="text-xs sm:text-sm font-black text-slate-900 dark:text-white font-mono truncate block mt-0.5">
               {formatCurrency(ticket.price)}
@@ -311,7 +313,7 @@ export function TicketCard({ ticket, viewMode = "grid" }: TicketCardProps) {
               href={bookHref}
               className="px-2.5 sm:px-3 py-1.5 rounded-xl bg-amber-600 hover:bg-amber-500 active:bg-amber-700 text-white font-bold text-xs transition-all shadow-xs hover:shadow-amber-600/25 active:scale-95 flex items-center gap-1 shrink-0"
             >
-              <span>Book</span>
+              <span>{t("ticket.bookNow", "Book")}</span>
               <ArrowRight className="w-3 h-3 group-hover:translate-x-0.5 transition-transform" />
             </Link>
           </div>

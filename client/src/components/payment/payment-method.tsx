@@ -3,6 +3,7 @@
 import React, { useState } from "react";
 import { Phone, Building2, CreditCard, Wallet, ShieldCheck, Check } from "lucide-react";
 import { PAYMENT_METHODS } from "@/lib/constants";
+import { useLanguage } from "@/providers/language-provider";
 
 interface PaymentMethodSelectorProps {
   selectedMethod: string;
@@ -15,6 +16,7 @@ export function PaymentMethodSelector({
   onSelectMethod,
   customerPhone = "+251 91 123 4567",
 }: PaymentMethodSelectorProps) {
+  const { t } = useLanguage();
   const [phoneNumber, setPhoneNumber] = useState(customerPhone);
   const [cardNumber, setCardNumber] = useState("");
   const [cardExpiry, setCardExpiry] = useState("");
@@ -37,10 +39,10 @@ export function PaymentMethodSelector({
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between">
-        <h4 className="text-sm font-bold text-[#0F172A] dark:text-white">Choose Payment Method</h4>
+        <h4 className="text-sm font-bold text-[#0F172A] dark:text-white">{t("Payment Method", "Choose Payment Method")}</h4>
         <span className="text-[11px] text-emerald-600 dark:text-emerald-400 font-semibold flex items-center gap-1">
           <ShieldCheck className="w-3.5 h-3.5" />
-          <span>Encrypted 256-bit</span>
+          <span>{t("Encrypted Pass", "Encrypted 256-bit")}</span>
         </span>
       </div>
 

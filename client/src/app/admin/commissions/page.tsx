@@ -54,17 +54,60 @@ export default function AdminCommissionsPage() {
   };
 
   // Live commission transactions split from confirmed platform bookings
-  const commissionTransactions = bookings.map((b) => ({
-    id: `tx-${b.id}`,
-    bookingRef: b.reference,
-    provider: b.providerName,
-    category: b.category,
-    gross: b.totalAmount,
-    rate: b.totalAmount > 0 ? Number(((b.platformFee / b.totalAmount) * 100).toFixed(1)) : 5.0,
-    platformFee: b.platformFee,
-    providerNet: b.totalAmount - b.platformFee,
-    date: b.bookingDate,
-  }));
+  // Step 1: Customer Paid (Gross Fare)
+  // Step 2: VAT is deducted first -> Pre-Tax Base Fare = Customer Paid - VAT
+  // Step 3: Platform Commission is deducted from Pre-Tax Base Fare -> Platform Commission = Pre-Tax Base * Commission%
+  // Step 4: Provider Net = (Customer Paid - VAT) - Platform Commission
+  // Point-in-time snapshot integrity: Historical transactions preserve their exact rates at time of booking
+  const commissionTransactions = bookings.map((b) => {
+    const customerPaid = Number(b.customerPaid ?? b.totalAmount) || 0;
+    const vatRate = Number(b.vatRate ?? settings.vatTaxRate ?? 5.0);
+
+    let vatAmount = Number(b.vatAmount);
+    if (!vatAmount && customerPaid > 0) {
+      if (b.subtotal && b.subtotal < customerPaid) {
+        vatAmount = Math.round((customerPaid - b.subtotal) * 100) / 100;
+      } else {
+        const computedBase = Math.round((customerPaid / (1 + vatRate / 100)) * 100) / 100;
+        vatAmount = Math.max(0, Math.round((customerPaid - computedBase) * 100) / 100);
+      }
+    }
+
+    const preTaxBase = Math.max(0, Math.round((customerPaid - vatAmount) * 100) / 100);
+
+    const catObj = categories.find((c) => c.category === b.category);
+    let defaultCatRate = settings.defaultCommissionRate ?? 5.0;
+    if (b.category === "BUS") defaultCatRate = settings.busCommissionRate ?? defaultCatRate;
+    else if (b.category === "CINEMA") defaultCatRate = settings.cinemaCommissionRate ?? defaultCatRate;
+    else if (b.category === "EVENT") defaultCatRate = settings.eventCommissionRate ?? defaultCatRate;
+    else if (b.category === "SPORTS") defaultCatRate = settings.sportsCommissionRate ?? defaultCatRate;
+
+    const commissionRate = Number(b.commissionRate ?? catObj?.commissionRate ?? defaultCatRate);
+
+    const platformFee = Number(b.platformFee ?? Math.round(preTaxBase * (commissionRate / 100) * 100) / 100);
+    const providerNet = Number(b.providerNet ?? b.providerPayout ?? Math.max(0, Math.round((preTaxBase - platformFee) * 100) / 100));
+
+    return {
+      id: `tx-${b.id}`,
+      bookingRef: b.reference,
+      provider: b.providerName,
+      category: b.category,
+      customerPaid,
+      vatAmount,
+      vatRate,
+      preTaxBase,
+      commissionRate,
+      platformFee,
+      providerNet,
+      date: b.bookingDate,
+    };
+  });
+
+  const totalGrossCustomer = commissionTransactions.reduce((acc, tx) => acc + tx.customerPaid, 0);
+  const totalVatDeducted = commissionTransactions.reduce((acc, tx) => acc + tx.vatAmount, 0);
+  const totalPreTaxBase = commissionTransactions.reduce((acc, tx) => acc + tx.preTaxBase, 0);
+  const totalPlatformFees = commissionTransactions.reduce((acc, tx) => acc + tx.platformFee, 0);
+  const totalProviderNet = commissionTransactions.reduce((acc, tx) => acc + tx.providerNet, 0);
 
   return (
     <div className="space-y-6">
@@ -174,12 +217,65 @@ export default function AdminCommissionsPage() {
       </div>
 
       {/* Real-time Commission Settlement Audit */}
-      <div className="p-6 rounded-3xl bg-card border border-slate-200/50 dark:border-slate-800/50 shadow-sm space-y-4">
+      <div className="p-6 rounded-3xl bg-card border border-slate-200/50 dark:border-slate-800/50 shadow-sm space-y-5">
         <div>
           <h3 className="font-bold text-sm text-foreground">Live Commission Split Ledger</h3>
           <p className="text-xs text-muted-foreground">
-            Auditing gross ticket collections and platform margin deduction in real-time
+            Auditing customer gross payments, statutory VAT deduction, platform commission, and net provider payouts in real-time.
           </p>
+        </div>
+
+        {/* 5-Card High-Level Financial Breakdown Banner */}
+        <div className="grid grid-cols-2 sm:grid-cols-5 gap-2.5 sm:gap-3">
+          <div className="p-3.5 rounded-2xl bg-slate-50 dark:bg-slate-800/40 border border-slate-200/60 dark:border-slate-800/60 text-center">
+            <span className="text-[10px] uppercase font-bold text-muted-foreground tracking-wider block">
+              Customer Paid
+            </span>
+            <span className="text-sm sm:text-base font-black text-foreground font-mono mt-1 block truncate">
+              {totalGrossCustomer.toLocaleString()} <span className="text-[10px] font-normal text-muted-foreground">ETB</span>
+            </span>
+            <span className="text-[10px] text-muted-foreground">Gross Collected</span>
+          </div>
+
+          <div className="p-3.5 rounded-2xl bg-rose-500/[0.05] border border-rose-500/20 text-center">
+            <span className="text-[10px] uppercase font-bold text-rose-600 dark:text-rose-400 tracking-wider block">
+              VAT Deducted ({settings.vatTaxRate ?? 5}%)
+            </span>
+            <span className="text-sm sm:text-base font-black text-rose-600 dark:text-rose-400 font-mono mt-1 block truncate">
+              -{totalVatDeducted.toLocaleString()} <span className="text-[10px] font-normal opacity-70">ETB</span>
+            </span>
+            <span className="text-[10px] text-rose-600/70 dark:text-rose-400/70">Statutory Tax</span>
+          </div>
+
+          <div className="p-3.5 rounded-2xl bg-amber-500/[0.05] border border-amber-500/20 text-center">
+            <span className="text-[10px] uppercase font-bold text-amber-700 dark:text-amber-400 tracking-wider block">
+              Pre-Tax Fare
+            </span>
+            <span className="text-sm sm:text-base font-black text-amber-700 dark:text-amber-400 font-mono mt-1 block truncate">
+              {totalPreTaxBase.toLocaleString()} <span className="text-[10px] font-normal opacity-70">ETB</span>
+            </span>
+            <span className="text-[10px] text-muted-foreground">Customer - VAT</span>
+          </div>
+
+          <div className="p-3.5 rounded-2xl bg-emerald-500/[0.05] border border-emerald-500/20 text-center">
+            <span className="text-[10px] uppercase font-bold text-emerald-600 dark:text-emerald-400 tracking-wider block">
+              Platform Fee
+            </span>
+            <span className="text-sm sm:text-base font-black text-emerald-600 dark:text-emerald-400 font-mono mt-1 block truncate">
+              +{totalPlatformFees.toLocaleString()} <span className="text-[10px] font-normal opacity-70">ETB</span>
+            </span>
+            <span className="text-[10px] text-emerald-600/70 dark:text-emerald-400/70">Platform Revenue</span>
+          </div>
+
+          <div className="p-3.5 rounded-2xl bg-blue-500/[0.05] border border-blue-500/20 text-center col-span-2 sm:col-span-1">
+            <span className="text-[10px] uppercase font-bold text-blue-600 dark:text-blue-400 tracking-wider block">
+              Provider Net
+            </span>
+            <span className="text-sm sm:text-base font-black text-blue-600 dark:text-blue-400 font-mono mt-1 block truncate">
+              {totalProviderNet.toLocaleString()} <span className="text-[10px] font-normal opacity-70">ETB</span>
+            </span>
+            <span className="text-[10px] text-blue-600/70 dark:text-blue-400/70">Total Disbursable</span>
+          </div>
         </div>
 
         {/* Mobile View: Commission Split Cards */}
@@ -208,56 +304,63 @@ export default function AdminCommissionsPage() {
                   </span>
                 </div>
 
-                <div className="grid grid-cols-3 gap-2 p-2 rounded-xl bg-card border border-slate-200/40 dark:border-slate-800/40 text-center">
+                <div className="grid grid-cols-2 gap-2 p-2.5 rounded-xl bg-card border border-slate-200/40 dark:border-slate-800/40 text-center">
                   <div>
-                    <span className="text-[9px] uppercase font-bold text-muted-foreground block">Gross Fare</span>
+                    <span className="text-[9px] uppercase font-bold text-muted-foreground block">Customer Paid</span>
                     <span className="text-xs font-black text-foreground font-mono mt-0.5 block truncate">
-                      {tx.gross} ETB
-                    </span>
-                  </div>
-                  <div className="border-x border-slate-200/40 dark:border-slate-800/40">
-                    <span className="text-[9px] uppercase font-bold text-muted-foreground block">TIKORA Fee</span>
-                    <span className="text-xs font-black text-emerald-600 dark:text-emerald-400 font-mono mt-0.5 block">
-                      +{tx.platformFee} ETB
+                      {tx.customerPaid.toLocaleString()} ETB
                     </span>
                   </div>
                   <div>
-                    <span className="text-[9px] uppercase font-bold text-muted-foreground block">Provider Net</span>
-                    <span className="text-xs font-black text-foreground font-mono mt-0.5 block truncate">
-                      {tx.providerNet} ETB
+                    <span className="text-[9px] uppercase font-bold text-rose-600 dark:text-rose-400 block">VAT ({tx.vatRate}%)</span>
+                    <span className="text-xs font-black text-rose-600 dark:text-rose-400 font-mono mt-0.5 block truncate">
+                      -{tx.vatAmount.toLocaleString()} ETB
+                    </span>
+                  </div>
+                  <div>
+                    <span className="text-[9px] uppercase font-bold text-emerald-600 dark:text-emerald-400 block">TIKORA Fee ({tx.commissionRate}%)</span>
+                    <span className="text-xs font-black text-emerald-600 dark:text-emerald-400 font-mono mt-0.5 block truncate">
+                      +{tx.platformFee.toLocaleString()} ETB
+                    </span>
+                  </div>
+                  <div>
+                    <span className="text-[9px] uppercase font-bold text-blue-600 dark:text-blue-400 block">Provider Net</span>
+                    <span className="text-xs font-black text-blue-600 dark:text-blue-400 font-mono mt-0.5 block truncate">
+                      {tx.providerNet.toLocaleString()} ETB
                     </span>
                   </div>
                 </div>
 
                 <div className="flex items-center justify-between text-[10px] font-mono text-muted-foreground pt-1 border-t border-slate-200/30 dark:border-slate-800/30">
+                  <span>Pre-Tax Fare: {tx.preTaxBase.toLocaleString()} ETB</span>
                   <span>{tx.date}</span>
-                  <span className="font-bold text-amber-600 dark:text-amber-400">{tx.rate}% Rate</span>
                 </div>
               </div>
             ))
           )}
         </div>
 
-        {/* Desktop View: Table */}
+        {/* Desktop View: Table with VAT, Commission %, and Provider Net */}
         <div className="hidden sm:block overflow-x-auto -mx-6 -mb-6">
-          <table className="w-full text-xs text-left min-w-[1020px]">
+          <table className="w-full text-xs text-left min-w-[1100px]">
             <thead className="bg-slate-50/60 dark:bg-slate-800/40 text-muted-foreground uppercase text-[10px] font-bold tracking-wider">
               <tr>
-                <th className="px-6 py-3.5 whitespace-nowrap min-w-[140px]">Booking Ref</th>
-                <th className="px-4 py-3.5 whitespace-nowrap min-w-[170px]">Provider Name</th>
-                <th className="px-4 py-3.5 whitespace-nowrap min-w-[90px]">Sector</th>
-                <th className="px-4 py-3.5 whitespace-nowrap min-w-[110px]">Gross Fare</th>
-                <th className="px-4 py-3.5 whitespace-nowrap min-w-[100px]">Commission %</th>
-                <th className="px-4 py-3.5 whitespace-nowrap min-w-[120px]">Platform Retained</th>
-                <th className="px-4 py-3.5 whitespace-nowrap min-w-[120px]">Provider Net</th>
-                <th className="px-4 py-3.5 font-mono whitespace-nowrap min-w-[120px]">Settlement Date</th>
-                <th className="px-6 py-3.5 text-right w-12 shrink-0">Actions</th>
+                <th className="px-5 py-3.5 whitespace-nowrap min-w-[130px]">Booking Ref</th>
+                <th className="px-4 py-3.5 whitespace-nowrap min-w-[160px]">Provider Operator</th>
+                <th className="px-4 py-3.5 whitespace-nowrap min-w-[80px]">Sector</th>
+                <th className="px-4 py-3.5 whitespace-nowrap min-w-[120px] text-right">Customer Paid</th>
+                <th className="px-4 py-3.5 whitespace-nowrap min-w-[110px] text-right">VAT Deducted</th>
+                <th className="px-4 py-3.5 whitespace-nowrap min-w-[120px] text-right">Pre-Tax Base</th>
+                <th className="px-4 py-3.5 whitespace-nowrap min-w-[120px] text-right">Platform Fee</th>
+                <th className="px-4 py-3.5 whitespace-nowrap min-w-[130px] text-right">Provider Net</th>
+                <th className="px-4 py-3.5 font-mono whitespace-nowrap min-w-[100px] text-center">Settlement Date</th>
+                <th className="px-5 py-3.5 text-right w-12 shrink-0">Actions</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100 dark:divide-slate-800/40">
               {commissionTransactions.length === 0 ? (
                 <tr>
-                  <td colSpan={9} className="px-6 py-12 text-center text-xs text-muted-foreground">
+                  <td colSpan={10} className="px-6 py-12 text-center text-xs text-muted-foreground">
                     <Percent className="w-8 h-8 mx-auto mb-2 text-muted-foreground/40" />
                     <p className="font-semibold text-foreground">No commission transactions yet</p>
                     <p className="text-[11px] mt-0.5">Platform commission splits will appear here once bookings are confirmed.</p>
@@ -266,23 +369,51 @@ export default function AdminCommissionsPage() {
               ) : (
                 commissionTransactions.map((tx) => (
                   <tr key={tx.id} className="hover:bg-amber-500/[0.03] dark:hover:bg-amber-500/[0.06] transition-colors">
-                    <td className="px-6 py-3.5 font-mono font-bold text-amber-600 dark:text-amber-400 whitespace-nowrap">
+                    <td className="px-5 py-3.5 font-mono font-bold text-amber-600 dark:text-amber-400 whitespace-nowrap">
                       {tx.bookingRef}
                     </td>
-                    <td className="px-4 py-3.5 font-semibold text-foreground whitespace-nowrap">{tx.provider}</td>
+                    <td className="px-4 py-3.5 font-semibold text-foreground whitespace-nowrap">
+                      {tx.provider}
+                    </td>
                     <td className="px-4 py-3.5 whitespace-nowrap">
                       <span className="px-2 py-0.5 rounded-lg text-[10px] font-medium bg-muted text-foreground">
                         {tx.category}
                       </span>
                     </td>
-                    <td className="px-4 py-3.5 font-semibold text-foreground whitespace-nowrap">{tx.gross} ETB</td>
-                    <td className="px-4 py-3.5 font-bold text-amber-600 dark:text-amber-400 whitespace-nowrap">{tx.rate}%</td>
-                    <td className="px-4 py-3.5 font-bold text-emerald-600 dark:text-emerald-400 whitespace-nowrap">
-                      +{tx.platformFee} ETB
+                    <td className="px-4 py-3.5 font-extrabold text-foreground text-right whitespace-nowrap">
+                      {tx.customerPaid.toLocaleString()} <span className="text-[10px] text-muted-foreground font-normal">ETB</span>
                     </td>
-                    <td className="px-4 py-3.5 font-bold text-foreground whitespace-nowrap">{tx.providerNet} ETB</td>
-                    <td className="px-4 py-3.5 font-mono text-muted-foreground whitespace-nowrap">{tx.date}</td>
-                    <td className="px-6 py-3.5 text-right whitespace-nowrap w-12">
+                    <td className="px-4 py-3.5 text-right whitespace-nowrap">
+                      <span className="font-bold text-rose-600 dark:text-rose-400">
+                        -{tx.vatAmount.toLocaleString()} ETB
+                      </span>
+                      <span className="text-[9px] font-bold text-muted-foreground block">
+                        {tx.vatRate}% VAT
+                      </span>
+                    </td>
+                    <td className="px-4 py-3.5 font-bold text-slate-700 dark:text-slate-300 text-right whitespace-nowrap">
+                      {tx.preTaxBase.toLocaleString()} <span className="text-[10px] text-muted-foreground font-normal">ETB</span>
+                    </td>
+                    <td className="px-4 py-3.5 text-right whitespace-nowrap">
+                      <span className="font-bold text-emerald-600 dark:text-emerald-400">
+                        +{tx.platformFee.toLocaleString()} ETB
+                      </span>
+                      <span className="text-[9px] font-bold text-amber-600 dark:text-amber-400 block">
+                        {tx.commissionRate}% Take
+                      </span>
+                    </td>
+                    <td className="px-4 py-3.5 text-right whitespace-nowrap">
+                      <span className="font-black text-blue-600 dark:text-blue-400 text-xs">
+                        {tx.providerNet.toLocaleString()} ETB
+                      </span>
+                      <span className="text-[9px] text-muted-foreground block font-mono">
+                        Disbursable
+                      </span>
+                    </td>
+                    <td className="px-4 py-3.5 font-mono text-muted-foreground text-center whitespace-nowrap">
+                      {tx.date}
+                    </td>
+                    <td className="px-5 py-3.5 text-right whitespace-nowrap w-12">
                       <div className="flex items-center justify-end">
                         <ActionDropdown
                           items={[

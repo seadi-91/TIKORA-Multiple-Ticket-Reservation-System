@@ -25,6 +25,8 @@ import {
 import { useAdminStore } from "@/stores/admin.store";
 import { useAuthStore } from "@/stores/auth.store";
 import { useTheme } from "@/providers/theme-provider";
+import { useLanguage } from "@/providers/language-provider";
+import { LanguageSelector } from "@/components/navigation/language-selector";
 import { toast } from "sonner";
 
 interface AdminHeaderProps {
@@ -37,6 +39,7 @@ export function AdminHeader({ onToggleMobileMenu }: AdminHeaderProps) {
   const { organizations, refunds, payouts } = useAdminStore();
   const { user, logout } = useAuthStore();
   const { theme, setTheme } = useTheme();
+  const { t } = useLanguage();
 
   const [searchQuery, setSearchQuery] = useState("");
   const [showNotifications, setShowNotifications] = useState(false);
@@ -114,12 +117,12 @@ export function AdminHeader({ onToggleMobileMenu }: AdminHeaderProps) {
 
         <div className="flex flex-col">
           <div className="flex items-center gap-1.5 text-[11px] text-muted-foreground font-medium">
-            <span className="text-amber-600 dark:text-amber-400 font-bold">Super Admin</span>
+            <span className="text-amber-600 dark:text-amber-400 font-bold">{t("Super Admin", "Super Admin")}</span>
             <span>/</span>
-            <span className="capitalize">{pathname.split("/")[2] || "Overview"}</span>
+            <span className="capitalize">{t(pathname.split("/")[2] || "Overview", pathname.split("/")[2] || "Overview")}</span>
           </div>
           <h1 className="text-sm md:text-base font-extrabold text-foreground tracking-tight">
-            {getPageTitle()}
+            {t(getPageTitle(), getPageTitle())}
           </h1>
         </div>
       </div>
@@ -136,7 +139,7 @@ export function AdminHeader({ onToggleMobileMenu }: AdminHeaderProps) {
             type="text"
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            placeholder="Search providers, TIN, users..."
+            placeholder={t("Search providers, TIN, users...", "Search providers, TIN, users...")}
             className="w-full h-9 pl-9 pr-3 text-xs rounded-xl bg-muted/40 border border-slate-200/50 dark:border-slate-800/50 placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-amber-500/30 focus:border-amber-500 transition-all"
           />
         </form>
@@ -158,7 +161,7 @@ export function AdminHeader({ onToggleMobileMenu }: AdminHeaderProps) {
             <div className="absolute right-0 mt-2 w-80 md:w-96 rounded-2xl bg-card border border-slate-200/60 dark:border-slate-800/60 shadow-2xl py-2 z-50 animate-in fade-in zoom-in-95 duration-100">
               <div className="flex items-center justify-between px-4 py-2 border-b border-slate-200/40 dark:border-slate-800/40">
                 <div className="flex items-center gap-2">
-                  <span className="font-bold text-xs text-foreground">Pending Action Items</span>
+                  <span className="font-bold text-xs text-foreground">{t("Pending Action Items", "Pending Action Items")}</span>
                   <span className="px-2 py-0.5 text-[10px] font-bold rounded-full bg-amber-500/10 text-amber-600 dark:text-amber-400">
                     {totalAlertsCount}
                   </span>
@@ -182,7 +185,7 @@ export function AdminHeader({ onToggleMobileMenu }: AdminHeaderProps) {
                         Applied for {p.category} provider verification
                       </p>
                       <span className="text-[10px] text-amber-600 dark:text-amber-400 mt-0.5 inline-block font-semibold">
-                        Review application →
+                        {t("Review application", "Review application")} →
                       </span>
                     </div>
                   </Link>
@@ -206,7 +209,7 @@ export function AdminHeader({ onToggleMobileMenu }: AdminHeaderProps) {
                         {r.customerName} • {r.amount} ETB
                       </p>
                       <span className="text-[10px] text-rose-600 dark:text-rose-400 mt-0.5 inline-block font-semibold">
-                        Review refund →
+                        {t("Review refund", "Review refund")} →
                       </span>
                     </div>
                   </Link>
@@ -236,9 +239,9 @@ export function AdminHeader({ onToggleMobileMenu }: AdminHeaderProps) {
                 {totalAlertsCount === 0 && (
                   <div className="py-8 text-center text-muted-foreground">
                     <ShieldCheck className="w-8 h-8 mx-auto mb-2 opacity-50 text-emerald-500" />
-                    <p className="text-xs font-bold text-foreground">All caught up!</p>
+                    <p className="text-xs font-bold text-foreground">{t("All caught up!", "All caught up!")}</p>
                     <p className="text-[11px] text-muted-foreground">
-                      No pending verifications or disputes
+                      {t("No pending verifications or disputes", "No pending verifications or disputes")}
                     </p>
                   </div>
                 )}
@@ -246,6 +249,9 @@ export function AdminHeader({ onToggleMobileMenu }: AdminHeaderProps) {
             </div>
           )}
         </div>
+
+        {/* Language Selector Dropdown */}
+        <LanguageSelector variant="navbar" />
 
         {/* Theme Selector Dropdown */}
         <div className="relative" ref={themeRef}>
@@ -339,11 +345,11 @@ export function AdminHeader({ onToggleMobileMenu }: AdminHeaderProps) {
           {showProfileMenu && (
             <div className="absolute right-0 mt-2 w-56 rounded-2xl bg-card border border-slate-200/60 dark:border-slate-800/60 shadow-2xl py-2 z-50">
               <div className="px-4 py-2 border-b border-slate-200/40 dark:border-slate-800/40">
-                <p className="text-xs font-bold text-foreground">{user?.name || "System Admin"}</p>
+                <p className="text-xs font-bold text-foreground">{user?.name || t("System Admin", "System Admin")}</p>
                 <p className="text-[11px] text-muted-foreground truncate">{user?.email || "admin@tikora.com"}</p>
                 <div className="mt-1 flex items-center gap-1.5">
                   <span className="px-2 py-0.5 text-[9px] font-bold rounded-full bg-amber-500/10 text-amber-600 dark:text-amber-400">
-                    PLATFORM ROOT
+                    {t("PLATFORM ROOT", "PLATFORM ROOT")}
                   </span>
                 </div>
               </div>
@@ -355,7 +361,7 @@ export function AdminHeader({ onToggleMobileMenu }: AdminHeaderProps) {
                   className="flex items-center gap-2.5 px-4 py-2 text-muted-foreground hover:text-foreground hover:bg-muted/60 transition-colors"
                 >
                   <Settings className="w-4 h-4" />
-                  <span>Platform Settings</span>
+                  <span>{t("Platform Settings", "Platform Settings")}</span>
                 </Link>
 
                 <Link
@@ -364,7 +370,7 @@ export function AdminHeader({ onToggleMobileMenu }: AdminHeaderProps) {
                   className="flex items-center gap-2.5 px-4 py-2 text-muted-foreground hover:text-foreground hover:bg-muted/60 transition-colors"
                 >
                   <ShieldCheck className="w-4 h-4" />
-                  <span>Security Audit Logs</span>
+                  <span>{t("Platform Audit Logs", "Security Audit Logs")}</span>
                 </Link>
 
                 <Link
@@ -373,7 +379,7 @@ export function AdminHeader({ onToggleMobileMenu }: AdminHeaderProps) {
                   className="flex items-center gap-2.5 px-4 py-2 text-muted-foreground hover:text-foreground hover:bg-muted/60 transition-colors"
                 >
                   <ExternalLink className="w-4 h-4" />
-                  <span>Switch to Provider UI</span>
+                  <span>{t("Switch to Provider UI", "Switch to Provider UI")}</span>
                 </Link>
 
                 <div className="my-1 border-t border-slate-200/40 dark:border-slate-800/40" />
@@ -389,7 +395,7 @@ export function AdminHeader({ onToggleMobileMenu }: AdminHeaderProps) {
                   className="w-full flex items-center gap-2.5 px-4 py-2 text-xs font-semibold text-rose-600 dark:text-rose-400 hover:bg-rose-500/10 transition-colors cursor-pointer"
                 >
                   <LogOut className="w-4 h-4" />
-                  <span>Sign Out</span>
+                  <span>{t("Sign Out", "Sign Out")}</span>
                 </button>
               </div>
             </div>

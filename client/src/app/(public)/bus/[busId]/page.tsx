@@ -145,7 +145,7 @@ export default function BusDetailPage({ params }: { params: Promise<{ busId: str
     }
   };
 
-  const pricing = BookingService.calculatePricing(bus.price, selectedSeatIds.length);
+  const pricing = BookingService.calculatePricing(bus.price, selectedSeatIds.length, 0, "BUS");
 
   const handleProceedToPayment = (e: React.FormEvent) => {
     e.preventDefault();
@@ -210,6 +210,14 @@ export default function BusDetailPage({ params }: { params: Promise<{ busId: str
             selectedSeats: selectedSeatIds,
             quantity: selectedSeatIds.length,
             pricing,
+            subtotal: pricing.subtotal,
+            customerPaid: pricing.total,
+            totalAmount: pricing.total,
+            vatAmount: pricing.tax,
+            vatRate: pricing.vatRate,
+            commissionRate: pricing.commissionRate,
+            platformFee: pricing.platformCommission,
+            providerNet: pricing.providerNet,
             paymentMethod: "CHAPA",
             paymentStatus: "PENDING",
             bookingStatus: "PENDING",
@@ -265,6 +273,14 @@ export default function BusDetailPage({ params }: { params: Promise<{ busId: str
       selectedSeats: selectedSeatIds,
       quantity: selectedSeatIds.length,
       pricing,
+      subtotal: pricing.subtotal,
+      customerPaid: pricing.total,
+      totalAmount: pricing.total,
+      vatAmount: pricing.tax,
+      vatRate: pricing.vatRate,
+      commissionRate: pricing.commissionRate,
+      platformFee: pricing.platformCommission,
+      providerNet: pricing.providerNet,
       paymentMethod,
       paymentStatus: "PAID",
       bookingStatus: "CONFIRMED",

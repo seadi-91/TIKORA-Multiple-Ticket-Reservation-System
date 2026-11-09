@@ -18,9 +18,11 @@ import {
 import { useProviderStore, ProviderStaffMember } from "@/stores/provider.store";
 import { toast } from "sonner";
 import { ActionDropdown } from "@/components/ui/action-dropdown";
+import { useLanguage } from "@/providers/language-provider";
 
 export default function ProviderStaffPage() {
   const { organization, staffMembers, toggleStaffStatus, deleteStaffMember, fetchStaff } = useProviderStore();
+  const { t } = useLanguage();
   const [roleFilter, setRoleFilter] = useState<string>("ALL");
   const [searchQuery, setSearchQuery] = useState("");
 
@@ -68,7 +70,7 @@ export default function ProviderStaffPage() {
             <span className="text-xs text-muted-foreground">{organization.name}</span>
           </div>
           <h1 className="text-base sm:text-lg font-bold tracking-tight text-foreground">
-            Staff & Ticket Inspector Management
+            {t("Staff & Ticket Inspector Management")}
           </h1>
           <p className="text-xs text-muted-foreground">
             Assign terminal gate inspectors, ticket scanners, dispatchers, and cashiers for {organization.name}.
@@ -80,7 +82,7 @@ export default function ProviderStaffPage() {
             href="/provider/staff/invite"
             className="inline-flex items-center gap-1.5 px-4 py-2 text-xs font-semibold rounded-lg bg-amber-600 hover:bg-amber-700 text-white shadow-sm transition-colors"
           >
-            <UserPlus className="w-3.5 h-3.5" /> Add Staff &amp; Inspector
+            <UserPlus className="w-3.5 h-3.5" /> {t("Add Staff & Inspector")}
           </Link>
         </div>
       </div>
@@ -89,38 +91,38 @@ export default function ProviderStaffPage() {
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5 sm:gap-4">
         <div className="bg-card border border-border/60 rounded-xl p-3 sm:p-4 shadow-xs">
           <div className="flex items-center justify-between text-muted-foreground text-xs mb-1">
-            <span className="text-[10px] sm:text-xs truncate">Total Team</span>
+            <span className="text-[10px] sm:text-xs truncate">{t("Total Team")}</span>
             <Users className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-amber-600 shrink-0" />
           </div>
           <div className="text-sm sm:text-base font-bold text-foreground truncate">{staffMembers.length}</div>
-          <span className="text-[10px] sm:text-[11px] text-muted-foreground truncate block">Authorized personnel</span>
+          <span className="text-[10px] sm:text-[11px] text-muted-foreground truncate block">{t("Authorized personnel")}</span>
         </div>
 
         <div className="bg-card border border-border/60 rounded-xl p-3 sm:p-4 shadow-xs">
           <div className="flex items-center justify-between text-muted-foreground text-xs mb-1">
-            <span className="text-[10px] sm:text-xs truncate">Inspectors</span>
+            <span className="text-[10px] sm:text-xs truncate">{t("Staff & Inspectors", "Inspectors")}</span>
             <QrCode className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-emerald-600 shrink-0" />
           </div>
           <div className="text-sm sm:text-base font-bold text-foreground truncate">{inspectorsCount}</div>
-          <span className="text-[10px] sm:text-[11px] text-emerald-600 truncate block">Mobile scanners</span>
+          <span className="text-[10px] sm:text-[11px] text-emerald-600 truncate block">{t("Mobile scanners")}</span>
         </div>
 
         <div className="bg-card border border-border/60 rounded-xl p-3 sm:p-4 shadow-xs">
           <div className="flex items-center justify-between text-muted-foreground text-xs mb-1">
-            <span className="text-[10px] sm:text-xs truncate">Dispatchers</span>
+            <span className="text-[10px] sm:text-xs truncate">{t("Dispatchers")}</span>
             <Clock className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-blue-600 shrink-0" />
           </div>
           <div className="text-sm sm:text-base font-bold text-foreground truncate">{dispatchersCount}</div>
-          <span className="text-[10px] sm:text-[11px] text-muted-foreground truncate block">Station leads</span>
+          <span className="text-[10px] sm:text-[11px] text-muted-foreground truncate block">{t("Station leads")}</span>
         </div>
 
         <div className="bg-card border border-border/60 rounded-xl p-3 sm:p-4 shadow-xs">
           <div className="flex items-center justify-between text-muted-foreground text-xs mb-1">
-            <span className="text-[10px] sm:text-xs truncate">Total Scans</span>
+            <span className="text-[10px] sm:text-xs truncate">{t("Scan Count", "Total Scans")}</span>
             <UserCheck className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-purple-600 shrink-0" />
           </div>
           <div className="text-sm sm:text-base font-bold text-foreground truncate">{totalScans.toLocaleString()}</div>
-          <span className="text-[10px] sm:text-[11px] text-muted-foreground truncate block">Passes verified</span>
+          <span className="text-[10px] sm:text-[11px] text-muted-foreground truncate block">{t("Verified passes")}</span>
         </div>
       </div>
 

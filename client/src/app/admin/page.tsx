@@ -27,6 +27,7 @@ import {
 } from "lucide-react";
 import { toast } from "sonner";
 import { useAdminStore } from "@/stores/admin.store";
+import { useLanguage } from "@/providers/language-provider";
 import { DashboardLineChart } from "@/components/charts/line-chart";
 import { DashboardBarChart } from "@/components/charts/bar-chart";
 import { DashboardPieChart } from "@/components/charts/pie-chart";
@@ -44,6 +45,7 @@ export default function AdminDashboardPage() {
     fetchPlatformData,
     isLoading,
   } = useAdminStore();
+  const { t, formatCurrencyWithLang } = useLanguage();
 
   useEffect(() => {
     fetchPlatformData();
@@ -199,18 +201,21 @@ export default function AdminDashboardPage() {
             <div className="flex items-center gap-2">
               <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-amber-500/15 text-amber-700 dark:text-amber-300 ring-1 ring-amber-500/20">
                 <Sparkles className="w-3 h-3 text-amber-600 dark:text-amber-400" />
-                <span>ROOT COMMAND CONSOLE</span>
+                <span>{t("ROOT COMMAND CONSOLE", "ROOT COMMAND CONSOLE")}</span>
               </span>
               <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-700 dark:text-emerald-300 text-[10px] font-semibold">
                 <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
-                Network Online
+                {t("Network Online", "Network Online")}
               </span>
             </div>
             <h2 className="text-base sm:text-lg md:text-xl font-bold tracking-tight text-foreground">
-              Platform Master Overview
+              {t("Platform Master Overview", "Platform Master Overview")}
             </h2>
             <p className="text-xs text-muted-foreground max-w-2xl leading-relaxed">
-              Unified control center for ticket inventories, organization compliance, live reservations, and financial settlements across Ethiopia.
+              {t(
+                "Unified control center for ticket inventories, organization compliance, live reservations, and financial settlements across Ethiopia.",
+                "Unified control center for ticket inventories, organization compliance, live reservations, and financial settlements across Ethiopia."
+              )}
             </p>
           </div>
 
@@ -225,21 +230,21 @@ export default function AdminDashboardPage() {
               className="px-3 py-2 text-xs font-semibold rounded-xl bg-card hover:bg-muted text-foreground transition-all shadow-xs flex items-center gap-1.5 border border-slate-200/50 dark:border-slate-800/50 cursor-pointer disabled:opacity-60"
             >
               <RefreshCw className={`w-3.5 h-3.5 ${isLoading ? "animate-spin text-amber-600" : "text-amber-600 dark:text-amber-400"}`} />
-              <span>{isLoading ? "Syncing..." : "Sync DB"}</span>
+              <span>{isLoading ? t("Syncing...", "Syncing...") : t("Sync DB", "Sync DB")}</span>
             </button>
             <Link
               href="/admin/providers"
               className="px-3 py-2 text-xs font-semibold rounded-xl bg-card/90 hover:bg-card text-foreground transition-all shadow-xs flex items-center gap-2 border border-slate-200/50 dark:border-slate-800/50"
             >
               <Building2 className="w-3.5 h-3.5 text-amber-600 dark:text-amber-400" />
-              <span>Providers ({organizations.length})</span>
+              <span>{t("Providers", "Providers")} ({organizations.length})</span>
             </Link>
             <Link
               href="/admin/verifications"
               className="px-3.5 py-2 text-xs font-bold rounded-xl bg-amber-600 hover:bg-amber-700 text-white transition-all shadow-xs shadow-amber-600/20 flex items-center gap-1.5"
             >
               <ShieldCheck className="w-3.5 h-3.5 text-white" />
-              <span>Verification Queue ({pendingOrgsCount})</span>
+              <span>{t("Verification Queue", "Verification Queue")} ({pendingOrgsCount})</span>
             </Link>
           </div>
         </div>
@@ -250,39 +255,39 @@ export default function AdminDashboardPage() {
         {/* Gross GMV */}
         <div className="group p-3 sm:p-3.5 rounded-xl sm:rounded-2xl bg-card border border-slate-200/50 dark:border-slate-800/50 shadow-xs hover:shadow-sm transition-all duration-200">
           <div className="flex items-center justify-between mb-1.5 sm:mb-2">
-            <span className="text-[10px] font-bold text-muted-foreground tracking-wide uppercase truncate">Gross GMV</span>
+            <span className="text-[10px] font-bold text-muted-foreground tracking-wide uppercase truncate">{t("Gross GMV", "Gross GMV")}</span>
             <div className="w-7 h-7 rounded-lg bg-gradient-to-tr from-amber-500/20 to-amber-500/5 text-amber-600 dark:text-amber-400 flex items-center justify-center shrink-0">
               <DollarSign className="w-3.5 h-3.5" />
             </div>
           </div>
           <p className="text-sm sm:text-base lg:text-lg font-bold tracking-tight text-foreground truncate">
-            {totalGMV.toLocaleString()} <span className="text-[10px] font-semibold text-muted-foreground">ETB</span>
+            {totalGMV.toLocaleString()} <span className="text-[10px] font-semibold text-muted-foreground">{t("common.etb", "ETB")}</span>
           </p>
           <div className="flex items-center gap-1 mt-1 text-[10px]">
-            <span className="text-muted-foreground text-[10px] truncate">Cumulative transaction volume</span>
+            <span className="text-muted-foreground text-[10px] truncate">{t("Cumulative transaction volume", "Cumulative transaction volume")}</span>
           </div>
         </div>
 
         {/* Platform Revenue */}
         <div className="group p-3 sm:p-3.5 rounded-xl sm:rounded-2xl bg-card border border-slate-200/50 dark:border-slate-800/50 shadow-xs hover:shadow-sm transition-all duration-200">
           <div className="flex items-center justify-between mb-1.5 sm:mb-2">
-            <span className="text-[10px] font-bold text-muted-foreground tracking-wide uppercase truncate">Net Commission</span>
+            <span className="text-[10px] font-bold text-muted-foreground tracking-wide uppercase truncate">{t("Net Commission", "Net Commission")}</span>
             <div className="w-7 h-7 rounded-lg bg-gradient-to-tr from-emerald-500/20 to-emerald-500/5 text-emerald-600 dark:text-emerald-400 flex items-center justify-center shrink-0">
               <Percent className="w-3.5 h-3.5" />
             </div>
           </div>
           <p className="text-sm sm:text-base lg:text-lg font-bold tracking-tight text-foreground truncate">
-            {platformRevenue.toLocaleString()} <span className="text-[10px] font-semibold text-muted-foreground">ETB</span>
+            {platformRevenue.toLocaleString()} <span className="text-[10px] font-semibold text-muted-foreground">{t("common.etb", "ETB")}</span>
           </p>
           <div className="flex items-center gap-1 mt-1 text-[10px]">
-            <span className="text-muted-foreground text-[10px] truncate">{averageMargin}% platform take rate</span>
+            <span className="text-muted-foreground text-[10px] truncate">{averageMargin}% {t("platform take rate", "platform take rate")}</span>
           </div>
         </div>
 
         {/* Total Bookings */}
         <div className="group p-3 sm:p-3.5 rounded-xl sm:rounded-2xl bg-card border border-slate-200/50 dark:border-slate-800/50 shadow-xs hover:shadow-sm transition-all duration-200">
           <div className="flex items-center justify-between mb-1.5 sm:mb-2">
-            <span className="text-[10px] font-bold text-muted-foreground tracking-wide uppercase truncate">Total Bookings</span>
+            <span className="text-[10px] font-bold text-muted-foreground tracking-wide uppercase truncate">{t("Total Bookings", "Total Bookings")}</span>
             <div className="w-7 h-7 rounded-lg bg-gradient-to-tr from-blue-500/20 to-blue-500/5 text-blue-600 dark:text-blue-400 flex items-center justify-center shrink-0">
               <Ticket className="w-3.5 h-3.5" />
             </div>
@@ -291,14 +296,14 @@ export default function AdminDashboardPage() {
             {totalBookingsCount.toLocaleString()}
           </p>
           <div className="flex items-center gap-1 mt-1 text-[10px]">
-            <span className="text-muted-foreground text-[10px] truncate">{activeCategoriesCount} active sectors</span>
+            <span className="text-muted-foreground text-[10px] truncate">{activeCategoriesCount} {t("active sectors", "active sectors")}</span>
           </div>
         </div>
 
         {/* Active Providers */}
         <div className="group p-3 sm:p-3.5 rounded-xl sm:rounded-2xl bg-card border border-slate-200/50 dark:border-slate-800/50 shadow-xs hover:shadow-sm transition-all duration-200">
           <div className="flex items-center justify-between mb-1.5 sm:mb-2">
-            <span className="text-[10px] font-bold text-muted-foreground tracking-wide uppercase truncate">Active Providers</span>
+            <span className="text-[10px] font-bold text-muted-foreground tracking-wide uppercase truncate">{t("Active Providers", "Active Providers")}</span>
             <div className="w-7 h-7 rounded-lg bg-gradient-to-tr from-amber-500/20 to-amber-500/5 text-amber-600 dark:text-amber-400 flex items-center justify-center shrink-0">
               <Building2 className="w-3.5 h-3.5" />
             </div>
@@ -309,7 +314,7 @@ export default function AdminDashboardPage() {
           <div className="flex items-center gap-1 mt-1 text-[10px]">
             <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-full bg-amber-500/10 text-amber-700 dark:text-amber-300 font-bold text-[9px]">
               <Clock className="w-2.5 h-2.5" />
-              {pendingOrgsCount} pending
+              {pendingOrgsCount} {t("pending", "pending")}
             </span>
           </div>
         </div>
@@ -317,7 +322,7 @@ export default function AdminDashboardPage() {
         {/* Pending Approvals */}
         <div className="group p-3 sm:p-3.5 rounded-xl sm:rounded-2xl bg-card border border-slate-200/50 dark:border-slate-800/50 shadow-xs hover:shadow-sm transition-all duration-200">
           <div className="flex items-center justify-between mb-1.5 sm:mb-2">
-            <span className="text-[10px] font-bold text-muted-foreground tracking-wide uppercase truncate">Verification Queue</span>
+            <span className="text-[10px] font-bold text-muted-foreground tracking-wide uppercase truncate">{t("Verification Queue", "Verification Queue")}</span>
             <div className="w-7 h-7 rounded-lg bg-gradient-to-tr from-rose-500/20 to-rose-500/5 text-rose-600 dark:text-rose-400 flex items-center justify-center shrink-0">
               <ShieldCheck className="w-3.5 h-3.5" />
             </div>
@@ -325,13 +330,13 @@ export default function AdminDashboardPage() {
           <p className="text-sm sm:text-base lg:text-lg font-bold tracking-tight text-foreground truncate">
             {pendingOrgsCount}
           </p>
-          <p className="text-[10px] text-muted-foreground mt-1 truncate">Partner applications</p>
+          <p className="text-[10px] text-muted-foreground mt-1 truncate">{t("Partner applications", "Partner applications")}</p>
         </div>
 
         {/* Total Platform Users */}
         <div className="group p-3 sm:p-3.5 rounded-xl sm:rounded-2xl bg-card border border-slate-200/50 dark:border-slate-800/50 shadow-xs hover:shadow-sm transition-all duration-200">
           <div className="flex items-center justify-between mb-1.5 sm:mb-2">
-            <span className="text-[10px] font-bold text-muted-foreground tracking-wide uppercase truncate">User Accounts</span>
+            <span className="text-[10px] font-bold text-muted-foreground tracking-wide uppercase truncate">{t("User Accounts", "User Accounts")}</span>
             <div className="w-7 h-7 rounded-lg bg-gradient-to-tr from-violet-500/20 to-violet-500/5 text-violet-600 dark:text-violet-400 flex items-center justify-center shrink-0">
               <Users className="w-3.5 h-3.5" />
             </div>
@@ -339,13 +344,13 @@ export default function AdminDashboardPage() {
           <p className="text-sm sm:text-base lg:text-lg font-bold tracking-tight text-foreground truncate">
             {totalUsersCount.toLocaleString()}
           </p>
-          <p className="text-[10px] text-muted-foreground mt-1 truncate">Registered accounts</p>
+          <p className="text-[10px] text-muted-foreground mt-1 truncate">{t("Registered accounts", "Registered accounts")}</p>
         </div>
 
         {/* Field Inspectors */}
         <div className="group p-3 sm:p-3.5 rounded-xl sm:rounded-2xl bg-card border border-slate-200/50 dark:border-slate-800/50 shadow-xs hover:shadow-sm transition-all duration-200">
           <div className="flex items-center justify-between mb-1.5 sm:mb-2">
-            <span className="text-[10px] font-bold text-muted-foreground tracking-wide uppercase truncate">Inspectors</span>
+            <span className="text-[10px] font-bold text-muted-foreground tracking-wide uppercase truncate">{t("Inspectors", "Inspectors")}</span>
             <div className="w-7 h-7 rounded-lg bg-gradient-to-tr from-cyan-500/20 to-cyan-500/5 text-cyan-600 dark:text-cyan-400 flex items-center justify-center shrink-0">
               <Activity className="w-3.5 h-3.5" />
             </div>
@@ -353,13 +358,13 @@ export default function AdminDashboardPage() {
           <p className="text-sm sm:text-base lg:text-lg font-bold tracking-tight text-foreground truncate">
             {activeInspectorsCount}
           </p>
-          <p className="text-[10px] text-muted-foreground mt-1 truncate">Active terminal staff</p>
+          <p className="text-[10px] text-muted-foreground mt-1 truncate">{t("Active terminal staff", "Active terminal staff")}</p>
         </div>
 
         {/* Refund Requests */}
         <div className="group p-3 sm:p-3.5 rounded-xl sm:rounded-2xl bg-card border border-slate-200/50 dark:border-slate-800/50 shadow-xs hover:shadow-sm transition-all duration-200">
           <div className="flex items-center justify-between mb-1.5 sm:mb-2">
-            <span className="text-[10px] font-bold text-muted-foreground tracking-wide uppercase truncate">Refund Claims</span>
+            <span className="text-[10px] font-bold text-muted-foreground tracking-wide uppercase truncate">{t("Refund Claims", "Refund Claims")}</span>
             <div className="w-7 h-7 rounded-lg bg-gradient-to-tr from-amber-600/20 to-amber-600/5 text-amber-600 dark:text-amber-400 flex items-center justify-center shrink-0">
               <RotateCcw className="w-3.5 h-3.5" />
             </div>
@@ -367,7 +372,7 @@ export default function AdminDashboardPage() {
           <p className="text-sm sm:text-base lg:text-lg font-bold tracking-tight text-foreground truncate">
             {refundsRequestedCount}
           </p>
-          <p className="text-[10px] text-muted-foreground mt-1 truncate">Pending claims</p>
+          <p className="text-[10px] text-muted-foreground mt-1 truncate">{t("Pending claims", "Pending claims")}</p>
         </div>
       </div>
 

@@ -12,42 +12,44 @@ import {
 } from "lucide-react";
 import { CUSTOMER_ROUTES } from "@/lib/constants";
 import { useBookingStore } from "@/stores/booking.store";
+import { useLanguage } from "@/providers/language-provider";
 
 export function CustomerBottomNav() {
   const pathname = usePathname();
   const { bookings, favorites } = useBookingStore();
+  const { t } = useLanguage();
 
   const activeBookings = bookings.filter((b) => b.bookingStatus === "CONFIRMED").length;
 
   const navItems = [
     {
-      label: "Overview",
+      label: t("nav.dashboard", "Overview"),
       href: CUSTOMER_ROUTES.OVERVIEW,
       icon: LayoutDashboard,
       isActive: pathname === CUSTOMER_ROUTES.OVERVIEW,
     },
     {
-      label: "Bookings",
+      label: t("nav.myBookings", "Bookings"),
       href: CUSTOMER_ROUTES.BOOKINGS,
       icon: Ticket,
       badge: activeBookings > 0 ? activeBookings : undefined,
       isActive: pathname.startsWith(CUSTOMER_ROUTES.BOOKINGS),
     },
     {
-      label: "Wallet",
+      label: t("customer.digitalPasses", "Wallet"),
       href: CUSTOMER_ROUTES.TICKETS,
       icon: QrCode,
       isActive: pathname.startsWith(CUSTOMER_ROUTES.TICKETS),
     },
     {
-      label: "Wishlist",
+      label: t("nav.wishlist", "Wishlist"),
       href: CUSTOMER_ROUTES.FAVORITES,
       icon: Heart,
       badge: favorites.length > 0 ? favorites.length : undefined,
       isActive: pathname.startsWith(CUSTOMER_ROUTES.FAVORITES),
     },
     {
-      label: "Profile",
+      label: t("customer.accountSettings", "Profile"),
       href: CUSTOMER_ROUTES.PROFILE,
       icon: User,
       isActive: pathname.startsWith(CUSTOMER_ROUTES.PROFILE) || pathname.startsWith(CUSTOMER_ROUTES.SETTINGS),

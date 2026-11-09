@@ -33,9 +33,11 @@ import { TicketCard } from "@/components/tickets/ticket-card";
 import { TicketService } from "@/services/ticket.service";
 import { TicketItem } from "@/types/ticket.types";
 import { ETHIOPIAN_CITIES, TicketCategory } from "@/lib/constants";
+import { useLanguage } from "@/providers/language-provider";
 
 export default function HomePage() {
   const router = useRouter();
+  const { t, getCategoryName } = useLanguage();
   const [mounted, setMounted] = useState(false);
   const [activeCategory, setActiveCategory] = useState<TicketCategory | "ALL">("ALL");
   const [searchQuery, setSearchQuery] = useState("");
@@ -78,39 +80,39 @@ export default function HomePage() {
   const categoryCards = [
     {
       id: "BUS",
-      title: "Intercity Bus Fleets",
-      description: "Express luxury coaches to Hawassa, Bahir Dar, Gondar & Dire Dawa with real-time seat matrices.",
+      title: t("categories.bus", "Intercity Bus Fleets"),
+      description: t("categories.busDesc", "Express luxury coaches to Hawassa, Bahir Dar, Gondar & Dire Dawa with real-time seat matrices."),
       icon: Bus,
-      badge: "Popular Across Ethiopia",
+      badge: t("common.popular", "Popular Across Ethiopia"),
       link: "/bus",
-      actionText: "Search Bus Routes",
+      actionText: t("common.search", "Search Bus Routes"),
     },
     {
       id: "CINEMA",
-      title: "Cinema & IMAX 3D",
-      description: "Century Mall, Edna Mall & Gast Cinema with 4K laser projection and couple loungers.",
+      title: t("categories.cinema", "Cinema & IMAX 3D"),
+      description: t("categories.cinemaDesc", "Century Mall, Edna Mall & Gast Cinema with 4K laser projection and couple loungers."),
       icon: Film,
-      badge: "Now Showing & Coming Soon",
+      badge: t("common.featured", "Now Showing & Coming Soon"),
       link: "/cinema",
-      actionText: "View Showtimes",
+      actionText: t("common.viewDetails", "View Showtimes"),
     },
     {
       id: "EVENT",
-      title: "Concerts & Festivals",
-      description: "Addis Jazz festivals, Ethiopian cultural holidays, tech conventions & standup comedy.",
+      title: t("categories.event", "Concerts & Festivals"),
+      description: t("categories.eventDesc", "Addis Jazz festivals, Ethiopian cultural holidays, tech conventions & standup comedy."),
       icon: Calendar,
-      badge: "VIP & Regular Passes",
+      badge: t("common.verified", "VIP & Regular Passes"),
       link: "/events",
-      actionText: "Explore Events",
+      actionText: t("common.viewAll", "Explore Events"),
     },
     {
       id: "SPORTS",
-      title: "Matchday Stadium Sports",
-      description: "Ethiopian Premier League clashes, Sheger Derby (St. George vs Coffee SC) and national finals.",
+      title: t("categories.sports", "Matchday Stadium Sports"),
+      description: t("categories.sportsDesc", "Ethiopian Premier League clashes, Sheger Derby (St. George vs Coffee SC) and national finals."),
       icon: Trophy,
-      badge: "Matchday Tribune Passes",
+      badge: t("common.popular", "Matchday Tribune Passes"),
       link: "/sports",
-      actionText: "Browse Fixtures",
+      actionText: t("common.viewAll", "Browse Fixtures"),
     },
   ];
 
@@ -126,20 +128,16 @@ export default function HomePage() {
           {/* Tagline Pill */}
           <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-amber-500/10 text-amber-800 dark:text-amber-300 border border-amber-500/25 text-xs font-bold shadow-2xs">
             <Sparkles className="w-3.5 h-3.5 text-amber-600 dark:text-amber-400" />
-            <span>Ethiopia&apos;s Modern Multi-Category Ticket Reservation Platform</span>
+            <span>{t("hero.badge", "Ethiopia's Modern Multi-Category Ticket Reservation Platform")}</span>
           </div>
 
           {/* Main Headline */}
           <h1 className="text-2xl sm:text-4xl lg:text-5xl font-black text-foreground tracking-tight leading-tight sm:leading-tight">
-            Book Verified Tickets for{" "}
-            <span className="text-transparent bg-clip-text bg-gradient-to-r from-amber-600 to-amber-500">
-              Buses, Cinema,
-            </span>{" "}
-            Events & Sports
+            {t("hero.title", "Book Verified Tickets for Buses, Cinema, Events & Sports")}
           </h1>
 
           <p className="text-xs sm:text-base text-muted-foreground max-w-2xl mx-auto leading-relaxed">
-            Verified Ethiopian operators, instant interactive seat selection, and digital QR passes powered by Telebirr, CBE Birr & Chapa.
+            {t("hero.subtitle", "Verified Ethiopian operators, instant interactive seat selection, and digital QR passes powered by Telebirr, CBE Birr & Chapa.")}
           </p>
 
           {/* High-End Search Card */}
@@ -147,11 +145,11 @@ export default function HomePage() {
             {/* Category Switcher Tabs */}
             <div className="flex items-center gap-1.5 overflow-x-auto no-scrollbar pb-2 border-b border-slate-200/80 dark:border-slate-800 mb-2.5">
               {[
-                { id: "ALL", label: "All Passes" },
-                { id: "BUS", label: "BUS" },
-                { id: "CINEMA", label: "CINEMA" },
-                { id: "EVENT", label: "EVENT" },
-                { id: "SPORTS", label: "SPORTS" },
+                { id: "ALL", label: t("hero.allCategories", "All Passes") },
+                { id: "BUS", label: getCategoryName("BUS") },
+                { id: "CINEMA", label: getCategoryName("CINEMA") },
+                { id: "EVENT", label: getCategoryName("EVENT") },
+                { id: "SPORTS", label: getCategoryName("SPORTS") },
               ].map((cat) => {
                 const isSelected = activeCategory === cat.id;
                 return (
@@ -175,7 +173,7 @@ export default function HomePage() {
             <form onSubmit={handleHeroSearch} className="grid grid-cols-2 sm:grid-cols-12 gap-2.5 sm:gap-3">
               <div className="col-span-2 sm:col-span-5 relative">
                 <label className="block text-[10px] uppercase font-bold text-muted-foreground mb-1">
-                  Destination or Title
+                  {t("common.search", "Destination or Title")}
                 </label>
                 <div className="relative">
                   <Search className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" />
@@ -183,7 +181,7 @@ export default function HomePage() {
                     type="text"
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
-                    placeholder="e.g. Selam Bus, Gladiator II, Jazz Festival..."
+                    placeholder={t("hero.searchPlaceholder", "e.g. Selam Bus, Gladiator II, Jazz Festival...")}
                     className="w-full pl-9 pr-3 py-2 text-xs rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-900/60 text-foreground focus:outline-none focus:ring-2 focus:ring-amber-500/30"
                   />
                 </div>
@@ -191,7 +189,7 @@ export default function HomePage() {
 
               <div className="col-span-1 sm:col-span-3 relative">
                 <label className="block text-[10px] uppercase font-bold text-muted-foreground mb-1">
-                  City / Location
+                  {t("hero.selectCity", "City / Location")}
                 </label>
                 <div className="relative">
                   <MapPin className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" />
@@ -200,7 +198,7 @@ export default function HomePage() {
                     onChange={(e) => setSelectedCity(e.target.value)}
                     className="w-full pl-9 pr-3 py-2 text-xs rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-900/60 text-foreground focus:outline-none focus:ring-2 focus:ring-amber-500/30 appearance-none cursor-pointer"
                   >
-                    <option value="">All Regions</option>
+                    <option value="">{t("hero.allCategories", "All Regions")}</option>
                     {ETHIOPIAN_CITIES.map((c) => (
                       <option key={c} value={c}>
                         {c}
@@ -212,7 +210,7 @@ export default function HomePage() {
 
               <div className="col-span-1 sm:col-span-2 relative">
                 <label className="block text-[10px] uppercase font-bold text-muted-foreground mb-1">
-                  Travel Date
+                  {t("hero.travelDate", "Travel Date")}
                 </label>
                 <div className="relative">
                   <CalendarIcon className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" />
@@ -231,7 +229,7 @@ export default function HomePage() {
                   className="w-full py-2.5 px-4 rounded-xl bg-gradient-to-r from-amber-600 to-amber-500 hover:from-amber-700 hover:to-amber-600 text-white text-xs font-bold shadow-md shadow-amber-600/25 flex items-center justify-center gap-2 active:scale-95 transition-all"
                 >
                   <Search className="w-4 h-4" />
-                  <span>Find Tickets</span>
+                  <span>{t("hero.searchButton", "Find Tickets")}</span>
                 </button>
               </div>
             </form>
@@ -241,15 +239,15 @@ export default function HomePage() {
           <div className="pt-1 flex flex-wrap items-center justify-center gap-4 sm:gap-8 text-xs text-muted-foreground">
             <div className="flex items-center gap-1.5 font-medium">
               <QrCode className="w-4 h-4 text-amber-600 dark:text-amber-400" />
-              <span>Offline QR Passes</span>
+              <span>{t("hero.instantQr", "Offline QR Passes")}</span>
             </div>
             <div className="flex items-center gap-1.5 font-medium">
               <ShieldCheck className="w-4 h-4 text-emerald-500" />
-              <span>100% Verified Partners</span>
+              <span>{t("hero.verifiedPartners", "100% Verified Partners")}</span>
             </div>
             <div className="flex items-center gap-1.5 font-medium">
               <CreditCard className="w-4 h-4 text-amber-600 dark:text-amber-400" />
-              <span>Telebirr & CBE Birr Instant Checkout</span>
+              <span>{t("hero.localPayments", "Telebirr & CBE Birr Instant Checkout")}</span>
             </div>
           </div>
         </div>
@@ -260,17 +258,17 @@ export default function HomePage() {
         <div className="flex items-center justify-between">
           <div>
             <span className="text-[10px] font-bold text-amber-600 dark:text-amber-400 uppercase tracking-wider">
-              Browse Categories
+              {t("home.browseCategories", "Browse Categories")}
             </span>
             <h2 className="text-xl sm:text-2xl font-black text-foreground">
-              Explore TIKORA Sectors
+              {t("home.exploreSectors", "Explore TIKORA Sectors")}
             </h2>
           </div>
           <Link
             href="/search"
             className="text-xs font-bold text-amber-600 dark:text-amber-400 hover:underline flex items-center gap-1"
           >
-            <span>Explore All</span>
+            <span>{t("home.exploreAll", "Explore All")}</span>
             <ChevronRight className="w-4 h-4" />
           </Link>
         </div>
@@ -299,7 +297,7 @@ export default function HomePage() {
                       </span>
                     ) : (
                       <span className="text-[8px] sm:text-[9px] font-bold px-2 py-0.5 rounded-full bg-rose-500/10 text-rose-600 dark:text-rose-400 border border-rose-500/20 truncate max-w-[120px]">
-                        Temporarily Off
+                        {t("home.temporarilyOff", "Temporarily Off")}
                       </span>
                     )}
                   </div>
@@ -325,7 +323,7 @@ export default function HomePage() {
                     </Link>
                   ) : (
                     <span className="inline-flex items-center gap-1 text-[11px] sm:text-xs font-semibold text-slate-400 cursor-not-allowed">
-                      <span>Sector Deactivated</span>
+                      <span>{t("home.sectorDeactivated", "Sector Deactivated")}</span>
                     </span>
                   )}
                 </div>
@@ -341,10 +339,10 @@ export default function HomePage() {
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
             <div>
               <span className="text-[9px] font-bold text-amber-600 dark:text-amber-400 uppercase tracking-widest block mb-0.5">
-                Trending Across Ethiopia
+                {t("home.trendingAcrossEthiopia", "Trending Across Ethiopia")}
               </span>
               <h2 className="text-sm sm:text-base font-extrabold text-foreground tracking-tight">
-                Popular Passes Ready to Book
+                {t("home.popularPassesReady", "Popular Passes Ready to Book")}
               </h2>
             </div>
 
@@ -361,7 +359,7 @@ export default function HomePage() {
                       : "bg-slate-100 dark:bg-slate-800 text-muted-foreground hover:text-foreground hover:bg-slate-200 dark:hover:bg-slate-700"
                   }`}
                 >
-                  {cat === "ALL" ? "All Passes" : cat}
+                  {cat === "ALL" ? t("home.allPasses", "All Passes") : getCategoryName(cat)}
                 </button>
               ))}
             </div>
@@ -383,13 +381,13 @@ export default function HomePage() {
               <div className="space-y-1">
                 <h3 className="text-sm font-bold text-foreground">
                   {!isSelectedCategoryActive
-                    ? `${activeCategory} Sector Temporarily Deactivated`
-                    : "No passes currently published"}
+                    ? t("home.sectorDeactivated", `${activeCategory} Sector Temporarily Deactivated`)
+                    : t("home.noPassesPublished", "No passes currently published")}
                 </h3>
                 <p className="text-xs text-muted-foreground max-w-sm mx-auto">
                   {!isSelectedCategoryActive
-                    ? "This sector has been deactivated by platform administration. Passes in this category are temporarily hidden from public reservations."
-                    : "Tickets for intercity buses, cinema premieres, live concerts, and soccer derbies will appear here once listed by verified Ethiopian partners."}
+                    ? t("home.sectorDeactivated", "This sector has been deactivated by platform administration. Passes in this category are temporarily hidden from public reservations.")
+                    : t("ticket.noTickets", "Tickets for intercity buses, cinema premieres, live concerts, and soccer derbies will appear here once listed by verified Ethiopian partners.")}
                 </p>
               </div>
             </div>
@@ -407,7 +405,7 @@ export default function HomePage() {
                 href="/search"
                 className="inline-flex items-center gap-2 px-6 py-3 rounded-2xl bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-foreground text-xs font-bold transition-all shadow-xs"
               >
-                <span>View All {tickets.length} Passes</span>
+                <span>{t("home.viewAllPasses", "View All Passes")}</span>
                 <ArrowRight className="w-4 h-4" />
               </Link>
             </div>
@@ -419,13 +417,13 @@ export default function HomePage() {
       <section className="max-w-7xl mx-auto px-4 sm:px-6 py-8 sm:py-12 w-full space-y-6">
         <div className="text-center max-w-xl mx-auto space-y-1.5">
           <span className="text-[10px] font-bold text-amber-600 dark:text-amber-400 uppercase tracking-wider">
-            Simple & Fast
+            {t("home.simpleAndFast", "Simple & Fast")}
           </span>
           <h2 className="text-xl sm:text-2xl font-black text-foreground">
-            How TIKORA Works
+            {t("home.howItWorks", "How TIKORA Works")}
           </h2>
           <p className="text-xs text-muted-foreground">
-            Reserve your bus coach seat, movie screening, concert pass, or stadium tribune in under a minute.
+            {t("home.howItWorksSubtitle", "Reserve your bus coach seat, movie screening, concert pass, or stadium tribune in under a minute.")}
           </p>
         </div>
 
@@ -435,10 +433,10 @@ export default function HomePage() {
               1
             </div>
             <h3 className="text-sm font-bold text-foreground">
-              Choose Service & Time
+              {t("home.step1Title", "Choose Service & Time")}
             </h3>
             <p className="text-xs text-muted-foreground leading-relaxed">
-              Explore daily bus schedules, cinema showtimes, music concerts, or stadium fixtures.
+              {t("home.step1Desc", "Explore daily bus schedules, cinema showtimes, music concerts, or stadium fixtures.")}
             </p>
           </div>
 
@@ -447,10 +445,10 @@ export default function HomePage() {
               2
             </div>
             <h3 className="text-sm font-bold text-foreground">
-              Pick Your Exact Seats
+              {t("home.step2Title", "Pick Your Exact Seats")}
             </h3>
             <p className="text-xs text-muted-foreground leading-relaxed">
-              Interactive 2x2 coach layouts, cinema hall loungers, or stadium tribune tiers.
+              {t("home.step2Desc", "Interactive 2x2 coach layouts, cinema hall loungers, or stadium tribune tiers.")}
             </p>
           </div>
 
@@ -459,10 +457,10 @@ export default function HomePage() {
               3
             </div>
             <h3 className="text-sm font-bold text-foreground">
-              Instant Offline QR Pass
+              {t("home.step3Title", "Instant Offline QR Pass")}
             </h3>
             <p className="text-xs text-muted-foreground leading-relaxed">
-              Pay with Telebirr, CBE Birr, or Chapa for instant digital entry without paper tickets.
+              {t("home.step3Desc", "Pay with Telebirr, CBE Birr, or Chapa for instant digital entry without paper tickets.")}
             </p>
           </div>
         </div>
@@ -473,13 +471,13 @@ export default function HomePage() {
         <div className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-slate-900 to-slate-950 border border-slate-800 p-6 sm:p-8 text-white flex flex-col md:flex-row items-center justify-between gap-5 shadow-xl">
           <div className="space-y-2 max-w-xl text-center md:text-left">
             <span className="text-[10px] font-bold uppercase tracking-widest px-3 py-1 rounded-full bg-amber-500/20 text-amber-300 inline-block border border-amber-500/30">
-              Exclusive Member Offer
+              {t("home.exclusiveOffer", "Exclusive Member Offer")}
             </span>
             <h3 className="text-lg sm:text-2xl font-black">
-              Get 15% Off Your Next Bus or Concert Ticket
+              {t("home.discountOfferTitle", "Get 15% Off Your Next Bus or Concert Ticket")}
             </h3>
             <p className="text-xs text-slate-300 leading-relaxed">
-              Use promo code <strong className="text-amber-400 font-mono">TIKORA15</strong> with Telebirr or CBE Birr checkout.
+              {t("home.discountOfferSubtitle", "Use promo code TIKORA15 with Telebirr or CBE Birr checkout.")}
             </p>
           </div>
 
@@ -487,7 +485,7 @@ export default function HomePage() {
             href="/search"
             className="px-6 py-3 rounded-2xl bg-amber-600 hover:bg-amber-700 text-white text-xs font-bold transition-all shadow-md shadow-amber-600/30 active:scale-95 shrink-0"
           >
-            Claim Offer
+            {t("home.claimOffer", "Claim Offer")}
           </Link>
         </div>
       </section>

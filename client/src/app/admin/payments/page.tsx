@@ -35,7 +35,7 @@ import { ActionDropdown } from "@/components/ui/action-dropdown";
 import { formatCurrency } from "@/lib/format-currency";
 
 export default function AdminPaymentsPage() {
-  const { payouts, processPayout, deletePayout, stats, bookings, fetchPlatformData, isLoading } = useAdminStore();
+  const { payouts, processPayout, deletePayout, stats, bookings, fetchPlatformData, isLoading, settings } = useAdminStore();
 
   useEffect(() => {
     fetchPlatformData();
@@ -165,7 +165,7 @@ export default function AdminPaymentsPage() {
             {stats.platformRevenue.toLocaleString()} <span className="text-[10px] text-muted-foreground font-normal">ETB</span>
           </p>
           <p className="text-[10px] text-emerald-600 dark:text-emerald-400 font-medium mt-0.5 truncate">
-            5.0% provider commission
+            {settings.defaultCommissionRate ?? 5.0}% provider commission
           </p>
         </div>
 
@@ -280,7 +280,7 @@ export default function AdminPaymentsPage() {
             <div>
               <h3 className="text-xs font-bold text-foreground">Customer Payments & Balances Ledger</h3>
               <p className="text-[11px] text-muted-foreground">
-                Displaying full customer paid amount (Base fare + 5% VAT) settled via Chapa.
+                Displaying full customer paid amount (Base fare + Statutory VAT) settled via payment gateways.
               </p>
             </div>
             <span className="text-[10px] font-semibold text-emerald-600 dark:text-emerald-400 bg-emerald-500/10 px-2.5 py-1 rounded-lg">
@@ -296,7 +296,7 @@ export default function AdminPaymentsPage() {
                   <th className="py-3.5 px-5 min-w-[210px]">Customer Details</th>
                   <th className="py-3.5 px-5 min-w-[200px]">Provider / Organizer</th>
                   <th className="py-3.5 px-5 min-w-[220px]">Ticket / Service</th>
-                  <th className="py-3.5 px-5 min-w-[180px] text-right">Total Paid (w/ 5% VAT)</th>
+                  <th className="py-3.5 px-5 min-w-[180px] text-right">Total Paid (Inc. VAT)</th>
                   <th className="py-3.5 px-5 min-w-[120px] text-center">Gateway</th>
                   <th className="py-3.5 px-5 min-w-[130px] text-center">Status</th>
                   <th className="py-3.5 px-5 min-w-[130px] text-right">Date</th>
@@ -305,8 +305,10 @@ export default function AdminPaymentsPage() {
               </thead>
               <tbody className="divide-y divide-border/30">
                 {filteredTicketPayments.map((b) => {
-                  const baseFare = Math.round(b.totalAmount / 1.05);
-                  const vatAmount = b.totalAmount - baseFare;
+                  const bPaid = b.customerPaid ?? b.totalAmount;
+                  const bVatRate = b.vatRate ?? settings.vatTaxRate ?? 5;
+                  const bVatAmount = b.vatAmount ?? Math.round((bPaid * bVatRate) / (100 + bVatRate));
+                  const baseFare = Math.max(0, bPaid - bVatAmount);
                   return (
                     <tr key={b.id} className="hover:bg-muted/20 transition-colors">
                       <td className="py-4 px-5 font-mono font-bold text-amber-600 dark:text-amber-400 whitespace-nowrap">
@@ -325,10 +327,10 @@ export default function AdminPaymentsPage() {
                       </td>
                       <td className="py-4 px-5 text-right whitespace-nowrap">
                         <span className="font-mono font-bold text-emerald-600 dark:text-emerald-400 block text-xs">
-                          {b.totalAmount.toLocaleString()} ETB
+                          {bPaid.toLocaleString()} ETB
                         </span>
                         <span className="text-[9px] text-muted-foreground">
-                          Base: {baseFare.toLocaleString()} + VAT: {vatAmount.toLocaleString()} ETB
+                          Base: {baseFare.toLocaleString()} + VAT ({bVatRate}%): {bVatAmount.toLocaleString()} ETB
                         </span>
                       </td>
                       <td className="py-4 px-5 text-center font-medium whitespace-nowrap">
@@ -807,26 +809,49 @@ export default function AdminPaymentsPage() {
                 </div>
               </div>
 
-              <div className="p-3.5 rounded-2xl bg-amber-500/[0.04] dark:bg-amber-500/[0.06] border border-amber-500/15 space-y-1.5">
-                <div className="flex justify-between">
-                  <span className="text-muted-foreground">Base Ticket Fare</span>
-                  <span className="font-mono font-bold text-foreground">
-                    {Math.round(detailBooking.totalAmount / 1.05).toLocaleString()} ETB
-                  </span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-muted-foreground">Value Added Tax (5% VAT)</span>
-                  <span className="font-mono font-bold text-foreground">
-                    {(detailBooking.totalAmount - Math.round(detailBooking.totalAmount / 1.05)).toLocaleString()} ETB
-                  </span>
-                </div>
-                <div className="border-t border-amber-500/20 pt-1.5 flex justify-between items-center">
-                  <span className="font-bold text-foreground">Total Customer Payment</span>
-                  <span className="font-mono font-black text-sm text-emerald-600 dark:text-emerald-400">
-                    {detailBooking.totalAmount.toLocaleString()} ETB
-                  </span>
-                </div>
-              </div>
+              {(() => {
+                const bPaid = detailBooking.customerPaid ?? detailBooking.totalAmount;
+                const bVatRate = detailBooking.vatRate ?? settings.vatTaxRate ?? 5;
+                const bVatAmount = detailBooking.vatAmount ?? Math.round((bPaid * bVatRate) / (100 + bVatRate));
+                const bBase = Math.max(0, bPaid - bVatAmount);
+                const bCommRate = detailBooking.commissionRate ?? settings.defaultCommissionRate ?? 5;
+                const bFee = detailBooking.platformFee ?? Math.round(bBase * (bCommRate / 100));
+                const bNet = detailBooking.providerNet ?? Math.max(0, bBase - bFee);
+                return (
+                  <div className="p-3.5 rounded-2xl bg-amber-500/[0.04] dark:bg-amber-500/[0.06] border border-amber-500/15 space-y-1.5">
+                    <div className="flex justify-between">
+                      <span className="text-muted-foreground">Pre-Tax Base Fare</span>
+                      <span className="font-mono font-bold text-foreground">
+                        {bBase.toLocaleString()} ETB
+                      </span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-muted-foreground">Statutory VAT ({bVatRate}%)</span>
+                      <span className="font-mono font-bold text-rose-600 dark:text-rose-400">
+                        -{bVatAmount.toLocaleString()} ETB
+                      </span>
+                    </div>
+                    <div className="border-t border-amber-500/20 pt-1.5 flex justify-between items-center">
+                      <span className="font-bold text-foreground">Total Customer Paid</span>
+                      <span className="font-mono font-black text-sm text-emerald-600 dark:text-emerald-400">
+                        {bPaid.toLocaleString()} ETB
+                      </span>
+                    </div>
+                    <div className="flex justify-between pt-1">
+                      <span className="text-muted-foreground">Platform Commission ({bCommRate}%)</span>
+                      <span className="font-mono font-bold text-amber-600 dark:text-amber-400">
+                        -{bFee.toLocaleString()} ETB
+                      </span>
+                    </div>
+                    <div className="flex justify-between pt-1 border-t border-border/40">
+                      <span className="font-bold text-muted-foreground">Provider Net Settlement</span>
+                      <span className="font-mono font-extrabold text-blue-600 dark:text-blue-400">
+                        {bNet.toLocaleString()} ETB
+                      </span>
+                    </div>
+                  </div>
+                );
+              })()}
 
               <div className="grid grid-cols-2 gap-2.5 text-[11px]">
                 <div className="p-2.5 rounded-xl bg-muted/30">

@@ -1,5 +1,6 @@
 import { API_BASE_URL } from "./auth.service";
 import {
+  useAdminStore,
   AdminUser,
   AdminOrganization,
   AdminInspector,
@@ -243,6 +244,20 @@ export const adminService = {
     return data.settings;
   },
 
+  async getPublicSettings(): Promise<Partial<AdminSettings>> {
+    try {
+      const res = await fetch(`${API_BASE_URL}/platform/settings`, {
+        method: "GET",
+        headers: { "Content-Type": "application/json" },
+      });
+      if (res.ok) {
+        const data = await res.json();
+        if (data.settings) return data.settings;
+      }
+    } catch {}
+    return {};
+  },
+
   async updateSettings(payload: Partial<AdminSettings>): Promise<AdminSettings> {
     const res = await fetch(`${API_BASE_URL}/admin/settings`, {
       method: "PUT",
@@ -294,34 +309,53 @@ export const adminService = {
     }
 
     const data = await res.json();
-    return (data.tickets || []).map((t: any) => ({
-      id: String(t.id),
-      title: t.title,
-      category: t.category,
-      providerId: String(t.providerId || "1"),
-      providerName: t.organizer || "Verified Provider",
-      location: `${t.city || "Addis Ababa"} • ${t.time} (${t.category === "CINEMA" ? "Showtime" : "Departure"})`,
-      price: t.price,
-      status: t.status === "AVAILABLE" ? "ACTIVE" : "INACTIVE",
-      totalSold: (t.totalSeats || 50) - (t.availableSeats || 50),
-      capacity: t.totalSeats || 50,
-      startDate: `${t.date} ${t.time}`,
-      rating: t.rating || 5.0,
-      imageUrl: t.imageUrl,
-      time: t.time,
-      date: t.date,
-      venue: t.location,
-      city: t.city,
-      description: t.description,
-      availableSeats: t.availableSeats,
-      tiers: t.tiers,
-      amenities: t.amenities,
-      badge: t.badge,
-      duration: t.duration,
-      currency: t.currency || "ETB",
-      reviewCount: t.reviewCount || 0,
-      organizerVerified: t.organizerVerified,
-    }));
+    return (data.tickets || []).map((t: any) => {
+      const capacity = Number(t.totalSeats || t.capacity || 100);
+      const totalSold = Number(
+        t.totalSold !== undefined
+          ? t.totalSold
+          : t.soldQuantity !== undefined
+          ? t.soldQuantity
+          : Math.max(0, capacity - (t.availableSeats ?? capacity))
+      );
+      const remainingCapacity = Number(
+        t.remainingCapacity !== undefined
+          ? t.remainingCapacity
+          : t.availableSeats !== undefined
+          ? t.availableSeats
+          : Math.max(0, capacity - totalSold)
+      );
+
+      return {
+        id: String(t.id),
+        title: t.title,
+        category: t.category,
+        providerId: String(t.providerId || "1"),
+        providerName: t.organizer || "Verified Provider",
+        location: `${t.city || "Addis Ababa"} • ${t.time} (${t.category === "CINEMA" ? "Showtime" : "Departure"})`,
+        price: t.price,
+        status: t.status === "AVAILABLE" ? "ACTIVE" : (t.status || "ACTIVE"),
+        totalSold: Math.max(0, totalSold),
+        capacity,
+        availableSeats: Math.max(0, remainingCapacity),
+        remainingCapacity: Math.max(0, remainingCapacity),
+        startDate: `${t.date} ${t.time}`,
+        rating: t.rating || 5.0,
+        imageUrl: t.imageUrl,
+        time: t.time,
+        date: t.date,
+        venue: t.location,
+        city: t.city,
+        description: t.description,
+        tiers: t.tiers,
+        amenities: t.amenities,
+        badge: t.badge,
+        duration: t.duration,
+        currency: t.currency || "ETB",
+        reviewCount: t.reviewCount || 0,
+        organizerVerified: t.organizerVerified,
+      };
+    });
   },
 
   async toggleTicketStatus(ticketId: string, currentStatus: string): Promise<string> {
@@ -491,14 +525,46 @@ export const adminService = {
       if (res.ok) {
         const data = await res.json();
         if (data.success && Array.isArray(data.bookings)) {
+          const adminSettings = useAdminStore.getState().settings;
           clientApiBookings = data.bookings.map((b: any) => {
             const total = Number(
               b.pricing?.total ||
+                b.customerPaid ||
                 b.totalAmount ||
                 (b.ticket?.price ? b.ticket.price * (b.quantity || 1) : 500)
             );
-            const platformFee = Math.round(total * 0.05);
-            const providerPayout = Math.max(0, total - platformFee);
+            const bCategory = (b.category || b.ticket?.category || "BUS") as string;
+            const catRate =
+              bCategory === "BUS"
+                ? adminSettings.busCommissionRate
+                : bCategory === "CINEMA"
+                ? adminSettings.cinemaCommissionRate
+                : bCategory === "EVENT"
+                ? adminSettings.eventCommissionRate
+                : bCategory === "SPORTS"
+                ? adminSettings.sportsCommissionRate
+                : adminSettings.defaultCommissionRate ?? 5.0;
+
+            const vatRate = Number(b.pricing?.vatRate ?? b.vatRate ?? adminSettings.vatTaxRate ?? 5.0);
+            const commissionRate = Number(b.pricing?.commissionRate ?? b.commissionRate ?? catRate);
+            const customerPaid = total;
+            const vatAmount = Number(
+              b.pricing?.vatAmount ??
+                b.vatAmount ??
+                Math.round(((total * vatRate) / (100 + vatRate)) * 100) / 100
+            );
+            const baseFare = Math.max(0, Math.round((customerPaid - vatAmount) * 100) / 100);
+            const platformFee = Number(
+              b.pricing?.platformFee ??
+                b.platformFee ??
+                Math.round(baseFare * (commissionRate / 100) * 100) / 100
+            );
+            const providerPayout = Number(
+              b.pricing?.providerNet ??
+                b.providerNet ??
+                b.providerPayout ??
+                Math.max(0, Math.round((baseFare - platformFee) * 100) / 100)
+            );
             const seats =
               (b.selectedSeats && b.selectedSeats.length > 0 && b.selectedSeats) ||
               (b.seats && b.seats.length > 0 && b.seats) ||
@@ -518,8 +584,15 @@ export const adminService = {
               seatNumbers: seats,
               seats,
               totalAmount: total,
+              customerPaid,
+              subtotal: baseFare,
+              baseFare,
+              vatAmount,
+              vatRate,
+              commissionRate,
               platformFee,
               providerPayout,
+              providerNet: providerPayout,
               paymentMethod: (b.paymentMethod || "CHAPA") as any,
               paymentStatus: (b.paymentStatus || "PAID") as any,
               bookingStatus: (b.bookingStatus || "CONFIRMED") as any,
@@ -536,10 +609,14 @@ export const adminService = {
 
     const map = new Map<string, AdminBooking>();
     for (const b of backendBookings) {
-      map.set(b.reference, b);
+      if (!String(b.id || "").startsWith("bkg-") && !String(b.reference || "").startsWith("TIKORA-BKG-10")) {
+        map.set(b.reference, b);
+      }
     }
     for (const b of clientApiBookings) {
-      map.set(b.reference, b);
+      if (!String(b.id || "").startsWith("bkg-") && !String(b.reference || "").startsWith("TIKORA-BKG-10")) {
+        map.set(b.reference, b);
+      }
     }
 
     return Array.from(map.values());

@@ -21,12 +21,14 @@ import {
 import { CUSTOMER_ROUTES, AUTH_ROUTES } from "@/lib/constants";
 import { useBookingStore } from "@/stores/booking.store";
 import { useAuthStore } from "@/stores/auth.store";
+import { useLanguage } from "@/providers/language-provider";
 import { toast } from "sonner";
 
 export function CustomerSidebar() {
   const pathname = usePathname();
   const { bookings, favorites, notifications } = useBookingStore();
   const { user, logout } = useAuthStore();
+  const { t } = useLanguage();
   const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
@@ -49,52 +51,52 @@ export function CustomerSidebar() {
 
   const navItems = [
     {
-      label: "Overview",
+      label: t("nav.dashboard", "Overview"),
       href: CUSTOMER_ROUTES.OVERVIEW,
       icon: LayoutDashboard,
     },
     {
-      label: "My Bookings",
+      label: t("nav.myBookings", "My Bookings"),
       href: CUSTOMER_ROUTES.BOOKINGS,
       icon: Ticket,
       badge: activeBookings > 0 ? `${activeBookings} active` : undefined,
     },
     {
-      label: "Digital QR Passes",
+      label: t("customer.digitalPasses", "Digital QR Passes"),
       href: CUSTOMER_ROUTES.TICKETS,
       icon: QrCode,
       badge: "Wallet",
     },
     {
-      label: "Saved Wishlist",
+      label: t("nav.wishlist", "Saved Wishlist"),
       href: CUSTOMER_ROUTES.FAVORITES,
       icon: Heart,
       badge: favorites.length > 0 ? `${favorites.length}` : undefined,
     },
     {
-      label: "Notifications",
+      label: t("nav.notifications", "Notifications"),
       href: CUSTOMER_ROUTES.NOTIFICATIONS,
       icon: Bell,
       badge: unreadNotifs > 0 ? `${unreadNotifs} new` : undefined,
       badgeColor: "bg-amber-500 text-slate-950 font-black",
     },
     {
-      label: "Payment History",
+      label: t("customer.paymentHistory", "Payment History"),
       href: CUSTOMER_ROUTES.PAYMENTS,
       icon: CreditCard,
     },
     {
-      label: "Customer Profile",
+      label: t("customer.accountSettings", "Customer Profile"),
       href: CUSTOMER_ROUTES.PROFILE,
       icon: User,
     },
     {
-      label: "Account Settings",
+      label: t("nav.settings", "Account Settings"),
       href: CUSTOMER_ROUTES.SETTINGS,
       icon: Settings,
     },
     {
-      label: "Help & Support Desk",
+      label: t("footer.helpCenter", "Help & Support Desk"),
       href: "/contact",
       icon: HelpCircle,
     },
