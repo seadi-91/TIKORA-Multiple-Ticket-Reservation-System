@@ -40,8 +40,8 @@ export class PaymentService {
     const lastName = dto.lastName || fullName.split(" ")[1] || "Customer";
     const phoneNumber = dto.phone || user?.phone || "+251911000000";
 
-    // Clean return_url so Chapa appends ?trx_ref cleanly without query string collisions
-    let returnUrl = dto.returnUrl ? dto.returnUrl.split("?")[0] : `${ENV.CLIENT_URL}/payments/callback`;
+    // Keep full returnUrl including query parameters if provided by caller
+    let returnUrl = dto.returnUrl ? dto.returnUrl.trim() : `${ENV.CLIENT_URL}/payments/callback`;
 
     let cleanEmail = (dto.email || "").trim().toLowerCase();
     if (!cleanEmail.includes("@") || cleanEmail.endsWith(".et") || cleanEmail.includes("tikora.et")) {
@@ -94,55 +94,62 @@ export class PaymentService {
       throw new Error("No checkout URL returned from Chapa payment gateway.");
     }
 
-    // Persist pending booking and payment in PostgreSQL
+    // Persist pending booking and payment in PostgreSQL (only for customer ticket bookings, not admin provider settlements)
     let bookingId: number | null = null;
-    try {
-      const resolvedUserId = user?.id || 1;
-      const subtotal = Math.round(dto.amount / 1.05);
+    const isSettlement =
+      dto.ticketTitle?.toLowerCase().includes("provider settlement") ||
+      dto.ticketTitle?.toLowerCase().includes("payout") ||
+      (dto as any).isPayout === true;
 
-      const booking = await db.orm.public.Booking.create({
-        bookingNumber: `BKG-${txRef}`,
-        userId: resolvedUserId,
-        customerName: fullName,
-        customerEmail: dto.email,
-        customerPhone: phoneNumber,
-        selectedSeats: dto.selectedSeats ? JSON.stringify(dto.selectedSeats) : null,
-        selectedTier: dto.selectedTier || "Standard",
-        paymentMethod: "CHAPA",
-        paymentStatus: "PENDING",
-        subtotal: Number(subtotal),
-        serviceFee: 0, // Commission is deducted from provider, NOT added to customer
-        discount: 0,
-        totalAmount: Number(dto.amount),
-        currency: dto.currency || "ETB",
-        status: "PENDING",
-        notes: `Ticket #${dto.ticketId || "N/A"} - ${dto.ticketTitle || "Reservation"}`,
-      });
+    if (!isSettlement && dto.ticketId) {
+      try {
+        const resolvedUserId = user?.id || 1;
+        const subtotal = Math.round(dto.amount / 1.05);
 
-      bookingId = booking.id;
+        const booking = await db.orm.public.Booking.create({
+          bookingNumber: `BKG-${txRef}`,
+          userId: resolvedUserId,
+          customerName: fullName,
+          customerEmail: dto.email,
+          customerPhone: phoneNumber,
+          selectedSeats: dto.selectedSeats ? JSON.stringify(dto.selectedSeats) : null,
+          selectedTier: dto.selectedTier || "Standard",
+          paymentMethod: "CHAPA",
+          paymentStatus: "PENDING",
+          subtotal: Number(subtotal),
+          serviceFee: 0, // Commission is deducted from provider, NOT added to customer
+          discount: 0,
+          totalAmount: Number(dto.amount),
+          currency: dto.currency || "ETB",
+          status: "PENDING",
+          notes: `Ticket #${dto.ticketId || "N/A"} - ${dto.ticketTitle || "Reservation"}`,
+        });
 
-      await db.orm.public.Payment.create({
-        bookingId: booking.id,
-        transactionNumber: txRef,
-        paymentMethod: "CHAPA",
-        paymentProvider: "CHAPA_ET",
-        amount: Number(dto.amount),
-        currency: dto.currency || "ETB",
-        status: "PENDING",
-        externalReference: txRef,
-      });
+        bookingId = booking.id;
 
-      if (dto.ticketId) {
-        await db.orm.public.BookingItem.create({
+        await db.orm.public.Payment.create({
           bookingId: booking.id,
-          offeringId: Number(dto.ticketId) || 1,
-          quantity: dto.quantity || 1,
-          unitPrice: Number(subtotal),
-          totalPrice: Number(dto.amount),
-        }).catch(() => {});
+          transactionNumber: txRef,
+          paymentMethod: "CHAPA",
+          paymentProvider: "CHAPA_ET",
+          amount: Number(dto.amount),
+          currency: dto.currency || "ETB",
+          status: "PENDING",
+          externalReference: txRef,
+        });
+
+        if (dto.ticketId) {
+          await db.orm.public.BookingItem.create({
+            bookingId: booking.id,
+            offeringId: Number(dto.ticketId) || 1,
+            quantity: dto.quantity || 1,
+            unitPrice: Number(subtotal),
+            totalPrice: Number(dto.amount),
+          }).catch(() => {});
+        }
+      } catch (dbErr) {
+        console.warn("[Chapa] Warning: Could not record pending booking to DB:", dbErr);
       }
-    } catch (dbErr) {
-      console.warn("[Chapa] Warning: Could not record pending booking to DB:", dbErr);
     }
 
     // Audit log

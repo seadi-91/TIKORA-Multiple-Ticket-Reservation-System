@@ -165,6 +165,76 @@ export const useBookingStore = create<BookingState>((set, get) => ({
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ booking, txRef: booking.bookingReference }),
         }).catch(() => {});
+
+        try {
+          const rawProvBookings = localStorage.getItem("tikora_provider_bookings");
+          let provBookings = rawProvBookings ? JSON.parse(rawProvBookings) : [];
+          if (!Array.isArray(provBookings)) provBookings = [];
+
+          const snapTotal = Number(booking.pricing?.total ?? booking.totalAmount ?? 0);
+          const snapVatRate = Number(booking.pricing?.vatRate ?? booking.vatRate ?? 5);
+          const snapVat = Number(booking.pricing?.tax ?? booking.vatAmount ?? Math.round(((snapTotal * snapVatRate) / (100 + snapVatRate)) * 100) / 100);
+          const snapSub = Number(booking.pricing?.subtotal ?? booking.subtotal ?? Math.max(0, snapTotal - snapVat));
+          const snapCommRate = Number(booking.pricing?.commissionRate ?? booking.commissionRate ?? 5);
+          const snapComm = Number(booking.pricing?.platformCommission ?? booking.platformFee ?? Math.round(snapSub * (snapCommRate / 100) * 100) / 100);
+          const snapNet = Number(booking.pricing?.providerNet ?? booking.providerNet ?? Math.max(0, snapSub - snapComm));
+          const pName = booking.ticket?.organizer || (booking as any).providerName || "TIKORA Partner";
+          const pId = (booking.ticket as any)?.providerId || (booking as any).providerId || "1";
+
+          const provRecord = {
+            id: booking.id,
+            reference: booking.bookingReference,
+            customerName: booking.customerName,
+            customerPhone: booking.customerPhone,
+            customerEmail: booking.customerEmail,
+            serviceTitle: booking.ticket?.title || "Ticket",
+            category: booking.category,
+            travelDate: booking.ticket?.date || new Date().toISOString().split("T")[0],
+            departureTime: booking.ticket?.time || "Flexible",
+            seats: booking.selectedSeats || [booking.selectedTier || "Pass"],
+            totalAmount: snapSub,
+            customerPaid: snapTotal,
+            subtotal: snapSub,
+            vatAmount: snapVat,
+            vatRate: snapVatRate,
+            commissionRate: snapCommRate,
+            platformFee: snapComm,
+            providerNet: snapNet,
+            paymentMethod: (booking.paymentMethod as any) || "CHAPA",
+            paymentStatus: (booking.paymentStatus as any) || "PAID",
+            bookingStatus: (booking.bookingStatus as any) || "CONFIRMED",
+            createdAt: booking.createdAt || new Date().toISOString(),
+            providerId: String(pId),
+            providerName: pName,
+          };
+
+          const pIdx = provBookings.findIndex((b: any) => b.reference === provRecord.reference || b.id === provRecord.id);
+          if (pIdx >= 0) provBookings[pIdx] = { ...provBookings[pIdx], ...provRecord };
+          else provBookings.unshift(provRecord);
+          localStorage.setItem("tikora_provider_bookings", JSON.stringify(provBookings));
+
+          // Also update admin bookings
+          const rawAdmin = localStorage.getItem("tikora_admin_bookings");
+          let adminBookings = rawAdmin ? JSON.parse(rawAdmin) : [];
+          if (!Array.isArray(adminBookings)) adminBookings = [];
+          const adminIdx = adminBookings.findIndex((b: any) => b.reference === provRecord.reference || b.id === provRecord.id);
+          const adminRecord = {
+            ...provRecord,
+            totalAmount: snapTotal,
+            quantity: booking.quantity || 1,
+            seatNumbers: booking.selectedSeats || [booking.selectedTier || "Pass"],
+            baseFare: snapSub,
+            providerPayout: snapNet,
+            bookingDate: new Date().toISOString().split("T")[0],
+          };
+          if (adminIdx >= 0) adminBookings[adminIdx] = { ...adminBookings[adminIdx], ...adminRecord };
+          else adminBookings.unshift(adminRecord);
+          localStorage.setItem("tikora_admin_bookings", JSON.stringify(adminBookings));
+
+          window.dispatchEvent(new CustomEvent("tikora_booking_created", { detail: provRecord }));
+        } catch (syncErr) {
+          console.warn("Storage sync error on addBooking:", syncErr);
+        }
       }
 
       return {

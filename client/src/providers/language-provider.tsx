@@ -92,6 +92,9 @@ export function LanguageProvider({ children }: { children: React.ReactNode }) {
       if (enDict && enDict[key]) {
         return enDict[key];
       }
+      if (language === "en" && defaultText && /[\u1200-\u137F]/.test(defaultText)) {
+        return key;
+      }
       return defaultText !== undefined ? defaultText : key;
     },
     [language]

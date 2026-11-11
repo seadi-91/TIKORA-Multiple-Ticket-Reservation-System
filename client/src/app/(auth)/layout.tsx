@@ -27,7 +27,13 @@ export default function AuthLayout({
 }) {
   const { settings } = useAdminStore();
   const { t } = useLanguage();
-  const brandName = settings?.siteName || settings?.platformName || "TIKORA";
+  const [mounted, setMounted] = React.useState(false);
+
+  React.useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  const brandName = mounted ? (settings?.siteName || settings?.platformName || "TIKORA") : "TIKORA";
   return (
     <div className="min-h-screen flex flex-col lg:flex-row bg-slate-50 dark:bg-[#0A0C10] text-slate-900 dark:text-[#F8FAFC] font-sans selection:bg-amber-600 selection:text-white transition-colors duration-200 relative overflow-hidden">
       {/* =========================================================================
@@ -62,7 +68,7 @@ export default function AuthLayout({
                 {brandName}
               </span>
               <span suppressHydrationWarning className="block text-[10px] uppercase tracking-widest text-slate-500 dark:text-slate-400 font-bold">
-                {settings?.tagline || "Ethiopian Multi-Category Reservation"}
+                {mounted && settings?.tagline ? settings.tagline : "Ethiopian Multi-Category Reservation"}
               </span>
             </div>
           </Link>
@@ -288,7 +294,7 @@ export default function AuthLayout({
         <div className="absolute -bottom-32 -left-20 w-[400px] h-[400px] bg-slate-200/50 dark:bg-slate-800/20 rounded-full blur-[140px] pointer-events-none" />
         <div className="absolute inset-0 bg-[radial-gradient(rgba(15,23,42,0.03)_1px,transparent_1px)] dark:bg-[radial-gradient(rgba(255,255,255,0.03)_1px,transparent_1px)] [background-size:24px_24px] pointer-events-none" />
 
-        <div className="w-full max-w-md sm:max-w-xl lg:max-w-2xl relative z-10 space-y-6">
+        <div className="w-full max-w-[415px] sm:max-w-[535px] lg:max-w-[620px] mx-auto relative z-10 space-y-5">
           {/* Mobile Logo Header */}
           <div className="lg:hidden text-center space-y-2 mb-4">
             <Link href="/" className="inline-flex items-center gap-2.5">

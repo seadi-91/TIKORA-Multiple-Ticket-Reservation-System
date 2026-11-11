@@ -1,0 +1,22 @@
+[
+  {
+    "id": "po-1794207248521",
+    "reference": "CHAPA-PO-1794207248553-1885",
+    "providerId": "3",
+    "providerName": "Adiss Abeba Stadium",
+    "amount": 3875,
+    "fee": 0,
+    "netAmount": 3875,
+    "remainingBalance": 400,
+    "currency": "ETB",
+    "status": "COMPLETED",
+    "payoutMethod": "CHAPA",
+    "bankName": "Commercial Bank of Ethiopia (CBE)",
+    "accountNumber": "1000192837465",
+    "accountName": "Adiss Abeba Stadium Operations",
+    "requestedAt": "2026-11-09T06:54:08.554Z",
+    "processedAt": "2026-11-09T06:54:08.554Z",
+    "notes": "Chapa transfer payout dispatched by admin to Adiss Abeba Stadium",
+    "category": "SPORTS"
+  }
+]

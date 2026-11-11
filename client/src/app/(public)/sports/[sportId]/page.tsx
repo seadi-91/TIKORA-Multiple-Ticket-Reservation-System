@@ -33,7 +33,8 @@ import { userService } from "@/services/user.service";
 import { PaymentService } from "@/services/payment.service";
 import { formatCurrency } from "@/lib/format-currency";
 import { formatDate } from "@/lib/format-date";
-import { BookingRecord } from "@/types/booking.types";
+import { BookingRecord, PassengerInfo } from "@/types/booking.types";
+import { PassengerDetailsForm } from "@/components/booking/passenger-details-form";
 import { TicketItem, TicketTier } from "@/types/ticket.types";
 
 export default function SportDetailPage({ params }: { params: Promise<{ sportId: string }> }) {
@@ -90,12 +91,70 @@ export default function SportDetailPage({ params }: { params: Promise<{ sportId:
   const [paymentMethod, setPaymentMethod] = useState("CHAPA");
   const [confirmedBooking, setConfirmedBooking] = useState<BookingRecord | null>(null);
 
+  const [passengers, setPassengers] = useState<PassengerInfo[]>(() => [
+    {
+      fullName: user?.name || "",
+      phone: user?.phone || "",
+      email: user?.email || "",
+      dateOfBirth: "",
+      gender: "MALE",
+      idNumber: "",
+      seatNumber: "Gate Pass #1",
+    },
+    {
+      fullName: "",
+      phone: user?.phone || "",
+      email: user?.email || "",
+      dateOfBirth: "",
+      gender: "MALE",
+      idNumber: "",
+      seatNumber: "Gate Pass #2",
+    },
+  ]);
+
+  const handleQuantityChange = (newQty: number) => {
+    const validQty = Math.max(1, newQty);
+    setQuantity(validQty);
+    setPassengers((prev) => {
+      const updated = [...prev];
+      while (updated.length < validQty) {
+        const idx = updated.length;
+        updated.push({
+          fullName: "",
+          phone: updated[0]?.phone || customerPhone || "",
+          email: updated[0]?.email || customerEmail || "",
+          dateOfBirth: "",
+          gender: "MALE",
+          idNumber: "",
+          seatNumber: `Gate Pass #${idx + 1}`,
+        });
+      }
+      return updated.slice(0, validQty);
+    });
+  };
+
   // Auto-populate customer info from DB & user store
   useEffect(() => {
     if (isAuthenticated) {
-      if (user?.name && !customerName) setCustomerName(user.name);
-      if (user?.phone && !customerPhone) setCustomerPhone(user.phone);
-      if (user?.email && !customerEmail) setCustomerEmail(user.email);
+      const name = user?.name || "";
+      const phone = user?.phone || "";
+      const email = user?.email || "";
+      if (name && !customerName) setCustomerName(name);
+      if (phone && !customerPhone) setCustomerPhone(phone);
+      if (email && !customerEmail) setCustomerEmail(email);
+
+      setPassengers((prev) => {
+        const updated = [...prev];
+        if (updated[0]) {
+          updated[0] = {
+            ...updated[0],
+            fullName: updated[0].fullName || name,
+            phone: updated[0].phone || phone,
+            email: updated[0].email || email,
+          };
+        }
+        return updated;
+      });
 
       userService
         .getProfile()
@@ -104,6 +163,18 @@ export default function SportDetailPage({ params }: { params: Promise<{ sportId:
             if (profile.name) setCustomerName(profile.name);
             if (profile.phone) setCustomerPhone(profile.phone);
             if (profile.email) setCustomerEmail(profile.email);
+            setPassengers((prev) => {
+              const updated = [...prev];
+              if (updated[0]) {
+                updated[0] = {
+                  ...updated[0],
+                  fullName: updated[0].fullName || profile.name || "",
+                  phone: updated[0].phone || profile.phone || "",
+                  email: updated[0].email || profile.email || "",
+                };
+              }
+              return updated;
+            });
           }
         })
         .catch((err) => {
@@ -158,6 +229,22 @@ export default function SportDetailPage({ params }: { params: Promise<{ sportId:
       router.push(`/login?redirect=${encodeURIComponent(currentPath)}`);
       return;
     }
+    // Validate all passengers
+    for (let i = 0; i < quantity; i++) {
+      const p = passengers[i];
+      if (!p || !p.fullName || !p.fullName.trim()) {
+        alert(`Please enter the full name for Supporter #${i + 1}`);
+        return;
+      }
+      if (!p.phone || !p.phone.trim()) {
+        alert(`Please enter the phone number for Supporter #${i + 1}`);
+        return;
+      }
+      if (!p.email || !p.email.trim()) {
+        alert(`Please enter the email address for Supporter #${i + 1}`);
+        return;
+      }
+    }
     setStep(2);
     window.scrollTo({ top: 0, behavior: "smooth" });
   };
@@ -169,6 +256,19 @@ export default function SportDetailPage({ params }: { params: Promise<{ sportId:
       return;
     }
 
+    const finalLeadName = passengers[0]?.fullName || customerName;
+    const finalLeadEmail = passengers[0]?.email || customerEmail;
+    const finalLeadPhone = passengers[0]?.phone || customerPhone;
+    const finalPassengers: PassengerInfo[] = Array.from({ length: quantity }).map((_, i) => ({
+      fullName: passengers[i]?.fullName || (i === 0 ? finalLeadName : `Supporter ${i + 1}`),
+      phone: passengers[i]?.phone || finalLeadPhone,
+      email: passengers[i]?.email || finalLeadEmail,
+      dateOfBirth: passengers[i]?.dateOfBirth || "",
+      gender: passengers[i]?.gender || "MALE",
+      idNumber: passengers[i]?.idNumber || "",
+      seatNumber: `${activeTier.name} Gate Pass #${i + 1}`,
+    }));
+
     if (paymentMethod === "CHAPA") {
       try {
         setIsProcessingPayment(true);
@@ -179,10 +279,10 @@ export default function SportDetailPage({ params }: { params: Promise<{ sportId:
         const res = await PaymentService.initializeChapaPayment({
           amount: pricing.total,
           currency: "ETB",
-          email: customerEmail || user?.email || "customer@tikora.et",
-          firstName: customerName.split(" ")[0] || "Supporter",
-          lastName: customerName.split(" ").slice(1).join(" ") || "Guest",
-          phone: customerPhone || user?.phone || "+251911000000",
+          email: finalLeadEmail || user?.email || "customer@tikora.et",
+          firstName: finalLeadName.split(" ")[0] || "Supporter",
+          lastName: finalLeadName.split(" ").slice(1).join(" ") || "Guest",
+          phone: finalLeadPhone || user?.phone || "+251911000000",
           ticketId: match.id,
           ticketTitle: match.title,
           category: "SPORTS",
@@ -198,15 +298,10 @@ export default function SportDetailPage({ params }: { params: Promise<{ sportId:
             ticketId: match.id,
             ticket: match,
             category: "SPORTS",
-            customerName,
-            customerEmail,
-            customerPhone,
-            passengers: Array.from({ length: quantity }).map((_, i) => ({
-              fullName: i === 0 ? customerName : `Supporter ${i + 1}`,
-              phone: customerPhone,
-              email: customerEmail,
-              seatNumber: `${activeTier.name} Gate Pass #${i + 1}`,
-            })),
+            customerName: finalLeadName,
+            customerEmail: finalLeadEmail,
+            customerPhone: finalLeadPhone,
+            passengers: finalPassengers,
             selectedSeats: [`${activeTier.name} (x${quantity})`],
             selectedTier: activeTier.name,
             quantity,
@@ -262,15 +357,10 @@ export default function SportDetailPage({ params }: { params: Promise<{ sportId:
       ticketId: match.id,
       ticket: match,
       category: "SPORTS",
-      customerName,
-      customerEmail,
-      customerPhone,
-      passengers: Array.from({ length: quantity }).map((_, i) => ({
-        fullName: i === 0 ? customerName : `Supporter ${i + 1}`,
-        phone: customerPhone,
-        email: customerEmail,
-        seatNumber: `${activeTier.name} Gate Pass #${i + 1}`,
-      })),
+      customerName: finalLeadName,
+      customerEmail: finalLeadEmail,
+      customerPhone: finalLeadPhone,
+      passengers: finalPassengers,
       selectedSeats: [`${activeTier.name} (x${quantity})`],
       selectedTier: activeTier.name,
       quantity,
@@ -527,115 +617,31 @@ export default function SportDetailPage({ params }: { params: Promise<{ sportId:
                       })}
                     </div>
 
-                    {/* Quantity Picker */}
-                    <div className="pt-4 border-t border-[#E2E8F0] dark:border-slate-800 flex items-center justify-between">
-                      <span className="text-xs font-bold text-[#0F172A] dark:text-white">
-                        Number of Stadium Passes:
-                      </span>
-                      <div className="flex items-center gap-3">
-                        <button
-                          type="button"
-                          onClick={() => setQuantity(Math.max(1, quantity - 1))}
-                          className="w-8 h-8 rounded-xl border border-[#E2E8F0] dark:border-slate-800 flex items-center justify-center cursor-pointer text-[#0F172A] dark:text-white hover:bg-gray-100 dark:hover:bg-slate-800"
-                        >
-                          <Minus className="w-3.5 h-3.5" />
-                        </button>
-                        <span className="text-base font-bold text-[#0F172A] dark:text-white w-6 text-center">
-                          {quantity}
-                        </span>
-                        <button
-                          type="button"
-                          onClick={() => setQuantity(Math.min(10, quantity + 1))}
-                          className="w-8 h-8 rounded-xl border border-[#E2E8F0] dark:border-slate-800 flex items-center justify-center cursor-pointer text-[#0F172A] dark:text-white hover:bg-gray-100 dark:hover:bg-slate-800"
-                        >
-                          <Plus className="w-3.5 h-3.5" />
-                        </button>
-                      </div>
-                    </div>
-                  </div>
+                    {/* Passenger & Ticket Registration Form */}
+                    <form onSubmit={handleProceedToPayment} className="space-y-4 pt-2">
+                      <PassengerDetailsForm
+                        passengers={passengers}
+                        onChange={(newPassengers) => {
+                          setPassengers(newPassengers);
+                          if (newPassengers[0]) {
+                            if (newPassengers[0].fullName) setCustomerName(newPassengers[0].fullName);
+                            if (newPassengers[0].phone) setCustomerPhone(newPassengers[0].phone);
+                            if (newPassengers[0].email) setCustomerEmail(newPassengers[0].email);
+                          }
+                        }}
+                        quantity={quantity}
+                        onQuantityChange={handleQuantityChange}
+                        allowQuantityEdit={true}
+                        maxQuantity={match.availableSeats || 50}
+                        seatLabels={Array.from({ length: quantity }).map((_, i) => `${activeTier.name} Gate Pass #${i + 1}`)}
+                        attendeeLabel="Supporter"
+                        themeColor="amber"
+                      />
 
-                  {/* Customer Information Form */}
-                  <div className="rounded-3xl bg-white dark:bg-[#161922] border border-[#E2E8F0] dark:border-slate-800 p-6 shadow-xs space-y-4">
-                    <div className="flex items-center justify-between">
-                      <h3 className="text-base font-bold text-[#0F172A] dark:text-white">
-                        2. Contact Information for QR Turnstile Pass
-                      </h3>
-                      {isAuthenticated && (
-                        <span className="text-[11px] font-semibold text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/40 px-2.5 py-1 rounded-full border border-emerald-200/60 dark:border-emerald-800/60 flex items-center gap-1.5 shrink-0">
-                          <ShieldCheck className="w-3.5 h-3.5" />
-                          <span>Auto-Filled from Profile</span>
-                        </span>
-                      )}
-                    </div>
-
-                    {!isAuthenticated && (
-                      <div className="p-3.5 rounded-2xl bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-800/60 flex items-center justify-between gap-3 text-xs text-amber-900 dark:text-amber-200">
-                        <div className="flex items-center gap-2">
-                          <Lock className="w-4 h-4 text-amber-600 shrink-0" />
-                          <span>Please sign in first to book this stadium match pass and auto-fill your contact details.</span>
-                        </div>
-                        <Link
-                          href={`/login?redirect=${encodeURIComponent(typeof window !== "undefined" ? window.location.pathname : `/sports/${match.id}`)}`}
-                          className="px-3 py-1.5 rounded-xl bg-amber-600 hover:bg-amber-700 text-white font-bold text-[11px] shrink-0 transition-colors"
-                        >
-                          Sign In Now
-                        </Link>
-                      </div>
-                    )}
-
-                    <form onSubmit={handleProceedToPayment} className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                      <div>
-                        <label className="block text-xs font-semibold text-[#0F172A] dark:text-slate-300 mb-1">
-                          Full Name
-                        </label>
-                        <div className="relative">
-                          <User className="w-4 h-4 text-[#64748B] absolute left-3 top-1/2 -translate-y-1/2" />
-                          <input
-                            type="text"
-                            required
-                            value={customerName}
-                            onChange={(e) => setCustomerName(e.target.value)}
-                            className="w-full pl-9 pr-3 py-2 rounded-xl border border-[#E2E8F0] dark:border-slate-800 bg-[#F8FAFC] dark:bg-[#0F1117] text-[#0F172A] dark:text-white text-xs focus:outline-none focus:border-[#B45309]"
-                          />
-                        </div>
-                      </div>
-
-                      <div>
-                        <label className="block text-xs font-semibold text-[#0F172A] dark:text-slate-300 mb-1">
-                          Mobile Phone
-                        </label>
-                        <div className="relative">
-                          <Phone className="w-4 h-4 text-[#64748B] absolute left-3 top-1/2 -translate-y-1/2" />
-                          <input
-                            type="tel"
-                            required
-                            value={customerPhone}
-                            onChange={(e) => setCustomerPhone(e.target.value)}
-                            className="w-full pl-9 pr-3 py-2 rounded-xl border border-[#E2E8F0] dark:border-slate-800 bg-[#F8FAFC] dark:bg-[#0F1117] text-[#0F172A] dark:text-white text-xs focus:outline-none focus:border-[#B45309]"
-                          />
-                        </div>
-                      </div>
-
-                      <div>
-                        <label className="block text-xs font-semibold text-[#0F172A] dark:text-slate-300 mb-1">
-                          Email Address
-                        </label>
-                        <div className="relative">
-                          <Mail className="w-4 h-4 text-[#64748B] absolute left-3 top-1/2 -translate-y-1/2" />
-                          <input
-                            type="email"
-                            required
-                            value={customerEmail}
-                            onChange={(e) => setCustomerEmail(e.target.value)}
-                            className="w-full pl-9 pr-3 py-2 rounded-xl border border-[#E2E8F0] dark:border-slate-800 bg-[#F8FAFC] dark:bg-[#0F1117] text-[#0F172A] dark:text-white text-xs focus:outline-none focus:border-[#B45309]"
-                          />
-                        </div>
-                      </div>
-
-                      <div className="sm:col-span-3 pt-2">
+                      <div className="pt-2">
                         <button
                           type="submit"
-                          className="w-full py-3 rounded-2xl bg-[#B45309] hover:bg-[#92400E] text-white text-xs font-bold transition-all shadow-xs active:scale-95 flex items-center justify-center gap-2 cursor-pointer"
+                          className="w-full py-3.5 rounded-2xl bg-[#B45309] hover:bg-[#92400E] text-white text-xs font-bold transition-all shadow-md active:scale-95 flex items-center justify-center gap-2 cursor-pointer"
                         >
                           {!isAuthenticated ? (
                             <>
@@ -644,7 +650,7 @@ export default function SportDetailPage({ params }: { params: Promise<{ sportId:
                             </>
                           ) : (
                             <>
-                              <span>Proceed to Payment ({quantity} × {activeTier.name})</span>
+                              <span>Proceed to Payment ({quantity} × {activeTier.name} • {formatCurrency(pricing.total)})</span>
                               <ArrowRight className="w-4 h-4" />
                             </>
                           )}

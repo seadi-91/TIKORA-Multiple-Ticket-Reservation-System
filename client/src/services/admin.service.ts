@@ -426,6 +426,25 @@ export const adminService = {
     return true;
   },
 
+  async deleteBooking(bookingId: string, bookingRef?: string): Promise<boolean> {
+    try {
+      const refQuery = bookingRef ? `&reference=${encodeURIComponent(bookingRef)}` : "";
+      await fetch(`/api/bookings?id=${encodeURIComponent(bookingId)}${refQuery}`, {
+        method: "DELETE",
+      });
+    } catch {}
+
+    try {
+      await fetch(`${API_BASE_URL}/admin/bookings/${encodeURIComponent(bookingId)}`, {
+        method: "DELETE",
+        headers: getAuthHeaders(),
+        credentials: "include",
+      });
+    } catch {}
+
+    return true;
+  },
+
   async getCategories(): Promise<AdminCategory[]> {
     const res = await fetch(`${API_BASE_URL}/admin/categories`, {
       method: "GET",

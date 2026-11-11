@@ -148,4 +148,60 @@ export class AuthController {
     res.clearCookie("tikora_auth_token");
     res.status(200).json({ success: true, message: "Logged out successfully." });
   }
+
+  /**
+   * POST /api/auth/forgot-password
+   */
+  static async forgotPassword(req: Request, res: Response): Promise<void> {
+    try {
+      const identifier = req.body.email || req.body.identifier;
+      const result = await AuthService.requestPasswordReset(identifier);
+      res.status(200).json(result);
+    } catch (error: any) {
+      res.status(400).json({
+        success: false,
+        message: error?.message || "Failed to process forgot password request.",
+      });
+    }
+  }
+
+  /**
+   * POST /api/auth/verify-otp
+   */
+  static async verifyOtp(req: Request, res: Response): Promise<void> {
+    try {
+      const { email, otp } = req.body;
+      const result = await AuthService.verifyPasswordResetOtp(email, otp);
+      res.status(200).json(result);
+    } catch (error: any) {
+      res.status(400).json({
+        success: false,
+        message: error?.message || "Verification code validation failed.",
+      });
+    }
+  }
+
+  /**
+   * POST /api/auth/reset-password
+   */
+  static async resetPassword(req: Request, res: Response): Promise<void> {
+    try {
+      const result = await AuthService.resetPassword(req.body);
+
+      // Auto-login: Set authentication cookie
+      res.cookie("tikora_auth_token", result.token, {
+        httpOnly: false,
+        secure: process.env.NODE_ENV === "production",
+        sameSite: "lax",
+        maxAge: 7 * 24 * 60 * 60 * 1000,
+      });
+
+      res.status(200).json(result);
+    } catch (error: any) {
+      res.status(400).json({
+        success: false,
+        message: error?.message || "Failed to reset password.",
+      });
+    }
+  }
 }

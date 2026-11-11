@@ -17,6 +17,7 @@ export interface ActionDropdownItem {
 export interface ActionDropdownProps {
   items: ActionDropdownItem[];
   align?: "left" | "right";
+  placement?: "auto" | "top" | "bottom";
   className?: string;
   buttonClassName?: string;
   buttonTitle?: string;
@@ -25,12 +26,14 @@ export interface ActionDropdownProps {
 export function ActionDropdown({
   items,
   align = "right",
+  placement: preferredPlacement = "auto",
   className = "",
   buttonClassName = "",
   buttonTitle = "Row actions",
 }: ActionDropdownProps) {
   const [isOpen, setIsOpen] = useState(false);
   const [mounted, setMounted] = useState(false);
+  const [activePlacement, setActivePlacement] = useState<"top" | "bottom">("bottom");
   const [coords, setCoords] = useState<{ top: number; left: number; right: number; bottom: number }>({
     top: 0,
     left: 0,
@@ -48,6 +51,28 @@ export function ActionDropdown({
   const updatePosition = () => {
     if (!buttonRef.current) return;
     const rect = buttonRef.current.getBoundingClientRect();
+    const spaceBelow = window.innerHeight - rect.bottom;
+    const spaceAbove = rect.top;
+    // Estimate menu height: each item is ~38px + padding + border
+    const estimatedHeight = Math.max(120, items.length * 40 + 20);
+
+    let chosen: "top" | "bottom" = "bottom";
+    if (preferredPlacement === "top") {
+      chosen = "top";
+    } else if (preferredPlacement === "bottom") {
+      chosen = "bottom";
+    } else {
+      // Auto smart flip: if not enough space below, or if bottom half has very limited space
+      if (spaceBelow < estimatedHeight && spaceAbove > spaceBelow) {
+        chosen = "top";
+      } else if (spaceBelow < 180 && spaceAbove > 180) {
+        chosen = "top";
+      } else {
+        chosen = "bottom";
+      }
+    }
+
+    setActivePlacement(chosen);
     setCoords({
       top: rect.top,
       left: rect.left,
@@ -64,6 +89,21 @@ export function ActionDropdown({
     }
     setIsOpen(!isOpen);
   };
+
+  // Re-check actual measured height after opening to avoid any viewport clipping
+  useEffect(() => {
+    if (!isOpen || !menuRef.current || !buttonRef.current) return;
+    const rect = buttonRef.current.getBoundingClientRect();
+    const menuHeight = menuRef.current.offsetHeight;
+    const spaceBelow = window.innerHeight - rect.bottom;
+    const spaceAbove = rect.top;
+
+    if (preferredPlacement === "auto") {
+      if (activePlacement === "bottom" && spaceBelow < menuHeight + 10 && spaceAbove > spaceBelow) {
+        setActivePlacement("top");
+      }
+    }
+  }, [isOpen, activePlacement, preferredPlacement]);
 
   // Close on outside click, window resize, or scroll
   useEffect(() => {
@@ -105,18 +145,31 @@ export function ActionDropdown({
     };
   }, [isOpen]);
 
+  const isTop = activePlacement === "top";
+  const availableHeight = isTop
+    ? Math.max(120, coords.top - 16)
+    : Math.max(120, window.innerHeight - coords.bottom - 16);
+
   const menuContent = isOpen && mounted && typeof document !== "undefined" && (
     <div
       ref={menuRef}
       style={{
         position: "fixed",
-        top: coords.bottom + 6,
+        ...(isTop
+          ? { bottom: Math.max(8, window.innerHeight - coords.top + 6) }
+          : { top: Math.max(8, coords.bottom + 6) }),
         ...(align === "right"
           ? { right: Math.max(12, coords.right) }
           : { left: Math.max(12, coords.left) }),
+        maxHeight: Math.min(380, availableHeight),
+        maxWidth: "calc(100vw - 24px)",
         zIndex: 9999,
       }}
-      className="w-48 sm:w-52 py-1.5 rounded-2xl bg-card border border-slate-200/80 dark:border-slate-800 shadow-xl shadow-black/10 backdrop-blur-md animate-in fade-in zoom-in-95 duration-100 text-xs"
+      className={`w-48 sm:w-52 py-1.5 rounded-2xl bg-card border border-slate-200/80 dark:border-slate-800 shadow-xl shadow-black/10 backdrop-blur-md animate-in fade-in zoom-in-95 duration-100 text-xs overflow-y-auto overscroll-contain ${
+        isTop
+          ? align === "right" ? "origin-bottom-right" : "origin-bottom-left"
+          : align === "right" ? "origin-top-right" : "origin-top-left"
+      }`}
       onClick={(e) => e.stopPropagation()}
     >
       <div className="flex flex-col">
@@ -182,7 +235,11 @@ export function ActionDropdown({
         onClick={toggleOpen}
         title={buttonTitle}
         aria-label={buttonTitle}
-        className={`w-8 h-8 rounded-xl flex items-center justify-center text-muted-foreground hover:text-foreground hover:bg-slate-100 dark:hover:bg-slate-800 border border-transparent hover:border-slate-200/60 dark:hover:border-slate-700/60 transition-all focus:outline-none focus:ring-2 focus:ring-amber-500/30 ${buttonClassName}`}
+        className={`w-8 h-8 rounded-xl flex items-center justify-center transition-all focus:outline-none focus:ring-2 focus:ring-amber-500/30 ${
+          isOpen
+            ? "bg-slate-200/80 dark:bg-slate-700/80 text-foreground border border-slate-300 dark:border-slate-600 shadow-xs ring-2 ring-amber-500/20"
+            : "text-muted-foreground hover:text-foreground hover:bg-slate-100 dark:hover:bg-slate-800 border border-transparent hover:border-slate-200/60 dark:hover:border-slate-700/60"
+        } ${buttonClassName}`}
       >
         <MoreVertical className="w-4 h-4" />
       </button>

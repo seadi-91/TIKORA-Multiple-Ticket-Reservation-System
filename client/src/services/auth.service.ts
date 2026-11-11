@@ -172,46 +172,49 @@ export const authService = {
     }
   },
 
-  async forgotPassword(data: ForgotPasswordData): Promise<{ message: string }> {
+  async forgotPassword(data: ForgotPasswordData): Promise<{ success: boolean; message: string; email: string }> {
     const res = await fetch(`${API_BASE_URL}/auth/forgot-password`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(data),
+      credentials: "include",
     });
 
     if (!res.ok) {
       const err = await res.json().catch(() => ({}));
-      throw new Error(err.message || "Could not send password reset email.");
+      throw new Error(err.message || "Could not send password reset code. Please check your email.");
     }
 
     return res.json();
   },
 
-  async resetPassword(data: ResetPasswordData): Promise<{ message: string }> {
-    const res = await fetch(`${API_BASE_URL}/auth/reset-password`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(data),
-    });
-
-    if (!res.ok) {
-      const err = await res.json().catch(() => ({}));
-      throw new Error(err.message || "Failed to reset password.");
-    }
-
-    return res.json();
-  },
-
-  async verifyOtp(data: VerifyOtpData): Promise<{ verified: boolean; message: string }> {
+  async verifyOtp(data: VerifyOtpData): Promise<{ success: boolean; message: string; resetToken: string; email: string }> {
     const res = await fetch(`${API_BASE_URL}/auth/verify-otp`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(data),
+      credentials: "include",
     });
 
     if (!res.ok) {
       const err = await res.json().catch(() => ({}));
       throw new Error(err.message || "Invalid or expired verification code.");
+    }
+
+    return res.json();
+  },
+
+  async resetPassword(data: ResetPasswordData): Promise<AuthResponse> {
+    const res = await fetch(`${API_BASE_URL}/auth/reset-password`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(data),
+      credentials: "include",
+    });
+
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({}));
+      throw new Error(err.message || "Failed to reset password.");
     }
 
     return res.json();

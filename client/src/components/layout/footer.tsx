@@ -33,11 +33,15 @@ export function Footer() {
   const [newsletterEmail, setNewsletterEmail] = useState("");
   const [subscribed, setSubscribed] = useState(false);
 
-  const brandName = settings.siteName || settings.platformName || "TIKORA";
-  const brandLocation = settings.footerLocation || settings.headquartersAddress || "Edna Mall Tower, Addis Ababa";
-  const brandPhone = settings.footerPhone || settings.supportPhone || "+251 11 667 8900";
-  const brandEmail = settings.footerEmail || settings.supportEmail || "support@tikora.et";
-  const copyrightNotice = settings.copyrightText || `© ${new Date().getFullYear()} ${brandName} Ethiopia Inc. All Rights Reserved.`;
+  const brandName = mounted ? (settings.siteName || settings.platformName || "TIKORA") : "TIKORA";
+  const brandLocation = mounted
+    ? (settings.footerLocation || settings.headquartersAddress || "Edna Mall Tower, Bole Sub-City, Addis Ababa, Ethiopia")
+    : "Edna Mall Tower, Bole Sub-City, Addis Ababa, Ethiopia";
+  const brandPhone = mounted ? (settings.footerPhone || settings.supportPhone || "+251 11 667 8900") : "+251 11 667 8900";
+  const brandEmail = mounted ? (settings.footerEmail || settings.supportEmail || "support@tikora.et") : "support@tikora.et";
+  const copyrightNotice = mounted
+    ? (settings.copyrightText || `© ${new Date().getFullYear()} ${brandName} Ethiopia Inc. All Rights Reserved.`)
+    : `© ${new Date().getFullYear()} TIKORA Ethiopia Inc. All Rights Reserved.`;
 
   const handleSubscribe = (e: React.FormEvent) => {
     e.preventDefault();
@@ -100,7 +104,9 @@ export function Footer() {
             suppressHydrationWarning
             className="text-[10px] sm:text-[11px] text-[#64748B] dark:text-slate-400 leading-relaxed max-w-sm"
           >
-            {settings.tagline || "Ethiopia's unified multi-category reservation platform. Secure, instant digital QR passes for buses, movies, concerts, and stadium sports."}
+            {mounted && settings.tagline
+              ? settings.tagline
+              : "Ethiopia's unified multi-category reservation platform. Secure, instant digital QR passes for buses, movies, concerts, and stadium sports."}
           </p>
 
           <div className="flex flex-wrap items-center gap-x-3 gap-y-1 pt-0.5 text-[10px] sm:text-[11px] text-[#0F172A] dark:text-slate-300">

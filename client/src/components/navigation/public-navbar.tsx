@@ -54,7 +54,6 @@ export function PublicNavbar({ onSearchClick }: PublicNavbarProps) {
   const { user, isAuthenticated, logout } = useAuthStore();
   const { settings } = useAdminStore();
   const { t } = useLanguage();
-  const brandName = settings.siteName || settings.platformName || "TIKORA";
 
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [themeDropdownOpen, setThemeDropdownOpen] = useState(false);
@@ -62,6 +61,8 @@ export function PublicNavbar({ onSearchClick }: PublicNavbarProps) {
   const [authDropdownOpen, setAuthDropdownOpen] = useState(false);
   const [isScrolled, setIsScrolled] = useState(false);
   const [mounted, setMounted] = useState(false);
+
+  const brandName = mounted ? (settings.siteName || settings.platformName || "TIKORA") : "TIKORA";
 
   const themeDropdownRef = useRef<HTMLDivElement>(null);
   const userDropdownRef = useRef<HTMLDivElement>(null);
@@ -198,7 +199,7 @@ export function PublicNavbar({ onSearchClick }: PublicNavbarProps) {
                 suppressHydrationWarning
                 className="text-[8px] uppercase tracking-widest text-[#64748B] dark:text-slate-400 font-semibold block mt-0.5"
               >
-                {settings.tagline || "Multi-Ticket Ethiopia"}
+                {mounted && settings.tagline ? settings.tagline : "Multi-Ticket Ethiopia"}
               </span>
             </div>
           </Link>

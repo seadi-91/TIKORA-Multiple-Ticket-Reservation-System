@@ -9,6 +9,7 @@ export interface PassengerInfo {
   idNumber?: string;
   seatNumber?: string;
   gender?: "MALE" | "FEMALE" | "OTHER";
+  dateOfBirth?: string;
 }
 
 export interface BookingPriceBreakdown {

@@ -22,12 +22,22 @@ import {
   Calendar,
   ExternalLink,
   Search,
+  Trophy,
+  Bus,
+  Film,
+  Sparkles,
 } from "lucide-react";
 import { useProviderStore, ProviderBookingRecord } from "@/stores/provider.store";
 import { formatCurrency } from "@/lib/format-currency";
 import { toast } from "sonner";
 import { ActionDropdown } from "@/components/ui/action-dropdown";
 import { useLanguage } from "@/providers/language-provider";
+import {
+  calculateProviderFinancials,
+  matchesProvider,
+  fetchUnifiedFinancialData,
+  ProviderFinancialSummary,
+} from "@/services/financial.service";
 import {
   SettlementReceiptCard,
   SettlementReceiptData,
@@ -38,67 +48,179 @@ export type PayoutTransaction = SettlementReceiptData;
 export const INITIAL_TRANSACTIONS: PayoutTransaction[] = [];
 
 export default function ProviderPaymentsPage() {
-  const { organization, bookings: storeBookings, requestPayout } = useProviderStore();
-  const { t } = useLanguage();
+  const {
+    organization,
+    bookings: storeBookings,
+    fetchOrganization,
+    fetchBookings,
+    requestPayout,
+    setOrganizationCategory,
+  } = useProviderStore();
+  const { t, language } = useLanguage();
   const [activeTab, setActiveTab] = useState<"TICKET_SALES" | "DISBURSEMENTS">("TICKET_SALES");
   const [transactions, setTransactions] = useState<PayoutTransaction[]>(INITIAL_TRANSACTIONS);
   const [ticketSales, setTicketSales] = useState<ProviderBookingRecord[]>([]);
+  const [allBookings, setAllBookings] = useState<any[]>(() => {
+    if (typeof window !== "undefined") {
+      try {
+        const bProv = localStorage.getItem("tikora_provider_bookings");
+        const bAdm = localStorage.getItem("tikora_admin_bookings");
+        const combined = [];
+        if (bProv) combined.push(...JSON.parse(bProv));
+        if (bAdm) combined.push(...JSON.parse(bAdm));
+        if (combined.length > 0) return combined;
+      } catch {}
+    }
+    return [];
+  });
+  const [allPayouts, setAllPayouts] = useState<any[]>(() => {
+    if (typeof window !== "undefined") {
+      try {
+        const pAdm = localStorage.getItem("tikora_admin_payouts");
+        if (pAdm) return JSON.parse(pAdm);
+      } catch {}
+    }
+    return [];
+  });
+  const [sectorOrderCounts, setSectorOrderCounts] = useState<Record<string, number>>({});
   const [searchQuery, setSearchQuery] = useState("");
   const [showPayoutModal, setShowPayoutModal] = useState(false);
   const [selectedReceiptTx, setSelectedReceiptTx] = useState<PayoutTransaction | null>(null);
   const [payoutAmount, setPayoutAmount] = useState<number>(0);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  // Sync ticket sales from store and local storage
+  // Unified real-time sync for bookings and payouts from unified financial service
   useEffect(() => {
-    let sales = storeBookings && storeBookings.length > 0 ? storeBookings : [];
-    if (typeof window !== "undefined") {
+    let isMounted = true;
+    fetchOrganization?.().catch(() => {});
+    fetchBookings?.().catch(() => {});
+
+    const loadFinancialData = async () => {
       try {
-        const raw = localStorage.getItem("tikora_provider_bookings");
-        if (raw) {
-          const parsed: ProviderBookingRecord[] = JSON.parse(raw);
-          if (parsed && parsed.length > 0) {
-            sales = parsed;
+        const { bookings: unifiedBookings, payouts: unifiedPayouts } = await fetchUnifiedFinancialData();
+        if (!isMounted) return;
+
+        setAllBookings(unifiedBookings);
+        setAllPayouts(unifiedPayouts);
+
+        const counts: Record<string, number> = {
+          SPORTS: unifiedBookings.filter(
+            (b) =>
+              b.category === "SPORTS" ||
+              String(b.providerId) === "3" ||
+              (b.providerName || "").toLowerCase().includes("stadium")
+          ).length,
+          BUS: unifiedBookings.filter(
+            (b) =>
+              b.category === "BUS" ||
+              String(b.providerId) === "1" ||
+              (b.providerName || "").toLowerCase().includes("bus")
+          ).length,
+          CINEMA: unifiedBookings.filter(
+            (b) =>
+              b.category === "CINEMA" ||
+              String(b.providerId) === "2" ||
+              (b.providerName || "").toLowerCase().includes("cinema")
+          ).length,
+          EVENT: unifiedBookings.filter(
+            (b) =>
+              b.category === "EVENT" ||
+              String(b.providerId) === "4" ||
+              (b.providerName || "").toLowerCase().includes("event")
+          ).length,
+        };
+        setSectorOrderCounts(counts);
+
+        let activeOrg = organization;
+        let matched = unifiedBookings.filter((b) => matchesProvider(b, activeOrg));
+
+        // Auto-detect if current sector has 0 orders, but another sector has live orders
+        if (matched.length === 0 && unifiedBookings.length > 0) {
+          const topCat = (["SPORTS", "BUS", "CINEMA", "EVENT"] as const).find((c) => counts[c] > 0);
+          if (topCat && topCat !== organization.category) {
+            setOrganizationCategory(topCat);
+            activeOrg = { ...organization, category: topCat };
+            matched = unifiedBookings.filter((b) => matchesProvider(b, activeOrg));
           }
         }
-      } catch {}
+
+        setTicketSales(matched);
+
+        // Map live settled payouts specifically for this organization
+        const orgPayouts = unifiedPayouts.filter((p) => {
+          const isCompleted =
+            p.status === "PROCESSED" ||
+            p.status === "COMPLETED" ||
+            p.status === "PAID";
+          return matchesProvider(p, activeOrg) && isCompleted;
+        });
+
+        const mapped: PayoutTransaction[] = orgPayouts.map((p) => {
+          const amt = Number(p.amount) || 0;
+          const net = Number(p.netAmount ?? amt) || amt;
+          const fee = Number(p.fee) || 0;
+          const dateStr = p.processedAt || p.requestedAt || new Date().toISOString();
+
+          return {
+            id: p.id || p.reference,
+            reference: p.reference || `PO-${Date.now()}`,
+            date: dateStr.split("T")[0],
+            timestamp: dateStr.replace("T", " ").substring(0, 16),
+            period: "Live Settlement",
+            amount: amt,
+            grossRevenue: amt,
+            grossSales: amt,
+            vatAmount: 0,
+            fee: fee,
+            commission: fee,
+            platformCommission: fee,
+            netPayout: net,
+            channel: (p.payoutMethod || "CHAPA") as any,
+            accountNumber: p.accountNumber || "1000000000000",
+            accountHolder: p.accountName || organization.name,
+            bankName: p.bankName || "Commercial Bank of Ethiopia (CBE)",
+            status: "COMPLETED",
+            transactionRef: p.reference || `TX-${Date.now()}`,
+            organizationName: organization.name,
+            taxNumber: organization.tinNumber || "N/A",
+            adminName: "Super Admin Peter",
+          };
+        });
+
+        setTransactions(mapped);
+      } catch (err) {
+        console.error("Failed to load unified financial data:", err);
+      }
+    };
+
+    loadFinancialData();
+
+    // Listen for live settlement payouts from admin or customer bookings
+    const handleSync = () => loadFinancialData();
+    if (typeof window !== "undefined") {
+      window.addEventListener("tikora_booking_created", handleSync);
+      window.addEventListener("tikora_provider_payout_settled", handleSync);
+      window.addEventListener("tikora_provider_notification", handleSync);
+      window.addEventListener("storage", handleSync);
     }
-    const cleanSales = sales.filter(
-      (s) =>
-        !String(s.id || "").startsWith("bkg-") &&
-        !String(s.reference || "").startsWith("TIKORA-BKG-10")
-    );
-    setTicketSales(cleanSales);
-  }, [storeBookings]);
+    return () => {
+      isMounted = false;
+      if (typeof window !== "undefined") {
+        window.removeEventListener("tikora_booking_created", handleSync);
+        window.removeEventListener("tikora_provider_payout_settled", handleSync);
+        window.removeEventListener("tikora_provider_notification", handleSync);
+        window.removeEventListener("storage", handleSync);
+      }
+    };
+  }, [storeBookings, organization.id, organization.name, organization.category, organization.tinNumber]);
 
-  // Compute live revenue numbers based on each booking's snapshotted base price and commission rate
-  const totalBaseSales = ticketSales
-    .filter((s) => s.paymentStatus === "PAID")
-    .reduce((sum, s) => sum + (s.totalAmount || s.subtotal || 0), 0);
-
-  const totalCommission = ticketSales
-    .filter((s) => s.paymentStatus === "PAID")
-    .reduce((sum, s) => {
-      if (typeof s.platformFee === "number") return sum + s.platformFee;
-      const rate = typeof s.commissionRate === "number" ? s.commissionRate : 5.0;
-      return sum + Math.round((s.totalAmount || 0) * (rate / 100) * 100) / 100;
-    }, 0);
-
-  const netEarnings = ticketSales
-    .filter((s) => s.paymentStatus === "PAID")
-    .reduce((sum, s) => {
-      if (typeof s.providerNet === "number") return sum + s.providerNet;
-      const base = s.totalAmount || 0;
-      const rate = typeof s.commissionRate === "number" ? s.commissionRate : 5.0;
-      const fee = Math.round(base * (rate / 100) * 100) / 100;
-      return sum + Math.max(0, base - fee);
-    }, 0);
-
-  const totalDisbursed = transactions
-    .filter((t) => t.status === "COMPLETED")
-    .reduce((sum, t) => sum + (t.netPayout || 0), 0);
-
-  const availableBalance = Math.max(0, netEarnings - totalDisbursed);
+  // Single authoritative financial calculation shared identically between Admin & Provider
+  const effectiveBookings = allBookings.length > 0 ? allBookings : storeBookings;
+  const fin = calculateProviderFinancials(organization, effectiveBookings, allPayouts);
+  const grossTicketSales = fin.ticketRevenue;
+  const totalCommissionFee = fin.commissionDeducted;
+  const totalDisbursed = fin.totalSettled;
+  const availableBalance = fin.netPayable;
 
   // Read URL query parameter for receipt on initial load
   useEffect(() => {
@@ -215,7 +337,7 @@ export default function ProviderPaymentsPage() {
             {t("Revenue & Payout Settlements")}
           </h1>
           <p className="text-xs text-muted-foreground">
-            {t("View incoming ticket sales (VAT-excluded base fares), platform commissions, and bank disbursements.")}
+            {t("View incoming ticket sales, 5% platform commission deductions, and bank disbursements.", "የትኬት ሽያጮችን፣ 5% የተቀነሰ የፕላትፎርም ኮሚሽን እና የባንክ ዝውውር መረጃዎችን ይመልከቱ።")}
           </p>
         </div>
 
@@ -237,66 +359,206 @@ export default function ProviderPaymentsPage() {
         </div>
       </div>
 
-      {/* KPI Financial Cards - Compact Grid */}
-      <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5 sm:gap-3">
-        {/* Ticket Sales (Base Fare, No VAT) */}
+      {/* Sector Switcher Bar with Real Live Counts */}
+      <div className="flex flex-wrap items-center gap-2 p-2 rounded-2xl bg-card border border-border/60 shadow-xs">
+        <span className="text-[11px] font-bold text-muted-foreground px-2 flex items-center gap-1.5">
+          <Sparkles className="w-3.5 h-3.5 text-amber-600" />
+          {t("Active Sector Provider")}:
+        </span>
+        {[
+          { id: "SPORTS" as const, label: "Stadium Sports Club", org: "Adiss Abeba Stadium", icon: Trophy },
+          { id: "BUS" as const, label: "Intercity Bus Lines", org: "Selam Bus Lines", icon: Bus },
+          { id: "CINEMA" as const, label: "Cinema Multiplex", org: "Century Cinema Multiplex", icon: Film },
+          { id: "EVENT" as const, label: "Live Events & Concerts", org: "Kuriftu Resort & Live Events", icon: Calendar },
+        ].map((s) => {
+          const Icon = s.icon;
+          const isSelected = organization.category === s.id;
+          const count = sectorOrderCounts[s.id] || 0;
+          return (
+            <button
+              key={s.id}
+              type="button"
+              onClick={() => {
+                setOrganizationCategory(s.id);
+                toast.success(`Switched provider to ${s.label} (${s.org})`);
+              }}
+              className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer ${
+                isSelected
+                  ? "bg-[#B45309] text-white shadow-xs"
+                  : "bg-muted/60 hover:bg-muted text-muted-foreground hover:text-foreground"
+              }`}
+            >
+              <Icon className="w-3.5 h-3.5" />
+              <span>{t(s.label)}</span>
+              <span
+                className={`text-[10px] px-1.5 py-0.2 rounded-full font-bold ${
+                  isSelected
+                    ? "bg-white/25 text-white"
+                    : count > 0
+                    ? "bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 font-extrabold"
+                    : "bg-background/80 text-muted-foreground"
+                }`}
+              >
+                {count} {t("orders")}
+              </span>
+            </button>
+          );
+        })}
+      </div>
+
+      {/* KPI Financial Cards - 5 Reconciled Provider Perspective Cards */}
+      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-2.5 sm:gap-3">
+        {/* Card 1: Total Ticket Sales (Base Ticket Fare) */}
         <div className="bg-card border border-border/60 rounded-xl p-3 shadow-xs">
           <div className="flex items-center justify-between text-muted-foreground text-xs mb-1">
-            <span className="text-[10px] sm:text-xs truncate font-medium">{t("Ticket Sales (No VAT)")}</span>
+            <span className="text-[10px] sm:text-xs truncate font-medium">
+              {language === "am" ? "ጠቅላላ የትኬት ሽያጭ" : t("payments.ticketSales", "Total Ticket Sales")}
+            </span>
             <TrendingUp className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
           </div>
           <div className="text-sm sm:text-base font-bold text-foreground truncate font-mono">
-            {formatCurrency(totalBaseSales)}
+            {formatCurrency(fin.ticketRevenue)}
           </div>
-          <span className="text-[10px] text-muted-foreground truncate block">{t("Base fare revenue")}</span>
+          <span className="text-[10px] text-muted-foreground truncate block">
+            {language === "am" ? "የትኬት መሸጫ ዋጋ (ያለ VAT)" : "Ticket Base Revenue"}
+          </span>
         </div>
 
-        {/* Platform Commission */}
+        {/* Card 2: TIKORA Platform Commission (5%) */}
         <div className="bg-card border border-border/60 rounded-xl p-3 shadow-xs">
           <div className="flex items-center justify-between text-muted-foreground text-xs mb-1">
-            <span className="text-[10px] sm:text-xs truncate font-medium">{t("analysis.platformCommission", "Platform Commission")}</span>
+            <span className="text-[10px] sm:text-xs truncate font-medium">
+              {language === "am" ? "የቲክኦራ 5% ኮሚሽን" : t("analysis.platformCommission", "Commission (5%)")}
+            </span>
             <DollarSign className="w-3.5 h-3.5 text-amber-600 shrink-0" />
           </div>
-          <div className="text-sm sm:text-base font-bold text-foreground truncate font-mono">
-            {formatCurrency(totalCommission)}
+          <div className="text-sm sm:text-base font-bold text-rose-500 truncate font-mono">
+            - {formatCurrency(fin.commissionDeducted)}
           </div>
-          <span className="text-[10px] text-muted-foreground truncate block">{t("Platform service fees")}</span>
+          <span className="text-[10px] text-muted-foreground truncate block">
+            {language === "am" ? "የተቀነሰ 5% ኮሚሽን" : "5% Platform Fee"}
+          </span>
         </div>
 
-        {/* Net Provider Earnings */}
-        <div className="bg-card border border-border/60 rounded-xl p-3 shadow-xs">
-          <div className="flex items-center justify-between text-muted-foreground text-xs mb-1">
-            <span className="text-[10px] sm:text-xs truncate font-medium">{t("Net Earnings")}</span>
-            <CheckCircle2 className="w-3.5 h-3.5 text-blue-600 shrink-0" />
+        {/* Card 3: Total Net Earned (Ticket Sales - Commission) */}
+        <div className="bg-card border border-blue-500/30 bg-blue-500/[0.04] rounded-xl p-3 shadow-xs">
+          <div className="flex items-center justify-between text-blue-700 dark:text-blue-400 text-xs mb-1 font-semibold">
+            <span className="text-[10px] sm:text-xs truncate font-bold">
+              {language === "am" ? "ጠቅላላ የተጣራ ገቢ" : "Total Net Earned"}
+            </span>
+            <ShieldCheck className="w-3.5 h-3.5 text-blue-600 shrink-0" />
           </div>
-          <div className="text-sm sm:text-base font-bold text-blue-600 truncate font-mono">
-            {formatCurrency(netEarnings)}
+          <div className="text-sm sm:text-base font-black text-blue-600 dark:text-blue-400 truncate font-mono">
+            {formatCurrency(fin.totalNetEarnings)}
           </div>
-          <span className="text-[10px] text-muted-foreground truncate block">{t("Pure provider payout")}</span>
+          <span className="text-[10px] text-blue-700/80 dark:text-blue-400/80 truncate block font-medium">
+            {language === "am" ? "የትኬት ዋጋ - 5% ኮሚሽን" : "Net After Commission"}
+          </span>
         </div>
 
-        {/* Available for Withdrawal */}
-        <div className="bg-card border border-amber-600/30 bg-amber-500/5 rounded-xl p-3 shadow-xs">
+        {/* Card 4: Total Received in Hand (Disbursed to Bank Account) */}
+        <div className="bg-card border border-emerald-500/40 bg-emerald-500/[0.06] rounded-xl p-3 shadow-xs">
+          <div className="flex items-center justify-between text-emerald-700 dark:text-emerald-400 text-xs mb-1 font-semibold">
+            <span className="text-[10px] sm:text-xs truncate font-bold">
+              {language === "am" ? "ተቀብሎ እጁ ላይ ያለ" : "Received & in Hand"}
+            </span>
+            <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
+          </div>
+          <div className="text-sm sm:text-base font-black text-emerald-600 dark:text-emerald-400 truncate font-mono">
+            {formatCurrency(fin.totalSettled)}
+          </div>
+          <span className="text-[10px] text-emerald-700/90 dark:text-emerald-400/90 truncate block font-medium">
+            {language === "am" ? "ወደ ባንክ አካውንት የገባ" : "Disbursed to Bank Account"}
+          </span>
+        </div>
+
+        {/* Card 5: Net on Platform (Remaining Unclaimed on Platform) */}
+        <div
+          className={`bg-card rounded-xl p-3 shadow-xs border ${
+            fin.netPayable === 0
+              ? "border-slate-200 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-900/50"
+              : "border-amber-600/40 bg-amber-500/10 shadow-amber-500/5 ring-1 ring-amber-500/20"
+          }`}
+        >
           <div className="flex items-center justify-between text-amber-700 dark:text-amber-300 text-xs mb-1 font-semibold">
-            <span className="text-[10px] sm:text-xs truncate font-medium">{t("Available Balance")}</span>
+            <span className="text-[10px] sm:text-xs truncate font-bold">
+              {language === "am" ? "Net on Platform (ያልተቀበለው)" : "Net on Platform"}
+            </span>
             <Wallet className="w-3.5 h-3.5 text-amber-600 shrink-0" />
           </div>
-          <div className="text-sm sm:text-base font-bold text-amber-700 dark:text-amber-400 truncate font-mono">
-            {formatCurrency(availableBalance)}
+          <div className="flex items-center gap-1.5">
+            <span
+              className={`text-sm sm:text-base font-black truncate font-mono ${
+                fin.netPayable === 0
+                  ? "text-slate-500 dark:text-slate-400"
+                  : "text-amber-700 dark:text-amber-400"
+              }`}
+            >
+              {formatCurrency(fin.netPayable)}
+            </span>
+            {fin.isSettled ? (
+              <span className="px-1.5 py-0.2 rounded-full text-[9px] font-bold bg-emerald-500/10 text-emerald-600 border border-emerald-500/20">
+                {language === "am" ? "✓ ሁሉም ተላልፏል" : "✓ All Settled"}
+              </span>
+            ) : (
+              <span className="px-1.5 py-0.2 rounded-full text-[9px] font-bold bg-amber-500/20 text-amber-700 dark:text-amber-300 animate-pulse">
+                {language === "am" ? "ቀሪ ሂሳብ" : "Pending Payout"}
+              </span>
+            )}
           </div>
-          <span className="text-[10px] text-muted-foreground truncate block">{t("Ready to withdraw")}</span>
+          <span className="text-[10px] text-muted-foreground truncate block font-medium">
+            {fin.isSettled
+              ? (language === "am" ? "ሁሉም ተከፍሎ አልቋል" : "Zero Balance Remaining")
+              : (language === "am" ? "በፕላትፎርሙ ላይ የቀረ ያልተቀበለው" : "Unclaimed on Platform")}
+          </span>
         </div>
       </div>
 
-      {/* Ethiopian VAT Tax Notice Banner */}
+      {/* Escrow Reconciliation Summary Banner */}
+      <div className="p-3.5 rounded-2xl bg-slate-50 dark:bg-slate-900/60 border border-slate-200/80 dark:border-slate-800 flex flex-col md:flex-row items-start md:items-center justify-between gap-3 text-xs">
+        <div className="flex items-center gap-2.5">
+          <div className="w-8 h-8 rounded-xl bg-amber-500/10 text-amber-600 flex items-center justify-center shrink-0 border border-amber-500/20">
+            <ShieldCheck className="w-4 h-4" />
+          </div>
+          <div>
+            <p className="font-bold text-foreground">
+              {language === "am"
+                ? "የክፍያ ሂሳብ ማጠቃለያ፦ ጠቅላላ የተጣራ ገቢ = ተቀብሎ እጅ ላይ ያለ + በፕላትፎርሙ ላይ የቀረ ያልተቀበሉት"
+                : "Escrow Financial Balance: Total Net = Disbursed in Hand + Unclaimed on Platform"}
+            </p>
+            <p className="text-[11px] text-muted-foreground">
+              {language === "am"
+                ? `ጠቅላላ የተጣራ ገቢ (${formatCurrency(fin.totalNetEarnings)}) = ወደ ባንክ የገባ (${formatCurrency(fin.totalSettled)}) + በፕላትፎርሙ ላይ የቀረ ያልተቀበሉት (${formatCurrency(fin.netPayable)})`
+                : `Total Net (${formatCurrency(fin.totalNetEarnings)}) = In Hand (${formatCurrency(fin.totalSettled)}) + On Platform (${formatCurrency(fin.netPayable)})`}
+            </p>
+          </div>
+        </div>
+        <div className="flex items-center gap-2 font-mono text-[11px] flex-wrap">
+          <span className="px-2.5 py-1 rounded-lg bg-emerald-500/10 text-emerald-600 font-bold border border-emerald-500/20 flex items-center gap-1">
+            <CheckCircle2 className="w-3 h-3 text-emerald-600" />
+            <span>{language === "am" ? "እጅ ላይ ያለ፦ " : "In Hand: "}</span>
+            <span className="text-emerald-700 dark:text-emerald-300 font-black">{formatCurrency(fin.totalSettled)}</span>
+          </span>
+          <span className="px-2.5 py-1 rounded-lg bg-amber-500/10 text-amber-700 dark:text-amber-300 font-bold border border-amber-500/20 flex items-center gap-1">
+            <Wallet className="w-3 h-3 text-amber-600" />
+            <span>{language === "am" ? "ያልተቀበሉት፦ " : "Unclaimed: "}</span>
+            <span className="text-amber-800 dark:text-amber-200 font-black">{formatCurrency(fin.netPayable)}</span>
+          </span>
+        </div>
+      </div>
+
+      {/* Platform Commission & Payout Policy Banner */}
       <div className="p-3 rounded-xl bg-amber-500/5 border border-amber-500/20 text-xs flex items-start gap-2.5">
-        <ShieldCheck className="w-4 h-4 text-amber-600 shrink-0 mt-0.5" />
+        <DollarSign className="w-4 h-4 text-amber-600 shrink-0 mt-0.5" />
         <div className="space-y-0.5">
-          <span className="font-semibold text-foreground">{t("Ethiopian VAT (5%) Separation Policy")}</span>
+          <span className="font-semibold text-foreground">
+            {t("TIKORA Commission & Settlement Policy", "የቲኮራ ኮሚሽን እና የክፍያ ዝውውር መመሪያ")}
+          </span>
           <p className="text-[11px] text-muted-foreground leading-relaxed">
-            The 5% Value Added Tax paid by customers is collected for the Ethiopian Ministry of Revenue and recorded
-            in the platform Admin Ledger. Your provider earnings are computed strictly from the pure ticket base fare,
-            deducting only the 5% platform service fee.
+            {t(
+              "Only the 5% TIKORA platform service fee is deducted from your ticket sales. The full remaining 95% net revenue is disbursed directly to your verified bank account via Chapa.",
+              "ከእያንዳንዱ የትኬት ሽያጭ 5% የቲኮራ ፕላትፎርም አገልግሎት ኮሚሽን ብቻ የሚቀነስ ሲሆን ቀሪው 95% የተጣራ ገቢ ሙሉ በሙሉ ወደ ባንክ ሂሳብዎ በቻፓ በኩል ይተላለፋል።"
+            )}
           </p>
         </div>
       </div>
@@ -368,9 +630,14 @@ export default function ProviderPaymentsPage() {
         <div className="bg-card border border-border/60 rounded-xl shadow-xs overflow-hidden space-y-0">
           <div className="p-3.5 border-b border-border/50 flex flex-col sm:flex-row sm:items-center justify-between gap-2.5">
             <div>
-              <h3 className="text-xs sm:text-sm font-bold text-foreground">Ticket Sales Payments</h3>
+              <h3 className="text-xs sm:text-sm font-bold text-foreground">
+                {t("Ticket Sales Settlements", "የትኬት ሽያጭ ገቢዎች")}
+              </h3>
               <p className="text-[11px] text-muted-foreground">
-                Showing pure ticket base prices (VAT excluded). 5% platform commission is deducted for net provider settlement.
+                {t(
+                  "Showing incoming ticket sales. 5% platform commission is deducted for your net provider settlement.",
+                  "የተሸጡ ትኬቶች ዋጋ። 5% የቲኮራ ፕላትፎርም ኮሚሽን ተቀንሶ የተጣራው ገቢ ለእርስዎ ይተላለፋል።"
+                )}
               </p>
             </div>
             <div className="relative w-full sm:w-64">
@@ -401,23 +668,26 @@ export default function ProviderPaymentsPage() {
                       <th className="py-2.5 px-3.5">{t("Reference / Pass")}</th>
                       <th className="py-2.5 px-3">{t("Customer Info")}</th>
                       <th className="py-2.5 px-3">{t("Service & Seats")}</th>
-                      <th className="py-2.5 px-3 text-right">{t("Base Fare (No VAT)")}</th>
-                      <th className="py-2.5 px-3 text-right">{t("Commission Fee")}</th>
-                      <th className="py-2.5 px-3 text-right">{t("Net Payout")}</th>
+                      <th className="py-2.5 px-3 text-right">{t("Ticket Price", "የትኬት ዋጋ")}</th>
+                      <th className="py-2.5 px-3 text-right">{t("Commission (5%)", "የተቀነሰ ኮሚሽን")}</th>
+                      <th className="py-2.5 px-3 text-right">{t("Net to Provider", "የተጣራ ገቢ")}</th>
                       <th className="py-2.5 px-3 text-center">{t("Status")}</th>
                       <th className="py-2.5 px-3.5 text-right">{t("Actions")}</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-border/40">
                     {filteredTicketSales.map((sale) => {
-                      const basePrice = sale.totalAmount || sale.subtotal || 0;
+                      const cPaid = Number(sale.customerPaid ?? sale.totalAmount ?? 0);
+                      const vatRate = Number(sale.vatRate ?? 5.0);
+                      const vat = Number(sale.vatAmount ?? Math.round(((cPaid * vatRate) / (100 + vatRate)) * 100) / 100);
+                      const basePrice = Number(sale.subtotal ?? Math.max(0, cPaid - vat));
                       const commRate = typeof sale.commissionRate === "number" ? sale.commissionRate : 5.0;
-                      const comm = typeof sale.platformFee === "number"
-                        ? sale.platformFee
-                        : Math.round(basePrice * (commRate / 100) * 100) / 100;
-                      const net = typeof sale.providerNet === "number"
-                        ? sale.providerNet
-                        : Math.max(0, basePrice - comm);
+                      const comm = Number(
+                        sale.platformFee ?? Math.round(basePrice * (commRate / 100) * 100) / 100
+                      );
+                      const net = Number(
+                        sale.providerNet ?? Math.max(0, basePrice - comm)
+                      );
 
                       return (
                         <tr key={sale.id} className="hover:bg-amber-500/[0.02] transition-colors">
@@ -444,17 +714,11 @@ export default function ProviderPaymentsPage() {
                           </td>
                           <td className="py-2.5 px-3 text-right font-mono font-bold text-foreground">
                             {formatCurrency(basePrice)}
-                            <span className="text-[9px] text-muted-foreground block font-normal">VAT Excluded</span>
                           </td>
-                          <td className="py-2.5 px-3 text-right">
-                            <span className="font-mono text-rose-600 dark:text-rose-400 font-semibold block">
-                              -{formatCurrency(comm)}
-                            </span>
-                            <span className="text-[10px] text-muted-foreground font-mono">
-                              ({commRate}%)
-                            </span>
+                          <td className="py-2.5 px-3 text-right font-mono font-semibold text-rose-500">
+                            -{formatCurrency(comm)}
                           </td>
-                          <td className="py-2.5 px-3 text-right font-mono font-bold text-emerald-600">
+                          <td className="py-2.5 px-3 text-right font-mono font-bold text-emerald-600 dark:text-emerald-400">
                             {formatCurrency(net)}
                           </td>
                           <td className="py-2.5 px-3 text-center">
@@ -493,15 +757,20 @@ export default function ProviderPaymentsPage() {
                 </table>
               </div>
 
-              {/* Mobile View: Compact Cards */}
+              {/* Mobile View: Compact Cards (VAT-free) */}
               <div className="block md:hidden p-2.5 space-y-2">
                 {filteredTicketSales.map((sale) => {
-                  const basePrice = (sale as any).customerPaid ?? sale.totalAmount ?? 0;
-                  const vatRate = (sale as any).vatRate ?? 5;
-                  const vatAmount = (sale as any).vatAmount ?? Math.round((basePrice * vatRate) / (100 + vatRate));
-                  const commRate = (sale as any).commissionRate ?? 5;
-                  const comm = (sale as any).platformFee ?? Math.round((basePrice - vatAmount) * (commRate / 100));
-                  const net = (sale as any).providerNet ?? Math.max(0, basePrice - vatAmount - comm);
+                  const cPaid = Number(sale.customerPaid ?? sale.totalAmount ?? 0);
+                  const vatRate = Number(sale.vatRate ?? 5.0);
+                  const vat = Number(sale.vatAmount ?? Math.round(((cPaid * vatRate) / (100 + vatRate)) * 100) / 100);
+                  const basePrice = Number(sale.subtotal ?? Math.max(0, cPaid - vat));
+                  const commRate = typeof sale.commissionRate === "number" ? sale.commissionRate : 5.0;
+                  const comm = Number(
+                    sale.platformFee ?? Math.round(basePrice * (commRate / 100) * 100) / 100
+                  );
+                  const net = Number(
+                    sale.providerNet ?? Math.max(0, basePrice - comm)
+                  );
 
                   return (
                     <div
@@ -527,14 +796,14 @@ export default function ProviderPaymentsPage() {
 
                       <div className="flex items-center justify-between pt-1.5 border-t border-border/40 font-mono">
                         <div>
-                          <span className="text-[10px] text-muted-foreground block">Customer Paid:</span>
+                          <span className="text-[10px] text-muted-foreground block">{t("Ticket Price", "የትኬት ዋጋ")}:</span>
                           <span className="font-bold text-foreground">{formatCurrency(basePrice)}</span>
-                          <span className="text-[9px] text-muted-foreground block">{vatRate}% VAT</span>
+                          <span className="text-[9px] text-rose-500 block">-{formatCurrency(comm)} {t("comm", "ኮሚሽን")}</span>
                         </div>
                         <div className="text-right">
-                          <span className="text-[10px] text-muted-foreground block">Net Payout ({commRate}% comm):</span>
-                          <span className="font-bold text-emerald-600">{formatCurrency(net)}</span>
-                          <span className="text-[9px] text-rose-500 block">-{formatCurrency(comm)} fee</span>
+                          <span className="text-[10px] text-muted-foreground block">{t("Net Payout", "የተጣራ ገቢ")}:</span>
+                          <span className="font-bold text-emerald-600 dark:text-emerald-400">{formatCurrency(net)}</span>
+                          <span className="text-[9px] text-muted-foreground block font-sans">95% {t("to provider", "ለፕሮቫይደር")}</span>
                         </div>
                       </div>
 

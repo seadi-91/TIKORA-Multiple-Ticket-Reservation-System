@@ -170,5 +170,51 @@ export const providerService = {
       });
     } catch {}
   },
+
+  async getNotifications() {
+    try {
+      const res = await fetch(`${API_BASE_URL}/provider/notifications`, {
+        headers: getAuthHeaders(),
+        credentials: "include",
+      });
+      if (res.ok) {
+        const data = await res.json();
+        if (data.success && Array.isArray(data.notifications)) return data.notifications;
+      }
+    } catch {}
+
+    try {
+      const res = await fetch("/api/provider/notifications");
+      if (res.ok) {
+        const data = await res.json();
+        if (data.success && Array.isArray(data.notifications)) return data.notifications;
+      }
+    } catch {}
+
+    return [];
+  },
+
+  async getPayouts() {
+    try {
+      const res = await fetch(`${API_BASE_URL}/provider/payouts`, {
+        headers: getAuthHeaders(),
+        credentials: "include",
+      });
+      if (res.ok) {
+        const data = await res.json();
+        if (data.success && Array.isArray(data.payouts)) return data.payouts;
+      }
+    } catch {}
+
+    try {
+      const res = await fetch("/api/admin/payout");
+      if (res.ok) {
+        const data = await res.json();
+        if (data.success && Array.isArray(data.payouts)) return data.payouts;
+      }
+    } catch {}
+
+    return [];
+  },
 };
 

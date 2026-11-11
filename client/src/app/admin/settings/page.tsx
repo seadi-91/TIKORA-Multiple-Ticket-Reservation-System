@@ -17,7 +17,6 @@ import {
   ShieldAlert,
   ShieldCheck,
   Search,
-  Download,
   RotateCcw,
   Sliders,
   Check,
@@ -35,7 +34,6 @@ import {
   Image as ImageIcon,
   Ticket,
   Trash2,
-  RefreshCw,
 } from "lucide-react";
 import { useAdminStore, AdminSettings } from "@/stores/admin.store";
 import { adminService } from "@/services/admin.service";
@@ -82,7 +80,6 @@ export default function AdminSettingsPage() {
 
   const [activeSection, setActiveSection] = useState<SettingSection>("GENERAL");
   const [searchQuery, setSearchQuery] = useState("");
-  const [showResetConfirm, setShowResetConfirm] = useState(false);
   const [mobileDrawerOpen, setMobileDrawerOpen] = useState(false);
 
   // Form state initialized with store settings
@@ -175,98 +172,6 @@ export default function AdminSettingsPage() {
   const handleDiscard = () => {
     setForm({ ...settings });
     toast.info("Changes discarded. Restored current active configuration.");
-  };
-
-  // Handle Reset to Factory Defaults
-  const handleResetToDefaults = () => {
-    const factoryDefaults: AdminSettings = {
-      platformName: "TIKORA Ethiopia",
-      siteName: "TIKORA",
-      logoUrl: "",
-      tagline: "Ethiopia's Unified Smart Ticket & Transit Hub",
-      supportEmail: "support@tikora.et",
-      supportPhone: "+251 11 667 8900",
-      headquartersAddress: "Edna Mall Tower, Bole Sub-City, Addis Ababa, Ethiopia",
-      footerEmail: "support@tikora.et",
-      footerPhone: "+251 11 667 8900",
-      footerLocation: "Edna Mall Tower, Bole Sub-City, Addis Ababa, Ethiopia",
-      copyrightText: "© 2026 TIKORA Technologies Inc. All Rights Reserved.",
-      operatingRegion: "Federal Democratic Republic of Ethiopia",
-      defaultTimezone: "Africa/Addis_Ababa (UTC+3)",
-      defaultLanguage: "en",
-      maintenanceMode: false,
-      maintenanceNotice: "System upgrade in progress. Public bookings will resume shortly.",
-      allowNewRegistrations: true,
-      allowGuestCheckout: true,
-      currency: "ETB",
-      defaultCommissionRate: 5.0,
-      busCommissionRate: 4.5,
-      cinemaCommissionRate: 6.0,
-      eventCommissionRate: 7.5,
-      sportsCommissionRate: 5.0,
-      vatTaxRate: 5.0,
-      platformServiceFeeETB: 10,
-      cartHoldDurationMinutes: 10,
-      maxTicketsPerBooking: 8,
-      telebirrEnabled: true,
-      telebirrMerchantId: "TB-ET-994821",
-      telebirrAutoSettle: true,
-      cbeBirrEnabled: true,
-      cbeBirrMerchantCode: "CBE-BIRR-44018",
-      chapaEnabled: true,
-      chapaMode: "LIVE",
-      minPayoutThresholdETB: 1000,
-      payoutSchedule: "DAILY",
-      payoutProcessingFeeETB: 25,
-      autoApproveRefundThreshold: 300,
-      busCancellationCutoffHours: 4,
-      cinemaCancellationCutoffHours: 2,
-      eventCancellationCutoffHours: 24,
-      sportsCancellationCutoffHours: 6,
-      cancellationPenaltyRate: 10.0,
-      disputeAutoEscalateHours: 48,
-      twoFactorRequiredForAdmins: true,
-      twoFactorRequiredForProviders: false,
-      sessionTimeoutMinutes: 60,
-      maxFailedLoginsLockout: 5,
-      lockoutDurationMinutes: 30,
-      enforcePasswordComplexity: true,
-      ipWhitelistingEnabled: false,
-      whitelistedAdminIPs: "197.156.104.22, 196.188.241.10",
-      auditLogRetentionDays: 90,
-      qrSignatureAlgorithm: "HMAC_SHA256",
-      qrDynamicRotationEnabled: true,
-      qrRotationIntervalSeconds: 60,
-      offlineScanWindowHours: 12,
-      allowDuplicateCheckInOverride: false,
-      smsGatewayProvider: "ETHIO_TELECOM",
-      smsSenderId: "TIKORA",
-      smsTicketReceiptsEnabled: true,
-      emailReceiptsEnabled: true,
-      highValueTransactionAlertETB: 50000,
-      systemAlertEmail: "security-ops@tikora.et",
-    };
-
-    setForm(factoryDefaults);
-    updateSettings(factoryDefaults);
-    setShowResetConfirm(false);
-    toast.success("Factory defaults restored successfully!");
-  };
-
-  // Export JSON configuration file
-  const handleExportJSON = () => {
-    const dataStr =
-      "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(form, null, 2));
-    const downloadAnchor = document.createElement("a");
-    downloadAnchor.setAttribute("href", dataStr);
-    downloadAnchor.setAttribute(
-      "download",
-      `tikora-settings-${new Date().toISOString().split("T")[0]}.json`
-    );
-    document.body.appendChild(downloadAnchor);
-    downloadAnchor.click();
-    downloadAnchor.remove();
-    toast.success("Configuration exported as JSON file.");
   };
 
   // Sidebar navigation structure grouped by domain
@@ -412,26 +317,6 @@ export default function AdminSettingsPage() {
 
         {/* Action Controls */}
         <div className="flex items-center gap-2 shrink-0">
-          <button
-            type="button"
-            onClick={handleExportJSON}
-            className="px-2.5 py-1.5 rounded-xl border border-slate-200/80 dark:border-slate-800 text-xs font-semibold text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800/60 transition-colors flex items-center gap-1.5 cursor-pointer shadow-2xs"
-            title="Export settings JSON"
-          >
-            <Download className="w-3.5 h-3.5 text-slate-500" />
-            <span className="hidden sm:inline">Export</span>
-          </button>
-
-          <button
-            type="button"
-            onClick={() => setShowResetConfirm(true)}
-            className="px-2.5 py-1.5 rounded-xl border border-slate-200/80 dark:border-slate-800 text-xs font-semibold text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800/60 transition-colors flex items-center gap-1.5 cursor-pointer shadow-2xs"
-            title="Reset default values"
-          >
-            <RotateCcw className="w-3.5 h-3.5 text-slate-500" />
-            <span className="hidden sm:inline">Reset</span>
-          </button>
-
           {hasUnsavedChanges && (
             <button
               type="button"
@@ -736,15 +621,6 @@ export default function AdminSettingsPage() {
                     Customize your platform site name, branding logo, customer support channels, and footer contact credentials.
                   </p>
                 </div>
-                <button
-                  type="button"
-                  onClick={() => fetchPlatformData()}
-                  disabled={isLoading}
-                  className="px-3 py-1.5 text-xs font-semibold rounded-xl bg-card border border-slate-200/60 dark:border-slate-800/60 text-foreground hover:bg-muted transition-colors flex items-center gap-1.5 shadow-2xs cursor-pointer"
-                >
-                  <RefreshCw className={`w-3.5 h-3.5 text-amber-500 ${isLoading ? "animate-spin" : ""}`} />
-                  <span>{isLoading ? "Syncing..." : "Sync DB"}</span>
-                </button>
               </div>
 
               {/* Logo Customizer Card */}
@@ -1977,41 +1853,6 @@ export default function AdminSettingsPage() {
           </div>
         </main>
       </div>
-
-      {/* Reset Confirmation Dialog Modal */}
-      {showResetConfirm && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs">
-          <div className="w-full max-w-md rounded-2xl bg-white dark:bg-[#161922] border border-amber-500/30 p-6 shadow-2xl space-y-4">
-            <div className="w-12 h-12 rounded-full bg-amber-500/10 text-amber-600 flex items-center justify-center mx-auto">
-              <AlertTriangle className="w-6 h-6" />
-            </div>
-
-            <div className="text-center space-y-1">
-              <h3 className="text-base font-bold text-foreground">Restore Factory Defaults?</h3>
-              <p className="text-xs text-muted-foreground leading-relaxed">
-                This will reset all platform commissions, payment gateway parameters, refund thresholds, and security policies to TIKORA defaults.
-              </p>
-            </div>
-
-            <div className="flex items-center justify-end gap-2 pt-3 border-t border-slate-100 dark:border-slate-800">
-              <button
-                type="button"
-                onClick={() => setShowResetConfirm(false)}
-                className="px-4 py-2 text-xs font-semibold rounded-xl text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 cursor-pointer"
-              >
-                Cancel
-              </button>
-              <button
-                type="button"
-                onClick={handleResetToDefaults}
-                className="px-4 py-2 text-xs font-bold rounded-xl bg-amber-600 hover:bg-amber-700 text-white transition-colors cursor-pointer shadow-xs"
-              >
-                Confirm Reset
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
     </div>
   );
 }

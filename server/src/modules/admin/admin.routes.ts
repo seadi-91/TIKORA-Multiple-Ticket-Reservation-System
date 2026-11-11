@@ -17,11 +17,15 @@ router.delete("/users/:id", AdminController.deleteUser);
 router.get("/providers", AdminController.getProviders);
 router.patch("/providers/:id/status", AdminController.updateProviderStatus);
 router.delete("/providers/:id", AdminController.deleteProvider);
+router.post("/providers/:id/payout", AdminController.recordPayout);
+router.post("/payout", AdminController.recordPayout);
+router.get("/payouts", AdminController.getPayouts);
 
 router.get("/inspectors", AdminController.getInspectors);
 
 router.get("/overview", AdminController.getOverview);
 router.get("/bookings", AdminController.getBookings);
+router.delete("/bookings/:id", AdminController.deleteBooking);
 router.get("/refunds", AdminController.getRefunds);
 router.get("/support", AdminController.getSupportTickets);
 

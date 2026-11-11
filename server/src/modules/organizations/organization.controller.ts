@@ -484,4 +484,116 @@ export class OrganizationController {
       res.status(500).json({ success: false, message: error.message || "Failed to remove staff member." });
     }
   }
+
+  /**
+   * GET /api/provider/notifications
+   * Retrieve real notifications for current provider
+   */
+  static async getNotifications(req: Request, res: Response): Promise<void> {
+    try {
+      const user = (req as any).user;
+      if (!user) {
+        res.status(401).json({ success: false, message: "Unauthorized" });
+        return;
+      }
+
+      let notifs: any[] = [];
+      try {
+        notifs = await db.orm.public.Notification.where({ userId: user.id }).all();
+      } catch {}
+      const mapped = notifs.map((n: any) => ({
+        id: String(n.id),
+        title: n.title,
+        message: n.message,
+        type: n.type,
+        linkHref: n.link || "/provider/payments",
+        link: n.link || "/provider/payments",
+        referenceId: n.referenceId || undefined,
+        isRead: n.isRead,
+        createdAt: n.createdAt ? new Date(n.createdAt).toISOString() : new Date().toISOString(),
+      }));
+
+      res.status(200).json({ success: true, notifications: mapped });
+    } catch (error: any) {
+      console.error("Organization getNotifications error:", error);
+      res.status(500).json({ success: false, message: error.message || "Failed to fetch notifications." });
+    }
+  }
+
+  /**
+   * PATCH /api/provider/notifications/:id/read
+   */
+  static async markNotificationRead(req: Request, res: Response): Promise<void> {
+    try {
+      const idParam = Array.isArray(req.params.id) ? req.params.id[0] : req.params.id;
+      const notifId = parseInt(idParam, 10);
+      if (!isNaN(notifId)) {
+        try {
+          await db.orm.public.Notification.where({ id: notifId }).update({ isRead: true });
+        } catch {}
+      }
+      res.status(200).json({ success: true, message: "Notification marked as read." });
+    } catch (error: any) {
+      res.status(500).json({ success: false, message: error.message || "Failed to update notification." });
+    }
+  }
+
+  /**
+   * PATCH /api/provider/notifications/read-all
+   */
+  static async markAllNotificationsRead(req: Request, res: Response): Promise<void> {
+    try {
+      const user = (req as any).user;
+      if (user) {
+        try {
+          await db.orm.public.Notification.where({ userId: user.id }).update({ isRead: true });
+        } catch {}
+      }
+      res.status(200).json({ success: true, message: "All notifications marked as read." });
+    } catch (error: any) {
+      res.status(500).json({ success: false, message: error.message || "Failed to update notifications." });
+    }
+  }
+
+  /**
+   * GET /api/provider/payouts
+   * Retrieve payouts for current provider
+   */
+  static async getPayouts(req: Request, res: Response): Promise<void> {
+    try {
+      const user = (req as any).user;
+      const provider = await OrganizationController.getProviderForUser(user.id, user.organizationId);
+      if (!provider) {
+        res.status(200).json({ success: true, payouts: [] });
+        return;
+      }
+
+      let payouts: any[] = [];
+      try {
+        payouts = await db.orm.public.ProviderPayout.where({ providerId: provider.id }).all();
+      } catch {}
+      const mapped = payouts.map((p: any) => ({
+        id: String(p.id),
+        reference: p.payoutReference,
+        providerId: String(p.providerId),
+        providerName: provider.name,
+        amount: Number(p.amount) || 0,
+        fee: Number(p.fee) || 0,
+        netAmount: Number(p.netAmount ?? p.amount) || 0,
+        currency: p.currency || "ETB",
+        payoutMethod: (p.paymentMethod || "CHAPA") as any,
+        accountNumber: p.accountNumber || "",
+        accountName: p.accountName || provider.name,
+        status: (p.status === "COMPLETED" ? "PROCESSED" : p.status) as any,
+        requestedAt: p.createdAt ? new Date(p.createdAt).toISOString() : new Date().toISOString(),
+        processedAt: p.paidAt ? new Date(p.paidAt).toISOString() : undefined,
+        notes: p.notes || undefined,
+      }));
+
+      res.status(200).json({ success: true, payouts: mapped });
+    } catch (error: any) {
+      console.error("Organization getPayouts error:", error);
+      res.status(500).json({ success: false, message: error.message || "Failed to fetch payouts." });
+    }
+  }
 }

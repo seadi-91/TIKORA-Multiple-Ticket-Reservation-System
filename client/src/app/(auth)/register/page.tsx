@@ -315,7 +315,7 @@ function RegisterWizardContent() {
   };
 
   return (
-    <div className="rounded-3xl backdrop-blur-2xl bg-white/85 dark:bg-[#161922]/85 border border-slate-200/90 dark:border-white/10 p-6 sm:p-8 shadow-xl shadow-slate-900/5 dark:shadow-[0_25px_60px_-15px_rgba(0,0,0,0.7),inset_0_1px_1px_rgba(255,255,255,0.1)] space-y-5 relative overflow-hidden transition-colors duration-200">
+    <div className="w-full max-w-[420px] sm:max-w-[530px] lg:max-w-[610px] mx-auto rounded-3xl backdrop-blur-2xl bg-white/85 dark:bg-[#161922]/85 border border-slate-200/90 dark:border-white/10 p-5 sm:p-7 shadow-xl shadow-slate-900/5 dark:shadow-[0_25px_60px_-15px_rgba(0,0,0,0.7),inset_0_1px_1px_rgba(255,255,255,0.1)] space-y-5 relative overflow-hidden transition-colors duration-200">
       {/* Subtle specular line */}
       <div className="absolute -inset-x-20 top-0 h-px bg-gradient-to-r from-transparent via-slate-300/80 dark:via-white/20 to-transparent pointer-events-none" />
 

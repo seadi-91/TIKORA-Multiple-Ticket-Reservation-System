@@ -46,13 +46,17 @@ export interface ProviderBookingRecord {
 export const INITIAL_BOOKINGS: ProviderBookingRecord[] = [];
 
 export default function ProviderBookingsPage() {
-  const { organization, bookings: storeBookings } = useProviderStore();
+  const { organization, bookings: storeBookings, fetchBookings } = useProviderStore();
   const { t } = useLanguage();
   const [localBookings, setLocalBookings] = useState<ProviderBookingRecord[]>([]);
   const [searchQuery, setSearchQuery] = useState("");
   const [paymentFilter, setPaymentFilter] = useState<string>("ALL");
   const [statusFilter, setStatusFilter] = useState<string>("ALL");
   const [liveAvailableSeats, setLiveAvailableSeats] = useState<number>(46);
+
+  useEffect(() => {
+    fetchBookings();
+  }, [fetchBookings]);
 
   useEffect(() => {
     const updateSeats = () => {
@@ -86,79 +90,117 @@ export default function ProviderBookingsPage() {
   }, [organization.category, organization.name, organization.stats.availableSeats]);
 
   useEffect(() => {
-    let list: ProviderBookingRecord[] = [];
-    if (storeBookings && storeBookings.length > 0) {
-      list = storeBookings;
-    } else if (typeof window !== "undefined") {
+    const loadAllBookings = async () => {
+      let remoteBookings: any[] = [];
       try {
-        const raw = localStorage.getItem("tikora_provider_bookings");
-        if (raw) {
-          list = JSON.parse(raw);
+        const res = await fetch("/api/bookings");
+        if (res.ok) {
+          const data = await res.json();
+          if (data.success && Array.isArray(data.bookings)) {
+            remoteBookings = data.bookings;
+          }
         }
       } catch {}
+
+      let cachedBookings: any[] = [];
+      if (typeof window !== "undefined") {
+        try {
+          const raw = localStorage.getItem("tikora_provider_bookings");
+          if (raw) cachedBookings = JSON.parse(raw);
+        } catch {}
+      }
+
+      // Merge remote, cached, and store bookings
+      const bookingMap = new Map<string, any>();
+      for (const b of [...(storeBookings || []), ...cachedBookings, ...remoteBookings]) {
+        if (!b) continue;
+        const key = String(b.bookingReference || b.reference || b.id || "");
+        if (key && !bookingMap.has(key)) {
+          bookingMap.set(key, b);
+        }
+      }
+
+      const allMerged = Array.from(bookingMap.values());
+      const cleanList = allMerged.filter(
+        (b) =>
+          !String(b.id || "").startsWith("bkg-") &&
+          !String(b.reference || "").startsWith("TIKORA-BKG-10")
+      );
+
+      // Check if ticket or booking belongs to this provider
+      const cleanOrgId = String(organization.id || "").replace(/^org-/, "").trim().toLowerCase();
+      const cleanOrgName = (organization.name || "").trim().toLowerCase().replace(/[\s\-_]+/g, "");
+      const orgWord = (organization.name || "").trim().toLowerCase().split(/\s+/)[0] || "";
+
+      const matched = cleanList.filter((b: any) => {
+        const bProvId = String(b.providerId || b.ticket?.providerId || "").replace(/^org-/, "").trim().toLowerCase();
+        const byId = cleanOrgId && bProvId && cleanOrgId === bProvId;
+
+        const rawBName = (b.providerName || b.ticket?.organizer || "").trim().toLowerCase();
+        const normBName = rawBName.replace(/[\s\-_]+/g, "");
+        const byName =
+          cleanOrgName &&
+          normBName &&
+          (cleanOrgName === normBName ||
+            cleanOrgName.includes(normBName) ||
+            normBName.includes(cleanOrgName) ||
+            cleanOrgName.replace("addis", "adiss") === normBName.replace("addis", "adiss") ||
+            cleanOrgName.replace("adiss", "addis") === normBName.replace("adiss", "addis") ||
+            (orgWord && rawBName.includes(orgWord)));
+
+        const byCategoryMatch = organization.category && b.category === organization.category;
+        return byId || byName || byCategoryMatch;
+      });
+
+      const mapped: ProviderBookingRecord[] = matched.map((b: any) => {
+        const cPaid = Number(b.customerPaid ?? b.pricing?.total ?? b.totalAmount ?? 500);
+        const vRate = Number(b.vatRate ?? b.pricing?.vatRate ?? 5.0);
+        const vAmount = Number(b.vatAmount ?? b.pricing?.vatAmount ?? Math.round(((cPaid * vRate) / (100 + vRate)) * 100) / 100);
+        const baseFare = Number(b.pricing?.subtotal ?? b.subtotal ?? Math.max(0, Math.round((cPaid - vAmount) * 100) / 100));
+        const commRate = Number(b.commissionRate ?? b.pricing?.commissionRate ?? (organization?.commissionRate || 5.0));
+        const pFee = Number(b.platformFee ?? b.pricing?.platformFee ?? Math.round(baseFare * (commRate / 100) * 100) / 100);
+        const pNet = Number(b.providerNet ?? b.pricing?.providerNet ?? Math.max(0, Math.round((baseFare - pFee) * 100) / 100));
+
+        return {
+          id: b.id,
+          reference: b.bookingReference || b.reference || b.id,
+          customerName: b.customerName || "Customer",
+          customerPhone: b.customerPhone || "+251 91 100 0000",
+          customerEmail: b.customerEmail || "customer@tikora.et",
+          serviceTitle: b.ticket?.title || b.serviceTitle || "TIKORA Experience Pass",
+          category: b.category || organization.category || "BUS",
+          travelDate: b.ticket?.date || b.travelDate || new Date().toISOString().split("T")[0],
+          departureTime: b.ticket?.time || b.departureTime || "Flexible",
+          seats: b.selectedSeats || b.seats || [b.selectedTier || "Pass"],
+          totalAmount: baseFare,
+          customerPaid: cPaid,
+          subtotal: baseFare,
+          vatRate: vRate,
+          vatAmount: vAmount,
+          commissionRate: commRate,
+          platformFee: pFee,
+          providerNet: pNet,
+          paymentMethod: b.paymentMethod || "CHAPA",
+          paymentStatus: b.paymentStatus || "PAID",
+          bookingStatus: b.bookingStatus || "CONFIRMED",
+          createdAt: b.createdAt || new Date().toISOString(),
+        };
+      });
+
+      setLocalBookings(mapped);
+    };
+
+    loadAllBookings();
+
+    const handleBookingCreated = () => {
+      loadAllBookings();
+    };
+
+    if (typeof window !== "undefined") {
+      window.addEventListener("tikora_booking_created", handleBookingCreated);
+      return () => window.removeEventListener("tikora_booking_created", handleBookingCreated);
     }
-
-    const cleanList = list.filter(
-      (b) =>
-        !String(b.id || "").startsWith("bkg-") &&
-        !String(b.reference || "").startsWith("TIKORA-BKG-10")
-    );
-
-    if (cleanList.length > 0) {
-      const filtered = organization.category
-        ? cleanList.filter((b) => b.category === organization.category)
-        : cleanList;
-      setLocalBookings(filtered);
-    } else {
-      fetch("/api/bookings")
-        .then((res) => res.json())
-        .then((data) => {
-          if (data.success && data.bookings && data.bookings.length > 0) {
-            const cleanData = data.bookings.filter(
-              (b: any) =>
-                !String(b.id || "").startsWith("bkg-") &&
-                !String(b.reference || "").startsWith("TIKORA-BKG-10") &&
-                (!organization.category || b.category === organization.category)
-            );
-            const mapped: ProviderBookingRecord[] = cleanData.map((b: any) => {
-              const cPaid = Number(b.customerPaid ?? b.pricing?.total ?? b.totalAmount ?? 500);
-              const vRate = Number(b.vatRate ?? b.pricing?.vatRate ?? 5.0);
-              const vAmount = Number(b.vatAmount ?? b.pricing?.vatAmount ?? Math.round(((cPaid * vRate) / (100 + vRate)) * 100) / 100);
-              const baseFare = Number(b.pricing?.subtotal ?? b.subtotal ?? Math.max(0, Math.round((cPaid - vAmount) * 100) / 100));
-              const commRate = Number(b.commissionRate ?? b.pricing?.commissionRate ?? (organization?.commissionRate || 5.0));
-              const pFee = Number(b.platformFee ?? b.pricing?.platformFee ?? Math.round(baseFare * (commRate / 100) * 100) / 100);
-              const pNet = Number(b.providerNet ?? b.pricing?.providerNet ?? Math.max(0, Math.round((baseFare - pFee) * 100) / 100));
-
-              return {
-                id: b.id,
-                reference: b.bookingReference || b.id,
-                customerName: b.customerName,
-                customerPhone: b.customerPhone || "+251 91 100 0000",
-                customerEmail: b.customerEmail || "customer@tikora.et",
-                serviceTitle: b.ticket?.title || b.serviceTitle || "TIKORA Experience Pass",
-                category: b.category || organization.category || "BUS",
-                travelDate: b.ticket?.date || new Date().toISOString().split("T")[0],
-                departureTime: b.ticket?.time || "Flexible",
-                seats: b.selectedSeats || [b.selectedTier || "Pass"],
-                totalAmount: baseFare,
-                customerPaid: cPaid,
-                vatRate: vRate,
-                vatAmount: vAmount,
-                commissionRate: commRate,
-                platformFee: pFee,
-                providerNet: pNet,
-                paymentMethod: b.paymentMethod || "CHAPA",
-                paymentStatus: b.paymentStatus || "PAID",
-                bookingStatus: b.bookingStatus || "CONFIRMED",
-                createdAt: b.createdAt || new Date().toISOString(),
-              };
-            });
-            setLocalBookings(mapped);
-          }
-        })
-        .catch(() => {});
-    }
-  }, [storeBookings, organization.category]);
+  }, [storeBookings, organization.id, organization.name, organization.category, organization.commissionRate]);
 
   const totalBookedSeats = localBookings.reduce(
     (sum, b) => sum + (b.seats && b.seats.length > 0 ? b.seats.length : 1),
@@ -247,7 +289,7 @@ export default function ProviderBookingsPage() {
             {t("Customer Bookings & Orders")}
           </h1>
           <p className="text-[11px] text-muted-foreground">
-            {t("Confirmed reservations, seat allocations, and boarding status. Ticket base revenue shown with statutory VAT excluded.")}
+            {t("Confirmed reservations, seat allocations, and boarding status with real-time financial tracking.", "የተረጋገጡ ቦታዎች፣ የመቀመጫ ምደባዎች እና የክፍያ ሁኔታዎች።")}
           </p>
         </div>
 
@@ -296,11 +338,11 @@ export default function ProviderBookingsPage() {
         </div>
 
         <div className="bg-card border border-border/60 rounded-xl p-3 shadow-2xs col-span-2 sm:col-span-1">
-          <span className="text-muted-foreground text-[10px] uppercase font-semibold block mb-0.5">{t("Ticket Sales (No VAT)")}</span>
+          <span className="text-muted-foreground text-[10px] uppercase font-semibold block mb-0.5">{t("Gross Ticket Sales", "ጠቅላላ የቲኬት ሽያጭ")}</span>
           <div className="text-xs sm:text-sm font-bold text-amber-600 font-mono">
             {formatCurrency(totalGrossRevenue)}
           </div>
-          <span className="text-[9px] text-muted-foreground">{t("Base fare revenue", "Base fare • VAT excluded")}</span>
+          <span className="text-[9px] text-muted-foreground">{t("Customer paid gross", "የደንበኞች ጠቅላላ ክፍያ")}</span>
         </div>
       </div>
 
@@ -490,7 +532,7 @@ export default function ProviderBookingsPage() {
                 <th className="py-4.5 px-6 min-w-[300px]">{t("Service & Route")}</th>
                 <th className="py-4.5 px-6 min-w-[160px]">{t("Schedule Date")}</th>
                 <th className="py-4.5 px-6 text-center min-w-[160px]">{t("Seats")}</th>
-                <th className="py-4.5 px-6 text-right min-w-[150px]">{t("Amount (ETB)")}</th>
+                <th className="py-4.5 px-6 text-right min-w-[150px]">{t("Ticket Price (ETB)", "የትኬት ዋጋ (ETB)")}</th>
                 <th className="py-4.5 px-6 text-center min-w-[140px]">{t("Payment")}</th>
                 <th className="py-4.5 px-6 text-center min-w-[150px]">{t("Boarding")}</th>
                 <th className="py-4.5 px-6 text-right min-w-[120px]">{t("Actions")}</th>

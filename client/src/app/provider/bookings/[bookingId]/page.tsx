@@ -588,20 +588,20 @@ export default function BookingDetailPage() {
             </button>
           </div>
 
-          {/* Financial Settlement Card - PURE TICKET PRICE WITHOUT VAT */}
+          {/* Financial Settlement Card - PURE TICKET PRICE */}
           <div className="bg-card border border-border/60 rounded-xl p-3.5 shadow-2xs space-y-2 text-[11px]">
             <div className="flex items-center justify-between border-b border-border/40 pb-1.5">
               <span className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">
                 Provider Settlement
               </span>
-              <span className="text-[9px] font-bold text-emerald-600 dark:text-emerald-400 bg-emerald-500/10 px-1.5 py-0.2 rounded">
-                VAT Excluded
+              <span className="text-[9px] font-bold text-amber-600 dark:text-amber-400 bg-amber-500/10 px-1.5 py-0.2 rounded">
+                TIKORA Payout
               </span>
             </div>
 
             <div className="space-y-1.5">
               <div className="flex justify-between py-0.5 text-muted-foreground">
-                <span>Ticket Base Fare ({booking.seats.length} seats):</span>
+                <span>Ticket Price ({booking.seats.length} seat{booking.seats.length > 1 ? "s" : ""}):</span>
                 <span className="font-semibold text-foreground">
                   {formatCurrency(booking.totalAmount)}
                 </span>
@@ -619,16 +619,6 @@ export default function BookingDetailPage() {
                 <span className="text-amber-600 dark:text-amber-400 font-mono">
                   {formatCurrency(booking.netPayout)}
                 </span>
-              </div>
-
-              <div className="p-2 rounded-lg bg-muted/40 text-[9px] text-muted-foreground border border-border/40 space-y-0.5 mt-1">
-                <div className="flex justify-between">
-                  <span>Customer Paid Total (w/ {booking.vatRate}% VAT):</span>
-                  <span className="font-mono font-medium text-foreground">{formatCurrency(booking.customerPaidWithVat)}</span>
-                </div>
-                <div className="text-[8px] text-muted-foreground/80 italic">
-                  * Customer {booking.vatRate}% VAT ({formatCurrency(booking.vatAmount)}) is statutory tax revenue and excluded from provider settlement.
-                </div>
               </div>
             </div>
 

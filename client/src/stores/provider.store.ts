@@ -3,6 +3,7 @@
 import { create } from "zustand";
 import { TicketCategory } from "@/types/ticket.types";
 import { providerService } from "@/services/provider.service";
+import { calculateProviderFinancials, matchesProvider } from "@/services/financial.service";
 
 export interface ProviderOrganization {
   id: string;
@@ -155,6 +156,9 @@ export interface ProviderBookingRecord {
   paymentStatus: "PAID" | "PENDING" | "REFUNDED";
   bookingStatus: "CONFIRMED" | "CHECKED_IN" | "CANCELLED";
   createdAt: string;
+  providerId?: string;
+  providerName?: string;
+  ticket?: any;
 }
 
 interface ProviderStoreState {
@@ -188,13 +192,143 @@ interface ProviderStoreState {
   // Refund Actions
   processRefund: (id: string, action: "APPROVED" | "REJECTED") => void;
   // Notification Actions
+  addNotification: (notification: Partial<ProviderNotification>) => void;
+  fetchNotifications: () => Promise<ProviderNotification[]>;
   markNotificationAsRead: (id: string) => void;
   markAllNotificationsAsRead: () => void;
+  // Booking Fetch
+  fetchBookings: () => Promise<ProviderBookingRecord[]>;
   // Payout Request
   requestPayout: (amount: number) => void;
   // Sector Switching
   setOrganizationCategory: (category: TicketCategory) => void;
 }
+
+export const DEFAULT_SECTOR_ORGS: Record<
+  TicketCategory,
+  {
+    id: string;
+    name: string;
+    legalName: string;
+    category: TicketCategory;
+    commissionRate: number;
+    email: string;
+    phone: string;
+    address: string;
+    city: string;
+    tinNumber: string;
+    registrationNumber: string;
+    licenseNumber: string;
+    description: string;
+    contactPerson: { fullName: string; role: string; phone: string; email: string };
+    payoutAccount: { bankName: string; accountNumber: string; accountHolder: string };
+  }
+> = {
+  SPORTS: {
+    id: "3",
+    name: "Adiss Abeba Stadium",
+    legalName: "Adiss Abeba Stadium Sports Directorate",
+    category: "SPORTS",
+    commissionRate: 5.0,
+    email: "stadium@tikora.et",
+    phone: "+251991826380",
+    address: "Addis Ababa Stadium, Stadium Area, Addis Ababa",
+    city: "Addis Ababa",
+    tinNumber: "TIN-0091827364",
+    registrationNumber: "REG-SPT-9988",
+    licenseNumber: "LIC-ETH-SPT-2024-003",
+    description: "National premier football and athletic stadium hosting major Ethiopian Premier League fixtures.",
+    contactPerson: {
+      fullName: "Addis Stadium Operations",
+      role: "Operations Lead",
+      phone: "+251991826380",
+      email: "stadium@tikora.et",
+    },
+    payoutAccount: {
+      bankName: "Commercial Bank of Ethiopia (CBE)",
+      accountNumber: "1000192837465",
+      accountHolder: "Adiss Abeba Stadium Operations",
+    },
+  },
+  BUS: {
+    id: "1",
+    name: "Selam Bus Lines",
+    legalName: "Selam Bus Lines Share Company",
+    category: "BUS",
+    commissionRate: 5.0,
+    email: "selambus@tikora.et",
+    phone: "+251911223344",
+    address: "Meskel Square, Addis Ababa",
+    city: "Addis Ababa",
+    tinNumber: "TIN-0098765432",
+    registrationNumber: "REG-BUS-1029",
+    licenseNumber: "BUS-LIC-2024-8891",
+    description: "Pioneer intercity scheduled transit lines connecting all major regions of Ethiopia.",
+    contactPerson: {
+      fullName: "Selam Bus Dispatch",
+      role: "Fleet Director",
+      phone: "+251911223344",
+      email: "selambus@tikora.et",
+    },
+    payoutAccount: {
+      bankName: "Commercial Bank of Ethiopia (CBE)",
+      accountNumber: "1000283746519",
+      accountHolder: "Selam Bus Lines S.C.",
+    },
+  },
+  CINEMA: {
+    id: "2",
+    name: "Century Cinema Multiplex",
+    legalName: "Century Cinema & Entertainment PLC",
+    category: "CINEMA",
+    commissionRate: 5.0,
+    email: "cinema@tikora.et",
+    phone: "+251911334455",
+    address: "Century Mall, Gurd Shola, Addis Ababa",
+    city: "Addis Ababa",
+    tinNumber: "TIN-0044556677",
+    registrationNumber: "REG-CIN-3344",
+    licenseNumber: "CIN-LIC-2024-5541",
+    description: "Premier multiplex cinema halls equipped with 4K laser projection and Dolby Atmos sound.",
+    contactPerson: {
+      fullName: "Century Cinema Box Office",
+      role: "General Manager",
+      phone: "+251911334455",
+      email: "cinema@tikora.et",
+    },
+    payoutAccount: {
+      bankName: "Commercial Bank of Ethiopia (CBE)",
+      accountNumber: "1000374651928",
+      accountHolder: "Century Cinema Multiplex",
+    },
+  },
+  EVENT: {
+    id: "4",
+    name: "Kuriftu Resort & Live Events",
+    legalName: "Kuriftu Resorts and Cultural Events",
+    category: "EVENT",
+    commissionRate: 5.0,
+    email: "events@tikora.et",
+    phone: "+251911778899",
+    address: "Bishoftu / Bole Road, Addis Ababa",
+    city: "Addis Ababa",
+    tinNumber: "TIN-0033221199",
+    registrationNumber: "REG-EVT-7788",
+    licenseNumber: "EVT-LIC-2024-1190",
+    description: "Cultural festivals, live concerts, and premium resort experience gatherings.",
+    contactPerson: {
+      fullName: "Kuriftu Event Coordinator",
+      role: "Event Director",
+      phone: "+251911778899",
+      email: "events@tikora.et",
+    },
+    payoutAccount: {
+      bankName: "Commercial Bank of Ethiopia (CBE)",
+      accountNumber: "1000465192837",
+      accountHolder: "Kuriftu Resort & Live Events",
+    },
+  },
+};
 
 const getInitialCategory = (): TicketCategory => {
   if (typeof window !== "undefined") {
@@ -203,12 +337,37 @@ const getInitialCategory = (): TicketCategory => {
       if (saved && ["BUS", "CINEMA", "EVENT", "SPORTS"].includes(saved)) {
         return saved;
       }
-    } catch (err) {}
+    } catch (err) { }
   }
-  return "BUS";
+  return "SPORTS";
 };
 
 const initialCat = getInitialCategory();
+
+const getInitialOrg = (cat: TicketCategory): ProviderOrganization => {
+  const def = DEFAULT_SECTOR_ORGS[cat] || DEFAULT_SECTOR_ORGS.SPORTS;
+  return {
+    id: def.id,
+    name: def.name,
+    legalName: def.legalName,
+    category: cat,
+    verified: true,
+    approvalStatus: "APPROVED",
+    tinNumber: def.tinNumber,
+    registrationNumber: def.registrationNumber,
+    licenseNumber: def.licenseNumber,
+    email: def.email,
+    phone: def.phone,
+    website: "https://tikora.et",
+    address: def.address,
+    city: def.city,
+    description: def.description,
+    commissionRate: def.commissionRate,
+    contactPerson: def.contactPerson,
+    payoutAccount: def.payoutAccount,
+    stats: getInitialStatsForCategory(cat),
+  };
+};
 
 export const getInitialStaffForCategory = (cat: TicketCategory): ProviderStaffMember[] => [];
 
@@ -251,6 +410,18 @@ const getInitialProviderBookings = (): ProviderBookingRecord[] => {
   }
 };
 
+const getInitialProviderNotifications = (): ProviderNotification[] => {
+  if (typeof window === "undefined") return [];
+  try {
+    const raw = localStorage.getItem("tikora_provider_notifications");
+    if (raw) {
+      const parsed = JSON.parse(raw);
+      if (Array.isArray(parsed)) return parsed;
+    }
+  } catch { }
+  return [];
+};
+
 const getInitialProviderStaff = (): ProviderStaffMember[] => {
   if (typeof window === "undefined") return [];
   try {
@@ -262,48 +433,20 @@ const getInitialProviderStaff = (): ProviderStaffMember[] => {
 };
 
 export const useProviderStore = create<ProviderStoreState>((set, get) => ({
-  organization: {
-    id: "org-provider-01",
-    name: "Organization Provider Portal",
-    legalName: "Organization Provider Services",
-    category: initialCat,
-    verified: true,
-    approvalStatus: "APPROVED",
-    tinNumber: "",
-    registrationNumber: "",
-    licenseNumber: "",
-    email: "contact@provider.et",
-    phone: "+251 11 000 0000",
-    website: "",
-    address: "Addis Ababa, Ethiopia",
-    city: "Addis Ababa",
-    description: "Verified ticket and transit service provider on TIKORA platform.",
-    contactPerson: {
-      fullName: "Operations Manager",
-      role: "Operations Lead",
-      phone: "+251 91 000 0000",
-      email: "operations@provider.et",
-    },
-    payoutAccount: {
-      bankName: "Commercial Bank of Ethiopia (CBE)",
-      accountNumber: "1000000000000",
-      accountHolder: "Provider Operational Account",
-    },
-    stats: getInitialStatsForCategory(initialCat),
-  },
+  organization: getInitialOrg(initialCat),
 
   busRoutes: [],
   busSchedules: [],
   movieShowtimes: [],
   staffMembers: getInitialProviderStaff(),
   refunds: [],
-  notifications: [],
+  notifications: getInitialProviderNotifications(),
   bookings: getInitialProviderBookings(),
 
   fetchOrganization: async () => {
     try {
       const org = await providerService.getProfile();
-      if (org) {
+      if (org && org.id) {
         set((state) => ({
           organization: {
             ...state.organization,
@@ -316,11 +459,56 @@ export const useProviderStore = create<ProviderStoreState>((set, get) => ({
         }));
         return org;
       }
-      return null;
     } catch (err) {
       console.warn("Could not fetch organization profile from DB:", err);
-      return null;
     }
+
+    if (typeof window !== "undefined") {
+      try {
+        const rawUser = localStorage.getItem("tikora_auth_user");
+        if (rawUser) {
+          const user = JSON.parse(rawUser);
+          if (user && user.role === "ORGANIZATION" && user.organizationName) {
+            const orgNameLower = (user.organizationName || "").toLowerCase();
+            let cat: TicketCategory = user.organizationCategory || get().organization.category;
+            let orgId = String(user.organizationId || get().organization.id);
+            if (
+              orgNameLower.includes("stadium") ||
+              orgNameLower.includes("sport") ||
+              orgNameLower.includes("adiss") ||
+              orgNameLower.includes("addis")
+            ) {
+              cat = "SPORTS";
+              orgId = "3";
+            } else if (orgNameLower.includes("bus") || orgNameLower.includes("selam")) {
+              cat = "BUS";
+              orgId = "1";
+            } else if (orgNameLower.includes("cinema") || orgNameLower.includes("century")) {
+              cat = "CINEMA";
+              orgId = "2";
+            } else if (orgNameLower.includes("kuriftu") || orgNameLower.includes("event")) {
+              cat = "EVENT";
+              orgId = "4";
+            }
+            const def = DEFAULT_SECTOR_ORGS[cat] || DEFAULT_SECTOR_ORGS.SPORTS;
+            set((state) => ({
+              organization: {
+                ...state.organization,
+                ...def,
+                id: orgId,
+                name: user.organizationName,
+                category: cat,
+                email: user.email || state.organization.email,
+              },
+            }));
+            try {
+              localStorage.setItem("tikora_provider_category", cat);
+            } catch { }
+          }
+        }
+      } catch { }
+    }
+    return get().organization;
   },
 
   updateOrganization: (data) => {
@@ -382,11 +570,11 @@ export const useProviderStore = create<ProviderStoreState>((set, get) => ({
         if (typeof window !== "undefined") {
           try {
             localStorage.setItem("tikora_provider_staff", JSON.stringify(staff));
-          } catch {}
+          } catch { }
         }
         return staff;
       }
-    } catch {}
+    } catch { }
     return get().staffMembers;
   },
 
@@ -402,7 +590,7 @@ export const useProviderStore = create<ProviderStoreState>((set, get) => ({
       if (typeof window !== "undefined") {
         try {
           localStorage.setItem("tikora_provider_staff", JSON.stringify(updated));
-        } catch {}
+        } catch { }
       }
       return { staffMembers: updated };
     });
@@ -416,9 +604,9 @@ export const useProviderStore = create<ProviderStoreState>((set, get) => ({
       if (typeof window !== "undefined") {
         try {
           localStorage.setItem("tikora_provider_staff", JSON.stringify(updated));
-        } catch {}
+        } catch { }
       }
-      providerService.toggleStaffStatus(id).catch(() => {});
+      providerService.toggleStaffStatus(id).catch(() => { });
       return { staffMembers: updated };
     });
   },
@@ -429,9 +617,9 @@ export const useProviderStore = create<ProviderStoreState>((set, get) => ({
       if (typeof window !== "undefined") {
         try {
           localStorage.setItem("tikora_provider_staff", JSON.stringify(updated));
-        } catch {}
+        } catch { }
       }
-      providerService.deleteStaff(id).catch(() => {});
+      providerService.deleteStaff(id).catch(() => { });
       return { staffMembers: updated };
     });
   },
@@ -441,15 +629,263 @@ export const useProviderStore = create<ProviderStoreState>((set, get) => ({
       refunds: state.refunds.map((r) => (r.id === id ? { ...r, status: action } : r)),
     })),
 
+  addNotification: (notification) => {
+    const newNotif: ProviderNotification = {
+      id: notification.id || `notif-${Date.now()}`,
+      title: notification.title || "Notification",
+      message: notification.message || "",
+      type: notification.type || "SYSTEM",
+      createdAt: notification.createdAt || new Date().toISOString(),
+      isRead: false,
+      linkHref: notification.linkHref || "/provider/dashboard",
+    };
+    set((state) => {
+      const updated = [newNotif, ...state.notifications.filter((n) => n.id !== newNotif.id)];
+      if (typeof window !== "undefined") {
+        try {
+          localStorage.setItem("tikora_provider_notifications", JSON.stringify(updated));
+        } catch { }
+      }
+      return { notifications: updated };
+    });
+  },
+
+  fetchNotifications: async () => {
+    let list: ProviderNotification[] = [];
+    try {
+      const res = await fetch("/api/provider/notifications");
+      if (res.ok) {
+        const data = await res.json();
+        if (data.success && Array.isArray(data.notifications)) {
+          list = data.notifications;
+        }
+      }
+    } catch { }
+
+    if (list.length === 0 && typeof window !== "undefined") {
+      try {
+        const raw = localStorage.getItem("tikora_provider_notifications");
+        if (raw) list = JSON.parse(raw);
+      } catch { }
+    }
+
+    if (list.length > 0) {
+      set({ notifications: list });
+      if (typeof window !== "undefined") {
+        try {
+          localStorage.setItem("tikora_provider_notifications", JSON.stringify(list));
+        } catch { }
+      }
+    }
+    return list;
+  },
+
   markNotificationAsRead: (id) =>
-    set((state) => ({
-      notifications: state.notifications.map((n) => (n.id === id ? { ...n, isRead: true } : n)),
-    })),
+    set((state) => {
+      const updated = state.notifications.map((n) => (n.id === id ? { ...n, isRead: true } : n));
+      if (typeof window !== "undefined") {
+        try {
+          localStorage.setItem("tikora_provider_notifications", JSON.stringify(updated));
+          fetch("/api/provider/notifications", {
+            method: "PATCH",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ id }),
+          }).catch(() => { });
+        } catch { }
+      }
+      return { notifications: updated };
+    }),
 
   markAllNotificationsAsRead: () =>
+    set((state) => {
+      const updated = state.notifications.map((n) => ({ ...n, isRead: true }));
+      if (typeof window !== "undefined") {
+        try {
+          localStorage.setItem("tikora_provider_notifications", JSON.stringify(updated));
+          fetch("/api/provider/notifications", {
+            method: "PATCH",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ markAll: true }),
+          }).catch(() => { });
+        } catch { }
+      }
+      return { notifications: updated };
+    }),
+
+  fetchBookings: async () => {
+    let currentOrg = get().organization;
+    let fetchedList: any[] = [];
+    try {
+      const res = await fetch("/api/bookings");
+      if (res.ok) {
+        const data = await res.json();
+        if (data.success && Array.isArray(data.bookings)) {
+          fetchedList = data.bookings;
+        }
+      }
+    } catch { }
+
+    let storedList: any[] = [];
+    let adminBookings: any[] = [];
+    let customerBookings: any[] = [];
+    if (typeof window !== "undefined") {
+      try {
+        const raw = localStorage.getItem("tikora_provider_bookings");
+        if (raw) storedList = JSON.parse(raw);
+        const rawAdm = localStorage.getItem("tikora_admin_bookings");
+        if (rawAdm) adminBookings = JSON.parse(rawAdm);
+        const rawCust = localStorage.getItem("tikora_customer_bookings");
+        if (rawCust) customerBookings = JSON.parse(rawCust);
+      } catch { }
+    }
+
+    const mergedMap = new Map<string, any>();
+    for (const b of [
+      ...fetchedList,
+      ...storedList,
+      ...adminBookings,
+      ...customerBookings,
+      ...get().bookings,
+    ]) {
+      if (!b) continue;
+      const key = String(b.bookingReference || b.reference || b.id || "");
+      if (key && !mergedMap.has(key)) {
+        mergedMap.set(key, b);
+      }
+    }
+
+    const allBookings = Array.from(mergedMap.values());
+    const validBookings = allBookings.filter(
+      (b) =>
+        !String(b.id || "").startsWith("bkg-") &&
+        !String(b.reference || "").startsWith("TIKORA-BKG-10")
+    );
+
+    let matchedValid = validBookings.filter((b) => matchesProvider(b, currentOrg));
+
+    // If current selected category has 0 bookings, but there are bookings for another sector on platform:
+    if (matchedValid.length === 0 && validBookings.length > 0) {
+      const firstB = validBookings[0];
+      const targetCat = (firstB.category as TicketCategory) || "SPORTS";
+      if (targetCat) {
+        const targetDef = DEFAULT_SECTOR_ORGS[targetCat];
+        if (targetDef) {
+          currentOrg = {
+            ...currentOrg,
+            ...targetDef,
+            category: targetCat,
+          };
+          set((state) => ({
+            organization: {
+              ...state.organization,
+              ...targetDef,
+              category: targetCat,
+            },
+          }));
+          if (typeof window !== "undefined") {
+            try {
+              localStorage.setItem("tikora_provider_category", targetCat);
+            } catch { }
+          }
+          matchedValid = validBookings.filter((b) => matchesProvider(b, targetDef));
+        }
+      }
+    }
+
+    const mapped: ProviderBookingRecord[] = matchedValid.map((b: any) => {
+      const cPaid = Number(b.customerPaid ?? b.pricing?.total ?? b.totalAmount ?? 0);
+      const vRate = Number(b.vatRate ?? b.pricing?.vatRate ?? 5.0);
+      const vAmount = Number(b.vatAmount ?? b.pricing?.tax ?? Math.round(((cPaid * vRate) / (100 + vRate)) * 100) / 100);
+      const baseFare = Number(b.pricing?.subtotal ?? b.subtotal ?? Math.max(0, Math.round((cPaid - vAmount) * 100) / 100));
+      const commRate = Number(b.commissionRate ?? b.pricing?.commissionRate ?? (currentOrg?.commissionRate || 5.0));
+      const pFee = Number(b.platformFee ?? b.pricing?.platformCommission ?? Math.round(baseFare * (commRate / 100) * 100) / 100);
+      const pNet = Number(b.providerNet ?? b.pricing?.providerNet ?? Math.max(0, Math.round((baseFare - pFee) * 100) / 100));
+
+      return {
+        id: b.id,
+        reference: b.bookingReference || b.reference || b.id,
+        customerName: b.customerName || "Customer",
+        customerPhone: b.customerPhone || "+251 91 100 0000",
+        customerEmail: b.customerEmail || "customer@tikora.et",
+        serviceTitle: b.ticket?.title || b.serviceTitle || "TIKORA Experience Pass",
+        category: b.category || currentOrg.category || "BUS",
+        travelDate: b.ticket?.date || b.travelDate || new Date().toISOString().split("T")[0],
+        departureTime: b.ticket?.time || b.departureTime || "Flexible",
+        seats: b.selectedSeats || b.seats || [b.selectedTier || "Pass"],
+        totalAmount: cPaid, // Standardize to customer paid gross so gross revenue matches admin (4,725 ETB)
+        subtotal: baseFare,
+        customerPaid: cPaid,
+        vatRate: vRate,
+        vatAmount: vAmount,
+        commissionRate: commRate,
+        platformFee: pFee,
+        providerNet: pNet,
+        paymentMethod: b.paymentMethod || "CHAPA",
+        paymentStatus: b.paymentStatus || "PAID",
+        bookingStatus: b.bookingStatus || "CONFIRMED",
+        createdAt: b.createdAt || new Date().toISOString(),
+        providerId: String(b.providerId || b.ticket?.providerId || ""),
+        providerName: b.providerName || b.ticket?.organizer || "",
+        ticket: b.ticket,
+      };
+    });
+
+    if (typeof window !== "undefined") {
+      try {
+        localStorage.setItem("tikora_provider_bookings", JSON.stringify(mapped));
+      } catch { }
+    }
+
+    const newGross = mapped.reduce((sum, b) => sum + (b.customerPaid || b.totalAmount || 0), 0);
+    const totalFees = mapped.reduce((sum, b) => sum + (b.platformFee || 0), 0);
+    const net = mapped.reduce((sum, b) => sum + (b.providerNet || 0), 0);
+    const totalTicketsSold = mapped.reduce((sum, b) => {
+      const pax = Array.isArray(b.seats) ? b.seats.length : (Number((b as any).quantity) || 1);
+      return sum + pax;
+    }, 0);
+
+    let remotePayouts: any[] = [];
+    try {
+      const pRes = await fetch("/api/admin/payout");
+      if (pRes.ok) {
+        const pData = await pRes.json();
+        if (pData.success && Array.isArray(pData.payouts)) {
+          remotePayouts = pData.payouts;
+          if (typeof window !== "undefined") {
+            try {
+              localStorage.setItem("tikora_admin_payouts", JSON.stringify(remotePayouts));
+            } catch { }
+          }
+        }
+      }
+    } catch { }
+    if (remotePayouts.length === 0 && typeof window !== "undefined") {
+      try {
+        const rawP = localStorage.getItem("tikora_admin_payouts");
+        if (rawP) remotePayouts = JSON.parse(rawP);
+      } catch { }
+    }
+
+    const fin = calculateProviderFinancials(currentOrg, validBookings, remotePayouts);
+
     set((state) => ({
-      notifications: state.notifications.map((n) => ({ ...n, isRead: true })),
-    })),
+      bookings: mapped,
+      organization: {
+        ...state.organization,
+        stats: {
+          ...state.organization.stats,
+          totalBookings: fin.bookingsCount,
+          grossSales: fin.ticketRevenue,
+          totalRevenue: fin.ticketRevenue,
+          availableBalance: fin.netPayable,
+          netPayout: fin.totalSettled,
+          totalTicketsSold,
+        },
+      },
+    }));
+
+    return mapped;
+  },
 
   requestPayout: (amount) =>
     set((state) => ({
@@ -465,12 +901,15 @@ export const useProviderStore = create<ProviderStoreState>((set, get) => ({
 
   addBooking: (booking) => {
     set((state) => {
-      // Provider displays purely the ticket base price (VAT excluded)
-      const seatsCount = booking.seats && booking.seats.length > 0 ? booking.seats.length : 1;
+      const seatsCount = Array.isArray(booking.seats) && booking.seats.length > 0
+        ? booking.seats.length
+        : (Number((booking as any).quantity) || 1);
+      const cPaid = Number(booking.customerPaid ?? booking.totalAmount ?? 0);
       const snapVatRate = typeof booking.vatRate === "number" ? booking.vatRate : 5.0;
-      const baseTicketPrice = typeof booking.totalAmount === "number" && booking.customerPaid
-        ? booking.totalAmount
-        : Math.round(booking.totalAmount / (1 + snapVatRate / 100));
+      const snapVatAmount = typeof booking.vatAmount === "number"
+        ? booking.vatAmount
+        : Math.round(((cPaid * snapVatRate) / (100 + snapVatRate)) * 100) / 100;
+      const baseTicketPrice = Number(booking.subtotal ?? Math.max(0, cPaid - snapVatAmount));
 
       const snapCommissionRate = typeof booking.commissionRate === "number"
         ? booking.commissionRate
@@ -486,8 +925,11 @@ export const useProviderStore = create<ProviderStoreState>((set, get) => ({
 
       const sanitizedBooking: ProviderBookingRecord = {
         ...booking,
-        totalAmount: baseTicketPrice, // Pure ticket base fare without VAT
+        totalAmount: cPaid,
+        customerPaid: cPaid,
+        subtotal: baseTicketPrice,
         vatRate: snapVatRate,
+        vatAmount: snapVatAmount,
         commissionRate: snapCommissionRate,
         platformFee: snapPlatformFee,
         providerNet: snapProviderNet,
@@ -507,7 +949,7 @@ export const useProviderStore = create<ProviderStoreState>((set, get) => ({
       if (typeof window !== "undefined") {
         try {
           localStorage.setItem("tikora_provider_bookings", JSON.stringify(newBookings));
-        } catch {}
+        } catch { }
       }
 
       const newGross = newBookings.reduce((sum, b) => sum + (b.totalAmount || 0), 0);
@@ -568,12 +1010,18 @@ export const useProviderStore = create<ProviderStoreState>((set, get) => ({
       }
     }
 
+    const def = DEFAULT_SECTOR_ORGS[category] || DEFAULT_SECTOR_ORGS.SPORTS;
     set((state) => ({
       organization: {
         ...state.organization,
+        ...def,
         category,
         stats: getInitialStatsForCategory(category),
       },
     }));
+    get().fetchBookings();
+    if (typeof window !== "undefined") {
+      window.dispatchEvent(new CustomEvent("tikora_provider_category_changed", { detail: category }));
+    }
   },
 }));

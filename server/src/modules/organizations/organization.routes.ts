@@ -19,5 +19,13 @@ router.post("/staff", OrganizationController.createStaff);
 router.patch("/staff/:id/status", OrganizationController.toggleStaffStatus);
 router.delete("/staff/:id", OrganizationController.deleteStaff);
 
+// Notifications & Alerts
+router.get("/notifications", OrganizationController.getNotifications);
+router.patch("/notifications/:id/read", OrganizationController.markNotificationRead);
+router.patch("/notifications/read-all", OrganizationController.markAllNotificationsRead);
+
+// Payouts & Settlements
+router.get("/payouts", OrganizationController.getPayouts);
+
 export default router;
 

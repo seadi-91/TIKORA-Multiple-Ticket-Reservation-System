@@ -25,6 +25,7 @@ export interface ChapaInitializeRequest {
   selectedTier?: string;
   quantity?: number;
   returnUrl?: string;
+  txRef?: string;
 }
 
 export interface ChapaInitializeResponse {

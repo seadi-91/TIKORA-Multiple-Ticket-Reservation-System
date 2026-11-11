@@ -27,7 +27,7 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en" suppressHydrationWarning className="h-full antialiased dark">
-      <body className="min-h-full min-h-[100dvh] flex flex-col font-sans transition-colors duration-200">
+      <body suppressHydrationWarning className="min-h-full min-h-[100dvh] flex flex-col font-sans transition-colors duration-200">
         <ThemeProvider>
           <LanguageProvider>
             <PlatformSettingsProvider>

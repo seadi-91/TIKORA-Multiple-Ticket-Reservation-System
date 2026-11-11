@@ -25,6 +25,7 @@ import {
   X,
 } from "lucide-react";
 import { useAdminStore } from "@/stores/admin.store";
+import { calculateProviderFinancials } from "@/services/financial.service";
 
 interface PageProps {
   params: Promise<{ providerId: string }>;
@@ -36,6 +37,8 @@ export default function AdminProviderDetailPage({ params }: PageProps) {
 
   const {
     organizations,
+    bookings,
+    payouts,
     approveOrganization,
     rejectOrganization,
     suspendOrganization,
@@ -51,6 +54,7 @@ export default function AdminProviderDetailPage({ params }: PageProps) {
   }, [fetchPlatformData]);
 
   const org = organizations.find((o) => o.id === resolvedParams.providerId);
+  const fin = org ? calculateProviderFinancials(org, bookings, payouts) : null;
 
   const [rejectModalOpen, setRejectModalOpen] = useState(false);
   const [rejectReason, setRejectReason] = useState("");
@@ -94,6 +98,34 @@ export default function AdminProviderDetailPage({ params }: PageProps) {
     updateOrganizationCommission(org.id, Number(commissionInput));
     setIsEditingCommission(false);
   };
+
+  const cleanOrgId = String(org?.id || "").replace(/^org-/, "").trim().toLowerCase();
+  const cleanOrgName = (org?.name || "").trim().toLowerCase().replace(/[\s\-_]+/g, "");
+  const orgWord = (org?.name || "").trim().toLowerCase().split(/\s+/)[0] || "";
+
+  const orgBookings = (bookings || []).filter((b) => {
+    if (b.bookingStatus === "CANCELLED" || (b as any).status === "CANCELLED") return false;
+    const bProvId = String(b.providerId || (b as any).ticket?.providerId || "").replace(/^org-/, "").trim().toLowerCase();
+    const byId = cleanOrgId && bProvId && cleanOrgId === bProvId;
+
+    const rawBName = (b.providerName || (b as any).ticket?.organizer || "").trim().toLowerCase();
+    const normBName = rawBName.replace(/[\s\-_]+/g, "");
+    const byName =
+      cleanOrgName &&
+      normBName &&
+      (cleanOrgName === normBName ||
+        cleanOrgName.includes(normBName) ||
+        normBName.includes(cleanOrgName) ||
+        cleanOrgName.replace("addis", "adiss") === normBName.replace("addis", "adiss") ||
+        cleanOrgName.replace("adiss", "addis") === normBName.replace("adiss", "addis") ||
+        (orgWord && rawBName.includes(orgWord)));
+
+    const byCategoryMatch = org?.category && b.category === org.category;
+    return byId || byName || byCategoryMatch;
+  });
+
+  const liveGross = orgBookings.reduce((sum, b) => sum + (Number((b as any).customerPaid ?? b.totalAmount) || 0), 0);
+  const displayGross = liveGross > 0 ? liveGross : (org?.totalRevenue || 0);
 
   return (
     <div className="space-y-6">
@@ -224,9 +256,23 @@ export default function AdminProviderDetailPage({ params }: PageProps) {
             </div>
 
             <div className="border-l border-slate-200/60 dark:border-slate-800/60 pl-4">
-              <p className="text-[10px] text-muted-foreground uppercase font-semibold">Total Revenue</p>
-              <p className="font-bold text-base text-foreground mt-0.5">
-                {(org.totalRevenue || 0).toLocaleString()} <span className="text-xs text-muted-foreground font-normal">ETB</span>
+              <p className="text-[10px] text-muted-foreground uppercase font-semibold">Total Revenue (Gross)</p>
+              <p className="font-bold text-base text-foreground mt-0.5 font-mono">
+                {(fin ? fin.grossRevenue : displayGross).toLocaleString()} <span className="text-xs text-muted-foreground font-normal">ETB</span>
+              </p>
+            </div>
+
+            <div className="border-l border-slate-200/60 dark:border-slate-800/60 pl-4">
+              <p className="text-[10px] text-muted-foreground uppercase font-semibold">Transferred (Chapa)</p>
+              <p className="font-bold text-base text-emerald-600 dark:text-emerald-400 mt-0.5 font-mono">
+                {(fin ? fin.totalSettled : 0).toLocaleString()} <span className="text-xs text-muted-foreground font-normal">ETB</span>
+              </p>
+            </div>
+
+            <div className="border-l border-slate-200/60 dark:border-slate-800/60 pl-4">
+              <p className="text-[10px] text-muted-foreground uppercase font-semibold">Net on Platform</p>
+              <p className={`font-bold text-base mt-0.5 font-mono ${fin && fin.netPayable > 0 ? "text-emerald-600 dark:text-emerald-400" : "text-muted-foreground"}`}>
+                {(fin ? fin.netPayable : 0).toLocaleString()} <span className="text-xs text-muted-foreground font-normal">ETB</span>
               </p>
             </div>
           </div>

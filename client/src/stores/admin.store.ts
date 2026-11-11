@@ -164,6 +164,7 @@ export interface AdminCategory {
 export interface AdminBooking {
   id: string;
   reference: string;
+  bookingReference?: string;
   customerName: string;
   customerEmail: string;
   customerPhone: string;
@@ -396,9 +397,11 @@ interface AdminState {
 
   processPayout: (id: string, approve: boolean, notes?: string) => void;
   deletePayout: (id: string) => void;
+  recordPayout: (payout: AdminPayout) => Promise<void>;
   processRefund: (id: string, approve: boolean, notes?: string) => void;
   replyToSupportTicket: (id: string, reply: string, updateStatus?: "OPEN" | "IN_PROGRESS" | "RESOLVED") => void;
   addBooking: (booking: AdminBooking) => void;
+  deleteBooking: (id: string, reference?: string) => Promise<boolean>;
 
   updateSettings: (newSettings: Partial<AdminSettings>) => void;
   fetchPublicSettings: () => Promise<void>;
@@ -478,11 +481,110 @@ const DEFAULT_INITIAL_SETTINGS: AdminSettings = {
   systemAlertEmail: "security-alerts@tikora.et",
 };
 
+export const DEFAULT_PLATFORM_ORGANIZATIONS: AdminOrganization[] = [
+  {
+    id: "3",
+    name: "Adiss Abeba Stadium",
+    category: "SPORTS",
+    businessLicense: "LIC-ETH-SPT-2024-003",
+    taxNumber: "TIN-0091827364",
+    contactPerson: "Addis Stadium Operations",
+    email: "stadium@tikora.et",
+    phone: "+251991826380",
+    address: "Addis Ababa Stadium, Stadium Area, Addis Ababa",
+    city: "Addis Ababa",
+    status: "APPROVED",
+    appliedDate: "2026-01-10T08:00:00.000Z",
+    approvedDate: "2026-01-11T10:00:00.000Z",
+    commissionRate: 5.0,
+    totalServices: 1,
+    totalBookings: 4,
+    totalRevenue: 4725,
+    rating: 4.9,
+    documents: [],
+  },
+  {
+    id: "1",
+    name: "Selam Bus Lines",
+    category: "BUS",
+    businessLicense: "BUS-LIC-2024-8891",
+    taxNumber: "TIN-0098765432",
+    contactPerson: "Selam Bus Dispatch",
+    email: "selambus@tikora.et",
+    phone: "+251911223344",
+    address: "Meskel Square, Addis Ababa",
+    city: "Addis Ababa",
+    status: "APPROVED",
+    appliedDate: "2026-01-05T08:00:00.000Z",
+    approvedDate: "2026-01-06T09:00:00.000Z",
+    commissionRate: 5.0,
+    totalServices: 2,
+    totalBookings: 0,
+    totalRevenue: 0,
+    rating: 4.8,
+    documents: [],
+  },
+  {
+    id: "2",
+    name: "Century Cinema Multiplex",
+    category: "CINEMA",
+    businessLicense: "CIN-LIC-2024-5541",
+    taxNumber: "TIN-0044556677",
+    contactPerson: "Century Cinema Box Office",
+    email: "cinema@tikora.et",
+    phone: "+251911334455",
+    address: "Century Mall, Gurd Shola, Addis Ababa",
+    city: "Addis Ababa",
+    status: "APPROVED",
+    appliedDate: "2026-01-08T08:00:00.000Z",
+    approvedDate: "2026-01-09T11:00:00.000Z",
+    commissionRate: 5.0,
+    totalServices: 2,
+    totalBookings: 0,
+    totalRevenue: 0,
+    rating: 4.7,
+    documents: [],
+  },
+  {
+    id: "4",
+    name: "Kuriftu Resort & Live Events",
+    category: "EVENT",
+    businessLicense: "EVT-LIC-2024-1190",
+    taxNumber: "TIN-0033221199",
+    contactPerson: "Kuriftu Event Coordinator",
+    email: "events@tikora.et",
+    phone: "+251911778899",
+    address: "Bishoftu / Bole Road, Addis Ababa",
+    city: "Addis Ababa",
+    status: "APPROVED",
+    appliedDate: "2026-01-12T08:00:00.000Z",
+    approvedDate: "2026-01-13T14:00:00.000Z",
+    commissionRate: 5.0,
+    totalServices: 1,
+    totalBookings: 0,
+    totalRevenue: 0,
+    rating: 4.9,
+    documents: [],
+  },
+];
+
 const getInitialAdminSettings = (): AdminSettings => {
   return DEFAULT_INITIAL_SETTINGS;
 };
 
 const getInitialAdminBookings = (): AdminBooking[] => {
+  return [];
+};
+
+const getInitialAdminPayouts = (): AdminPayout[] => {
+  if (typeof window === "undefined") return [];
+  try {
+    const raw = localStorage.getItem("tikora_admin_payouts");
+    if (raw) {
+      const parsed = JSON.parse(raw);
+      if (Array.isArray(parsed)) return parsed;
+    }
+  } catch {}
   return [];
 };
 
@@ -516,6 +618,16 @@ export const rehydrateAdminStore = () => {
       }
     } else {
       useAdminStore.setState({ bookings: [] });
+    }
+  } catch {}
+
+  try {
+    const rawPayouts = localStorage.getItem("tikora_admin_payouts");
+    if (rawPayouts) {
+      const parsedPayouts = JSON.parse(rawPayouts);
+      if (Array.isArray(parsedPayouts)) {
+        useAdminStore.setState({ payouts: parsedPayouts });
+      }
     }
   } catch {}
 };
@@ -555,6 +667,11 @@ export const useAdminStore = create<AdminState>((set, get) => ({
       ]);
 
       let localBookingsList: AdminBooking[] = [];
+      const cleanBackendBookings = (Array.isArray(bookingsList) ? bookingsList : []).filter(
+        (b: any) =>
+          !String(b.id || "").startsWith("bkg-") &&
+          !String(b.reference || "").startsWith("TIKORA-BKG-10")
+      );
       if (typeof window !== "undefined") {
         try {
           const raw = localStorage.getItem("tikora_admin_bookings");
@@ -571,16 +688,177 @@ export const useAdminStore = create<AdminState>((set, get) => ({
         } catch {}
       }
 
-      const cleanBackendBookings = (bookingsList || []).filter(
-        (b: any) =>
+      // Also query Next.js persistent storage for /api/bookings and /api/admin/payout
+      let apiBookings: any[] = [];
+      let apiPayouts: any[] = [];
+      let hasApiPayouts = false;
+      if (typeof window !== "undefined") {
+        try {
+          const [bRes, pRes] = await Promise.all([
+            fetch("/api/bookings").then((r) => r.json()).catch(() => ({})),
+            fetch("/api/admin/payout").then((r) => r.json()).catch(() => ({})),
+          ]);
+          if (bRes && Array.isArray(bRes.bookings)) apiBookings = bRes.bookings;
+          if (pRes && Array.isArray(pRes.payouts)) {
+            apiPayouts = pRes.payouts;
+            hasApiPayouts = true;
+          }
+        } catch {}
+      }
+
+      // Merge and deduplicate all bookings
+      const bookingsMap = new Map<string, any>();
+      for (const b of [...cleanBackendBookings, ...apiBookings, ...localBookingsList]) {
+        if (!b) continue;
+        const key = String(b.bookingReference || b.reference || b.id || "");
+        if (key && !bookingsMap.has(key)) {
+          bookingsMap.set(key, b);
+        }
+      }
+      const finalBookings = Array.from(bookingsMap.values()).filter(
+        (b) =>
           !String(b.id || "").startsWith("bkg-") &&
           !String(b.reference || "").startsWith("TIKORA-BKG-10")
       );
 
-      const finalBookings = cleanBackendBookings.length > 0 ? cleanBackendBookings : localBookingsList;
+      // Determine final authoritative payouts
+      // When /api/admin/payout responds, it is the single authoritative source of truth.
+      // This stops stale localStorage test payouts from ever overwriting or suppressing real active balances.
+      let finalPayouts: AdminPayout[] = [];
+      if (hasApiPayouts) {
+        finalPayouts = apiPayouts;
+        if (typeof window !== "undefined") {
+          try {
+            localStorage.setItem("tikora_admin_payouts", JSON.stringify(apiPayouts));
+          } catch {}
+        }
+      } else {
+        const payoutsMap = new Map<string, any>();
+        for (const p of [...(get().payouts || [])]) {
+          if (!p) continue;
+          const key = String(p.reference || p.id || "");
+          if (key && !payoutsMap.has(key)) {
+            payoutsMap.set(key, p);
+          }
+        }
+        finalPayouts = Array.from(payoutsMap.values());
+      }
 
-      const computedGMV = finalBookings.reduce((sum: number, b: any) => sum + (Number(b.totalAmount) || 0), 0);
-      const computedRev = finalBookings.reduce((sum: number, b: any) => sum + (Number(b.platformFee) || 0), 0);
+      // Blacklist of permanently deleted providers
+      let deletedOrgIds: string[] = [];
+      if (typeof window !== "undefined") {
+        try {
+          const rawDel = localStorage.getItem("tikora_deleted_providers");
+          if (rawDel) deletedOrgIds = JSON.parse(rawDel);
+        } catch {}
+      }
+      const isOrgDeleted = (id?: string, name?: string) => {
+        if (!id && !name) return false;
+        const cleanId = String(id || "").replace(/^org-/, "").trim().toLowerCase();
+        const cleanName = (name || "").trim().toLowerCase();
+        return deletedOrgIds.some((d) => {
+          const cd = String(d).replace(/^org-/, "").trim().toLowerCase();
+          return cd === cleanId || (cleanName && cd === cleanName);
+        });
+      };
+
+      // Filter out bookings and payouts for permanently deleted providers
+      const nonDeletedBookings = finalBookings.filter(
+        (b) => !isOrgDeleted(b.providerId || (b as any).ticket?.providerId, b.providerName || (b as any).ticket?.organizer)
+      );
+      const nonDeletedPayouts = finalPayouts.filter((p) => !isOrgDeleted(p.providerId, p.providerName));
+
+      // Reconcile organizations: defaults + backend providers + any provider from bookings or services
+      const orgMap = new Map<string, AdminOrganization>();
+      for (const def of DEFAULT_PLATFORM_ORGANIZATIONS) {
+        if (!isOrgDeleted(def.id, def.name)) {
+          orgMap.set(def.id, { ...def });
+        }
+      }
+      if (Array.isArray(providers) && providers.length > 0) {
+        for (const p of providers) {
+          if (p && p.id && !isOrgDeleted(p.id, p.name)) {
+            const sid = String(p.id);
+            orgMap.set(sid, {
+              ...(orgMap.get(sid) || {}),
+              ...p,
+              id: sid,
+            });
+          }
+        }
+      }
+      for (const b of nonDeletedBookings) {
+        const pId = String(b.providerId || (b as any).ticket?.providerId || "").replace(/^org-/, "").trim();
+        const pName = (b.providerName || (b as any).ticket?.organizer || "").trim();
+        if (pName && !isOrgDeleted(pId, pName)) {
+          const matchedOrg = Array.from(orgMap.values()).find(
+            (o) => (pId && o.id === pId) || o.name.toLowerCase() === pName.toLowerCase()
+          );
+          if (matchedOrg) {
+            if (pId && matchedOrg.id !== pId) matchedOrg.id = pId;
+          } else {
+            const newId = pId || `org-${Date.now()}`;
+            orgMap.set(newId, {
+              id: newId,
+              name: pName,
+              category: (b.category as any) || "SPORTS",
+              businessLicense: "LIC-VERIFIED-ET",
+              taxNumber: "TIN-00984120",
+              contactPerson: `${pName} Operations`,
+              email: `${pName.toLowerCase().replace(/[^a-z0-9]/g, "")}@tikora.et`,
+              phone: "+251991826380",
+              address: (b as any).ticket?.location || "Addis Ababa",
+              city: (b as any).ticket?.city || "Addis Ababa",
+              status: "APPROVED",
+              appliedDate: new Date().toISOString(),
+              approvedDate: new Date().toISOString(),
+              commissionRate: Number(b.commissionRate || 5.0),
+              totalServices: 1,
+              totalBookings: 0,
+              totalRevenue: 0,
+              rating: 4.9,
+              documents: [],
+            });
+          }
+        }
+      }
+      for (const org of orgMap.values()) {
+        const cleanOrgId = String(org.id || "").replace(/^org-/, "").trim().toLowerCase();
+        const cleanOrgName = (org.name || "").trim().toLowerCase().replace(/[\s\-_]+/g, "");
+        const orgWord = (org.name || "").trim().toLowerCase().split(/\s+/)[0] || "";
+
+        const matchedOrgBookings = nonDeletedBookings.filter((b: any) => {
+          if (b.bookingStatus === "CANCELLED" || (b as any).status === "CANCELLED") return false;
+          const bProvId = String(b.providerId || b.ticket?.providerId || "").replace(/^org-/, "").trim().toLowerCase();
+          const byId = cleanOrgId && bProvId && cleanOrgId === bProvId;
+
+          const rawBName = (b.providerName || b.ticket?.organizer || "").trim().toLowerCase();
+          const normBName = rawBName.replace(/[\s\-_]+/g, "");
+          const byName =
+            cleanOrgName &&
+            normBName &&
+            (cleanOrgName === normBName ||
+              cleanOrgName.includes(normBName) ||
+              normBName.includes(cleanOrgName) ||
+              cleanOrgName.replace("addis", "adiss") === normBName.replace("addis", "adiss") ||
+              cleanOrgName.replace("adiss", "addis") === normBName.replace("adiss", "addis") ||
+              (orgWord && rawBName.includes(orgWord)));
+
+          const byCategoryMatch = org.category && b.category === org.category;
+          return byId || byName || byCategoryMatch;
+        });
+
+        if (matchedOrgBookings.length > 0) {
+          const orgGross = matchedOrgBookings.reduce((sum: number, b: any) => sum + (Number(b.customerPaid ?? b.totalAmount) || 0), 0);
+          org.totalBookings = matchedOrgBookings.length;
+          org.totalRevenue = orgGross;
+        }
+      }
+
+      const reconciledOrgs = Array.from(orgMap.values());
+
+      const computedGMV = nonDeletedBookings.reduce((sum: number, b: any) => sum + (Number(b.customerPaid ?? b.totalAmount) || 0), 0);
+      const computedRev = nonDeletedBookings.reduce((sum: number, b: any) => sum + (Number(b.platformFee) || 0), 0);
       const computedRefunds = refundsList.filter((r: any) => r.status === "PENDING").length;
 
       // Accurately reconcile booked counts per service from confirmed bookings
@@ -617,25 +895,26 @@ export const useAdminStore = create<AdminState>((set, get) => ({
 
       set((state) => ({
         users: users.length > 0 ? users : state.users,
-        organizations: providers.length > 0 ? providers : state.organizations,
+        organizations: reconciledOrgs,
         inspectors: inspectors.length > 0 ? inspectors : state.inspectors,
         stats: {
           ...state.stats,
           ...(stats || {}),
-          totalBookings: Math.max(finalBookings.length, stats?.totalBookings || 0),
-          totalGMV: Math.max(computedGMV, stats?.totalGMV || 0),
-          platformRevenue: Math.max(computedRev, stats?.platformRevenue || 0),
+          totalBookings: nonDeletedBookings.length,
+          totalGMV: computedGMV,
+          platformRevenue: computedRev,
           refundsRequested: Math.max(computedRefunds, stats?.refundsRequested || 0),
           totalUsers: users.length > 0 ? users.length : state.stats.totalUsers,
-          activeProviders: providers.filter((p: any) => p.status === "APPROVED").length || state.stats.activeProviders,
-          pendingApprovals: providers.filter((p: any) => p.status === "PENDING").length || state.stats.pendingApprovals,
+          activeProviders: reconciledOrgs.filter((p: any) => p.status === "APPROVED").length || state.stats.activeProviders,
+          pendingApprovals: reconciledOrgs.filter((p: any) => p.status === "PENDING").length || state.stats.pendingApprovals,
           activeTickets: reconciledServices.length > 0 ? reconciledServices.length : state.stats.activeTickets,
           activeInspectors: inspectors.filter((i: any) => i.status === "ACTIVE").length || state.stats.activeInspectors,
         },
         auditLogs: auditLogs.length > 0 ? auditLogs : state.auditLogs,
         services: reconciledServices.length > 0 ? reconciledServices : state.services,
         categories: categories.length > 0 ? categories : state.categories,
-        bookings: finalBookings,
+        bookings: nonDeletedBookings,
+        payouts: nonDeletedPayouts,
         refunds: refundsList.length > 0 ? refundsList : state.refunds,
         supportTickets: supportList.length > 0 ? supportList : state.supportTickets,
         settings: (() => {
@@ -668,7 +947,7 @@ export const useAdminStore = create<AdminState>((set, get) => ({
     refundsRequested: 0,
   },
 
-  organizations: [],
+  organizations: DEFAULT_PLATFORM_ORGANIZATIONS,
   users: [],
   inspectors: [],
   services: [],
@@ -721,7 +1000,7 @@ export const useAdminStore = create<AdminState>((set, get) => ({
   ],
 
   bookings: getInitialAdminBookings(),
-  payouts: [],
+  payouts: getInitialAdminPayouts(),
   refunds: [],
   supportTickets: [],
   auditLogs: [],
@@ -1082,12 +1361,92 @@ export const useAdminStore = create<AdminState>((set, get) => ({
 
   deleteOrganization: async (id: string) => {
     const org = get().organizations.find((o) => o.id === id);
+    const orgName = org?.name || "";
+    const cleanId = String(id).replace(/^org-/, "").trim();
+
+    // 1. Record in persistent deleted providers blacklist so it is never resurrected
+    if (typeof window !== "undefined") {
+      try {
+        const rawDel = localStorage.getItem("tikora_deleted_providers");
+        const list: string[] = rawDel ? JSON.parse(rawDel) : [];
+        if (!list.includes(cleanId)) list.push(cleanId);
+        if (orgName && !list.includes(orgName.toLowerCase())) list.push(orgName.toLowerCase());
+        localStorage.setItem("tikora_deleted_providers", JSON.stringify(list));
+      } catch {}
+    }
+
+    // 2. Remove all bookings for this provider from localStorage & API
+    if (typeof window !== "undefined") {
+      try {
+        const rawB = localStorage.getItem("tikora_admin_bookings");
+        if (rawB) {
+          const parsed = JSON.parse(rawB);
+          if (Array.isArray(parsed)) {
+            const rem = parsed.filter(
+              (b: any) =>
+                String(b.providerId || b.ticket?.providerId || "").replace(/^org-/, "") !== cleanId &&
+                (!orgName || (b.providerName || b.ticket?.organizer || "").toLowerCase() !== orgName.toLowerCase())
+            );
+            localStorage.setItem("tikora_admin_bookings", JSON.stringify(rem));
+          }
+        }
+      } catch {}
+      try {
+        const rawPB = localStorage.getItem("tikora_provider_bookings");
+        if (rawPB) {
+          const parsed = JSON.parse(rawPB);
+          if (Array.isArray(parsed)) {
+            const rem = parsed.filter(
+              (b: any) =>
+                String(b.providerId || b.ticket?.providerId || "").replace(/^org-/, "") !== cleanId &&
+                (!orgName || (b.providerName || b.ticket?.organizer || "").toLowerCase() !== orgName.toLowerCase())
+            );
+            localStorage.setItem("tikora_provider_bookings", JSON.stringify(rem));
+          }
+        }
+      } catch {}
+    }
+    fetch(`/api/bookings?providerId=${encodeURIComponent(id)}`, { method: "DELETE" }).catch(() => {});
+
+    // 3. Remove all payouts for this provider
+    if (typeof window !== "undefined") {
+      try {
+        const rawP = localStorage.getItem("tikora_admin_payouts");
+        if (rawP) {
+          const parsed = JSON.parse(rawP);
+          if (Array.isArray(parsed)) {
+            const rem = parsed.filter((p: any) => String(p.providerId || "").replace(/^org-/, "") !== cleanId);
+            localStorage.setItem("tikora_admin_payouts", JSON.stringify(rem));
+          }
+        }
+      } catch {}
+    }
+    fetch(`/api/admin/payout?providerId=${encodeURIComponent(id)}`, { method: "DELETE" }).catch(() => {});
+
+    // 4. Update memory state
+    const remainingBookings = get().bookings.filter(
+      (b: any) =>
+        String(b.providerId || b.ticket?.providerId || "").replace(/^org-/, "") !== cleanId &&
+        (!orgName || (b.providerName || b.ticket?.organizer || "").toLowerCase() !== orgName.toLowerCase())
+    );
+    const remainingPayouts = (get().payouts || []).filter(
+      (p: any) => String(p.providerId || "").replace(/^org-/, "") !== cleanId
+    );
+
+    const newGMV = remainingBookings.reduce((sum, b) => sum + (Number(b.customerPaid ?? b.totalAmount) || 0), 0);
+    const newRev = remainingBookings.reduce((sum, b) => sum + (Number(b.platformFee) || 0), 0);
+
     set((state) => ({
-      organizations: state.organizations.filter((o) => o.id !== id),
-      services: state.services.filter((s) => s.providerId !== id),
+      organizations: state.organizations.filter((o) => o.id !== id && String(o.id).replace(/^org-/, "") !== cleanId),
+      services: state.services.filter((s) => s.providerId !== id && String(s.providerId).replace(/^org-/, "") !== cleanId),
+      bookings: remainingBookings,
+      payouts: remainingPayouts,
       stats: {
         ...state.stats,
         activeProviders: Math.max(0, state.stats.activeProviders - 1),
+        totalBookings: remainingBookings.length,
+        totalGMV: newGMV,
+        platformRevenue: newRev,
       },
     }));
 
@@ -1102,7 +1461,85 @@ export const useAdminStore = create<AdminState>((set, get) => ({
       actorName: "Peter SuperAdmin",
       actorRole: "SUPER_ADMIN",
       target: org ? org.name : `Provider #${id}`,
-      details: `Provider organization #${id} was permanently deleted by Super Admin.`,
+      details: `Provider organization #${id} and all associated offerings, bookings, and financial balances were permanently deleted by Super Admin.`,
+      ipAddress: "127.0.0.1",
+      severity: "WARNING",
+    });
+
+    return true;
+  },
+
+  deleteBooking: async (id: string, reference?: string) => {
+    const targetRef = reference || id;
+    const cleanId = String(id).trim().toLowerCase();
+    const cleanRef = String(targetRef).trim().toLowerCase();
+
+    // 1. Update localStorage tikora_admin_bookings
+    if (typeof window !== "undefined") {
+      try {
+        const raw = localStorage.getItem("tikora_admin_bookings");
+        if (raw) {
+          const parsed = JSON.parse(raw);
+          if (Array.isArray(parsed)) {
+            const rem = parsed.filter((b: any) => {
+              const bId = String(b.id || "").trim().toLowerCase();
+              const bRef = String(b.bookingReference || b.reference || "").trim().toLowerCase();
+              return bId !== cleanId && bRef !== cleanRef && bId !== cleanRef;
+            });
+            localStorage.setItem("tikora_admin_bookings", JSON.stringify(rem));
+          }
+        }
+      } catch {}
+      try {
+        const rawP = localStorage.getItem("tikora_provider_bookings");
+        if (rawP) {
+          const parsed = JSON.parse(rawP);
+          if (Array.isArray(parsed)) {
+            const rem = parsed.filter((b: any) => {
+              const bId = String(b.id || "").trim().toLowerCase();
+              const bRef = String(b.bookingReference || b.reference || "").trim().toLowerCase();
+              return bId !== cleanId && bRef !== cleanRef && bId !== cleanRef;
+            });
+            localStorage.setItem("tikora_provider_bookings", JSON.stringify(rem));
+          }
+        }
+      } catch {}
+    }
+
+    // 2. Call backend / persistent API
+    try {
+      await adminService.deleteBooking(id, reference);
+    } catch (err) {
+      console.warn("Failed to delete booking via API:", err);
+    }
+
+    // 3. Update store state
+    const currentBookings = get().bookings;
+    const remaining = currentBookings.filter((b) => {
+      const bId = String(b.id || "").trim().toLowerCase();
+      const bRef = String(b.bookingReference || (b as any).reference || "").trim().toLowerCase();
+      return bId !== cleanId && bRef !== cleanRef && bId !== cleanRef;
+    });
+
+    const newGMV = remaining.reduce((sum, b) => sum + (Number(b.customerPaid ?? b.totalAmount) || 0), 0);
+    const newRev = remaining.reduce((sum, b) => sum + (Number(b.platformFee) || 0), 0);
+
+    set((state) => ({
+      bookings: remaining,
+      stats: {
+        ...state.stats,
+        totalBookings: remaining.length,
+        totalGMV: newGMV,
+        platformRevenue: newRev,
+      },
+    }));
+
+    get().addAuditLog({
+      action: "BOOKING_DELETED_PERMANENTLY",
+      actorName: "Peter SuperAdmin",
+      actorRole: "SUPER_ADMIN",
+      target: targetRef,
+      details: `Booking ${targetRef} was permanently deleted by Super Admin.`,
       ipAddress: "127.0.0.1",
       severity: "WARNING",
     });
@@ -1314,6 +1751,38 @@ export const useAdminStore = create<AdminState>((set, get) => ({
       details: `Permanently removed settlement payout record for ${payout.providerName}. Amount: ETB ${payout.netAmount.toLocaleString()}`,
       ipAddress: "197.156.104.22",
       severity: "WARNING",
+    });
+  },
+
+  recordPayout: async (payout: AdminPayout) => {
+    set((state) => {
+      const updated = [payout, ...state.payouts.filter((p) => p.id !== payout.id && p.reference !== payout.reference)];
+      if (typeof window !== "undefined") {
+        try {
+          localStorage.setItem("tikora_admin_payouts", JSON.stringify(updated));
+        } catch {}
+      }
+      return { payouts: updated };
+    });
+
+    if (typeof window !== "undefined") {
+      try {
+        fetch("/api/admin/payout", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(payout),
+        }).catch(() => {});
+      } catch {}
+    }
+
+    get().addAuditLog({
+      action: "PAYOUT_PROCESSED",
+      actorName: "Peter SuperAdmin",
+      actorRole: "SUPER_ADMIN",
+      target: `${payout.reference} (${payout.providerName})`,
+      details: `Transferred and settled payout of ETB ${payout.netAmount.toLocaleString()} to ${payout.providerName} via Chapa.`,
+      ipAddress: "197.156.104.22",
+      severity: "INFO",
     });
   },
 

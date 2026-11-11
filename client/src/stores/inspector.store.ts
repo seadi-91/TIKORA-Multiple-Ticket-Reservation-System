@@ -241,6 +241,7 @@ interface InspectorStoreState {
   fetchOrganizationServices: () => Promise<void>;
   fetchOrganizationBookings: () => Promise<void>;
   checkInBooking: (reference: string) => Promise<boolean>;
+  undoCheckInBooking: (reference: string) => Promise<boolean>;
   initializeFromAuthUser: (user: any) => void;
 }
 
@@ -516,6 +517,63 @@ export const useInspectorStore = create<InspectorStoreState>((set, get) => ({
       return true;
     } catch (err) {
       console.error("checkInBooking error:", err);
+      return false;
+    }
+  },
+
+  undoCheckInBooking: async (reference: string) => {
+    try {
+      const cleanRef = reference.trim().toUpperCase();
+
+      // 1. Send update to server API
+      await fetch("/api/bookings", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ reference: cleanRef, bookingStatus: "CONFIRMED" }),
+      }).catch(() => {});
+
+      // 2. Update store state
+      set((s) => ({
+        organizationBookings: s.organizationBookings.map((b) => {
+          const bRef = (b.bookingReference || b.reference || b.id || "").toUpperCase();
+          if (bRef === cleanRef || bRef.includes(cleanRef) || cleanRef.includes(bRef)) {
+            const { checkedInAt, ...rest } = b as any;
+            return { ...rest, bookingStatus: "CONFIRMED" };
+          }
+          return b;
+        }),
+      }));
+
+      // 3. Update local storage copies
+      if (typeof window !== "undefined") {
+        try {
+          const updateStorage = (key: string) => {
+            const list = JSON.parse(localStorage.getItem(key) || "[]");
+            const updated = list.map((b: any) => {
+              const bRef = (b.bookingReference || b.reference || b.id || "").toUpperCase();
+              if (bRef === cleanRef || bRef.includes(cleanRef) || cleanRef.includes(bRef)) {
+                const { checkedInAt, ...rest } = b;
+                return { ...rest, bookingStatus: "CONFIRMED" };
+              }
+              return b;
+            });
+            localStorage.setItem(key, JSON.stringify(updated));
+          };
+          updateStorage("tikora_bookings");
+          updateStorage("tikora_provider_bookings");
+          updateStorage("tikora_admin_bookings");
+        } catch {}
+      }
+
+      set((s) => ({
+        assignments: s.assignments.map((a, idx) =>
+          idx === 0 ? { ...a, scannedSeats: Math.max(0, a.scannedSeats - 1) } : a
+        ),
+      }));
+
+      return true;
+    } catch (err) {
+      console.error("undoCheckInBooking error:", err);
       return false;
     }
   },

@@ -1,6 +1,9 @@
 import bcrypt from "bcryptjs";
+import jwt from "jsonwebtoken";
 import { db } from "../../config/database";
 import { signToken } from "../../utils/jwt";
+import { ENV } from "../../config/environment";
+import { sendEmailOtp } from "../../utils/mailer";
 import {
   UserRoleType,
   ClientAuthUser,
@@ -498,6 +501,353 @@ export class AuthService {
     }
 
     return this.formatAuthUser(user, role, organizationId, organizationCategory, accountStatus);
+  }
+
+  /**
+   * 1. Request Password Reset (Check Email in DB & Dispatch 6-digit OTP)
+   */
+  static async requestPasswordReset(identifier: string): Promise<{
+    success: boolean;
+    message: string;
+    email: string;
+    debugOtp?: string;
+  }> {
+    if (!identifier || !identifier.trim()) {
+      throw new Error("Email address is required.");
+    }
+
+    const trimmed = identifier.trim();
+    let user: any = null;
+
+    if (trimmed.includes("@")) {
+      const normalizedEmail = trimmed.toLowerCase();
+      user = await db.orm.public.User.where({ email: normalizedEmail }).first();
+    } else {
+      // Also allow Ethiopian phone number lookups if user entered phone instead of email
+      user = await db.orm.public.User.where({ phone: trimmed }).first();
+      if (!user) {
+        user = await db.orm.public.User.where({ username: trimmed }).first();
+      }
+    }
+
+    // Explicit check: DB lay kal check adrgo db lay kale
+    if (!user) {
+      throw new Error("No account found registered with this email address. Please check your email or register.");
+    }
+
+    if (!user.isActive) {
+      throw new Error("This account is currently deactivated. Please contact support.");
+    }
+
+    // Generate 6-digit OTP
+    const otp = Math.floor(100000 + Math.random() * 900000).toString();
+    const otpHash = await bcrypt.hash(otp, 10);
+    const expiresAt = new Date(Date.now() + 15 * 60 * 1000); // 15 minutes validity
+
+    // Invalidate/expire any previous unused reset requests for this user
+    try {
+      const existingResets = await db.orm.public.PasswordReset.where({
+        userId: user.id,
+        usedAt: null,
+      }).all();
+      for (const r of existingResets) {
+        await db.orm.public.PasswordReset.where({ id: r.id }).update({
+          usedAt: new Date(),
+        });
+      }
+    } catch (cleanErr) {
+      // Non-blocking cleanup
+    }
+
+    // Create new PasswordReset record in database
+    await db.orm.public.PasswordReset.create({
+      userId: user.id,
+      otpHash,
+      expiresAt,
+      usedAt: null,
+    });
+
+    // In-app Notification for the user (does not expose OTP in text)
+    try {
+      await db.orm.public.Notification.create({
+        userId: user.id,
+        title: "TIKORA Security: Password Reset Requested",
+        message: `A 6-digit verification code has been dispatched to your email address (${user.email}). Please check your email inbox.`,
+        type: "SECURITY",
+        link: `/verify-otp?email=${encodeURIComponent(user.email)}`,
+        referenceId: String(user.id),
+        isRead: false,
+      });
+    } catch (notifErr) {
+      console.warn("Failed to create reset notification:", notifErr);
+    }
+
+    // Dispatch real email via SMTP from "TIKORA Security"
+    try {
+      await sendEmailOtp(user.email, otp, `${user.firstName} ${user.lastName}`.trim());
+    } catch (mailErr) {
+      // Non-blocking
+    }
+
+    AuditService.record({
+      userId: user.id,
+      actorName: `${user.firstName} ${user.lastName}`.trim(),
+      actorRole: "CUSTOMER",
+      target: `PasswordReset: ${user.email}`,
+      action: "PASSWORD_RESET_OTP_REQUESTED",
+      entityType: "AUTH",
+      entityId: String(user.id),
+      details: `6-digit OTP verification code sent via email to ${user.email}.`,
+      severity: "INFO",
+    });
+
+    return {
+      success: true,
+      message: "A 6-digit verification code has been dispatched to your email address.",
+      email: user.email,
+    };
+  }
+
+  /**
+   * 2. Verify 6-digit OTP Code
+   */
+  static async verifyPasswordResetOtp(email: string, otp: string): Promise<{
+    success: boolean;
+    message: string;
+    resetToken: string;
+    email: string;
+  }> {
+    if (!email || !otp) {
+      throw new Error("Email and 6-digit verification code are required.");
+    }
+
+    const normalizedEmail = email.trim().toLowerCase();
+    const cleanOtp = otp.trim();
+
+    if (cleanOtp.length !== 6 || !/^\d{6}$/.test(cleanOtp)) {
+      throw new Error("Invalid verification code. Please enter the full 6-digit numeric code.");
+    }
+
+    const user = await db.orm.public.User.where({ email: normalizedEmail }).first();
+    if (!user) {
+      throw new Error("No account found registered with this email address.");
+    }
+
+    // Find active non-used reset records for this user
+    const resets = await db.orm.public.PasswordReset.where({
+      userId: user.id,
+      usedAt: null,
+    }).all();
+
+    const now = Date.now();
+    const activeResets = resets
+      .filter((r) => new Date(r.expiresAt).getTime() > now)
+      .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+
+    if (activeResets.length === 0) {
+      throw new Error("Verification code has expired or does not exist. Please request a new code.");
+    }
+
+    let matchedReset: any = null;
+    for (const r of activeResets) {
+      const match = await bcrypt.compare(cleanOtp, r.otpHash);
+      if (match) {
+        matchedReset = r;
+        break;
+      }
+    }
+
+    if (!matchedReset) {
+      throw new Error("Incorrect 6-digit verification code. Please check and try again.");
+    }
+
+    // Sign temporary reset token valid for 15 minutes
+    const resetToken = jwt.sign(
+      {
+        userId: user.id,
+        email: user.email,
+        resetId: matchedReset.id,
+        purpose: "PASSWORD_RESET",
+      },
+      ENV.JWT_SECRET,
+      { expiresIn: "15m" }
+    );
+
+    return {
+      success: true,
+      message: "Verification code verified successfully.",
+      resetToken,
+      email: user.email,
+    };
+  }
+
+  /**
+   * 3. Reset Password & Auto-Login ("password change adrgo ygba")
+   */
+  static async resetPassword(params: {
+    email?: string;
+    token?: string;
+    password: string;
+    confirmPassword?: string;
+  }): Promise<AuthResponseDto> {
+    const { email, token: resetTokenInput, password, confirmPassword } = params;
+
+    if (!password) {
+      throw new Error("New password is required.");
+    }
+
+    if (password.length < 8) {
+      throw new Error("Password must be at least 8 characters long.");
+    }
+
+    if (confirmPassword && password !== confirmPassword) {
+      throw new Error("New password and confirm password do not match.");
+    }
+
+    let user: any = null;
+    let resetId: number | null = null;
+
+    if (resetTokenInput) {
+      try {
+        const decoded = jwt.verify(resetTokenInput, ENV.JWT_SECRET) as any;
+        if (decoded && decoded.userId && decoded.purpose === "PASSWORD_RESET") {
+          user = await db.orm.public.User.where({ id: decoded.userId }).first();
+          resetId = decoded.resetId || null;
+        }
+      } catch (err: any) {
+        // Token invalid or expired
+      }
+    }
+
+    if (!user && email) {
+      user = await db.orm.public.User.where({ email: email.trim().toLowerCase() }).first();
+    }
+
+    if (!user) {
+      throw new Error("Invalid or expired session. Please start the password reset process again.");
+    }
+
+    // Hash new password
+    const hashedPassword = await bcrypt.hash(password, 10);
+
+    // Update password in PostgreSQL
+    await db.orm.public.User.where({ id: user.id }).update({
+      password: hashedPassword,
+    });
+
+    // Mark reset record as used
+    try {
+      if (resetId) {
+        await db.orm.public.PasswordReset.where({ id: resetId }).update({
+          usedAt: new Date(),
+        });
+      }
+      const activeResets = await db.orm.public.PasswordReset.where({
+        userId: user.id,
+        usedAt: null,
+      }).all();
+      for (const r of activeResets) {
+        await db.orm.public.PasswordReset.where({ id: r.id }).update({
+          usedAt: new Date(),
+        });
+      }
+    } catch (upErr) {
+      console.warn("Failed to mark reset records as used:", upErr);
+    }
+
+    // Security notification
+    try {
+      await db.orm.public.Notification.create({
+        userId: user.id,
+        title: "Security: Password Changed",
+        message: "Your Tikora account password was successfully reset and updated.",
+        type: "SECURITY",
+        link: "/customer",
+        referenceId: String(user.id),
+        isRead: false,
+      });
+    } catch {}
+
+    AuditService.record({
+      userId: user.id,
+      actorName: `${user.firstName} ${user.lastName}`.trim(),
+      actorRole: "CUSTOMER",
+      target: `User: ${user.email}`,
+      action: "PASSWORD_RESET_COMPLETED",
+      entityType: "AUTH",
+      entityId: String(user.id),
+      details: `Password successfully updated for user ${user.email}. User automatically logged in.`,
+      severity: "INFO",
+    });
+
+    // Determine user role and generate login token ("password change adrgo ygba")
+    const userRoles = await db.orm.public.UserRole.where({ userId: user.id })
+      .include("role")
+      .all();
+
+    let role: UserRoleType = "CUSTOMER";
+    if (userRoles.length > 0 && userRoles[0].role) {
+      role = userRoles[0].role.name as UserRoleType;
+    }
+
+    let organizationId: number | undefined;
+    let organizationName: string | undefined;
+    let organizationCategory: string | undefined;
+    let assignedStation: string | undefined;
+    let accountStatus: "ACTIVE" | "PENDING_APPROVAL" | "SUSPENDED" | "INACTIVE" = user.isActive ? "ACTIVE" : "INACTIVE";
+
+    if (role === "ORGANIZATION" || role === "INSPECTOR") {
+      const membership = await db.orm.public.ProviderMember.where({ userId: user.id })
+        .include("provider")
+        .first();
+
+      if (membership && membership.provider) {
+        organizationId = membership.provider.id;
+        organizationCategory = membership.provider.providerType;
+        organizationName = membership.provider.name;
+        assignedStation = membership.position || undefined;
+
+        if (role === "ORGANIZATION") {
+          const provStatus = membership.provider.verificationStatus;
+          if (provStatus === "PENDING" || !membership.provider.isActive) {
+            accountStatus = "PENDING_APPROVAL";
+          } else if (provStatus === "APPROVED") {
+            accountStatus = "ACTIVE";
+          }
+        } else {
+          accountStatus = user.isActive ? "ACTIVE" : "SUSPENDED";
+        }
+      } else if (role === "ORGANIZATION") {
+        accountStatus = "PENDING_APPROVAL";
+      }
+    }
+
+    const jwtPayload: JwtUserPayload = {
+      id: user.id,
+      email: user.email,
+      name: `${user.firstName} ${user.lastName}`.trim(),
+      role,
+      organizationId,
+      organizationCategory,
+      status: accountStatus,
+    };
+
+    const token = signToken(jwtPayload);
+    const clientUser = this.formatAuthUser(
+      user,
+      role,
+      organizationId,
+      organizationCategory,
+      accountStatus,
+      organizationName,
+      assignedStation
+    );
+
+    return {
+      user: clientUser,
+      token,
+      message: "Password changed successfully! You are now logged in.",
+    };
   }
 }
 

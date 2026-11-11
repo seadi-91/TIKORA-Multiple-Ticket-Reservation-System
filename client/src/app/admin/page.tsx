@@ -64,7 +64,7 @@ export default function AdminDashboardPage() {
 
   // Dynamic calculations from actual store data
   const totalGMV = useMemo(() => {
-    return bookings.reduce((sum, b) => sum + (Number(b.totalAmount) || 0), 0);
+    return bookings.reduce((sum, b) => sum + (Number((b as any).customerPaid ?? b.totalAmount) || 0), 0);
   }, [bookings]);
 
   const platformRevenue = useMemo(() => {

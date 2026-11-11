@@ -38,10 +38,10 @@ interface ProviderHeaderProps {
 }
 
 const SECTORS: { id: TicketCategory; label: string; orgName: string; icon: any }[] = [
-  { id: "CINEMA", label: "Cinema Multiplex", orgName: "Century Cinema Addis", icon: Film },
-  { id: "BUS", label: "Intercity Bus Lines", orgName: "Selam Bus Lines S.C.", icon: Bus },
-  { id: "EVENT", label: "Live Events & Concerts", orgName: "Addis Live Events & Concerts", icon: Calendar },
-  { id: "SPORTS", label: "Stadium Sports Club", orgName: "St. George Stadium Club", icon: Trophy },
+  { id: "SPORTS", label: "Stadium Sports Club", orgName: "Adiss Abeba Stadium", icon: Trophy },
+  { id: "BUS", label: "Intercity Bus Lines", orgName: "Selam Bus Lines", icon: Bus },
+  { id: "CINEMA", label: "Cinema Multiplex", orgName: "Century Cinema Multiplex", icon: Film },
+  { id: "EVENT", label: "Live Events & Concerts", orgName: "Kuriftu Resort & Live Events", icon: Calendar },
 ];
 
 export function ProviderHeader({ onToggleMobileMenu }: ProviderHeaderProps) {
@@ -50,6 +50,7 @@ export function ProviderHeader({ onToggleMobileMenu }: ProviderHeaderProps) {
   const {
     organization,
     notifications,
+    fetchNotifications,
     markAllNotificationsAsRead,
     markNotificationAsRead,
     setOrganizationCategory,
@@ -71,6 +72,19 @@ export function ProviderHeader({ onToggleMobileMenu }: ProviderHeaderProps) {
   const themeRef = useRef<HTMLDivElement>(null);
 
   const unreadNotifs = notifications.filter((n) => !n.isRead);
+
+  useEffect(() => {
+    fetchNotifications();
+
+    const handleCustomNotif = () => {
+      fetchNotifications();
+    };
+
+    if (typeof window !== "undefined") {
+      window.addEventListener("tikora_provider_notification", handleCustomNotif);
+      return () => window.removeEventListener("tikora_provider_notification", handleCustomNotif);
+    }
+  }, [fetchNotifications]);
 
   // Close dropdowns on outside click
   useEffect(() => {
@@ -458,7 +472,13 @@ export function ProviderHeader({ onToggleMobileMenu }: ProviderHeaderProps) {
                   notifications.map((n) => (
                     <div
                       key={n.id}
-                      onClick={() => markNotificationAsRead(n.id)}
+                      onClick={() => {
+                        markNotificationAsRead(n.id);
+                        if (n.linkHref || (n as any).link) {
+                          router.push(n.linkHref || (n as any).link);
+                          setShowNotifications(false);
+                        }
+                      }}
                       className={`p-2.5 rounded-xl border text-left cursor-pointer transition-colors ${
                         n.isRead
                           ? "bg-transparent border-transparent hover:bg-slate-50 dark:hover:bg-slate-800/40"

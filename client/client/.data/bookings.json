@@ -1,0 +1,296 @@
+[
+  {
+    "id": "BKG-TIKORA-1794207276094-5971",
+    "bookingReference": "TIKORA-1794207276094-5971",
+    "ticketId": "8",
+    "ticket": {
+      "id": "8",
+      "title": "Football for welkite kenema with Jimma abajifar",
+      "category": "SPORTS",
+      "categoryIsActive": true,
+      "isCategoryActive": true,
+      "organizer": "Adiss Abeba Stadium",
+      "organizerVerified": true,
+      "location": "Addis Ababa, Stadium",
+      "city": "Addis Ababa",
+      "date": "2026-11-20",
+      "time": "03:00 PM",
+      "price": 500,
+      "currency": "ETB",
+      "totalSold": 22,
+      "soldQuantity": 22,
+      "capacity": 500,
+      "totalSeats": 500,
+      "availableSeats": 478,
+      "remainingCapacity": 478,
+      "status": "AVAILABLE",
+      "badge": "Derby Match",
+      "imageUrl": "https://images.unsplash.com/photo-1518091043644-c1d4457512c6?auto=format&fit=crop&w=800&q=80",
+      "description": "",
+      "amenities": [],
+      "providerId": 3,
+      "tiers": [
+        {
+          "id": "tier-9",
+          "name": "Standard",
+          "price": 500,
+          "available": 478,
+          "perks": [
+            "Standard comfortable allocated seating"
+          ]
+        }
+      ]
+    },
+    "category": "SPORTS",
+    "customerName": "Amina User",
+    "customerEmail": "aminamuhamed683@gmail.com",
+    "customerPhone": "0934273821",
+    "passengers": [
+      {
+        "fullName": "Amina User",
+        "phone": "0934273821",
+        "email": "aminamuhamed683@gmail.com",
+        "seatNumber": "Standard Gate Pass #1"
+      },
+      {
+        "fullName": "Supporter 2",
+        "phone": "0934273821",
+        "email": "aminamuhamed683@gmail.com",
+        "seatNumber": "Standard Gate Pass #2"
+      }
+    ],
+    "selectedSeats": [
+      "Standard (x2)"
+    ],
+    "selectedTier": "Standard",
+    "quantity": 2,
+    "pricing": {
+      "basePrice": 500,
+      "quantity": 2,
+      "subtotal": 1000,
+      "serviceFee": 0,
+      "tax": 50,
+      "discount": 0,
+      "total": 1050,
+      "vatRate": 5,
+      "commissionRate": 5,
+      "platformCommission": 50,
+      "providerNet": 950
+    },
+    "subtotal": 1000,
+    "customerPaid": 1050,
+    "totalAmount": 1050,
+    "vatAmount": 50,
+    "vatRate": 5,
+    "commissionRate": 5,
+    "platformFee": 50,
+    "providerNet": 950,
+    "paymentMethod": "CHAPA",
+    "paymentStatus": "PAID",
+    "bookingStatus": "CONFIRMED",
+    "createdAt": "2026-11-09T06:54:36.829Z",
+    "qrCodeData": "TIKORA-PASS:TIKORA-1794207276094-5971:1050:PAID",
+    "providerId": "3",
+    "providerName": "Adiss Abeba Stadium",
+    "providerPayout": 950,
+    "updatedAt": "2026-11-09T06:55:48.502Z"
+  },
+  {
+    "id": "BKG-TIKORA-1794204815138-3289",
+    "bookingReference": "TIKORA-1794204815138-3289",
+    "ticketId": "8",
+    "ticket": {
+      "id": "8",
+      "title": "Football for welkite kenema with Jimma abajifar",
+      "category": "SPORTS",
+      "categoryIsActive": true,
+      "isCategoryActive": true,
+      "organizer": "Adiss Abeba Stadium",
+      "organizerVerified": true,
+      "location": "Addis Ababa, Stadium",
+      "city": "Addis Ababa",
+      "date": "2026-11-20",
+      "time": "03:00 PM",
+      "price": 500,
+      "currency": "ETB",
+      "totalSold": 20,
+      "soldQuantity": 20,
+      "capacity": 500,
+      "totalSeats": 500,
+      "availableSeats": 480,
+      "remainingCapacity": 480,
+      "status": "AVAILABLE",
+      "badge": "Derby Match",
+      "imageUrl": "https://images.unsplash.com/photo-1518091043644-c1d4457512c6?auto=format&fit=crop&w=800&q=80",
+      "description": "",
+      "amenities": [],
+      "providerId": 3,
+      "tiers": [
+        {
+          "id": "tier-9",
+          "name": "Standard",
+          "price": 500,
+          "available": 480,
+          "perks": [
+            "Standard comfortable allocated seating"
+          ]
+        }
+      ]
+    },
+    "category": "SPORTS",
+    "customerName": "Amina User",
+    "customerEmail": "aminamuhamed683@gmail.com",
+    "customerPhone": "0991826380",
+    "passengers": [
+      {
+        "fullName": "Amina User",
+        "phone": "0991826380",
+        "email": "aminamuhamed683@gmail.com",
+        "seatNumber": "Standard Gate Pass #1"
+      },
+      {
+        "fullName": "Supporter 2",
+        "phone": "0991826380",
+        "email": "aminamuhamed683@gmail.com",
+        "seatNumber": "Standard Gate Pass #2"
+      }
+    ],
+    "selectedSeats": [
+      "Standard (x2)"
+    ],
+    "selectedTier": "Standard",
+    "quantity": 2,
+    "pricing": {
+      "basePrice": 500,
+      "quantity": 2,
+      "subtotal": 1000,
+      "serviceFee": 0,
+      "tax": 50,
+      "discount": 0,
+      "total": 1050,
+      "vatRate": 5,
+      "commissionRate": 5,
+      "platformCommission": 50,
+      "providerNet": 950
+    },
+    "subtotal": 1000,
+    "customerPaid": 1050,
+    "totalAmount": 1050,
+    "vatAmount": 50,
+    "vatRate": 5,
+    "commissionRate": 5,
+    "platformFee": 50,
+    "providerNet": 950,
+    "paymentMethod": "CHAPA",
+    "paymentStatus": "PAID",
+    "bookingStatus": "CONFIRMED",
+    "createdAt": "2026-11-09T06:13:35.838Z",
+    "qrCodeData": "TIKORA-PASS:TIKORA-1794204815138-3289:1050:PAID",
+    "providerId": "3",
+    "providerName": "Adiss Abeba Stadium",
+    "providerPayout": 950,
+    "updatedAt": "2026-11-09T06:54:17.773Z"
+  },
+  {
+    "id": "BKG-TIKORA-1794201974831-8036",
+    "bookingReference": "TIKORA-1794201974831-8036",
+    "ticketId": "8",
+    "ticket": {
+      "id": "8",
+      "title": "Football for welkite kenema with Jimma abajifar",
+      "category": "SPORTS",
+      "categoryIsActive": true,
+      "isCategoryActive": true,
+      "organizer": "Adiss Abeba Stadium",
+      "organizerVerified": true,
+      "location": "Addis Ababa, Stadium",
+      "city": "Addis Ababa",
+      "date": "2026-11-20",
+      "time": "03:00 PM",
+      "price": 500,
+      "currency": "ETB",
+      "totalSold": 15,
+      "soldQuantity": 15,
+      "capacity": 500,
+      "totalSeats": 500,
+      "availableSeats": 485,
+      "remainingCapacity": 485,
+      "status": "AVAILABLE",
+      "badge": "Derby Match",
+      "imageUrl": "https://images.unsplash.com/photo-1518091043644-c1d4457512c6?auto=format&fit=crop&w=800&q=80",
+      "description": "",
+      "amenities": [],
+      "providerId": 3,
+      "tiers": [
+        {
+          "id": "tier-9",
+          "name": "Standard",
+          "price": 500,
+          "available": 485,
+          "perks": [
+            "Standard comfortable allocated seating"
+          ]
+        }
+      ]
+    },
+    "category": "SPORTS",
+    "customerName": "Amina User",
+    "customerEmail": "aminamuhamed683@gmail.com",
+    "customerPhone": "251991826384",
+    "passengers": [
+      {
+        "fullName": "Amina User",
+        "phone": "251991826384",
+        "email": "aminamuhamed683@gmail.com",
+        "seatNumber": "Standard Gate Pass #1"
+      },
+      {
+        "fullName": "Supporter 2",
+        "phone": "251991826384",
+        "email": "aminamuhamed683@gmail.com",
+        "seatNumber": "Standard Gate Pass #2"
+      },
+      {
+        "fullName": "Supporter 3",
+        "phone": "251991826384",
+        "email": "aminamuhamed683@gmail.com",
+        "seatNumber": "Standard Gate Pass #3"
+      }
+    ],
+    "selectedSeats": [
+      "Standard (x3)"
+    ],
+    "selectedTier": "Standard",
+    "quantity": 3,
+    "pricing": {
+      "basePrice": 500,
+      "quantity": 3,
+      "subtotal": 1500,
+      "serviceFee": 0,
+      "tax": 75,
+      "discount": 0,
+      "total": 1575,
+      "vatRate": 5,
+      "commissionRate": 5,
+      "platformCommission": 75,
+      "providerNet": 1425
+    },
+    "subtotal": 1500,
+    "customerPaid": 1575,
+    "totalAmount": 1575,
+    "vatAmount": 75,
+    "vatRate": 5,
+    "commissionRate": 5,
+    "platformFee": 75,
+    "providerNet": 1425,
+    "paymentMethod": "CHAPA",
+    "paymentStatus": "PAID",
+    "bookingStatus": "CONFIRMED",
+    "createdAt": "2026-11-09T05:26:15.713Z",
+    "qrCodeData": "TIKORA-PASS:TIKORA-1794201974831-8036:1575:PAID",
+    "providerId": "3",
+    "providerName": "Adiss Abeba Stadium",
+    "providerPayout": 1425,
+    "updatedAt": "2026-11-09T05:52:43.618Z"
+  }
+]

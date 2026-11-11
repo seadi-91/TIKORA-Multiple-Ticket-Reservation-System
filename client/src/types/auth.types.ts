@@ -57,9 +57,10 @@ export interface ForgotPasswordData {
 }
 
 export interface ResetPasswordData {
-  password: string;
-  confirmPassword: string;
+  email?: string;
   token?: string;
+  password: string;
+  confirmPassword?: string;
 }
 
 export interface VerifyOtpData {

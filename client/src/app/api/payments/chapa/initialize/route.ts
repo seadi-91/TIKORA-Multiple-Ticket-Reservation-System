@@ -22,6 +22,7 @@ export async function POST(req: Request) {
       selectedTier,
       quantity = 1,
       returnUrl: clientReturnUrl,
+      txRef: clientTxRef,
     } = body;
 
     if (!amount || Number(amount) <= 0) {
@@ -38,7 +39,7 @@ export async function POST(req: Request) {
       );
     }
 
-    const txRef = `TIKORA-${Date.now()}-${Math.floor(1000 + Math.random() * 9000)}`;
+    const txRef = clientTxRef || `TIKORA-${Date.now()}-${Math.floor(1000 + Math.random() * 9000)}`;
     const fName = firstName || "TIKORA";
     const lName = lastName || "Customer";
     const phoneNum = phone || "+251911000000";
@@ -47,8 +48,8 @@ export async function POST(req: Request) {
     const protocol = host.includes("localhost") ? "http" : "https";
     const origin = `${protocol}://${host}`;
 
-    // Clean return_url so Chapa appends ?trx_ref cleanly without query string conflicts
-    let returnUrl = clientReturnUrl ? clientReturnUrl.split("?")[0] : `${origin}/payments/callback`;
+    // Keep full returnUrl including query parameters if provided by caller
+    let returnUrl = clientReturnUrl ? clientReturnUrl.trim() : `${origin}/payments/callback`;
 
     let cleanEmail = (email || "").trim().toLowerCase();
     if (!cleanEmail.includes("@") || cleanEmail.endsWith(".et") || cleanEmail.includes("tikora.et")) {

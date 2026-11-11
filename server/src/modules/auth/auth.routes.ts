@@ -12,6 +12,9 @@ router.post("/register/customer", AuthController.registerCustomer);
 router.post("/register/organization", AuthController.registerOrganization);
 router.get("/me", authenticate, AuthController.getMe);
 router.post("/logout", AuthController.logout);
+router.post("/forgot-password", AuthController.forgotPassword);
+router.post("/verify-otp", AuthController.verifyOtp);
+router.post("/reset-password", AuthController.resetPassword);
 
 // Google OAuth Initiation
 router.get("/google", (req, res, next) => {

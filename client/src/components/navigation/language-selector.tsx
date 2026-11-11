@@ -55,7 +55,7 @@ export function LanguageSelector({ variant = "navbar", className = "" }: Languag
       <div className={`space-y-1.5 ${className}`}>
         <div className="flex items-center gap-1.5 text-xs font-semibold text-slate-500 dark:text-slate-400 px-1">
           <Globe className="w-3.5 h-3.5" />
-          <span>Language / ቋንቋ</span>
+          <span>{language === "am" ? "ቋንቋ" : language === "om" ? "Afaan" : language === "ti" ? "ቋንቋ" : "Language"}</span>
         </div>
         <div className="grid grid-cols-2 gap-1.5">
           {supportedLanguages.map((lang) => {
@@ -117,7 +117,7 @@ export function LanguageSelector({ variant = "navbar", className = "" }: Languag
                 <span className="flex items-center gap-2">
                   <span>{lang.flag}</span>
                   <span>{lang.nativeName}</span>
-                  <span className="text-[10px] text-slate-400">({lang.name})</span>
+                  {language === "en" && <span className="text-[10px] text-slate-400">({lang.name})</span>}
                 </span>
                 {lang.code === language && <Check className="w-3.5 h-3.5 text-amber-600 dark:text-amber-400" />}
               </button>
@@ -136,7 +136,7 @@ export function LanguageSelector({ variant = "navbar", className = "" }: Languag
         onClick={() => setIsOpen(!isOpen)}
         className="flex items-center gap-1.5 px-2 py-1.5 sm:px-2.5 sm:py-1.5 rounded-xl border border-[#E2E8F0] dark:border-slate-800 bg-white/70 dark:bg-[#161922] text-xs font-medium text-slate-700 dark:text-slate-200 hover:border-amber-500/50 hover:text-amber-600 dark:hover:text-amber-400 transition-all cursor-pointer shadow-2xs"
         aria-label="Language selection"
-        title="Change Language / ቋንቋ ቀይር"
+        title={language === "am" ? "ቋንቋ ቀይር" : language === "om" ? "Afaan Jijjiiri" : language === "ti" ? "ቋንቋ ቀይር" : "Change Language"}
       >
         <Globe className="w-3.5 h-3.5 text-slate-400 group-hover:text-amber-500 shrink-0" />
         <span className="hidden sm:inline-block font-semibold text-[11px] sm:text-xs">
@@ -149,7 +149,7 @@ export function LanguageSelector({ variant = "navbar", className = "" }: Languag
       {isOpen && (
         <div className="absolute right-0 top-full mt-1.5 w-48 rounded-2xl border border-slate-200 dark:border-slate-800 bg-white/95 dark:bg-[#161922]/95 backdrop-blur-md p-1.5 shadow-xl z-50 animate-in fade-in zoom-in-95 duration-150">
           <div className="px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider text-slate-400 border-b border-slate-100 dark:border-slate-800/80 mb-1">
-            Choose Language / ቋንቋ ይምረጡ
+            {language === "am" ? "ቋንቋ ይምረጡ" : language === "om" ? "Afaan Filadhaa" : language === "ti" ? "ቋንቋ ምረጹ" : "Choose Language"}
           </div>
           {supportedLanguages.map((lang) => {
             const isSelected = lang.code === language;
@@ -168,7 +168,7 @@ export function LanguageSelector({ variant = "navbar", className = "" }: Languag
                   <span className="text-sm">{lang.flag}</span>
                   <div className="text-left">
                     <div className="font-semibold leading-tight">{lang.nativeName}</div>
-                    <div className="text-[10px] text-slate-400 font-normal">{lang.name}</div>
+                    {language === "en" && <div className="text-[10px] text-slate-400 font-normal">{lang.name}</div>}
                   </div>
                 </div>
                 {isSelected && <Check className="w-4 h-4 text-amber-600 dark:text-amber-400" />}

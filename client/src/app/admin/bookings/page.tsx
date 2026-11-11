@@ -21,13 +21,15 @@ import {
   Building2,
   User,
   RefreshCw,
+  Trash2,
+  AlertTriangle,
 } from "lucide-react";
 import { toast } from "sonner";
 import { useAdminStore, AdminBooking } from "@/stores/admin.store";
 import { ActionDropdown } from "@/components/ui/action-dropdown";
 
 export default function AdminBookingsPage() {
-  const { bookings, fetchPlatformData, isLoading } = useAdminStore();
+  const { bookings, fetchPlatformData, isLoading, deleteBooking } = useAdminStore();
 
   useEffect(() => {
     fetchPlatformData();
@@ -37,6 +39,23 @@ export default function AdminBookingsPage() {
   const [categoryFilter, setCategoryFilter] = useState<string>("ALL");
   const [statusFilter, setStatusFilter] = useState<string>("ALL");
   const [selectedBooking, setSelectedBooking] = useState<AdminBooking | null>(null);
+  const [bookingToDelete, setBookingToDelete] = useState<AdminBooking | null>(null);
+  const [isDeletingBooking, setIsDeletingBooking] = useState<boolean>(false);
+
+  const handleConfirmDeleteBooking = async () => {
+    if (!bookingToDelete) return;
+    setIsDeletingBooking(true);
+    try {
+      const ref = bookingToDelete.reference;
+      await deleteBooking(bookingToDelete.id, bookingToDelete.reference);
+      toast.success(`Booking ${ref} permanently deleted.`);
+      setBookingToDelete(null);
+    } catch (err: any) {
+      toast.error(`Failed to delete booking: ${err?.message || "Unknown error"}`);
+    } finally {
+      setIsDeletingBooking(false);
+    }
+  };
 
   const filteredBookings = bookings.filter((b) => {
     const matchesSearch =
@@ -267,6 +286,12 @@ export default function AdminBookingsPage() {
                       icon: <Building2 className="w-4 h-4" />,
                       href: `/admin/providers?q=${encodeURIComponent(b.providerName)}`,
                     },
+                    {
+                      label: "Delete Booking",
+                      icon: <Trash2 className="w-4 h-4 text-rose-500" />,
+                      variant: "danger",
+                      onClick: () => setBookingToDelete(b),
+                    },
                   ]}
                 />
               </div>
@@ -449,6 +474,12 @@ export default function AdminBookingsPage() {
                           icon: <Building2 className="w-4 h-4" />,
                           href: `/admin/providers?q=${encodeURIComponent(b.providerName)}`,
                         },
+                        {
+                          label: "Delete Booking",
+                          icon: <Trash2 className="w-4 h-4 text-rose-500" />,
+                          variant: "danger",
+                          onClick: () => setBookingToDelete(b),
+                        },
                       ]}
                     />
                   </td>
@@ -568,6 +599,59 @@ export default function AdminBookingsPage() {
                 className="px-4 py-2 text-xs font-semibold rounded-xl bg-muted hover:bg-muted/80 text-foreground transition-colors"
               >
                 Close Audit Record
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Permanently Delete Booking Confirmation Modal */}
+      {bookingToDelete && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs animate-in fade-in">
+          <div className="w-full max-w-md rounded-2xl bg-card border border-rose-500/30 p-6 shadow-2xl space-y-4">
+            <div className="w-12 h-12 rounded-full bg-rose-500/10 text-rose-600 flex items-center justify-center mx-auto">
+              <AlertTriangle className="w-6 h-6" />
+            </div>
+
+            <div className="text-center space-y-1">
+              <h3 className="text-base font-bold text-foreground">Permanently Delete Booking?</h3>
+              <p className="text-xs text-muted-foreground leading-relaxed">
+                Are you sure you want to permanently delete booking{" "}
+                <strong className="text-foreground font-mono">{bookingToDelete.reference}</strong> for{" "}
+                <strong className="text-foreground">{bookingToDelete.customerName}</strong> (
+                <span className="font-mono">{bookingToDelete.totalAmount.toLocaleString()} ETB</span>)?
+              </p>
+              <p className="text-[11px] text-rose-600 dark:text-rose-400 font-semibold pt-1">
+                Warning: This action is permanent. All payment allocations, ticket reservations, and audit records for this booking will be removed from the platform.
+              </p>
+            </div>
+
+            <div className="flex items-center justify-end gap-2 pt-3 border-t border-border">
+              <button
+                type="button"
+                onClick={() => setBookingToDelete(null)}
+                disabled={isDeletingBooking}
+                className="px-4 py-2 text-xs font-semibold rounded-xl text-muted-foreground hover:bg-muted cursor-pointer"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                onClick={handleConfirmDeleteBooking}
+                disabled={isDeletingBooking}
+                className="px-4 py-2 text-xs font-bold rounded-xl bg-rose-600 hover:bg-rose-700 text-white transition-colors cursor-pointer shadow-xs flex items-center gap-1.5"
+              >
+                {isDeletingBooking ? (
+                  <>
+                    <span className="w-3.5 h-3.5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                    <span>Deleting...</span>
+                  </>
+                ) : (
+                  <>
+                    <Trash2 className="w-3.5 h-3.5" />
+                    <span>Yes, Delete Permanently</span>
+                  </>
+                )}
               </button>
             </div>
           </div>
